@@ -1,0 +1,32 @@
+word,translation,type,pinyin,level
+年,Année,Date,Nián,A1
+月,Mois/Lune,Date,Yuè,A1
+日/号,Jour (soleil)/numéro,Date,Rì/hào,A1
+星期,Semaine,Date,Xīngqī,A1
+天,Jour/ciel,Date,Tiān,A1
+昨天,Hier,Date,Zuótiān,A1
+今天,Aujourd'hui,Date,Jīntiān,A1
+明天,Demain,Date,Míngtiān,A1
+去年,L'année dernière,Date,Qùnián,A1
+今年,Cette année,Date,Jīnnián,A1
+明年,L'année prochaine,Date,Míngnián,A1
+上个月,Le mois dernier,Date,Shàng gè yuè,A1
+下个月,Le mois prochain,Date,Xià gè yuè,A1
+早上,Matin,Moments de la journée,Zǎoshang,A1
+上午,Matinée,Moments de la journée,Shàngwǔ,A1
+中午,Midi,Moments de la journée,Zhōngwǔ,A1
+下午,Après-midi,Moments de la journée,Xiàwǔ,A1
+晚上,Soir,Moments de la journée,Wǎnshàng,A1
+夜里,Nuit,Moments de la journée,Yèlǐ,A1
+点,Heure,Heure,Diǎn,A1
+分钟,Minute,Heure,Fēnzhōng,A1
+半,Demi,Heure,Bàn,A1
+刻,Quart,Heure,Kè,A1
+差,Moins,Heure,Chà,A1
+现在,Maintenant,Heure,Xiànzài,A1
+电影,Film,Noms et expressions,Diànyǐng,A1
+看,Regarder,Verbes,Kàn,A1
+做,Faire,Verbes,Zuò,A1
+吃饭,Manger,Verbes,Chīfàn,A1
+工作,Travailler,Verbes,Gōngzuò,A1
+休息,Se reposer,Verbes,Xiūxi,A1
