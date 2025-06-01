@@ -1,0 +1,180 @@
+[
+  {
+    "title": "Combien de personnes y a-t-il dans ta famille ?",
+    "entries": [
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你好！这是我的家。",
+          "pinyin": "Nǐ hǎo! Zhè shì wǒ de jiā.",
+          "translation": "Bonjour ! Voici ma famille."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你的家有几口人？",
+          "pinyin": "Nǐ de jiā yǒu jǐ kǒu rén?",
+          "translation": "Combien de personnes y a-t-il dans ta famille ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "七口人。",
+          "pinyin": "Qī kǒu rén.",
+          "translation": "Sept personnes."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "爸爸，妈妈，一个姐姐，两个弟弟，一个哥哥和我。",
+          "pinyin": "Bàba, māma, yī gè jiějie, liǎng gè dìdi, yī gè gēge hé wǒ.",
+          "translation": "Papa, maman, une grande sœur, deux petits frères, un grand frère et moi."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我没有妹妹。",
+          "pinyin": "Wǒ méiyǒu mèimei.",
+          "translation": "Je n'ai pas de petite sœur."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "好，你们住在哪儿？",
+          "pinyin": "Hǎo, nǐmen zhù zài nǎr?",
+          "translation": "D'accord, où habitez-vous ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我们住在北京，那是中国的首都。",
+          "pinyin": "Wǒmen zhù zài Běijīng, nà shì Zhōngguó de shǒudū.",
+          "translation": "Nous habitons à Pékin, c'est la capitale de la Chine."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我知道！",
+          "pinyin": "Wǒ zhīdào!",
+          "translation": "Je sais !"
+        }
+      }
+    ]
+  },
+  {
+    "title": "Que font tes parents ?",
+    "entries": [
+        {
+          "role": 0,
+          "content": {
+            "sentence": "我今天跟爷爷奶奶去巴黎。",
+            "pinyin": "Wǒ jīn tiān gēn yéye nǎinai qù Bālí.",
+            "translation": "Aujourd'hui je vais à Paris avec mes grands-parents (paternels)."
+          }
+        },
+        {
+          "role": 1,
+          "content": {
+            "sentence": "你的父母不去吗？",
+            "pinyin": "Nǐ de fùmǔ bù qù ma?",
+            "translation": "Tes parents n'y vont pas ?"
+          }
+        },
+        {
+          "role": 0,
+          "content": {
+            "sentence": "不去。",
+            "pinyin": "Bù qù.",
+            "translation": "Non."
+          }
+        },
+        {
+          "role": 1,
+          "content": {
+            "sentence": "为什么不去？",
+            "pinyin": "Wèishénme bù qù?",
+            "translation": "Pourquoi n'y vont-ils pas ?"
+          }
+        },
+        {
+          "role": 0,
+          "content": {
+            "sentence": "因为他们今天很忙，他们要工作。",
+            "pinyin": "Yīnwèi tāmen jīn tiān hěn máng, tāmen yào gōngzuò.",
+            "translation": "Parce qu'ils sont occupés aujourd'hui, ils doivent travailler."
+          }
+        },
+        {
+        "role": 1,
+        "content": {
+          "sentence": "他们在哪儿工作？",
+          "pinyin": "Tāmen zài nǎr gōngzuò?",
+          "translation": "Où travaillent-ils ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "他们在一个饭馆工作。",
+          "pinyin": "Tāmen zài yī gè fànguǎn gōngzuò.",
+          "translation": "Ils travaillent dans un restaurant."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你看这张地图。",
+          "pinyin": "Nǐ kàn zhè zhāng dìtú.",
+          "translation": "Regarde cette carte."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "这里是我的家。",
+          "pinyin": "Zhè lǐ shì wǒ de jiā.",
+          "translation": "Ici, c'est ma maison."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "哪里是他们工作的饭馆。",
+          "pinyin": "Nǎlǐ shì tāmen gōngzuò de fànguǎn.",
+          "translation": "Le restaurant où il travaille est là."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "是中国的饭馆吗？",
+          "pinyin": "Shì Zhōngguó de fànguǎn ma?",
+          "translation": "Est-ce un restaurant chinois ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "不是，是意大利的饭馆。",
+          "pinyin": "Bù shì, shì Yìdàlì de fànguǎn.",
+          "translation": "Non, c'est un restaurant italien."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我觉得意大利的菜很好吃。",
+          "pinyin": "Wǒ juéde Yìdàlì de cài hěn hǎo chī.",
+          "translation": "Je trouve que la cuisine italienne est bonne."
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,108 @@
+[
+  {
+    "title": "Combien y en a-t-il ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "有三个人吗？",
+          "pinyin": "Yǒu sān gè rén ma?",
+          "translation": "Y a-t-il trois personnes ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "没有三个人。",
+          "pinyin": "Méiyǒu sān gè rén.",
+          "translation": "Il n'y a pas trois personnes."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "有几个人？",
+          "pinyin": "Yǒu jǐ gè rén?",
+          "translation": "Combien de personnes y a-t-il ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "有两个人。",
+          "pinyin": "Yǒu liǎng gè rén.",
+          "translation": "Il y a deux personnes."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你有几本书？",
+          "pinyin": "Nǐ yǒu jǐ běn shū?",
+          "translation": "Combien de livres as-tu ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我有四本书。",
+          "pinyin": "Wǒ yǒu sì běn shū.",
+          "translation": "J'ai quatre livres."
+        }
+      }
+    ]
+  },
+  {
+    "title": "Bonjour, puis-je te demander ton âge ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你好，请问你几岁？",
+          "pinyin": "Nǐ hǎo, qǐngwèn nǐ jǐ suì?",
+          "translation": "Bonjour, puis-je te demander ton âge ?"
+        }
+      },
+      {
+          "role": 1,
+          "content": {
+              "sentence": "我八岁了，你呢？",
+              "pinyin": "Wǒ bā suì le, nǐ ne?",
+              "translation": "J'ai huit ans, et toi ?"
+            }
+        },
+        {
+            "role": 0,
+            "content": {
+                "sentence": "我七岁了。",
+                "pinyin": "Wǒ qī suì le.",
+                "translation": "J'ai sept ans."
+            }
+        },
+        {
+            "role": 1,
+            "content": {
+                "sentence": "你好，请问你多大？",
+                "pinyin": "Nǐ hǎo, qǐngwèn nǐ duō dà?",
+                "translation": "Bonjour, puis-je te demander ton âge ?"
+              }
+          },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我四岁了，你呢？",
+          "pinyin": "Wǒ sì shí suì le, nǐ ne?",
+          "translation": "J'ai 40 ans, et toi ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我三十九岁了。",
+          "pinyin": "Wǒ sān shí jiǔ suì le.",
+          "translation": "J'ai 39 ans."
+        }
+      }
+    ]
+  }
+]

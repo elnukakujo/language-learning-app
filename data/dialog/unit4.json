@@ -1,0 +1,108 @@
+[
+  {
+    "title": "Quand y allons-nous ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "妈妈，我们在哪儿？",
+          "pinyin": "Māmā, wǒmen zài nǎr?",
+          "translation": "Maman, où sommes-nous ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我们在巴黎。",
+          "pinyin": "Wǒmen zài Bālí.",
+          "translation": "Nous sommes à Paris."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我们什么时候去中国？",
+          "pinyin": "Wǒmen shénme shíhòu qù Zhōngguó?",
+          "translation": "Quand allons-nous en Chine ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我们明年七月二日去中国。",
+          "pinyin": "Wǒmen míngnián qī yuè èr rì qù Zhōngguó.",
+          "translation": "Nous irons en Chine le 2 juillet de l'année prochaine."
+        }
+      }
+    ]
+  },
+  {
+    "title": "Es-tu déjà allé en Chine ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你去过中国吗？",
+          "pinyin": "Nǐ qù guo Zhōngguó ma?",
+          "translation": "Es-tu déjà allé en Chine ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我去过，你呢？",
+          "pinyin": "Wǒ qù guo, nǐ ne?",
+          "translation": "J'y suis déjà allée, et toi ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我没有去过中国。",
+          "pinyin": "Wǒ méiyǒu qù guo Zhōngguó.",
+          "translation": "Je ne suis jamais allé en Chine."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "可是我喜欢中国。",
+          "pinyin": "Kěshì wǒ xǐhuan Zhōngguó.",
+          "translation": "Mais j'aime la Chine."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你什么时候再去中国？",
+          "pinyin": "Nǐ shénme shíhòu zài qù Zhōngguó?",
+          "translation": "Quand retournes-tu en Chine ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我明年再去中国。",
+          "pinyin": "Wǒ míngnián zài qù Zhōngguó.",
+          "translation": "Je retourne en Chine l'année prochaine."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "为什么？",
+          "pinyin": "Wèishénme?",
+          "translation": "Pourquoi ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "因为我今年没有去中国，所以明年再去。",
+          "pinyin": "Yīnwèi wǒ jīnnián méiyǒu qù Zhōngguó, suǒyǐ míngnián zài qù.",
+          "translation": "Parce que je ne suis pas allée en Chine cette année, donc j'irai l'année prochaine."
+        }
+      }
+    ]
+  }
+]

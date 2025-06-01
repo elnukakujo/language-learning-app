@@ -1,0 +1,244 @@
+[
+  {
+    "title": "Tu m'enverras une carte postale ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我明天坐飞机去泰国旅行！",
+          "pinyin": "Wǒ míngtiān zuò fēijī qù Tàiguó lǚxíng!",
+          "translation": "Demain, je prends l'avion pour partir en voyage en Thaïlande."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "真的吗？我没有去过泰国。",
+          "pinyin": "Zhēn de ma? Wǒ méiyǒu qù guo Tàiguó.",
+          "translation": "Vraiment ? Je ne suis jamais allé en Thaïlande."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "是真的。我去过一次。",
+          "pinyin": "Shì zhēn de. Wǒ qù guo yī cì.",
+          "translation": "C'est vrai. J'y suis déjà allé une fois."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你什么时候去过泰国？",
+          "pinyin": "Nǐ shénme shíhòu qù guo Tàiguó?",
+          "translation": "Quand es-tu (déjà) allé en Thaïlande ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我七岁的时候去过。",
+          "pinyin": "Wǒ qī suì de shíhòu qù guo.",
+          "translation": "J'y suis allé quand j'avais sept ans."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好，你什么时候回来？",
+          "pinyin": "Hǎo, nǐ shénme shíhòu huí lái?",
+          "translation": "D'accord, quand reviens-tu ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我下个星期三回来。",
+          "pinyin": "Wǒ xià gè xīngqī sān huí lái.",
+          "translation": "Je reviens mercredi prochain."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好啊！泰国的天气怎么样？",
+          "pinyin": "Hǎo a! Tàiguó de tiānqì zěnme yàng?",
+          "translation": "D'accord ! Quel temps fait-il en Thaïlande ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "泰国的天气很好，现在是夏天，天气很热。",
+          "pinyin": "Tàiguó de tiānqì hěn hǎo, xiànzài shì xiàtiān, tiānqì hěn rè.",
+          "translation": "La météo thaïlandaise est bonne. Actuellement c'est l'été, il fait chaud."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "可是，在泰国常常下雨。",
+          "pinyin": "Kěshì, zài Tàiguó cháng cháng xià yǔ.",
+          "translation": "Cependant, il pleut souvent en Thaïlande."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "泰国 的 风景 这么 好看！",
+          "pinyin": "Tàiguó de fēngjǐng zhème hǎo kàn!",
+          "translation": "Les paysages thaïlandais sont si beaux !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你能给我寄一张明信片吗？",
+          "pinyin": "Nǐ néng gěi wǒ jì yī zhāng míngxìnpiàn ma?",
+          "translation": "Tu pourras m'envoyer une carte postale ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "能！",
+          "pinyin": "Néng!",
+          "translation": "Oui !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "谢谢，祝你旅途愉快。",
+          "pinyin": "Xièxie, zhù nǐ lǚtú yúkuài.",
+          "translation": "Merci, je te souhaite un bon voyage."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "谢谢你。",
+          "pinyin": "Xièxie nǐ.",
+          "translation": "Je te remercie."
+        }
+      }
+    ]
+  },
+  {
+    "title": "Cet endroit est splendide !",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "喂，妈妈，我到了柬埔寨。",
+          "pinyin": "Wéi, māma, wǒ dào le Jiǎnpǔzhài.",
+          "translation": "Allô maman ? Je suis arrivé au Cambodge."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好！你累不累？你吃饭了没？",
+          "pinyin": "Hǎo! Nǐ lèi bù lèi? Nǐ chīfàn le méi?",
+          "translation": "D'accord ! Es-tu fatigué ? As-tu mangé ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "不累！我还没有吃饭！",
+          "pinyin": "Bù lèi! Wǒ hái méiyǒu chīfàn!",
+          "translation": "Non ! Je n'ai pas encore mangé."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我現在坐出租车去宾馆。",
+          "pinyin": "Wǒ xiànzài zuò chūzūchē qù bīnguǎn.",
+          "translation": "Je suis actuellement dans le taxi pour l'hôtel."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "天气冷吗？",
+          "pinyin": "Tiānqì lěng ma?",
+          "translation": "Est-ce qu'il fait froid ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "天气不冷，这个地方非常好看！",
+          "pinyin": "Tiānqì bù lěng, zhè gè dìfang fēicháng hǎo kàn!",
+          "translation": "Il ne fait pas froid, cet endroit est magnifique !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你什么时候回法国？",
+          "pinyin": "Nǐ shénme shíhòu huí Fǎguó?",
+          "translation": "Quand rentres-tu en France ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我两个星期以后回法国。",
+          "pinyin": "Wǒ liǎng gè xīngqī yǐhòu huí Fǎguó.",
+          "translation": "Je rentre en France dans deux semaines."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我明天去参观有名的地方。",
+          "pinyin": "Wǒ míng tiān qù cānguān yǒumíng de dìfang.",
+          "translation": "Demain je vais aller visiter des lieux célèbres."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好！你明天离开宾馆以前给我打电话。",
+          "pinyin": "Hǎo! Nǐ míngtiān líkāi bīnguǎn yǐqián gěi wǒ dǎ diànhuà.",
+          "translation": "D'accord ! Téléphone-moi demain avant de quitter l'hôtel."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我快要到了。",
+          "pinyin": "Wǒ kuài yào dào le.",
+          "translation": "J'arrive bientôt."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我今天还没有吃饭，我很饿。",
+          "pinyin": "Wǒ jīn tiān hái méiyǒu chīfàn, wǒ hěn è.",
+          "translation": "Je n'ai pas encore mangé today, I am hungry. (Je n'ai pas encore mangé aujourd'hui, j'ai faim.)"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好啊，你吃饭了以后再给我打电话。",
+          "pinyin": "Hǎo a, nǐ chīfàn le yǐhòu zài gěi wǒ dǎ diànhuà.",
+          "translation": "D'accord, téléphone-moi à nouveau quand tu auras fini de manger."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "好啊。",
+          "pinyin": "Hǎo a.",
+          "translation": "Entendu."
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,180 @@
+[
+  {
+    "title": "À quelle heure travailles-tu ?",
+    "entries": [
+        {
+          "role": 0,
+          "content": {
+            "sentence": "你 怎么 去 工作？",
+            "pinyin": "Nǐ zěnme qù gōngzuò?",
+            "translation": "Comment vas-tu au travail ?"
+          }
+        },
+        {
+          "role": 1,
+          "content": {
+            "sentence": "我每天坐火车去工作，你呢？",
+            "pinyin": "Wǒ měitiān zuò huǒchē qù gōngzuò, nǐ ne?",
+            "translation": "Je prends le train tous les jours pour aller travailler, et toi ?"
+          }
+        },
+        {
+          "role": 0,
+          "content": {
+            "sentence": "我坐公交车去工作。",
+            "pinyin": "Wǒ zuò gōngjiāochē qù gōngzuò.",
+            "translation": "Je prends le bus pour aller travailler."
+          }
+        },
+        {
+          "role": 1,
+          "content": {
+            "sentence": "你工作的地方在哪儿？",
+            "pinyin": "Nǐ gōngzuò de dìfang zài nǎr?",
+            "translation": "Où se situe l'endroit où tu travailles ?"
+          }
+        },
+        {
+          "role": 0,
+          "content": {
+            "sentence": "在巴黎，你呢？",
+            "pinyin": "Zài Bālí, nǐ ne?",
+            "translation": "À Paris, et toi ?"
+          }
+        },
+        {
+          "role": 1,
+          "content": {
+            "sentence": "我工作的地方也是巴黎。",
+            "pinyin": "Wǒ gōngzuò de dìfang yě shì Bālí.",
+            "translation": "L'endroit où je travaille est également Paris."
+          }
+        },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你几点上班？",
+          "pinyin": "Nǐ jǐ diǎn shàngbān?",
+          "translation": "À quelle heure commences-tu le travail ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我八点半开始工作，下午五点下班。",
+          "pinyin": "Wǒ bā diǎn bàn kāishǐ gōngzuò, xiàwǔ wǔ diǎn xiàbān.",
+          "translation": "Je commence à travailler à 8h30, je finis à 5h de l'après-midi."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我也是。",
+          "pinyin": "Wǒ yě shì.",
+          "translation": "Moi aussi."
+        }
+      }
+    ]
+  },
+  {
+    "title": "Que fais-tu de ta journée ?",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你今天做什么？",
+          "pinyin": "Nǐ jīn tiān zuò shénme?",
+          "translation": "Que fais-tu aujourd'hui ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我今天去公园玩儿，你呢？",
+          "pinyin": "Wǒ jīn tiān qù gōngyuán wánr, nǐ ne?",
+          "translation": "Aujourd'hui je vais au parc me détendre, et toi ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我今天先去游泳池，然后去饭馆吃饭。",
+          "pinyin": "Wǒ jīn tiān xiān qù yóuyǒng chí, ránhòu qù fànguǎn chīfàn.",
+          "translation": "Aujourd'hui je vais d'abord à la piscine, puis j'irai manger au restaurant."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你喜欢游泳吗？",
+          "pinyin": "Nǐ xǐhuan yóuyǒng ma?",
+          "translation": "Aimes-tu nager ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "不喜欢，我不会游泳。",
+          "pinyin": "Bù xǐhuan, wǒ bù huì yóuyǒng.",
+          "translation": "Non, je ne sais pas nager."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我觉得游泳有点儿无聊。",
+          "pinyin": "Wǒ juéde yóuyǒng yǒudiǎnr wúliáo.",
+          "translation": "Je trouve que la natation est un peu ennuyante."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我比较喜欢走路。",
+          "pinyin": "Wǒ bǐjiào xǐhuan zǒulù.",
+          "translation": "Je préfère la marche."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我不同意，游泳很有意思！",
+          "pinyin": "Wǒ bù tóngyì, yóuyǒng hěn yǒu yìsi!",
+          "translation": "Je ne suis pas d'accord, c'est super de nager !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你每天游泳吗？",
+          "pinyin": "Nǐ měitiān yóuyǒng ma?",
+          "translation": "Nages-tu tous les jours ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "是 的。",
+          "pinyin": "Shì de.",
+          "translation": "Oui !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你每天怎么去游泳池？",
+          "pinyin": "Nǐ měitiān zěnme qù yóuyǒng chí?",
+          "translation": "Comment te rends-tu à la piscine quotidiennement ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我每天骑自行车去。",
+          "pinyin": "Wǒ měitiān qí zìxíngchē qù.",
+          "translation": "J'y vais à vélo tous les jours."
+        }
+      }
+    ]
+  }
+]

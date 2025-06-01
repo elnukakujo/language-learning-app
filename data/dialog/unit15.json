@@ -1,0 +1,188 @@
+[
+  {
+    "title": "Range ta chambre !",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你把门打开吧！我进不来！",
+          "pinyin": "Nǐ bǎ mén dǎkāi ba! Wǒ jìn bù lái!",
+          "translation": "Ouvre la porte ! Je ne peux pas entrer !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "好，请进。",
+          "pinyin": "Hǎo, qǐng jìn.",
+          "translation": "Bien, entre donc."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你为什么不整理你的房间？",
+          "pinyin": "Nǐ wèishénme bù zhěnglǐ nǐ de fángjiān?",
+          "translation": "Pourquoi ne ranges-tu pas ta chambre ?"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我忘了，我最近很忙。",
+          "pinyin": "Wǒ wàng le, wǒ zuì jìn hěn máng.",
+          "translation": "J'ai oublié, je suis occupé ces derniers temps."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你的衣服为什么在地上？",
+          "pinyin": "Nǐ de yīfu wèishénme zài dìbǎn shàng?",
+          "translation": "Pourquoi tes vêtements sont-ils par terre ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你把衣服放在床上！你的房间很脏！",
+          "pinyin": "Nǐ bǎ yīfu fàng zài chuángshàng! Nǐ de fángjiān hěn zāng!",
+          "translation": "Mets tes vêtements sur le lit ! Ta chambre est sale !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "没有这么脏。",
+          "pinyin": "Méiyǒu zhème zāng.",
+          "translation": "Elle n'est pas si sale que ça."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "请你把窗户打开！",
+          "pinyin": "Qǐng nǐ bǎ chuānghu dǎkāi!",
+          "translation": "Merci d'ouvrir la fenêtre !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "妈，我有很多作业，明天有经济考试。",
+          "pinyin": "Mā, wǒ yǒu hěn duō zuòyè, míngtiān yǒu jīngjì kǎoshì.",
+          "translation": "Maman, j'ai beaucoup de devoirs, il y a un examen d'économie demain."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你做完作业以后就整理你的房间！",
+          "pinyin": "Nǐ zuò wán zuòyè yǐhòu jiù zhěnglǐ nǐ de fángjiān!",
+          "translation": "Quand tu auras fini tes devoirs, tu rangeras ta chambre."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "我会的，你放心吧。",
+          "pinyin": "Wǒ huì de, nǐ fàngxīn ba.",
+          "translation": "Je le ferai, ne t'inquiète pas."
+        }
+      }
+    ]
+  },
+  {
+    "title": "Notre appartement est trop petit !",
+    "entries": [
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我想搬家！",
+          "pinyin": "Wǒ xiǎng bānjiā!",
+          "translation": "Je souhaiterais déménager !"
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "你为什么想搬家？",
+          "pinyin": "Nǐ wèishénme xiǎng bānjiā?",
+          "translation": "Pourquoi souhaites-tu déménager ?"
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "因为我们的房子太小了，我们一共四个人。",
+          "pinyin": "Yīnwèi wǒmen de fángzi tài xiǎo le, wǒmen yīgòng sì gè rén.",
+          "translation": "Parce que notre maison est trop petite, nous sommes 4 personnes en tout."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我们住在四楼，没有电梯。",
+          "pinyin": "Wǒmen zhù zài sì lóu, méiyǒu diàntī.",
+          "translation": "Nous habitons au quatrième étage, il n'y a pas d'ascenseur."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "我们在这里只有一间浴室。",
+          "pinyin": "Wǒmen zài zhèlǐ zhī yǒu yī jiān yùshì.",
+          "translation": "Nous n'avons qu'une salle de bain ici."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "此外，厨房太小了。",
+          "pinyin": "Cǐwài, chúfáng tài xiǎo le.",
+          "translation": "De plus, la cuisine est trop petite."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "这里只有三个房间。",
+          "pinyin": "Zhèlǐ zhī yǒu sān gè fángjiān.",
+          "translation": "Ici il n'y a que 3 chambres."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "这个主意不错。",
+          "pinyin": "Zhège zhǔyì bù cuò.",
+          "translation": "Cette idée n'est pas mauvaise."
+        }
+      },
+      {
+        "role": 1,
+        "content": {
+          "sentence": "如果 我们 搬家，我们的三个孩子都会有自己的房间。",
+          "pinyin": "Rúguǒ wǒmen bānjiā, wǒmen de sān gè háizi dōu huì yǒu zìjǐ de fángjiān.",
+          "translation": "Si nous déménageons, nos trois enfants auront tous leur propre chambre."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "你看这个房地产公司的网站。",
+          "pinyin": "Nǐ kàn zhège fángdìchǎn gōngsī de wǎngzhàn.",
+          "translation": "Regarde le site internet de cette agence immobilière."
+        }
+      },
+      {
+        "role": 0,
+        "content": {
+          "sentence": "他们出租的房子很好，可是房租有点儿贵。",
+          "pinyin": "Tāmen chūzū de fángzi hěn hǎo, kěshì fángzū yǒudiǎnr guì.",
+          "translation": "Les maisons qu'ils louent sont bien mais les loyers sont un peu chers."
+        }
+      }
+    ]
+  }
+]
