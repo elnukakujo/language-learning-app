@@ -28,6 +28,8 @@ class ChineseUnit(Unit):
     vocab = relationship("ChineseVocabulary", back_populates="unit", cascade="all, delete-orphan")
     # One unit has many ChineseGrammarSheet entries
     grammar_sheets = relationship("ChineseGrammarSheet", back_populates="unit", cascade="all, delete-orphan")
+    # One unit has many ChineseDialogue entries
+    dialogues = relationship("ChineseDialogue", back_populates="unit", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<ChineseUnit(title='{self.title}', level='{self.level}')>"
@@ -76,6 +78,52 @@ class ChineseGrammarSheet(GrammarSheet):
 
     def __repr__(self):
         return f"<ChineseGrammarSheet(title='{self.title}', level='{self.level}, unit_id='{self.unit_id}')>"
+    
+class Speech(Base):
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True)
+    speaker = Column(Integer, nullable=False)
+    sentence = Column(Text, nullable=False)
+    translation = Column(Text, nullable=False)
+
+    def __repr__(self):
+        return f"<Speech(speaker='{self.speaker}', sentence='{self.sentence}', translation='{self.translation}')>"
+    
+class ChineseSpeech(Speech):
+    __tablename__ = 'chinese_speech'
+
+    pinyin = Column(Text, nullable=False, unique=False)
+    dialogue_id = Column(Integer, ForeignKey('chinese_dialogue.id'), nullable=False)
+    # One speech belongs to one Dialogue
+    dialogue = relationship("ChineseDialogue", back_populates="entries")
+
+    def __repr__(self):
+        return f"<ChineseSpeech(speaker='{self.speaker}', sentence='{self.sentence}', translation='{self.translation}', pinyin='{self.pinyin}')>"
+
+class Dialogue(Base):
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False, unique=True)
+    unit_id = Column(Integer, ForeignKey('chinese_units.id'), nullable=False)
+    entries = Column(String, nullable=False)
+
+    def __repr__(self):
+        return f"<Dialogue(title='{self.title}', entries='{self.entries}')>"
+    
+class ChineseDialogue(Dialogue):
+    __tablename__ = 'chinese_dialogue'
+
+    unit_id = Column(Integer, ForeignKey('chinese_units.id'), nullable=False)
+    # One dialogue belongs to one ChineseUnit
+    unit = relationship("ChineseUnit", back_populates="dialogues")
+
+    # One speech belongs to one ChineseDialogue
+    entries = relationship("ChineseSpeech", back_populates="dialogue", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<ChineseDialogue(title='{self.title}', unit_id='{self.unit_id}', entries='{self.entries}')>"
 
 Base.metadata.create_all(engine)
 
@@ -118,6 +166,28 @@ if __name__ == "__main__":
                 ))
 
             session.add_all(grammar_sheets)
+
+        if os.path.exists(f'data/dialog/unit{idx}.json'):
+            dialogues = []
+            with open(f'data/dialog/unit{idx}.json', 'r', encoding='utf-8') as f:
+                dialogue_data = json.load(f)
+            for element in dialogue_data:
+                dialogue = ChineseDialogue(
+                    title=element["title"],
+                    unit=unit,
+                    entries=[]
+                )
+                for entry in element["entries"]:
+                    dialogue.entries.append(ChineseSpeech(
+                        speaker=entry["role"],
+                        sentence=entry["content"]["sentence"],
+                        translation=entry["content"]["translation"],
+                        pinyin=entry["content"]["pinyin"],
+                        dialogue=dialogue
+                    ))
+                dialogues.append(dialogue)
+
+            session.add_all(dialogues)
     try:
         session.commit()
     except Exception as e:
