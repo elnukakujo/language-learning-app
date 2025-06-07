@@ -1,2 +1,2 @@
-# Vocabulary-dbms
+# language-learning-app
 A week-end project to create a Database Management System to save my language courses vocabulary
