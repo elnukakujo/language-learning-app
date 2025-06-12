@@ -19,7 +19,7 @@ A preview helps students have a clear idea of what they will learn. This means g
 The Learning section of what a student will learn during a unit. It can be composed by the following types of elements but all of those might not be in it due to changes between units and languages.
 - **Vocabulary**: Represents a word or term to know by heart. It's composed of a term, it's translated version and its prononciation. However, all languages are different, and some might require the same term in different alphabet.
 - **Grammar Sheet**: Is an explanation with title and example defining a language concept like how to put a verb to the past, how to create a passive sentence and so on.
-- **Calligraphy**: Can be present in a language course if the learning language has a different writing system compared to the student language. 
+- **Calligraphy**: Can be present in a language course if the learning language has a different writing system compared to the student language. It presents how to write and read characters.
 
 ### Exercise
 - **True/False**
