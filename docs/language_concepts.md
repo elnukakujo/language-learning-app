@@ -1,5 +1,7 @@
 # Concepts of a Language Course
 
+![alt text](https://raw.githubusercontent.com/elnukakujo/language-learning-app/refs/heads/main/docs/CourseModel.drawio.png)
+
 After reviewing my [Chinese manual](https://www.editions-ellipses.fr/accueil/10457-n-hao-ma-premiers-pas-en-chinois-mandarin-a1-a2-9782340038684.html?srsltid=AfmBOopRUlOsr0ffdePtTNsupkNRExMX17DO2QiTOMAt_D72wAh4Qsx_) as well as my [japanese language school material](https://www.coto-language.com/product-page/beginner-6-intensive-course-materials-2020), this is the vision I have of a generalized modelisation for a language course.
 
 ## Planning
