@@ -1,0 +1,106 @@
+<diagram program="umletino" version="15.1"><zoom_level>8</zoom_level><element><id>UMLClass</id><coordinates><x>464</x><y>240</y><w>152</w><h>64</h></coordinates><panel_attributes>Language
+--
+Name: string
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1144</x><y>384</y><w>168</w><h>80</h></coordinates><panel_attributes>&lt;&lt;Enumeration&gt;&gt;
+WritingSystemNameLogoSyllab
+--
+Cherokee
+Hanzi
+Kana/Kanji</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>464</x><y>72</y><w>152</w><h>64</h></coordinates><panel_attributes>User
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>536</x><y>128</y><w>88</w><h>128</h></coordinates><panel_attributes>lt=-
+m1=n
+m2=0..n
+Learns/Knows</panel_attributes><additional_attributes>10;10;10;140</additional_attributes></element><element><id>UMLClass</id><coordinates><x>704</x><y>160</y><w>152</w><h>64</h></coordinates><panel_attributes>/WritingSystem/
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>608</x><y>192</y><w>112</w><h>104</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=n
+Uses</panel_attributes><additional_attributes>120;10;10;110</additional_attributes></element><element><id>Relation</id><coordinates><x>608</x><y>104</y><w>112</w><h>96</h></coordinates><panel_attributes>lt=-
+m1=1..n
+m2=n
+Learns/Knows</panel_attributes><additional_attributes>120;100;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>928</x><y>0</y><w>168</w><h>64</h></coordinates><panel_attributes>WritingSystemAbjad
+--
+Family: WritingSystemFamily=Abjad
+Name: WritingSystemNameAbjad</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1144</x><y>0</y><w>168</w><h>72</h></coordinates><panel_attributes>&lt;&lt;Enumeration&gt;&gt;
+WritingSystemNameAbjad
+--
+Arabic
+Hebrew</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1088</x><y>24</y><w>72</w><h>24</h></coordinates><panel_attributes>lt=-</panel_attributes><additional_attributes>10;10;70;10</additional_attributes></element><element><id>Relation</id><coordinates><x>848</x><y>24</y><w>96</w><h>184</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;210;60;210;60;10;100;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>928</x><y>120</y><w>168</w><h>64</h></coordinates><panel_attributes>WritingSystemAbugida
+--
+Family: WritingSystemFamily=Abugida
+Name: WritingSystemNameAbugida</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1144</x><y>104</y><w>168</w><h>96</h></coordinates><panel_attributes>&lt;&lt;Enumeration&gt;&gt;
+WritingSystemNameAbugida
+--
+Canadian Syllabics
+Ethiopic
+Northern Brahmic
+Southern Brahmic
+Thaana</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1088</x><y>144</y><w>72</w><h>24</h></coordinates><panel_attributes>lt=-</panel_attributes><additional_attributes>10;10;70;10</additional_attributes></element><element><id>Relation</id><coordinates><x>848</x><y>144</y><w>96</w><h>64</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;60;60;60;60;10;100;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>928</x><y>256</y><w>168</w><h>64</h></coordinates><panel_attributes>WritingSystemAlphabetic
+--
+Family: WritingSystemFamily=Alphabetic
+Name: WritingSystemNameAlphabetic</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>848</x><y>184</y><w>96</w><h>120</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;60;10;60;130;100;130</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1144</x><y>224</y><w>168</w><h>136</h></coordinates><panel_attributes>&lt;&lt;Enumeration&gt;&gt;
+WritingSystemNameAlphabetic
+--
+Armenian
+Cyrillic
+Georgian
+Greek
+Latin
+Mongolian
+Neo-Tifinagh
+Osage</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1088</x><y>280</y><w>72</w><h>24</h></coordinates><panel_attributes>lt=-</panel_attributes><additional_attributes>10;10;70;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>928</x><y>392</y><w>168</w><h>64</h></coordinates><panel_attributes>WritingSystemLogoSyllab
+--
+Family: WritingSystemFamily=Logographic/Syllabic
+Name: WritingSystemNameLogoSyllab</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>848</x><y>184</y><w>96</w><h>264</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;60;10;60;310;100;310</additional_attributes></element><element><id>Relation</id><coordinates><x>1088</x><y>416</y><w>72</w><h>24</h></coordinates><panel_attributes>lt=-</panel_attributes><additional_attributes>10;10;70;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>232</x><y>448</y><w>152</w><h>72</h></coordinates><panel_attributes>/Planning/
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>440</y><w>168</w><h>80</h></coordinates><panel_attributes>DateTIme
+--
+Day: integer
+Month: string
+Year: integer</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>160</x><y>448</y><w>88</w><h>40</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=1
+starts</panel_attributes><additional_attributes>10;20;90;20</additional_attributes></element><element><id>Relation</id><coordinates><x>160</x><y>488</y><w>88</w><h>40</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=1
+ends</panel_attributes><additional_attributes>10;20;90;20</additional_attributes></element><element><id>Relation</id><coordinates><x>376</x><y>408</y><w>104</w><h>56</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=1
+follows</panel_attributes><additional_attributes>10;50;110;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>464</x><y>512</y><w>152</w><h>64</h></coordinates><panel_attributes>CourseUnit
+--
+Name: string
+Mastery_Level: string</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>432</y><w>40</w><h>96</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-
+m2=1..n</panel_attributes><additional_attributes>10;10;10;100</additional_attributes></element><element><id>Relation</id><coordinates><x>376</x><y>496</y><w>104</w><h>72</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=1
+follows</panel_attributes><additional_attributes>10;10;110;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>464</x><y>632</y><w>152</w><h>64</h></coordinates><panel_attributes>/LearnableElement/
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>568</y><w>40</w><h>80</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-
+m2=1..n</panel_attributes><additional_attributes>10;10;10;80</additional_attributes></element><element><id>UMLClass</id><coordinates><x>272</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>VocabularyElement
+--
+Term: string
+TranslatedTerm: string
+Pronunciation: string</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>464</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>Grammar&amp;ConjugationElement
+--
+Title: string
+Explanation: string</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>656</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>CalligraphyElement
+--
+Caracter: str
+Pronunciation: str</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>464</x><y>376</y><w>152</w><h>64</h></coordinates><panel_attributes>LanguageCourse
+--
+Name: string
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>296</y><w>56</w><h>96</h></coordinates><panel_attributes>lt=-
+m1=1
+m2=1
+taught</panel_attributes><additional_attributes>10;10;10;100</additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>688</y><w>24</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;90</additional_attributes></element><element><id>Relation</id><coordinates><x>344</x><y>688</y><w>208</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>240;10;240;60;10;60;10;90</additional_attributes></element><element><id>Relation</id><coordinates><x>528</x><y>688</y><w>224</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;60;260;60;260;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>912</x><y>632</y><w>152</w><h>64</h></coordinates><panel_attributes>Exercise
+--
+Solution: string</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>608</x><y>536</y><w>416</w><h>112</h></coordinates><panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-
+m2=1..n</panel_attributes><additional_attributes>10;10;480;10;480;120</additional_attributes></element><element><id>UMLClass</id><coordinates><x>912</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>TranslateExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>24</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1104</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>FilltheBlankExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>216</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;250;50;250;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1296</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>QuestionExercise
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>408</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;490;50;490;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1488</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>ReWordingExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>592</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;720;50;720;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1680</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>EssayExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>784</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;960;50;960;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1872</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>ConversationExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>2064</x><y>760</y><w>152</w><h>64</h></coordinates><panel_attributes>CalligraphyExercise
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>976</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;1200;50;1200;90</additional_attributes></element><element><id>Relation</id><coordinates><x>984</x><y>688</y><w>1168</w><h>88</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;1440;50;1440;90</additional_attributes></element></diagram>
