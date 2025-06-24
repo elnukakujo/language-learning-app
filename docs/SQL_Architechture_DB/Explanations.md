@@ -1,6 +1,6 @@
 # Description de l'architechture de la database SQL 
 
-![Diagramme UML de la base de données](docs/SQL_Architechture_DB/GeneralDatabase.png)
+![Diagramme UML de la base de données](./docs/SQL_Architechture_DB/GeneralDatabase.png)
 
 Le diagrame UML modélise la structure relationnelle de la base de données pour un système d’apprentissage potentiellement multilingue.
 
