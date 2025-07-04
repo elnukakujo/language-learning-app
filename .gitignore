@@ -2,3 +2,5 @@ venv/
 
 .DS_Store
 *.db
+.vscode/
+__pycache__/
