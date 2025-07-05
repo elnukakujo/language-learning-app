@@ -19,9 +19,9 @@ class Unit(Base):
 class CalligraphyCharacter(Base):
     __tablename__ = 'calligraphy_character'
 
-    char_id = Column(String, primary_key=True, index=True)
+    learn_id = Column(String, primary_key=True, index=True)
     character = Column(String, index=True)
-    char_translation = Column(String)
+    translation = Column(String)
     components = Column(String)
     score = Column(Integer, default=0)  # e.g., how much the character is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the character was last seen
@@ -33,8 +33,8 @@ class CalligraphyCharacter(Base):
 class GrammarRule(Base):
     __tablename__ = 'grammar_rule'
     
-    grammar_id = Column(String, primary_key=True, index=True)
-    grammar_title = Column(String, index=True)
+    learn_id = Column(String, primary_key=True, index=True)
+    title = Column(String, index=True)
     explanation = Column(String)
     score = Column(Integer, default=0)
     last_seen = Column(Date, default=date.today)  # e.g., when the grammar rule was last seen
@@ -45,12 +45,12 @@ class GrammarRule(Base):
 class Vocabulary(Base):
     __tablename__ = 'vocabulary'
     
-    voc_id = Column(String, primary_key=True, index=True)
+    learn_id = Column(String, primary_key=True, index=True)
     word = Column(String, index=True)
-    voc_translation = Column(String)
-    voc_phonetic = Column(String)
+    translation = Column(String)
+    phonetic = Column(String)
     example_sentence = Column(String)
-    voc_type = Column(String)  # e.g., noun, verb, adjective
+    type = Column(String)  # e.g., noun, verb, adjective
     score = Column(Integer, default=0)  # e.g., how much the vocabulary is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the vocabulary was last seen
 
@@ -60,7 +60,7 @@ class Vocabulary(Base):
 class Exercise(Base):
     __tablename__ = 'exercises'
 
-    exercise_id = Column(String, primary_key=True, index=True)
+    learn_id = Column(String, primary_key=True, index=True)
     exercise_type = Column(String, index=True)  # e.g., multiple choice, fill
     question = Column(String, index=True)
     support = Column(String)  # e.g., image, audio, text

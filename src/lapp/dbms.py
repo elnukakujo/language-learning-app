@@ -1,9 +1,12 @@
+from pyexpat import model
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from pathlib import Path
+
 import os
 import logging
 logger = logging.getLogger(__name__)
@@ -24,11 +27,14 @@ def init_db(language_name: str) -> tuple[sqlalchemy.engine.Engine, sqlalchemy.or
     Returns:
         tuple: A tuple containing the created SQLAlchemy Engine and Session.
     """
-    DATABASE_URL = f'sqlite:///../db/{language_name}.db'
-    if os.path.exists(f"../db/{language_name}.db"):
-        logger.info(f"Found existing database {language_name}.db.")
+    db_path = Path(__file__).resolve().parent.parent.parent / "db" / f"{language_name}.db"
+
+    if db_path.exists():
+        logger.info(f"Found existing database {db_path.name}.")
     else:
-        logger.info(f"Creating new database {language_name}.db.")
+        logger.info(f"Creating new database {db_path.name}.")
+
+    DATABASE_URL = f"sqlite:///{db_path}"  # Absolute path
 
     engine = create_engine(DATABASE_URL, echo=True)
     session = sessionmaker(bind=engine)
@@ -105,7 +111,7 @@ def find_by_pk(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -
         return existing, mapper, pk_attrs
     else:
         logger.warning("No record found with matching unique attributes.")
-        return None
+        return None, None, None
 
 def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> None:
     """
