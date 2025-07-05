@@ -1,4 +1,5 @@
 from datetime import date
+from hmac import new
 import re
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -28,6 +29,10 @@ class NewVocabularyRequest(BaseModel):
     phonetic: str = Null
     example_sentence: str = Null
     type: str = Null
+
+class UpdateScoreRequest(BaseModel):
+    element_id: str
+    success: bool
 
 @app.post("/random")
 def get_random(data: RandomRequest):
@@ -204,6 +209,48 @@ def new_vocabulary(data: NewVocabularyRequest):
     insert(session, new_voc)
     
     result = orm_to_dict(new_voc)
+    session.close()
+    
+    return result
+
+@app.post("/update_score")
+def score_update(data: UpdateScoreRequest):
+    """
+    Updates the score of an element in the database based on its success or failure.
+    
+    Parameters:
+        data (UpdateScoreRequest): An object containing:
+            - element_id (str): The ID of the element to update.
+            - success (bool): Whether the update is a success or failure.
+    
+    Returns:
+        dict: A dictionary representation of the updated element, or an error message if not found.
+    """
+    language_id = data.element_id.split("_")[0].lower()
+    suffix = data.element_id.split("_")[-1].lower()[0]
+
+    _, session = init_db(language_id)
+
+    element_type = str_to_modelclass(suffix)
+
+    element, _, _ = find_by_pk(session, element_type(learn_id=data.element_id))
+
+    if not element:
+        session.close()
+        return {"error": "Element not found."}
+
+    new_score = update_score(score=element.score, last_seen=element.last_seen, success=data.success)
+    print(new_score)
+
+    updated_element = element_type(
+        learn_id=element.learn_id,
+        score=new_score,
+        last_seen=date.today()
+    )
+
+    updated_element = modify(session, updated_element)
+    
+    result = orm_to_dict(updated_element)
     session.close()
     
     return result

@@ -113,7 +113,7 @@ def find_by_pk(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -
         logger.warning("No record found with matching unique attributes.")
         return None, None, None
 
-def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> None:
+def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> sqlalchemy.orm.decl_api.DeclarativeMeta:
     """
     Modifies an existing database record or adds a new one using the provided SQLAlchemy session and object.
 
@@ -130,8 +130,8 @@ def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> No
         obj (DeclarativeMeta): The SQLAlchemy declarative model instance representing the record to modify or insert.
 
     Returns:
-        None
-
+        Updated Object (DeclarativeMeta): The modified or newly created object after the commit.
+    
     Raises:
         SQLAlchemyError: If the commit fails, the exception is caught, and an error message is logged after rolling back the session.
     """
@@ -155,13 +155,17 @@ def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> No
             current_value = getattr(existing, attr)
             if current_value != new_value:
                 setattr(existing, attr, new_value)
+        session.commit()
+        return existing
     else:
         session.add(obj)
-    try:
-        session.commit()
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"Error committing modify: {e}")
+        try:
+            session.commit()
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Error committing modify: {e}")
+            return None
+        return obj
 
 def delete(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> None:
     """
