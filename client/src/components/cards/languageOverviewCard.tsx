@@ -1,18 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-
-type Language = {
-    id: string;
-    name: string;
-    native_name: string;
-    flag: string;
-    level: string;
-    current_unit_id: string;
-    description?: string;
-    score: number;
-    last_seen: Date;
-};
+import type Language from '@/interface/Language';
 
 export default function LanguageOverviewCard({ language }: { language: Language }) {
     const router = useRouter();
@@ -25,7 +14,7 @@ export default function LanguageOverviewCard({ language }: { language: Language 
             <h5>{language.name} ({language.native_name})</h5>
             <p>{language.level}</p>
             <p>{language.score.toFixed(1)}/100</p>
-            <p>Last Seen: {new Date(language.last_seen).toLocaleDateString()}</p>
+            <p>Last Seen: {new Date(language.last_seen).toLocaleDateString('en-US')}</p>
             {language.current_unit_id && <p>{language.current_unit_id}</p>}
         </button>
     );

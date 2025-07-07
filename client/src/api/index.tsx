@@ -23,8 +23,14 @@ export async function getLanguageData(languageId: string) {
 }
 
 export async function getUnitData(unit_id: string) {
-  console.log(`Fetching data for unit: ${unit_id}`);
-  const res = await fetch(`${BASE_URL}/find_by_id/${unit_id}`);
+  const res = await fetch(`${BASE_URL}/unit/${unit_id}`);
   if (!res.ok) throw new Error(`Failed to fetch data for unit ${unit_id}`);
+  return res.json();
+}
+
+export async function getElementbyId(element_id: string) {
+  console.log(`Fetching element with ID: ${element_id}`);
+  const res = await fetch(`${BASE_URL}/find_by_id/${element_id}`);
+  if (!res.ok) throw new Error(`Failed to fetch vocabulary for element ${element_id}`);
   return res.json();
 }

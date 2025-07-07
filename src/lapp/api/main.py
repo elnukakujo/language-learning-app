@@ -1,58 +1,15 @@
 from datetime import date
 import re
 from fastapi import FastAPI
-from pydantic import BaseModel
 import random
-from typing import Optional, Type
+from typing import Type
 
+from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 
 app = FastAPI()
-
-class RandomRequest(BaseModel):
-    language_id: str
-    unit_id: int
-    type: str
-
-class UpdatebyIdRequest(BaseModel):
-    element_id: str
-    updates: dict
-
-# Pour element_type = "voc" (vocabulaire) :
-#   - word, translation, phonetic, example_sentence, type
-#
-# Pour element_type = "gram" (règle de grammaire) :
-#   - title, explanation
-#
-# Pour element_type = "char" (caractère calligraphié) :
-#   - character, translation, components
-#
-# Pour element_type = "ex" (exercice) :
-#   - exercise_type, question, support, answer
-
-class NewElementRequest(BaseModel):
-    language_id: str
-    unit_id: int
-    element_type: str  # e.g. "voc", "g", "char", "ex"
-    word: Optional[str] = None
-    translation: Optional[str] = None
-    phonetic: Optional[str] = None
-    example_sentence: Optional[str] = None
-    type: Optional[str] = None
-    title: Optional[str] = None
-    explanation: Optional[str] = None
-    character: Optional[str] = None
-    components: Optional[str] = None
-    exercise_type: Optional[str] = None
-    question: Optional[str] = None
-    support: Optional[str] = None
-    answer: Optional[str] = None
-
-class UpdateScoreRequest(BaseModel):
-    element_id: str
-    success: bool
 
 @app.post("/random")
 def get_random(data: RandomRequest):
@@ -333,3 +290,53 @@ def units(language_id: str):
     session.close()
 
     return dict_units
+
+@app.get("/unit/{unit_id}")
+def unit(unit_id: str):
+    """
+    Returns a specific unit for a given language.
+    
+    Parameters:
+        unit_id (str): The ID of the unit to fetch.
+    
+    Returns:
+        dict: A dictionary representation of the unit, or an error message if not found.
+    """
+    _, session = init_db()
+
+    unit = session.query(Unit).filter(Unit.id == unit_id).first()
+    
+    if not unit:
+        session.close()
+        return {"error": f"Unit {unit_id} not found."}
+
+    result = orm_to_dict(unit)
+
+    vocabularies = session.query(Vocabulary).filter(Vocabulary.unit_id == unit.id).all()
+    grammar = session.query(GrammarRule).filter(GrammarRule.unit_id == unit.id).all()
+    characters = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.unit_id == unit.id).all()
+    exercises = session.query(Exercise).filter(Exercise.unit_id == unit.id).all()
+
+    result = {
+        **result,
+        "vocabulary": {
+            "items": [{"id": v.id, "word": v.word, "translation": v.translation} for v in vocabularies],
+            "count": len(vocabularies)
+        },
+        "grammar": {
+            "items": [{"id": g.id, "title": g.title} for g in grammar],
+            "count": len(grammar)
+        },
+        "characters": {
+            "items": [{"id": c.id, "character": c.character, "translation": c.translation} for c in characters],
+            "count": len(characters)
+        },
+        "exercises": {
+            "items": [{"type": e.exercise_type} for e in exercises],
+            "count": len(exercises)
+        }
+    }
+
+    session.close()
+
+    return result

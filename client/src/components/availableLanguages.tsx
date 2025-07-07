@@ -1,20 +1,9 @@
 import { getAvailableLanguages } from "@/api";
 import LanguageOverviewCard from "./cards/languageOverviewCard";
+import Language from "@/interface/Language";
 
 type LanguagesObject = {
     [key: string]: Language;
-};
-
-type Language = {
-    id: string;
-    name: string;
-    native_name: string;
-    flag: string;
-    level: string;
-    current_unit_id: string;
-    description?: string;
-    score: number;
-    last_seen: Date;
 };
 
 export default async function AvailableLanguages() {

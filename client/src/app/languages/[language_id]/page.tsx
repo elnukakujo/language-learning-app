@@ -1,14 +1,7 @@
 import { getLanguageData } from "@/api";
 
 import UnitOverviewCard from "@/components/cards/unitOverviewCard";
-
-type Unit = {
-    id: string;
-    title: string;
-    description: string;
-    score: number;
-    last_seen: Date;
-};
+import type { Unit } from "@/types";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;

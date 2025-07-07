@@ -69,7 +69,6 @@ class CalligraphyCharacter(Base):
     parent: Mapped["Unit"] = relationship("Unit", back_populates="characters")
     unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))
 
-
 class GrammarRule(Base):
     __tablename__ = 'grammar_rule'
     
@@ -88,9 +87,9 @@ class Vocabulary(Base):
     id = Column(String, primary_key=True, index=True)
     word = Column(String, index=True)
     translation = Column(String)
-    phonetic = Column(String)
-    example_sentence = Column(String)
-    type = Column(String)  # e.g., noun, verb, adjective
+    phonetic = Column(String, default="")
+    example_sentence = Column(String, default="")
+    type = Column(String, default="")  # e.g., noun, verb, adjective
     score = Column(Integer, default=0)  # e.g., how much the vocabulary is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the vocabulary was last seen
 
