@@ -4,6 +4,7 @@ import re
 from fastapi import FastAPI
 from pydantic import BaseModel
 import random
+from typing import Optional, Type
 
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete, find_by_attr
 from lapp.tables import Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
@@ -21,14 +22,34 @@ class UpdatebyIdRequest(BaseModel):
     element_id: str
     updates: dict
 
-class NewVocabularyRequest(BaseModel):
+# Pour element_type = "voc" (vocabulaire) :
+#   - word, translation, phonetic, example_sentence, type
+#
+# Pour element_type = "gram" (règle de grammaire) :
+#   - title, explanation
+#
+# Pour element_type = "char" (caractère calligraphié) :
+#   - character, translation, components
+#
+# Pour element_type = "ex" (exercice) :
+#   - exercise_type, question, support, answer
+class NewElementRequest(BaseModel):
     language_id: str
     unit_id: int
-    word: str
-    translation: str
-    phonetic: str = Null
-    example_sentence: str = Null
-    type: str = Null
+    element_type: str  # e.g. "voc", "g", "char", "ex"
+    word: Optional[str] = None
+    translation: Optional[str] = None
+    phonetic: Optional[str] = None
+    example_sentence: Optional[str] = None
+    type: Optional[str] = None
+    title: Optional[str] = None
+    explanation: Optional[str] = None
+    character: Optional[str] = None
+    components: Optional[str] = None
+    exercise_type: Optional[str] = None
+    question: Optional[str] = None
+    support: Optional[str] = None
+    answer: Optional[str] = None
 
 class UpdateScoreRequest(BaseModel):
     element_id: str
@@ -166,52 +187,76 @@ def update_by_id(data: UpdatebyIdRequest):
     
     return result
 
-@app.post("/new_vocabulary")
-def new_vocabulary(data: NewVocabularyRequest):
+# Dictionnaire d'alias qui associe chaque type d'élément à ses abréviations textuelles
+alias_map = {
+    Vocabulary: ["voc", "v"],
+    GrammarRule: ["gram", "g"],
+    CalligraphyCharacter: ["char", "c"],
+    Exercise: ["ex", "e"]
+}
+# Inverse le dictionnaire pour passer d'une abréviation à un type d'élément directement
+alias_lookup = {alias: model for model, aliases in alias_map.items() for alias in aliases}
+
+@app.post("/new_element")
+def new_element(data: NewElementRequest):
+    """ 
+    Create a new learning element (vocabulary, grammar rule, calligraphy character, or exercise).
+
+    Required fields depend on the 'element_type' value:
+
+    - "voc" (Vocabulary): word, translation, phonetic, example_sentence, type
+    - "gram" (Grammar Rule): title, explanation
+    - "char" (Calligraphy Character): character, translation, components
+    - "ex" (Exercise): exercise_type, question, support, answer
     """
-    Adds a new vocabulary entry to the database.
-    
-    Parameters:
-        data (NewVocabularyRequest): An object containing:
-            - language_id (str): Identifier for the language used to initialize the database.
-            - unit_id (int): Identifier for the unit, used alongside language_id to filter elements.
-            - word (str): The vocabulary word to add.
-            - translation (str): The translation of the vocabulary word.
-            - phonetic (str, optional): Phonetic representation of the word. Defaults to None.
-            - example_sentence (str, optional): Example sentence using the word. Defaults to None.
-            - type (str, optional): Type of vocabulary. Defaults to None.
-    
-    Returns:
-        dict: A dictionary representation of the newly added vocabulary entry.
-    """
+
+    # Initialise la base de données pour la langue spécifiée et crée une session
     _, session = init_db(data.language_id)
 
-    unit_id = data.language_id.upper() + "_" + str(data.unit_id)
+    # Construit l'identifiant de l'unité au format "ZH_1"
+    unit_str_id = f"{data.language_id.upper()}_{data.unit_id}"
 
-    unit_learn_ids = session.query(Vocabulary.learn_id).filter(Vocabulary.unit_id == unit_id).all()
+   # Récupère la classe du modèle SQLAlchemy correspondant à l'alias fourni
+    model_class: Type = alias_lookup.get(data.element_type.lower())
+    if not model_class:
+        return {"error": f"Unknown element type: {data.element_type}"}
 
-    max_id = max(
-        int(re.search(r'\d+$', learn_id[0]).group()) for learn_id in unit_learn_ids if re.search(r'\d+$', learn_id[0])
-    )
+    # Cherche les IDs existants pour ce type d'élément dans l'unité donnée
+    learn_ids = session.query(model_class.learn_id).filter(model_class.unit_id == unit_str_id).all()
+    # Extrait le numéro le plus élevé à la fin de chaque ID pour calculer le prochain
+    max_id = max([int(re.search(r"\\d+$", learn_id[0]).group()) for learn_id in learn_ids if re.search(r"\\d+$", learn_id[0])],default=0)
+    # Construit le nouvel identifiant pour l'élément, ex: "ZH_1_V1"
+    learn_id = f"{unit_str_id}_{data.element_type.upper()}{max_id + 1}"
 
-    new_voc = Vocabulary(
-        unit_id=unit_id,
-        learn_id=f"{data.language_id.upper()}_{data.unit_id}_V{max_id + 1}",
-        word=data.word,
-        translation=data.translation,
-        phonetic=data.phonetic,
-        example_sentence=data.example_sentence,
-        type=data.type,
-        score=0.0,
-        last_seen=date.today()
-    )
+    # Prépare les données de l'objet à insérer selon le type d'élément
+    element_data = {
+        Vocabulary: dict(learn_id=learn_id, unit_id=unit_str_id, word=data.word, translation=data.translation,
+                         phonetic=data.phonetic, example_sentence=data.example_sentence, type=data.type,
+                         score=0, last_seen=date.today()),
 
-    insert(session, new_voc)
-    
-    result = orm_to_dict(new_voc)
+        GrammarRule: dict(learn_id=learn_id, unit_id=unit_str_id, title=data.title, explanation=data.explanation,
+                          score=0, last_seen=date.today()),
+
+        CalligraphyCharacter: dict(learn_id=learn_id, unit_id=unit_str_id, character=data.character,
+                                   translation=data.translation, components=data.components, score=0,
+                                   last_seen=date.today()),
+
+        Exercise: dict(learn_id=learn_id, unit_id=unit_str_id, exercise_type=data.exercise_type,
+                       question=data.question, support=data.support, answer=data.answer, score=0,
+                       last_seen=date.today())
+    }
+
+    # Crée une instance de l'objet basé sur le modèle et les données
+    new_object = model_class(**element_data[model_class])
+    # Insère l'objet dans la base de données
+    insert(session, new_object)
+    # Convertit l'objet en dictionnaire pour l'API
+    result = orm_to_dict(new_object)
+    # Ferme la session SQL
     session.close()
-    
+    # Retourne le résultat au client
     return result
+
 
 @app.post("/update_score")
 def score_update(data: UpdateScoreRequest):
