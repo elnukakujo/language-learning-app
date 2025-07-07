@@ -1,5 +1,5 @@
 from datetime import date
-from hmac import new
+import json
 import re
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -254,3 +254,15 @@ def score_update(data: UpdateScoreRequest):
     session.close()
     
     return result
+
+@app.get("/available_languages")
+def available_languages():
+    """
+    Returns a list of available languages in the database.
+    
+    Returns:
+        list: A list of dictionaries, each containing the language ID and name.
+    """
+    with open("db/languages.json", "r", encoding="utf-8") as f:
+        languages = json.load(f)
+    return languages

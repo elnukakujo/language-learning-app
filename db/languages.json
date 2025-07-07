@@ -1,0 +1,10 @@
+{
+    "zh":{
+        "id": "zh",
+        "name": "Chinese",
+        "nativeName": "中文",
+        "flag": "🇨🇳",
+        "level": "A1",
+        "current_unit_id": "ZH_0"
+    }
+}

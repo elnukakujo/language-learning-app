@@ -1,7 +1,10 @@
 venv/
 .venv
 .vnv
-.DS_Store
+
+.DS_Store\
 *.db
 .vscode/
 __pycache__/
+
+.env
