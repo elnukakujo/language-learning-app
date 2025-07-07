@@ -1,15 +1,13 @@
 from datetime import date
-import json
 import re
 from fastapi import FastAPI
 from pydantic import BaseModel
 import random
 from typing import Optional, Type
 
-from lapp.dbms import find_by_pk, init_db, insert, modify, delete, find_by_attr
+from lapp.dbms import find_by_pk, init_db, insert, modify, delete
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
-from sqlalchemy import Null, table
 
 app = FastAPI()
 
@@ -97,7 +95,7 @@ def get_random(data: RandomRequest):
     element = random.choice(elements)
     return orm_to_dict(element)
 
-@app.post("/find_by_id")
+@app.get("/find_by_id/{element_id}")
 def find_by_id(element_id: str):
     """
     Finds an element in the database by its ID.
@@ -108,14 +106,11 @@ def find_by_id(element_id: str):
     Returns:
         dict: A dictionary representation of the found element, or an error message if not found.
     """
-    language_id = element_id.split("_")[0].lower()
-    suffix = element_id.split("_")[-1].lower()[0]
+    _, session = init_db()
 
-    _, session = init_db(language_id)
+    element_type = str_to_modelclass(element_id)
 
-    element_type = str_to_modelclass(suffix)
-
-    element, _, _ = find_by_pk(session, element_type(learn_id=element_id))
+    element, _, _ = find_by_pk(session, element_type(id=element_id))
         
     if not element:
         session.close()
@@ -126,7 +121,7 @@ def find_by_id(element_id: str):
     
     return result
 
-@app.post("/delete_by_id")
+@app.get("/delete_by_id/{element_id}")
 def delete_by_id(element_id: str):
     """
     Deletes an element in the database by its ID.
@@ -137,15 +132,11 @@ def delete_by_id(element_id: str):
     Returns:
         dict: A dictionary representation of the deleted element, or an error message if not found.
     """
+    _, session = init_db()
 
-    language_id = element_id.split("_")[0].lower()
-    suffix = element_id.split("_")[-1].lower()[0]
+    element_type = str_to_modelclass(element_id=element_id)
 
-    _, session = init_db(language_id)
-
-    element_type = str_to_modelclass(suffix)
-
-    element, _, _ = find_by_pk(session, element_type(learn_id=element_id))
+    element, _, _ = find_by_pk(session, element_type(id=element_id))
     
     if not element:
         session.close()
@@ -170,14 +161,11 @@ def update_by_id(data: UpdatebyIdRequest):
     Returns:
         dict: A dictionary representation of the updated element, or an error message if not found.
     """
-    language_id = data.element_id.split("_")[0].lower()
-    suffix = data.element_id.split("_")[-1].lower()[0]
+    _, session = init_db()
 
-    _, session = init_db(language_id)
+    element_type = str_to_modelclass(data.element_id)
 
-    element_type = str_to_modelclass(suffix)
-
-    element, _, _ = find_by_pk(session, element_type(learn_id=data.element_id))
+    element, _, _ = find_by_pk(session, element_type(id=data.element_id))
 
     for key, value in data.updates.items():
         setattr(element, key, value)
@@ -223,26 +211,26 @@ def new_element(data: NewElementRequest):
         return {"error": f"Unknown element type: {data.element_type}"}
 
     # Cherche les IDs existants pour ce type d'élément dans l'unité donnée
-    learn_ids = session.query(model_class.learn_id).filter(model_class.unit_id == unit_str_id).all()
+    ids = session.query(model_class.id).filter(model_class.unit_id == unit_str_id).all()
     # Extrait le numéro le plus élevé à la fin de chaque ID pour calculer le prochain
-    max_id = max([int(re.search(r"\\d+$", learn_id[0]).group()) for learn_id in learn_ids if re.search(r"\\d+$", learn_id[0])],default=0)
+    max_id = max([int(re.search(r"\\d+$", id[0]).group()) for id in ids if re.search(r"\\d+$", id[0])],default=0)
     # Construit le nouvel identifiant pour l'élément, ex: "ZH_1_V1"
-    learn_id = f"{unit_str_id}_{data.element_type.upper()}{max_id + 1}"
+    id = f"{unit_str_id}_{data.element_type.upper()}{max_id + 1}"
 
     # Prépare les données de l'objet à insérer selon le type d'élément
     element_data = {
-        Vocabulary: dict(learn_id=learn_id, unit_id=unit_str_id, word=data.word, translation=data.translation,
+        Vocabulary: dict(id=id, unit_id=unit_str_id, word=data.word, translation=data.translation,
                          phonetic=data.phonetic, example_sentence=data.example_sentence, type=data.type,
                          score=0, last_seen=date.today()),
 
-        GrammarRule: dict(learn_id=learn_id, unit_id=unit_str_id, title=data.title, explanation=data.explanation,
+        GrammarRule: dict(id=id, unit_id=unit_str_id, title=data.title, explanation=data.explanation,
                           score=0, last_seen=date.today()),
 
-        CalligraphyCharacter: dict(learn_id=learn_id, unit_id=unit_str_id, character=data.character,
+        CalligraphyCharacter: dict(id=id, unit_id=unit_str_id, character=data.character,
                                    translation=data.translation, components=data.components, score=0,
                                    last_seen=date.today()),
 
-        Exercise: dict(learn_id=learn_id, unit_id=unit_str_id, exercise_type=data.exercise_type,
+        Exercise: dict(id=id, unit_id=unit_str_id, exercise_type=data.exercise_type,
                        question=data.question, support=data.support, answer=data.answer, score=0,
                        last_seen=date.today())
     }
@@ -258,7 +246,6 @@ def new_element(data: NewElementRequest):
     # Retourne le résultat au client
     return result
 
-
 @app.post("/update_score")
 def score_update(data: UpdateScoreRequest):
     """
@@ -272,14 +259,11 @@ def score_update(data: UpdateScoreRequest):
     Returns:
         dict: A dictionary representation of the updated element, or an error message if not found.
     """
-    language_id = data.element_id.split("_")[0].lower()
-    suffix = data.element_id.split("_")[-1].lower()[0]
+    _, session = init_db()
 
-    _, session = init_db(language_id)
+    element_type = str_to_modelclass(element_id=data.element_id)
 
-    element_type = str_to_modelclass(suffix)
-
-    element, _, _ = find_by_pk(session, element_type(learn_id=data.element_id))
+    element, _, _ = find_by_pk(session, element_type(id=data.element_id))
 
     if not element:
         session.close()
@@ -289,7 +273,7 @@ def score_update(data: UpdateScoreRequest):
     print(new_score)
 
     updated_element = element_type(
-        learn_id=element.learn_id,
+        id=element.id,
         score=new_score,
         last_seen=date.today()
     )
@@ -324,3 +308,28 @@ def available_languages():
     session.close()
 
     return dict_languages
+
+@app.get("/units/{language_id}")
+def units(language_id: str):
+    """
+    Returns a list of available units for a given language.
+    
+    Parameters:
+        language_id (str): The ID of the language to fetch units for.
+    
+    Returns:
+        list: A list of dictionaries, each containing the unit ID and title.
+    """
+    _, session = init_db()
+
+    units = session.query(Unit).filter(Unit.language_id == language_id).all()
+    
+    if not units:
+        session.close()
+        return {"error": f"No units found for language {language_id}."}
+    
+    dict_units = [orm_to_dict(unit) for unit in units]
+    
+    session.close()
+
+    return dict_units

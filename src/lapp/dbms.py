@@ -167,17 +167,14 @@ def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> sq
             return None
         return obj
 
-def delete(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> None:
+def delete(session: Session, obj: sqlalchemy.orm.DeclarativeMeta) -> None:
     """
-    Deletes an existing record from the database.
-
-    Attempts to find the record based on the object's primary key.
-    If found, deletes the record and commits the session.
-    Logs a warning if the record cannot be found, and logs an error if the commit fails.
+    Deletes a record from the database along with its orphaned children,
+    using SQLAlchemy's cascade functionality.
 
     Args:
-        session (Session): The SQLAlchemy session used for the operation.
-        obj (DeclarativeMeta): The instance whose corresponding record is to be deleted.
+        session (Session): SQLAlchemy session
+        obj (DeclarativeMeta): The instance to delete
 
     Returns:
         None
@@ -187,6 +184,9 @@ def delete(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> No
     if result:
         existing, _, _ = result
         try:
+            # ⚠️ Ensure children are loaded so orphan detection works
+            _ = [getattr(existing, rel.key) for rel in inspect(existing.__class__).relationships]
+
             session.delete(existing)
             session.commit()
         except SQLAlchemyError as e:
