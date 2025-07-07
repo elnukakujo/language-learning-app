@@ -3,13 +3,53 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .dbms import Base
 from datetime import date
 
+class Language(Base):
+    __tablename__ = 'language'
+
+    language_id = Column(String, primary_key=True, index=True)
+    name = Column(String, index=True)
+    native_name = Column(String)
+    level = Column(String)
+    description = Column(String, default="")
+    score = Column(Integer, default=0)
+    last_seen = Column(Date, default=date.today)
+    flag = Column(String, default="")
+
+    # Foreign key to current unit
+    current_unit = Column(String, ForeignKey("unit.unit_id"), nullable=True)
+
+    # One-to-many: all units belonging to this language
+    units: Mapped[list["Unit"]] = relationship(
+        "Unit",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+        foreign_keys="[Unit.language_id]"  # ← Disambiguate here
+    )
+
+    # One-to-one: current unit relationship (optional, but useful)
+    current_unit_obj: Mapped["Unit"] = relationship(
+        "Unit",
+        foreign_keys=[current_unit],
+        uselist=False
+    )
+
 class Unit(Base):
     __tablename__ = 'unit'
-    
+
     unit_id = Column(String, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(String)
     level = Column(String)
+    score = Column(Integer, default=0)
+
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.language_id"))
+
+    # Many-to-one: parent language
+    parent: Mapped["Language"] = relationship(
+        "Language",
+        back_populates="units",
+        foreign_keys=[language_id]
+    )
 
     characters: Mapped[list["CalligraphyCharacter"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
     grammars: Mapped[list["GrammarRule"]] = relationship(back_populates="parent", cascade="all, delete-orphan")

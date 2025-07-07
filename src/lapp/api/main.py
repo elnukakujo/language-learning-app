@@ -7,7 +7,7 @@ import random
 from typing import Optional, Type
 
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete, find_by_attr
-from lapp.tables import Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
+from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 from sqlalchemy import Null, table
 
@@ -33,6 +33,7 @@ class UpdatebyIdRequest(BaseModel):
 #
 # Pour element_type = "ex" (exercice) :
 #   - exercise_type, question, support, answer
+
 class NewElementRequest(BaseModel):
     language_id: str
     unit_id: int
@@ -211,7 +212,7 @@ def new_element(data: NewElementRequest):
     """
 
     # Initialise la base de données pour la langue spécifiée et crée une session
-    _, session = init_db(data.language_id)
+    _, session = init_db()
 
     # Construit l'identifiant de l'unité au format "ZH_1"
     unit_str_id = f"{data.language_id.upper()}_{data.unit_id}"
@@ -308,6 +309,18 @@ def available_languages():
     Returns:
         list: A list of dictionaries, each containing the language ID and name.
     """
-    with open("db/languages.json", "r", encoding="utf-8") as f:
-        languages = json.load(f)
-    return languages
+    _, session = init_db()
+
+    languages = session.query(Language).all()
+    
+    if not languages:
+        session.close()
+        return {"error": "No languages found in the database."}
+    
+    dict_languages = []
+    for language in languages:
+        dict_languages.append(orm_to_dict(language))
+
+    session.close()
+
+    return dict_languages

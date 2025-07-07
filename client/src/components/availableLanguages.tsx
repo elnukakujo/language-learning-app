@@ -6,9 +6,9 @@ type LanguagesObject = {
 };
 
 type Language = {
-    id: string;
+    language_id: string;
     name: string;
-    nativeName: string;
+    native_name: string;
     flag: string;
     level: string;
     current_unit_id: string;
@@ -22,7 +22,7 @@ export default async function AvailableLanguages() {
         <p>Which language do you want to learn?</p>
         <ul>
             {Object.values(languages).map((lang) => (
-                <li key={lang.id}>
+                <li key={lang.language_id}>
                     <LanguageOverviewCard language={lang} />
                 </li>
             ))}

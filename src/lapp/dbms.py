@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
-def init_db(language_name: str) -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]:
+def init_db() -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]:
     """
     Initializes the SQLite database for the given language.
 
@@ -27,7 +27,7 @@ def init_db(language_name: str) -> tuple[sqlalchemy.engine.Engine, sqlalchemy.or
     Returns:
         tuple: A tuple containing the created SQLAlchemy Engine and Session.
     """
-    db_path = Path(__file__).resolve().parent.parent.parent / "db" / f"{language_name}.db"
+    db_path = Path(__file__).resolve().parent.parent.parent / "db" / "languages.db"
 
     if db_path.exists():
         logger.info(f"Found existing database {db_path.name}.")
@@ -41,7 +41,7 @@ def init_db(language_name: str) -> tuple[sqlalchemy.engine.Engine, sqlalchemy.or
     session = session()
 
     Base.metadata.create_all(engine)
-    logger.info(f"Database {language_name}.db initialized successfully.")
+    logger.info(f"Database languages.db initialized successfully.")
 
     return engine, session
 
