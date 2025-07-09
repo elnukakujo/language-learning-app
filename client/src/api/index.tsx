@@ -1,3 +1,10 @@
+import type Language from "@/interface/Language";
+import type Unit from "@/interface/Unit";
+import type Character from "@/interface/Character";
+import type Exercise from "@/interface/Exercise";
+import type Grammar from "@/interface/Grammar";
+import type Vocabulary from "@/interface/Vocabulary";
+
 const BASE_URL = process.env.LAPP_URL || 'http://localhost:8000';
 
 export async function getAvailableLanguages() {
@@ -29,8 +36,26 @@ export async function getUnitData(unit_id: string) {
 }
 
 export async function getElementbyId(element_id: string) {
-  console.log(`Fetching element with ID: ${element_id}`);
   const res = await fetch(`${BASE_URL}/find_by_id/${element_id}`);
   if (!res.ok) throw new Error(`Failed to fetch vocabulary for element ${element_id}`);
+  return res.json();
+}
+
+export async function updateElement(
+  data: Character | Grammar | Vocabulary | Unit | Language | Exercise
+) {
+  // Exclude last_seen and score using destructuring
+  const { last_seen, score, type_element, ...updates } = data as any;
+
+  const res = await fetch(`${BASE_URL}/update_by_id`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      element_id: data.id,
+      updates,
+    }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update element");
   return res.json();
 }

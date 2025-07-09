@@ -1,3 +1,4 @@
+import array
 from sqlalchemy import Column, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .dbms import Base
@@ -60,9 +61,11 @@ class CalligraphyCharacter(Base):
     __tablename__ = 'calligraphy_character'
 
     id = Column(String, primary_key=True, index=True)
-    character = Column(String, index=True)
-    translation = Column(String)
-    components = Column(String)
+    character = Column(String, index=True)  # e.g., the character itself
+    components = Column(String, default="")
+    phonetic = Column(String)  # e.g., pinyin for Chinese characters
+    meaning = Column(String)
+    example_word = Column(String, default="")
     score = Column(Integer, default=0)  # e.g., how much the character is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the character was last seen
 

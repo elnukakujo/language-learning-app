@@ -23,7 +23,7 @@ type CharactersProps = {
     items: Array<{
         id: string;
         character: string;
-        translation: string;
+        meaning: string;
     }>;
     count: number;
 };
@@ -75,7 +75,7 @@ export default function UnitList({ type, props }: { type: string, props?: Vocabu
                             {type === "c" && (
                                 <>
                                     {(item as CharactersProps["items"][0]).character} –{" "}
-                                    {(item as CharactersProps["items"][0]).translation}
+                                    {(item as CharactersProps["items"][0]).meaning}
                                 </>
                             )}
                         </button>

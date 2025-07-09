@@ -1,5 +1,6 @@
+from datetime import date
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 
 class RandomRequest(BaseModel):
     language_id: str
@@ -8,7 +9,7 @@ class RandomRequest(BaseModel):
 
 class UpdatebyIdRequest(BaseModel):
     element_id: str
-    updates: dict
+    updates: dict[str, Any]  # e.g. {"word": "new_word", "translation": "new_translation"}
 
 # Pour element_type = "voc" (vocabulaire) :
 #   - word, translation, phonetic, example_sentence, type

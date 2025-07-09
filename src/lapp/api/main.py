@@ -1,6 +1,8 @@
 from datetime import date
 import re
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 import random
 from typing import Type
 
@@ -10,6 +12,14 @@ from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyChar
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Or specify your frontend origin like ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],  # Or ["POST"] if you want to restrict
+    allow_headers=["*"],
+)
 
 @app.post("/random")
 def get_random(data: RandomRequest):
@@ -112,17 +122,20 @@ def update_by_id(data: UpdatebyIdRequest):
     
     Parameters:
         data (UpdatebyIdRequest): An object containing:
-            - element_id (str): The ID of the element to update.
+            - id (str): The ID of the element to update.
             - updates (dict): A dictionary of attributes to update and their new values.
     
     Returns:
         dict: A dictionary representation of the updated element, or an error message if not found.
     """
     _, session = init_db()
+    print(data)
 
     element_type = str_to_modelclass(data.element_id)
+    print(element_type)
 
     element, _, _ = find_by_pk(session, element_type(id=data.element_id))
+    print(element)
 
     for key, value in data.updates.items():
         setattr(element, key, value)
@@ -328,7 +341,7 @@ def unit(unit_id: str):
             "count": len(grammar)
         },
         "characters": {
-            "items": [{"id": c.id, "character": c.character, "translation": c.translation} for c in characters],
+            "items": [{"id": c.id, "character": c.character, "meaning": c.meaning} for c in characters],
             "count": len(characters)
         },
         "exercises": {
