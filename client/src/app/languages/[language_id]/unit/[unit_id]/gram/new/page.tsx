@@ -1,7 +1,7 @@
 import CreateGrammarForm from "@/components/forms/createForms/createGrammarForm";
 
-export default function createGrammarPage({ params }: { params: { unit_id: string } }) {
-    const { unit_id } = params;
+export default async function createGrammarPage({ params }: { params: { unit_id: string } }) {
+    const { unit_id } = await params;
 
     return (
         <div className="flex flex-col items-center justify-center h-full">

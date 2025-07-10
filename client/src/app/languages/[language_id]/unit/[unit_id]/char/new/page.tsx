@@ -1,7 +1,7 @@
 import CreateCharacterForm from "@/components/forms/createForms/createCharacterForm";
 
-export default function createCharacterPage({ params }: { params: { unit_id: string } }) {
-    const { unit_id } = params;
+export default async function createCharacterPage({ params }: { params: { unit_id: string } }) {
+    const { unit_id } = await params;
 
     return (
         <div className="flex flex-col items-center justify-center h-full">

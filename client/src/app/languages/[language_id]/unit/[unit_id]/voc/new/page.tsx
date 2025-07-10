@@ -1,7 +1,7 @@
 import CreateVocabularyForm from "@/components/forms/createForms/createVocabularyForm";
 
-export default function createVocabularyPage({ params }: { params: { unit_id: string } }) {
-    const { unit_id } = params;
+export default async function createVocabularyPage({ params }: { params: { unit_id: string } }) {
+    const { unit_id } = await params;
 
     return (
         <div className="flex flex-col items-center justify-center h-full">
