@@ -59,3 +59,29 @@ export async function updateElement(
   if (!res.ok) throw new Error("Failed to update element");
   return res.json();
 }
+
+export async function addNewElement(
+  data: Character | Grammar | Vocabulary | Unit | Language | Exercise
+) {
+  const { last_seen, score, type_element, ...newElement } = data as any;
+
+  const res = await fetch(`${BASE_URL}/new_element`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      language_id: "language_id" in newElement ? newElement.language_id : undefined,
+      unit_id: "unit_id" in newElement ? newElement.unit_id : undefined,
+      element_type: type_element.charAt(0).toLowerCase(), // Get the first letter of the class name
+      element: newElement,
+    }),
+  });
+
+  if (!res.ok) throw new Error("Failed to add new element");
+  return res.json();
+}
+
+export async function deleteElement(element_id: string) {
+  const res = await fetch(`${BASE_URL}/delete_by_id/${element_id}`);
+
+  if (!res.ok) throw new Error("Failed to delete element");
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import NavButton from "./buttons/navButton";
 
 type VocabularyProps = {
     items: Array<{
@@ -82,6 +83,11 @@ export default function UnitList({ type, props }: { type: string, props?: Vocabu
                     </li>
                 ))}
             </ul>}
+            <NavButton
+                path = {`/languages/${language_id}/unit/${unit_id}/${type === "v" ? "voc" : type === "g" ? "gram" : "char"}/new`}
+            >
+                <span>Add New {title}</span>
+            </NavButton>
         </section>
     );
 }

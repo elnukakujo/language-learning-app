@@ -1,6 +1,6 @@
 import { getElementbyId } from "@/api";
 import type Vocabulary from "@/interface/Vocabulary";
-import UpdateVocabularyForm from "@/components/forms/updateVocabularyForm";
+import UpdateVocabularyForm from "@/components/forms/updateForms/updateVocabularyForm";
 
 type paramsType = {
     language_id: string;

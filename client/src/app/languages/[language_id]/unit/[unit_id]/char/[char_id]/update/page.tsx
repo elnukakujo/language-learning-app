@@ -1,6 +1,6 @@
 import { getElementbyId } from "@/api";
 import type Character from "@/interface/Character";
-import UpdateCharacterForm from "@/components/forms/updateCharacterForm";
+import UpdateCharacterForm from "@/components/forms/updateForms/updateCharacterForm";
 
 type paramsType = {
     language_id: string;

@@ -42,7 +42,8 @@ class Unit(Base):
     description = Column(String)
     level = Column(String)
     score = Column(Integer, default=0)
-
+    last_seen = Column(Date, default=date.today)
+    
     language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
     # Many-to-one: parent language

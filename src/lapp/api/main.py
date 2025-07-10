@@ -1,12 +1,11 @@
 from datetime import date
-import re
+from pyexpat import model
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import random
-from typing import Type
 
-from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest
+from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest, VocabularyDict, GrammarRuleDict, CalligraphyCharacterDict, ExerciseDict, UnitDict, LanguageDict
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
@@ -146,74 +145,40 @@ def update_by_id(data: UpdatebyIdRequest):
     
     return result
 
-# Dictionnaire d'alias qui associe chaque type d'élément à ses abréviations textuelles
-alias_map = {
-    Vocabulary: ["voc", "v"],
-    GrammarRule: ["gram", "g"],
-    CalligraphyCharacter: ["char", "c"],
-    Exercise: ["ex", "e"]
-}
-# Inverse le dictionnaire pour passer d'une abréviation à un type d'élément directement
-alias_lookup = {alias: model for model, aliases in alias_map.items() for alias in aliases}
-
 @app.post("/new_element")
 def new_element(data: NewElementRequest):
-    """ 
-    Create a new learning element (vocabulary, grammar rule, calligraphy character, or exercise).
-
-    Required fields depend on the 'element_type' value:
-
-    - "voc" (Vocabulary): word, translation, phonetic, example_sentence, type
-    - "gram" (Grammar Rule): title, explanation
-    - "char" (Calligraphy Character): character, translation, components
-    - "ex" (Exercise): exercise_type, question, support, answer
-    """
-
+    print(data.element_type)
     # Initialise la base de données pour la langue spécifiée et crée une session
     _, session = init_db()
 
-    # Construit l'identifiant de l'unité au format "ZH_1"
-    unit_str_id = f"{data.language_id.upper()}_{data.unit_id}"
+    # Récupère l'ID de l'unité au format "ZH_1"
+    if data.element_type == "l":
+        element = Language(**{k: v for k, v in data.element.model_dump().items() if k not in ("id")}, id=data.element.name[:2].upper())
+    elif data.element_type == "u":
+        same_elements_in_unit = session.query(Unit).filter(Unit.language_id == data.language_id.upper()).all()
+        n_elements_same_class = len(same_elements_in_unit)
+        element = Unit(
+            **{k: v for k, v in data.element.model_dump().items() if k not in ("language_id")},
+            language_id=data.language_id.upper(),
+            id=f"{data.language_id.upper()}_{n_elements_same_class}"
+        )
+    else:
+        unit_id = data.unit_id
+        id = f"{unit_id}_{data.element_type.upper()}"
+        model_class = str_to_modelclass(id)
 
-   # Récupère la classe du modèle SQLAlchemy correspondant à l'alias fourni
-    model_class: Type = alias_lookup.get(data.element_type.lower())
-    if not model_class:
-        return {"error": f"Unknown element type: {data.element_type}"}
+        same_elements_in_unit = session.query(model_class).filter(model_class.unit_id == data.unit_id).all()
+        n_elements_same_class = len(same_elements_in_unit)+1
 
-    # Cherche les IDs existants pour ce type d'élément dans l'unité donnée
-    ids = session.query(model_class.id).filter(model_class.unit_id == unit_str_id).all()
-    # Extrait le numéro le plus élevé à la fin de chaque ID pour calculer le prochain
-    max_id = max([int(re.search(r"\\d+$", id[0]).group()) for id in ids if re.search(r"\\d+$", id[0])],default=0)
-    # Construit le nouvel identifiant pour l'élément, ex: "ZH_1_V1"
-    id = f"{unit_str_id}_{data.element_type.upper()}{max_id + 1}"
+        element = model_class(
+            **{k: v for k, v in data.element.model_dump().items() if k not in ("id", "unit_id")},
+            id=id+str(n_elements_same_class),
+            unit_id=unit_id
+        )
 
-    # Prépare les données de l'objet à insérer selon le type d'élément
-    element_data = {
-        Vocabulary: dict(id=id, unit_id=unit_str_id, word=data.word, translation=data.translation,
-                         phonetic=data.phonetic, example_sentence=data.example_sentence, type=data.type,
-                         score=0, last_seen=date.today()),
-
-        GrammarRule: dict(id=id, unit_id=unit_str_id, title=data.title, explanation=data.explanation,
-                          score=0, last_seen=date.today()),
-
-        CalligraphyCharacter: dict(id=id, unit_id=unit_str_id, character=data.character,
-                                   translation=data.translation, components=data.components, score=0,
-                                   last_seen=date.today()),
-
-        Exercise: dict(id=id, unit_id=unit_str_id, exercise_type=data.exercise_type,
-                       question=data.question, support=data.support, answer=data.answer, score=0,
-                       last_seen=date.today())
-    }
-
-    # Crée une instance de l'objet basé sur le modèle et les données
-    new_object = model_class(**element_data[model_class])
-    # Insère l'objet dans la base de données
-    insert(session, new_object)
-    # Convertit l'objet en dictionnaire pour l'API
-    result = orm_to_dict(new_object)
-    # Ferme la session SQL
+    insert(session, element)
+    result = orm_to_dict(element)
     session.close()
-    # Retourne le résultat au client
     return result
 
 @app.post("/update_score")
@@ -280,7 +245,7 @@ def available_languages():
     return dict_languages
 
 @app.get("/units/{language_id}")
-def units(language_id: str):
+def language_overview(language_id: str):
     """
     Returns a list of available units for a given language.
     
@@ -305,7 +270,7 @@ def units(language_id: str):
     return dict_units
 
 @app.get("/unit/{unit_id}")
-def unit(unit_id: str):
+def unit_details(unit_id: str):
     """
     Returns a specific unit for a given language.
     

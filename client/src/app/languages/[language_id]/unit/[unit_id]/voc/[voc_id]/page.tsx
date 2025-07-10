@@ -1,4 +1,5 @@
 import { getElementbyId } from "@/api";
+import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import type Vocabulary from "@/interface/Vocabulary";
 
@@ -20,6 +21,7 @@ export default async function VocabularyPage({ params }: { params: { language_id
             <NavButton path={`/languages/${params.language_id}/unit/${params.unit_id}/voc/${params.voc_id}/update`}>
                 Update the informations
             </NavButton>
+            <DeleteButton element_id={vocabulary.id} />
         </main>
     );
 }

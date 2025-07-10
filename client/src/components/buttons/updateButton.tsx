@@ -6,7 +6,7 @@ import GrammarBase from "@/interface/Grammar";
 import VocabularyBase from "@/interface/Vocabulary";
 
 import { updateElement } from "@/api";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface Character extends CharacterBase { type_element: 'char'; };
 interface Grammar extends GrammarBase { type_element: 'gram'; };

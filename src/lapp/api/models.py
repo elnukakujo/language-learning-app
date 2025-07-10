@@ -2,6 +2,66 @@ from datetime import date
 from pydantic import BaseModel
 from typing import Optional, Any
 
+class LanguageDict(BaseModel):
+    id: Optional[str] = None
+    name: str
+    native_name: Optional[str] = None
+    level: Optional[str] = "A1"  # Default level
+    description: Optional[str] = None
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+    flag: Optional[str] = None  # Flag emoji
+    current_unit: Optional[str] = None
+
+class UnitDict(BaseModel):
+    id: Optional[int] = None
+    language_id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    level: str = "A1"  # Default level
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+
+class CalligraphyCharacterDict(BaseModel):
+    id: Optional[str] = None
+    unit_id: Optional[str] = None
+    character: str
+    components: Optional[str] = None  # Components of the character
+    phonetic: str
+    meaning: str
+    example_word: Optional[str] = None  # Example word using the character
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+
+class VocabularyDict(BaseModel):
+    id: Optional[str] = None
+    unit_id: Optional[str] = None
+    word: str
+    translation: str
+    phonetic: Optional[str] = None  # e.g., pinyin for Chinese words
+    example_sentence: Optional[str] = None  # Example sentence using the word
+    type: Optional[str] = None # e.g., noun, verb, adjective
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+
+class GrammarRuleDict(BaseModel):
+    id: Optional[str] = None
+    unit_id: Optional[str] = None
+    title: str
+    explanation: str
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+
+class ExerciseDict(BaseModel):
+    id: Optional[str] = None
+    unit_id: Optional[str] = None
+    exercise_type: Optional[str] = None  # e.g., "fill_in_the_blank", "multiple_choice"
+    question: str
+    support: Optional[str] = None  # e.g., image, audio, text
+    answer: str
+    score: Optional[float] = 0.0
+    last_seen: Optional[date] = date.today()
+
 class RandomRequest(BaseModel):
     language_id: str
     unit_id: int
@@ -11,35 +71,11 @@ class UpdatebyIdRequest(BaseModel):
     element_id: str
     updates: dict[str, Any]  # e.g. {"word": "new_word", "translation": "new_translation"}
 
-# Pour element_type = "voc" (vocabulaire) :
-#   - word, translation, phonetic, example_sentence, type
-#
-# Pour element_type = "gram" (règle de grammaire) :
-#   - title, explanation
-#
-# Pour element_type = "char" (caractère calligraphié) :
-#   - character, translation, components
-#
-# Pour element_type = "ex" (exercice) :
-#   - exercise_type, question, support, answer
-
 class NewElementRequest(BaseModel):
-    language_id: str
-    unit_id: int
-    element_type: str  # e.g. "voc", "g", "char", "ex"
-    word: Optional[str] = None
-    translation: Optional[str] = None
-    phonetic: Optional[str] = None
-    example_sentence: Optional[str] = None
-    type: Optional[str] = None
-    title: Optional[str] = None
-    explanation: Optional[str] = None
-    character: Optional[str] = None
-    components: Optional[str] = None
-    exercise_type: Optional[str] = None
-    question: Optional[str] = None
-    support: Optional[str] = None
-    answer: Optional[str] = None
+    language_id: Optional[str] = None
+    unit_id: Optional[str] = None
+    element_type: str
+    element: VocabularyDict | GrammarRuleDict | CalligraphyCharacterDict | ExerciseDict | UnitDict | LanguageDict
 
 class UpdateScoreRequest(BaseModel):
     element_id: str

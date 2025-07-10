@@ -3,6 +3,7 @@ import type Grammar from "@/interface/Grammar";
 import Markdown from "react-markdown";
 
 import NavButton from "@/components/buttons/navButton";
+import DeleteButton from "@/components/buttons/deleteButton";
 
 type paramsType = {
     language_id: string;
@@ -26,6 +27,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
             <NavButton path={updatePath}>
                 Update the informations
             </NavButton>
+            <DeleteButton element_id={gram_id} />
         </main>
     );
 }
