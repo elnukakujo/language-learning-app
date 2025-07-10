@@ -14,7 +14,7 @@ export default async function AvailableLanguages() {
         <p>Which language do you want to learn?</p>
         <ul>
             {Object.values(languages).map((lang) => (
-                <li key={lang.id}>
+                <li key={"l"+lang.id}>
                     <LanguageOverviewCard language={lang} />
                 </li>
             ))}
