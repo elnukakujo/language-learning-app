@@ -147,27 +147,28 @@ def update_by_id(data: UpdatebyIdRequest):
 
 @app.post("/new_element")
 def new_element(data: NewElementRequest):
-    print(data.element_type)
     # Initialise la base de données pour la langue spécifiée et crée une session
     _, session = init_db()
 
     # Récupère l'ID de l'unité au format "ZH_1"
-    if data.element_type == "l":
+    if data.element_type[0].lower() == "l":
         element = Language(**{k: v for k, v in data.element.model_dump().items() if k not in ("id")}, id=data.element.name[:2].upper())
-    elif data.element_type == "u":
-        same_elements_in_unit = session.query(Unit).filter(Unit.language_id == data.language_id.upper()).all()
+    elif data.element_type[0].lower() == "u":
+        language_id = data.element.language_id.upper()
+        same_elements_in_unit = session.query(Unit).filter(Unit.language_id == language_id).all()
         n_elements_same_class = len(same_elements_in_unit)
+        id = f"{language_id}_{n_elements_same_class}"
         element = Unit(
             **{k: v for k, v in data.element.model_dump().items() if k not in ("language_id")},
-            language_id=data.language_id.upper(),
-            id=f"{data.language_id.upper()}_{n_elements_same_class}"
+            language_id=language_id,
+            id=id
         )
     else:
-        unit_id = data.unit_id
-        id = f"{unit_id}_{data.element_type.upper()}"
+        unit_id = data.element.unit_id
+        id = f"{unit_id}_{data.element_type[0].upper()}"
         model_class = str_to_modelclass(id)
 
-        same_elements_in_unit = session.query(model_class).filter(model_class.unit_id == data.unit_id).all()
+        same_elements_in_unit = session.query(model_class).filter(model_class.unit_id == unit_id).all()
         n_elements_same_class = len(same_elements_in_unit)+1
 
         element = model_class(
@@ -310,7 +311,7 @@ def unit_details(unit_id: str):
             "count": len(characters)
         },
         "exercises": {
-            "items": [{"type": e.exercise_type} for e in exercises],
+            "items": [{"type": e.exercise_type, "count": len(session.query(Exercise).filter(Exercise.exercise_type == e.exercise_type).all())} for e in exercises],
             "count": len(exercises)
         }
     }
@@ -318,3 +319,11 @@ def unit_details(unit_id: str):
     session.close()
 
     return result
+
+@app.get("/{unit_id}/exercises_overview")
+def exercises_overview(unit_id: str):
+    _, session = init_db()
+
+    exercises = session.query(Exercise).filter(Exercise.unit_id == unit_id).all()
+
+    return [orm_to_dict(exercise) for exercise in exercises]

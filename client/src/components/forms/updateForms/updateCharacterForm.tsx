@@ -6,10 +6,10 @@ import type Character from "@/interface/Character";
 
 export default function updateCharacterForm({ character }: { character: Character }) {
     const [characterName, setCharacterName] = useState<string>(character.character);
-    const [components, setComponents] = useState<string>(character.components);
+    const [components, setComponents] = useState<string>(character.components || "");
     const [meaning, setMeaning] = useState<string>(character.meaning);
-    const [phonetic, setPhonetic] = useState<string>(character.phonetic);
-    const [exampleWord, setExampleWord] = useState<string>(character.example_word);
+    const [phonetic, setPhonetic] = useState<string>(character.phonetic || "");
+    const [exampleWord, setExampleWord] = useState<string>(character.example_word || "");
 
   return (
     <form className="flex flex-col space-y-4">

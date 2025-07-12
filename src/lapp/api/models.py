@@ -15,7 +15,7 @@ class LanguageDict(BaseModel):
 
 class UnitDict(BaseModel):
     id: Optional[int] = None
-    language_id: Optional[str] = None
+    language_id: str
     title: str
     description: Optional[str] = None
     level: str = "A1"  # Default level
@@ -24,7 +24,7 @@ class UnitDict(BaseModel):
 
 class CalligraphyCharacterDict(BaseModel):
     id: Optional[str] = None
-    unit_id: Optional[str] = None
+    unit_id: str
     character: str
     components: Optional[str] = None  # Components of the character
     phonetic: str
@@ -35,7 +35,7 @@ class CalligraphyCharacterDict(BaseModel):
 
 class VocabularyDict(BaseModel):
     id: Optional[str] = None
-    unit_id: Optional[str] = None
+    unit_id: str
     word: str
     translation: str
     phonetic: Optional[str] = None  # e.g., pinyin for Chinese words
@@ -46,15 +46,15 @@ class VocabularyDict(BaseModel):
 
 class GrammarRuleDict(BaseModel):
     id: Optional[str] = None
-    unit_id: Optional[str] = None
+    unit_id: str
     title: str
     explanation: str
     score: Optional[float] = 0.0
     last_seen: Optional[date] = date.today()
 
 class ExerciseDict(BaseModel):
-    id: Optional[str] = None
-    unit_id: Optional[str] = None
+    id: Optional[str] = None 
+    unit_id: str # e.g., "ZH_0"
     exercise_type: Optional[str] = None  # e.g., "fill_in_the_blank", "multiple_choice"
     question: str
     support: Optional[str] = None  # e.g., image, audio, text
@@ -72,8 +72,6 @@ class UpdatebyIdRequest(BaseModel):
     updates: dict[str, Any]  # e.g. {"word": "new_word", "translation": "new_translation"}
 
 class NewElementRequest(BaseModel):
-    language_id: Optional[str] = None
-    unit_id: Optional[str] = None
     element_type: str
     element: VocabularyDict | GrammarRuleDict | CalligraphyCharacterDict | ExerciseDict | UnitDict | LanguageDict
 

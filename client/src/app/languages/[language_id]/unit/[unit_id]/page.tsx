@@ -1,10 +1,13 @@
 import { getUnitData } from "@/api";
-import UnitList from "@/components/unitList";
+import VocabularyList from "@/components/lists/vocabularyList";
+import GrammarList from "@/components/lists/grammarList";
+import CharacterList from "@/components/lists/characterList";
+import ExerciseList from "@/components/lists/exerciseList";
 
 import type Unit from "@/interface/Unit";
 
 interface ExtendedUnit extends Unit {
-    vocabulary?: {
+    vocabulary: {
         items: Array<{
             id: string;
             word: string;
@@ -12,24 +15,25 @@ interface ExtendedUnit extends Unit {
         }>;
         count: number;
     };
-    grammar?: {
+    grammar: {
         items: Array<{
             id: string;
             title: string;
         }>;
         count: number;
     };
-    characters?: {
+    characters: {
         items: Array<{
             id: string;
             character: string;
-            translation: string;
+            meaning: string;
         }>;
         count: number;
     };
-    exercises?: {
+    exercises: {
         items: Array<{
             type: string;
+            count: number;
         }>;
         count: number;
     };
@@ -43,20 +47,12 @@ export default async function Unit({ params }: { params: { language_id: string, 
         <main>
             <h1>{unit.title}</h1>
             <p>{unit.description}</p>
-            <p>Score: {unit.score.toFixed(1)}/100</p>
+            <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
             <article className="flex flex-row gap-8 justify-around">
-                <UnitList type="v" props={unit.vocabulary} />
-                <UnitList type="g" props={unit.grammar} />
-                <UnitList type="c" props={unit.characters} />
-                <section className="flex flex-col gap-4 w-[14rem]">
-                    <h2>Exercises</h2>
-                    {unit.exercises && <ul>
-                        {unit.exercises.items.map((item, index) => (
-                            <li key={index}>{item.type}</li>
-                        ))}
-                    </ul>
-                    }
-                </section>
+                <VocabularyList vocProps={unit.vocabulary} />
+                <GrammarList gramProps={unit.grammar} />
+                <CharacterList charProps={unit.characters} />
+                <ExerciseList exProps={unit.exercises} />
             </article>
         </main>
     );

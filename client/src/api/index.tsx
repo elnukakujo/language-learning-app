@@ -69,8 +69,6 @@ export async function addNewElement(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      language_id: "language_id" in newElement ? newElement.language_id : undefined,
-      unit_id: "unit_id" in newElement ? newElement.unit_id : undefined,
       element_type: type_element.charAt(0).toLowerCase(), // Get the first letter of the class name
       element: newElement,
     }),
@@ -84,4 +82,11 @@ export async function deleteElement(element_id: string) {
   const res = await fetch(`${BASE_URL}/delete_by_id/${element_id}`);
 
   if (!res.ok) throw new Error("Failed to delete element");
+}
+
+export async function getExercisesOverview(unit_id: string) {
+  const res = await fetch(`${BASE_URL}/${unit_id}/exercises_overview`);
+
+  if (!res.ok) throw new Error("Failed to get Exercises overview");
+    return res.json();
 }

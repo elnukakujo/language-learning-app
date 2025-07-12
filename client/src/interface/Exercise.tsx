@@ -1,10 +1,10 @@
 export default interface Exercise {
     id: string;
-    type: string;
+    exercise_type?: string;
     question: string;
-    support: string;
+    support?: string;
     answer: string;
-    score: number;
-    last_seen: Date;
+    score?: number;
+    last_seen?: Date;
     unit_id: string;
 };
