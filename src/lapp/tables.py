@@ -1,4 +1,3 @@
-import array
 from sqlalchemy import Column, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .dbms import Base

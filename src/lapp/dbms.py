@@ -1,6 +1,6 @@
 from pyexpat import model
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.inspection import inspect
@@ -225,3 +225,25 @@ def find_by_attr(session: Session, attr_values: dict, model_class: sqlalchemy.or
     else:
         logger.warning("No record found with matching attributes.")
         return None
+    
+def generate_new_id(session, unit_id, model_class) -> str:
+    # Get next sequence value in a transaction-safe way
+    # Get the current maximum number for this prefix in the unit
+    existing_ids = session.scalars(
+        select(model_class.id)
+        .where(model_class.unit_id == unit_id)
+    ).all()
+    
+    # Extract the numeric parts
+    numbers = []
+    for id_str in existing_ids:
+        try:
+            num = int(id_str.split("_")[-1][1:])
+            numbers.append(num)
+        except ValueError:
+            continue
+    
+    # Calculate next number
+    next_num = max(numbers) + 1 if numbers else 1
+
+    return next_num

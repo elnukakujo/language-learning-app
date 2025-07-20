@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import random
 
 from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest, VocabularyDict, GrammarRuleDict, CalligraphyCharacterDict, ExerciseDict, UnitDict, LanguageDict
-from lapp.dbms import find_by_pk, init_db, insert, modify, delete
+from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_id
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 
@@ -168,12 +168,11 @@ def new_element(data: NewElementRequest):
         id = f"{unit_id}_{data.element_type[0].upper()}"
         model_class = str_to_modelclass(id)
 
-        same_elements_in_unit = session.query(model_class).filter(model_class.unit_id == unit_id).all()
-        n_elements_same_class = len(same_elements_in_unit)+1
+        id += str(generate_new_id(session, unit_id=unit_id, model_class=model_class))
 
         element = model_class(
             **{k: v for k, v in data.element.model_dump().items() if k not in ("id", "unit_id")},
-            id=id+str(n_elements_same_class),
+            id=id,
             unit_id=unit_id
         )
 
@@ -296,6 +295,13 @@ def unit_details(unit_id: str):
     characters = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.unit_id == unit.id).all()
     exercises = session.query(Exercise).filter(Exercise.unit_id == unit.id).all()
 
+    exercise_count = {}
+    for e in exercises:
+        if e.exercise_type not in exercise_count:
+            exercise_count[e.exercise_type] = 0
+        exercise_count[e.exercise_type] += 1
+    print(exercise_count)
+
     result = {
         **result,
         "vocabulary": {
@@ -311,7 +317,7 @@ def unit_details(unit_id: str):
             "count": len(characters)
         },
         "exercises": {
-            "items": [{"type": e.exercise_type, "count": len(session.query(Exercise).filter(Exercise.exercise_type == e.exercise_type).all())} for e in exercises],
+            "items": [{"type": exercise_type, "count": count} for exercise_type, count in exercise_count.items()],
             "count": len(exercises)
         }
     }
