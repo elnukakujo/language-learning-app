@@ -8,28 +8,43 @@ export default async function ExercisesPage({ params }: { params: { language_id:
     const { language_id, unit_id } = await params;
 
     const exercises: Exercise[] = await getExercisesOverview(unit_id)
+    const exercisesByType = exercises.reduce((group, exercise) => {
+        const key = exercise.exercise_type || "unknown";
+        if (!group[key]) {
+            group[key] = [];
+        }
+        group[key].push(exercise);
+        return group;
+    }, {} as Record<string, Exercise[]>);
 
     return(
         <main className="flex flex-col space-y-5">
             <h1>Exercises</h1>
-            {exercises.map((exercise,index) => (
-                <section key={index}>
-                    {exercise.exercise_type && <h6><i>{exercise.exercise_type?.charAt(0).toUpperCase() + exercise.exercise_type?.slice(1)}</i></h6>}
-                    <Markdown>{exercise.question}</Markdown>
-                    <Markdown>{exercise.support}</Markdown>
-                    <nav className="flex flex-row space-x-2">
-                        <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>
-                            <p>Practice this Exercise</p>
-                        </NavButton>
-                        <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
-                            <p>Update the Exercise</p>
-                        </NavButton>
-                        <DeleteButton element_id={exercise.id}>
-                            <p>Delete Exercise</p>
-                        </DeleteButton>
-                    </nav>
-                </section>
-            ))}
+            <article className="flex flex-col space-y-5">
+                {Object.entries(exercisesByType).map(([type, exercises]) => (
+                    <section key={type}>
+                        <h3>{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
+                        <ul>
+                            {exercises.map((exercise, index) => (
+                                <li key={index}>
+                                    <Markdown>{exercise.support}</Markdown>
+                                    <nav className="flex flex-row space-x-2">
+                                        <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>
+                                            <p>Practice this Exercise</p>
+                                        </NavButton>
+                                        <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
+                                            <p>Update the Exercise</p>
+                                        </NavButton>
+                                        <DeleteButton element_id={exercise.id}>
+                                            <p>Delete Exercise</p>
+                                        </DeleteButton>
+                                    </nav>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ))}
+            </article>
             <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/new`}>
                 <p>Add New Exercise</p>
             </NavButton>

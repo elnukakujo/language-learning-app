@@ -90,3 +90,21 @@ export async function getExercisesOverview(unit_id: string) {
   if (!res.ok) throw new Error("Failed to get Exercises overview");
     return res.json();
 }
+
+export async function updateScoreById(ex_id: string, success: boolean) {
+  const res = await fetch(`${BASE_URL}/update_score/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json"},
+    body: JSON.stringify({ element_id: ex_id, success: success }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update score by ID");
+  return res.json();
+}
+
+export async function getNextExercise(ex_id: string) {
+  const res = await fetch(`${BASE_URL}/exercise/next/${ex_id}`);
+
+  if (!res.ok) throw new Error("Failed to get next exercise");
+  return res.json();
+}

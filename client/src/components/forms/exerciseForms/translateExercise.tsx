@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import Exercise from "@/interface/Exercise";
+import { updateScoreById } from "@/api";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const { question, support = '', answer } = exercise;
@@ -18,8 +19,13 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         setIsSubmitted(true);
         if (normalize(userAnswer) === normalize(answer)) {
             setIsCorrect(true);
+            updateScoreById(exercise.id, true).catch(console.error);
         } else {
             setAttempts(prev => prev + 1);
+            if (attempts >= 2) {
+
+                updateScoreById(exercise.id, false).catch(console.error);
+            }
         };
     };
 
@@ -40,7 +46,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
                 placeholder="Type your answer here..."
             />
 
-            {!isSubmitted || !isCorrect ? (
+            { !isCorrect && attempts < 3 ? (
                 <button 
                     type="button" 
                     onClick={handleSubmit}
@@ -57,10 +63,10 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
                     {isCorrect ? '✓ Correct! Well done!' : `✗ Some answers are incorrect (Attempt ${attempts}/3)`}
                     
                     {attempts >= 3 && !isCorrect && (
-                    <div className="mt-2">
-                        <p className="font-medium">Correct answers:</p>
-                        <p>{answer}</p>
-                    </div>
+                        <div className="mt-2">
+                            <p className="font-medium">Correct answers:</p>
+                            <p>{answer}</p>
+                        </div>  
                     )}
                 </div>
             )}

@@ -5,7 +5,7 @@ import { useState } from "react";
 import type Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
 
-export default function EssayExercise({ exercise }: { exercise: Exercise }) {
+export default function AnsweringExercise({ exercise }: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [showCorrection, setShowCorrection] = useState<boolean>(false);

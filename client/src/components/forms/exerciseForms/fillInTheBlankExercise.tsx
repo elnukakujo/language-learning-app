@@ -1,5 +1,6 @@
 "use client";
 
+import { updateScoreById } from "@/api";
 import type Exercise from "@/interface/Exercise";
 import { useState } from "react";
 
@@ -27,8 +28,12 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
         setIsSubmitted(true);
         if (normalize(correctAnswers.join('__')) === normalize(userAnswers.join('__'))) {
             setIsCorrect(true);
+            updateScoreById(exercise.id, true).catch(console.error);
         } else {
             setAttempts(prev => prev + 1);
+            if (attempts >= 2) {
+                updateScoreById(exercise.id, false).catch(console.error);
+            }
         };
     };
 
@@ -41,7 +46,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
   return (
     <form className="flex flex-col space-y-4">
         {question && (
-        <h3>{question}</h3>
+            <h3>{question}</h3>
         )}
         <p>
           {parts.map((part, index) => (

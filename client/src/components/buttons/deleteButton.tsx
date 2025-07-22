@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function DeleteButton({ element_id, children }: { element_id: string, children?: React.ReactNode }) {
     const languageId = element_id.split('_')[0].toUpperCase();
     const unitId = languageId + '_' + element_id.split('_')[1];
-    console.log(element_id);
+
     const router = useRouter();
     const handleDelete = async () => {
         try {

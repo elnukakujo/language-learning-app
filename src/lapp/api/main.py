@@ -9,6 +9,7 @@ from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest,
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_id
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
+from sqlalchemy import func
 
 app = FastAPI()
 
@@ -128,13 +129,10 @@ def update_by_id(data: UpdatebyIdRequest):
         dict: A dictionary representation of the updated element, or an error message if not found.
     """
     _, session = init_db()
-    print(data)
 
     element_type = str_to_modelclass(data.element_id)
-    print(element_type)
 
     element, _, _ = find_by_pk(session, element_type(id=data.element_id))
-    print(element)
 
     for key, value in data.updates.items():
         setattr(element, key, value)
@@ -205,7 +203,6 @@ def score_update(data: UpdateScoreRequest):
         return {"error": "Element not found."}
 
     new_score = update_score(score=element.score, last_seen=element.last_seen, success=data.success)
-    print(new_score)
 
     updated_element = element_type(
         id=element.id,
@@ -300,7 +297,6 @@ def unit_details(unit_id: str):
         if e.exercise_type not in exercise_count:
             exercise_count[e.exercise_type] = 0
         exercise_count[e.exercise_type] += 1
-    print(exercise_count)
 
     result = {
         **result,
@@ -333,3 +329,32 @@ def exercises_overview(unit_id: str):
     exercises = session.query(Exercise).filter(Exercise.unit_id == unit_id).all()
 
     return [orm_to_dict(exercise) for exercise in exercises]
+
+@app.get("/exercise/next/{ex_id}")
+def next_exercise(ex_id: str):
+    """
+    Returns the next exercise for a given unit.
+    
+    Parameters:
+        unit_id (str): The ID of the unit to fetch the next exercise for.
+    
+    Returns:
+        dict: A dictionary representation of the next exercise, or an error message if not found.
+    """
+    _, session = init_db()
+    unit_id = "_".join(ex_id.split("_")[:2])  # Extract the unit_id from the ex_id
+
+    lowest_score = session.query(func.min(Exercise.score)).filter(Exercise.unit_id == unit_id).scalar()
+    exercises = session.query(Exercise).filter(Exercise.id != ex_id).filter(Exercise.unit_id == unit_id, Exercise.score == lowest_score).all()
+
+    if not exercises:
+        session.close()
+        return {"error": f"No exercises found for unit {unit_id}."}
+    
+    next_exercise = random.choice(exercises)
+    
+    result = orm_to_dict(next_exercise)
+    
+    session.close()
+
+    return result["id"]

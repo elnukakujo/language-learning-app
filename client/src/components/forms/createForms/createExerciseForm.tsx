@@ -34,13 +34,13 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
         case "true-false":
           setQuestion("State whether the following statement is true or false:");
           setSupport("-- A statement to evaluate --");
-          setAnswer("-- true/false --");
+          setAnswer("true");
           setTextareaToDisplay(["question", "support", "answer"]);
           break;
         case "organize":
           setQuestion("Organize the following items:");
-          setSupport("-- A list of words/characters/sentences to organize --");
-          setAnswer("-- The organized text --");
+          setSupport("-- My/house/small/purple/and/is --");
+          setAnswer("-- My house is small and purple --");
           setTextareaToDisplay(["question", "support", "answer"]);
           break;
         case "answering":
@@ -105,13 +105,40 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
             <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
               Answer
             </label>
-            <textarea
-              id="answer"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
-              required
-            />
+            {exerciseType === "true-false" ? (
+              <div className="flex flex-row space-x-2">
+                <span className="flex items-center space-x-2">
+                  <input
+                    id="answer-true"
+                    type="radio"
+                    checked={answer === "true"}
+                    onChange={() => setAnswer("true")}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="answer-true">True</label>
+                </span>
+                <span className="flex items-center space-x-2">
+                  <input
+                    id="answer-false"
+                    type="radio"
+                    checked={answer === "false"}
+                    onChange={() => setAnswer("false")}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="answer-false">False</label>
+                </span>
+              </div>)
+              :
+              <textarea
+                id="answer"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+                required
+              />
+            }
           </section>
         )}
         {textareaToDisplay.length >= 1 && (
