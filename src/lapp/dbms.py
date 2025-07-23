@@ -36,7 +36,7 @@ def init_db() -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]
 
     DATABASE_URL = f"sqlite:///{db_path}"  # Absolute path
 
-    engine = create_engine(DATABASE_URL, echo=True)
+    engine = create_engine(DATABASE_URL)
     session = sessionmaker(bind=engine)
     session = session()
 
@@ -135,37 +135,14 @@ def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> sq
     Raises:
         SQLAlchemyError: If the commit fails, the exception is caught, and an error message is logged after rolling back the session.
     """
-    # Try to find existing row
-    existing_data = find_by_pk(session, obj)
-
-    if existing_data:
-        existing, mapper, pk_attrs = existing_data
-        for attr in mapper.attrs.keys():
-            if attr in pk_attrs:
-                continue  # Don't update primary key
-
-            # Skip if new object doesn't explicitly set this attribute
-            if not hasattr(obj, attr):
-                continue
-
-            new_value = getattr(obj, attr)
-            if new_value is None:
-                continue  # Treat None as "not provided", skip
-
-            current_value = getattr(existing, attr)
-            if current_value != new_value:
-                setattr(existing, attr, new_value)
+    try:
+        merged_obj = session.merge(obj)  # Automatically handles updates
         session.commit()
-        return existing
-    else:
-        session.add(obj)
-        try:
-            session.commit()
-        except SQLAlchemyError as e:
-            session.rollback()
-            logger.error(f"Error committing modify: {e}")
-            return None
-        return obj
+        return merged_obj
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"Error committing modify: {e}")
+        return None
 
 def delete(session: Session, obj: sqlalchemy.orm.DeclarativeMeta) -> None:
     """

@@ -24,8 +24,8 @@ export default async function CharacterPage({ params }: { params: paramsType }) 
                 {character.example_word && (
                     <p>Example expression: {character.example_word}</p>
                 )}
-                <p>Score: {character.score.toFixed(1)}/100</p>
-                <p>Last seen: {new Date(character.last_seen).toLocaleDateString('en-US')}</p>
+                <p>Score: {character.score?.toFixed(1)}/100</p>
+                <p>Last seen: {new Date(character.last_seen || 0).toLocaleDateString('en-US')}</p>
             </article>
             <NavButton path={`/languages/${language_id}/unit/${unit_id}/char/${char_id}/update`}>
                 Update the informations

@@ -2,16 +2,20 @@
 
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
+import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Exercise from "@/interface/Exercise";
 
-export default function UpdateExerciseForm({ exercise }: { exercise: Exercise }) {
+export default function UpdateExerciseForm({ exercise, existingUnitsId }: { exercise: Exercise, existingUnitsId: string[] }) {
     const [question, setQuestion] = useState<string>(exercise.question);
     const [support, setSupport] = useState<string>(exercise.support || '');
     const [answer, setAnswer] = useState<string>(exercise.answer);
 
+    const [unitId, setUnitId] = useState<string>(exercise.unit_id);
+
     return (
       <form className="flex flex-col space-y-4">
           <div className="flex flex-col space-y-2 h-fit">
+            <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
             {[question, support, answer].map((value, index) => (
                 <div key={index}>
                     <label htmlFor={`field-${index}`} key={index}>
@@ -41,7 +45,7 @@ export default function UpdateExerciseForm({ exercise }: { exercise: Exercise })
               answer: answer,
               score: exercise.score,
               last_seen: exercise.last_seen,
-              unit_id: exercise.unit_id
+              unit_id: unitId
           }}
         />
       </form>

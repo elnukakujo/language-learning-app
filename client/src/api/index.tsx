@@ -102,9 +102,9 @@ export async function updateScoreById(ex_id: string, success: boolean) {
   return res.json();
 }
 
-export async function getNextExercise(ex_id: string) {
-  const res = await fetch(`${BASE_URL}/exercise/next/${ex_id}`);
+export async function getNext(element_id: string) {
+  const res = await fetch(`${BASE_URL}/next/${element_id}`);
 
-  if (!res.ok) throw new Error("Failed to get next exercise");
+  if (!res.ok) throw new Error("Failed to get next element");
   return res.json();
 }

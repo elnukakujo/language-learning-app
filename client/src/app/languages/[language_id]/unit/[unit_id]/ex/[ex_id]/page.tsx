@@ -1,4 +1,4 @@
-import { getElementbyId, getNextExercise } from "@/api";
+import { getElementbyId, getNext } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/Exercise";
@@ -14,8 +14,7 @@ export default async function ExercisePage( { params } : { params: { language_id
     const { language_id, unit_id, ex_id } = await params;
 
     const exercise: Exercise = await getElementbyId(ex_id);
-    const next_ex_id: string = await getNextExercise(ex_id);
-    console.log("Next Exercise ID:", next_ex_id);
+    const next_ex_id: string = await getNext(ex_id);
     return(
         <main>
             {exercise.exercise_type === 'fill-in-the-blank' && (

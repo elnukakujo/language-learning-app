@@ -19,21 +19,16 @@ type UpdateButtonProps = {
 };
 
 export default function UpdateButton({ element, children }: UpdateButtonProps) {
-    const elementId = element.id;
-    const unitId = element.unit_id;
-    const languageId = unitId.split('_')[0];
-    const elementType = element.type_element;
     const router = useRouter();
+    const elementType = element.type_element;
 
     const handleUpdate = async () => {
-        updateElement(element)
-        .then(() => {
-            console.log("Element updated successfully");
-            router.push('/languages/' + languageId + '/unit/' + unitId + '/' + elementType + '/' + elementId);
-        })
-        .catch((error) => {
-            console.error("Error updating element:", error);
-        });
+        const new_element = await updateElement(element);
+        const elementId = new_element.id;
+        const unitId = elementId.split('_').slice(0, 2).join('_');
+        const languageId = elementId.split('_')[0];
+
+        router.push('/languages/' + languageId + '/unit/' + unitId + '/' + elementType + '/' + elementId);
     };
 
     return (

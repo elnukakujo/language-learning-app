@@ -2,18 +2,22 @@
 
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
+import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Character from "@/interface/Character";
 
-export default function updateCharacterForm({ character }: { character: Character }) {
+export default function updateCharacterForm({ character, existingUnitsId }: { character: Character, existingUnitsId: string[] }) {
     const [characterName, setCharacterName] = useState<string>(character.character);
     const [components, setComponents] = useState<string>(character.components || "");
     const [meaning, setMeaning] = useState<string>(character.meaning);
     const [phonetic, setPhonetic] = useState<string>(character.phonetic || "");
     const [exampleWord, setExampleWord] = useState<string>(character.example_word || "");
 
+    const [unitId, setUnitId] = useState<string>(character.unit_id);
+
   return (
     <form className="flex flex-col space-y-4">
       <div className="flex flex-col space-y-2 h-fit">
+        <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
         {[characterName, components, meaning, phonetic, exampleWord].map((value, index) => (
             <div key={index}>
               <label htmlFor={`field-${index}`} key={index}>
@@ -48,7 +52,7 @@ export default function updateCharacterForm({ character }: { character: Characte
             example_word: exampleWord,
             score: character.score,
             last_seen: character.last_seen,
-            unit_id: character.unit_id,
+            unit_id: unitId,
         }}
       />
     </form>

@@ -2,11 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
+import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Grammar from "@/interface/Grammar";
 
-export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
-  const [updatedTitle, setUpdatedTitle] = useState(grammar.title);
-  const [updatedExplanation, setUpdatedExplanation] = useState(grammar.explanation);
+export default function updateGrammarForm({ grammar, existingUnitsId }: { grammar: Grammar, existingUnitsId: string[] }) {
+  const [updatedTitle, setUpdatedTitle] = useState<string>(grammar.title);
+  const [updatedExplanation, setUpdatedExplanation] = useState<string>(grammar.explanation);
+
+  const [unitId, setUnitId] = useState<string>(grammar.unit_id);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -21,6 +24,7 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
   return (
     <form className="flex flex-col space-y-4">
       <div className="flex flex-col space-y-2 h-fit">
+        <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
         <label htmlFor="title">Title</label>
         <input
           type="text"
@@ -56,7 +60,7 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
           explanation: updatedExplanation,
           score: grammar.score,
           last_seen: grammar.last_seen,
-          unit_id: grammar.unit_id,
+          unit_id: unitId,
         }}
       />
     </form>

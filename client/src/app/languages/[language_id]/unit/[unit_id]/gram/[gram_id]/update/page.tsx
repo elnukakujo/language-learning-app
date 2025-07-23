@@ -1,4 +1,4 @@
-import { getElementbyId } from "@/api";
+import { getElementbyId, getLanguageData } from "@/api";
 import type Grammar from "@/interface/Grammar";
 import UpdateGrammarForm from "@/components/forms/updateForms/updateGrammarForm";
 
@@ -9,13 +9,15 @@ type paramsType = {
 };
 
 export default async function UpdateGrammarPage({ params }: { params: paramsType }) {
-    const { gram_id } = await params;
+    const { gram_id, language_id } = await params;
     const grammar: Grammar = await getElementbyId(gram_id);
+    const existingUnitsId: string[] = await getLanguageData(language_id).then(data => data.units.map((unit: {id: string}) => unit.id));
+
 
     return (
         <main className="p-4">
             <h1 className="text-2xl font-semibold mb-4">Update Grammar</h1>
-            <UpdateGrammarForm grammar={grammar} />
+            <UpdateGrammarForm grammar={grammar} existingUnitsId={existingUnitsId} />
         </main>
     );
 }

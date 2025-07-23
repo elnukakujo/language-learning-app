@@ -21,46 +21,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/random")
-def get_random(data: RandomRequest):
-    """
-    Fetches a random element from the database using the specified language and unit filters.
-    Parameters:
-        data (RandomRequest): An object containing the following attributes:
-            - language_id (str): Identifier for the language used to initialize the database.
-                - Should be a string that matches the language database name (e.g., "en", "de").
-            - type (str): The type of terminology to query. Should be a key in the type_terminology mapping.
-                - Valid values are "voc", "gram", "char", or "ex" corresponding to Vocabulary, GrammarRule, CalligraphyCharacter, or Exercise respectively.
-            - unit_id (str or int): Identifier for the unit, used alongside language_id to filter elements.
-                - Must be an integer from 0 to n, where n is the number of units in the database for the specified language.
+@app.get("/next/{element_id}")
+def get_random(element_id: str):
+    _, session = init_db()
+    unit_id = "_".join(element_id.split("_")[:2])  # Extract the unit_id from the element_id
 
-    Returns:
-        dict: A dictionary representation of the randomly selected element converted via orm_to_dict.
-              If no element is found that matches the criteria, returns a dictionary with an 'error' key.
-    Notes:
-        - The function initializes a database session using init_db() with the provided language_id.
-        - It builds a query on the type-specific table (from type_terminology) filtering
-          by a compound unit_id formed by concatenating the uppercase language_id with the unit_id.
-        - The session is closed after the query is executed.
-        - If the query yields no results, an error message is returned.
-    """
+    element_type = str_to_modelclass(element_id)
 
-    _, session = init_db(data.language_id)
-
-    table_class = str_to_modelclass(data.type)
-    if table_class is None:
-        session.close()
-        return {"error": "Invalid type provided."}
-    
-    unit_id = data.language_id.upper() + "_" + str(data.unit_id)
-
-    elements = session.query(table_class).filter(table_class.unit_id == unit_id).all()
-    session.close()
+    lowest_score = session.query(func.min(element_type.score)).filter(element_type.unit_id == unit_id).scalar()
+    elements = session.query(element_type).filter(element_type.id != element_id).filter(element_type.unit_id == unit_id, element_type.score == lowest_score).all()
 
     if not elements:
-        return {"error": "No elements found for the specified type and unit."}
-    element = random.choice(elements)
-    return orm_to_dict(element)
+        session.close()
+        return {"error": f"No elements found for unit {unit_id}."}
+
+    next_element = random.choice(elements)
+
+    result = orm_to_dict(next_element)
+
+    session.close()
+
+    return result["id"]
 
 @app.get("/find_by_id/{element_id}")
 def find_by_id(element_id: str):
@@ -134,6 +115,11 @@ def update_by_id(data: UpdatebyIdRequest):
 
     element, _, _ = find_by_pk(session, element_type(id=data.element_id))
 
+    if "unit_id" in data.updates and data.updates["unit_id"] != element.unit_id:
+        data.updates["id"] = f'{data.updates["unit_id"]}_{element_type.__name__[0].upper()}'+str(generate_new_id(session, unit_id=data.updates["unit_id"], model_class=element_type))
+
+    print(data.updates)
+
     for key, value in data.updates.items():
         setattr(element, key, value)
     
@@ -182,7 +168,7 @@ def new_element(data: NewElementRequest):
 @app.post("/update_score")
 def score_update(data: UpdateScoreRequest):
     """
-    Updates the score of an element in the database based on its success or failure.
+    Updates the score of an element, its unit as well as the language in the database based on its success or failure.
     
     Parameters:
         data (UpdateScoreRequest): An object containing:
@@ -211,7 +197,45 @@ def score_update(data: UpdateScoreRequest):
     )
 
     updated_element = modify(session, updated_element)
+    print(f"Updated element {updated_element.id} with new score: {updated_element.score}")
+
+    average_vocab_score = session.query(func.avg(Vocabulary.score)).filter(Vocabulary.unit_id == updated_element.unit_id).scalar()
+    average_char_score = session.query(func.avg(CalligraphyCharacter.score)).filter(CalligraphyCharacter.unit_id == updated_element.unit_id).scalar()
+    average_exercise_score = session.query(func.avg(Exercise.score)).filter(Exercise.unit_id == updated_element.unit_id).scalar()
+    print(f"Average scores: vocab={average_vocab_score}, char={average_char_score}, exercise={average_exercise_score}")
+
+    scores = [s for s in (average_vocab_score, average_char_score, average_exercise_score) if s is not None]
+    average_score = sum(scores) / len(scores) if scores else None
+
+    if average_score is None:
+        result = orm_to_dict(updated_element)
+        session.close()
+        return result
     
+    updated_unit = Unit(
+        id = updated_element.unit_id,
+        score = average_score,
+        last_seen = date.today()
+    )
+    updated_unit = modify(session, updated_unit)
+    print(f"Updated unit with average score: {updated_unit.score}")
+
+    average_unit_score = session.query(func.avg(Unit.score)).filter(Unit.language_id == updated_unit.language_id).scalar()
+
+    if average_unit_score is None:
+        result = orm_to_dict(updated_element)
+        session.close()
+        return result
+    
+    updated_language = Language(
+        id = updated_unit.language_id,
+        score = average_unit_score,
+        last_seen = date.today()
+    )
+
+    updated_language = modify(session, updated_language)
+    print(f"Updated language with average score: {updated_language.score}")
+
     result = orm_to_dict(updated_element)
     session.close()
     

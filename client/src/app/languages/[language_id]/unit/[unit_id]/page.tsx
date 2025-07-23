@@ -48,6 +48,7 @@ export default async function Unit({ params }: { params: { language_id: string, 
             <h1>{unit.title}</h1>
             <p>{unit.description}</p>
             <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
+            <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
             <article className="flex flex-row gap-8 justify-around">
                 <VocabularyList vocProps={unit.vocabulary} />
                 <GrammarList gramProps={unit.grammar} />

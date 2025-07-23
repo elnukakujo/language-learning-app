@@ -1,5 +1,6 @@
 "use client";
 
+import { getNext } from "@/api";
 import { useParams, useRouter } from "next/navigation";
 import NavButton from "../buttons/navButton";
 
@@ -19,6 +20,7 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
     const handleClick = (id: string) => {
         router.push(`/languages/${language_id}/unit/${unit_id}/voc/${id}`);
     };
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <h2>Vocabulary</h2>
@@ -36,8 +38,13 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
             <NavButton
                 path = {`/languages/${language_id}/unit/${unit_id}/voc/new`}
             >
-                <span>Add New Vocabulary</span>
+                <p>Add New Vocabulary</p>
             </NavButton>
+            {vocProps.items.length > 0 && <NavButton
+                path = {`/languages/${language_id}/unit/${unit_id}/voc/${vocProps.items[0]?.id}/flashcard`}
+            >
+                <p>Flashcard Practice</p>
+            </NavButton>}
         </section>
     );
 }

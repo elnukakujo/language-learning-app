@@ -38,6 +38,11 @@ export default function CharacterList({ charProps}: { charProps: CharactersProps
             >
                 <span>Add New Character</span>
             </NavButton>
+            {charProps.items.length > 0 && <NavButton
+                path = {`/languages/${language_id}/unit/${unit_id}/char/${charProps.items[0]?.id}/flashcard`}
+            >
+                <p>Flashcard Practice</p>
+            </NavButton>}
         </section>
     );
 }
