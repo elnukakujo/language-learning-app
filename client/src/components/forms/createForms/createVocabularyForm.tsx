@@ -26,8 +26,8 @@ export default function createVocabularyForm({ unit_id }: { unit_id: string }) {
                         const newValue = e.target.value;
                         if (index === 0) setWord(newValue);
                         if (index === 1) setTranslation(newValue);
-                        if (index === 2) setPhonetic(newValue);
-                        if (index === 3) setType(newValue);
+                        if (index === 2) setType(newValue);
+                        if (index === 3) setPhonetic(newValue);
                         if (index === 4) setExampleSentence(newValue);
                     }}
                     className="border border-gray-300 rounded p-2 w-full"

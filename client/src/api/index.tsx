@@ -22,11 +22,12 @@ export async function getLanguageData(languageId: string) {
   const units = await fetch(`${BASE_URL}/units/${languageId}`);
   if (!units.ok) throw new Error(`Failed to fetch data for language ${languageId}`);
   const unitsData = await units.json();
-
   return {
     language,
     units: unitsData,
   };
+
+  
 }
 
 export async function getUnitData(unit_id: string) {
@@ -63,8 +64,9 @@ export async function updateElement(
 export async function addNewElement(
   data: Character | Grammar | Vocabulary | Unit | Language | Exercise
 ) {
-  const { last_seen, score, type_element, ...newElement } = data as any;
-
+  const { last_seen, score, type_element, id, ...newElement } = data as any;
+  console.log(newElement);
+  console.log(type_element.charAt(0).toLowerCase());
   const res = await fetch(`${BASE_URL}/new_element`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -6,6 +6,9 @@ import ExerciseList from "@/components/lists/exerciseList";
 
 import type Unit from "@/interface/Unit";
 
+import NavButton from "@/components/buttons/navButton";
+import DeleteButton from "@/components/buttons/deleteButton";
+
 interface ExtendedUnit extends Unit {
     vocabulary: {
         items: Array<{
@@ -40,15 +43,25 @@ interface ExtendedUnit extends Unit {
 }
 
 export default async function Unit({ params }: { params: { language_id: string, unit_id: string } }) {
-    const { unit_id } = await params;
+    const { language_id, unit_id } = await params;
     const unit: ExtendedUnit = await getUnitData(unit_id);
 
     return (
         <main>
-            <h1>{unit.title}</h1>
-            <p>{unit.description}</p>
-            <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
-            <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
+            <header>
+                <h1>{unit.title}</h1>
+                <p>{unit.description}</p>
+                <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
+                <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
+                <nav>
+                    <NavButton path={`/languages/${language_id}/unit/${unit_id}/update`}>
+                        <p>Update this Unit Informations</p>
+                    </NavButton>
+                    <DeleteButton element_id={unit_id}>
+                        <p>Delete this Unit</p>
+                    </DeleteButton>
+                </nav>
+            </header>
             <article className="flex flex-row gap-8 justify-around">
                 <VocabularyList vocProps={unit.vocabulary} />
                 <GrammarList gramProps={unit.grammar} />

@@ -18,7 +18,7 @@ class UnitDict(BaseModel):
     language_id: str
     title: str
     description: Optional[str] = None
-    level: str = "A1"  # Default level
+    level: Optional[str] = "A1"  # Default level
     score: Optional[float] = 0.0
     last_seen: Optional[date] = date.today()
 

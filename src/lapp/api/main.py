@@ -132,6 +132,7 @@ def update_by_id(data: UpdatebyIdRequest):
 @app.post("/new_element")
 def new_element(data: NewElementRequest):
     # Initialise la base de données pour la langue spécifiée et crée une session
+    print(data)
     _, session = init_db()
 
     # Récupère l'ID de l'unité au format "ZH_1"

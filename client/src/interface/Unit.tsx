@@ -4,4 +4,5 @@ export default interface Unit {
     description?: string;
     score?: number;
     last_seen?: Date;
+    language_id: string;
 };

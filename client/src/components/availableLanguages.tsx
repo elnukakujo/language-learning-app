@@ -1,6 +1,7 @@
 import { getAvailableLanguages } from "@/api";
 import LanguageOverviewCard from "./cards/languageOverviewCard";
 import Language from "@/interface/Language";
+import NavButton from "@/components/buttons/navButton";
 
 type LanguagesObject = {
     [key: string]: Language;
@@ -19,6 +20,9 @@ export default async function AvailableLanguages() {
                 </li>
             ))}
         </ul>
+        <NavButton path="/languages/new">
+            <p>Create New Language</p>
+        </NavButton>
     </section>
   );
 }
