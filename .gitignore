@@ -2,8 +2,9 @@ venv/
 .venv
 .vnv
 
-.DS_Store\
+.DS_Store
 *.db
+*.sqlite
 .vscode/
 __pycache__/
 

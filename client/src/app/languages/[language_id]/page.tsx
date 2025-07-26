@@ -11,27 +11,27 @@ export default async function Language({ params }: { params: { language_id: stri
     const hasUnits = units && units.length > 0;
 
     return (
-        <main>
-            <header>
+        <main className="flex flex-col space-y-4">
+            <header className="flex flex-col">
                 <h1>{language.flag} {language.name} ({language.native_name})</h1>
                 {language.level && <p>Language Level: {language.level}</p>}
                 <p>Language Score: {language.score.toFixed(1)}/100</p>
                 <p>Last Seen: {new Date(language.last_seen).toLocaleDateString()}</p>
                 {language.current_unit_id && <p>Current Unit ID: {language.current_unit_id}</p>}
-                <nav>
+                <nav className="flex flex-row space-x-4">
                     <NavButton path={`/languages/${language_id}/update`}>
                         <p>Update Language</p>
                     </NavButton>
                     <DeleteButton element_id={language_id}/>
                 </nav>
             </header>
-            <article>
+            <article className="flex flex-col space-y-4">
                 {
                     hasUnits && 
                     (
                         <section>
                             <h2>Units</h2>
-                            <ul>
+                            <ul className="flex flex-col space-y-2">
                                 {units.map((unit: Unit) => (
                                     <li key={unit.id}>
                                         <UnitOverviewCard unit={unit} />

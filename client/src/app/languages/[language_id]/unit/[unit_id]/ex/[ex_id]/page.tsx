@@ -35,17 +35,19 @@ export default async function ExercisePage( { params } : { params: { language_id
             {exercise.exercise_type === 'answering' && (
                 <AnsweringExercise exercise={ exercise } />
             )}
-            <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
-                <p>Update the Exercise</p>
-            </NavButton>
-            <DeleteButton
-                element_id={exercise.id}
-            >
-                <p>Delete Exercise</p>
-            </DeleteButton>
-            <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${next_ex_id}`}>
-                <p>Next Exercise</p>
-            </NavButton>
+            <nav className="flex flex-row space-x-4">
+                <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
+                    <p>Update the Exercise</p>
+                </NavButton>
+                <DeleteButton
+                    element_id={exercise.id}
+                >
+                    <p>Delete Exercise</p>
+                </DeleteButton>
+                <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${next_ex_id}`}>
+                    <p>Next Exercise</p>
+                </NavButton>
+            </nav>
         </main>
     )
 }

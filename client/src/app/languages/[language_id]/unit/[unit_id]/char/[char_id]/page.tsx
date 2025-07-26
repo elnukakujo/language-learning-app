@@ -27,10 +27,12 @@ export default async function CharacterPage({ params }: { params: paramsType }) 
                 <p>Score: {character.score?.toFixed(1)}/100</p>
                 <p>Last seen: {new Date(character.last_seen || 0).toLocaleDateString('en-US')}</p>
             </article>
-            <NavButton path={`/languages/${language_id}/unit/${unit_id}/char/${char_id}/update`}>
-                Update the informations
-            </NavButton>
-            <DeleteButton element_id={character.id} />
+            <nav className="flex flex-row space-x-4">
+                <NavButton path={`/languages/${language_id}/unit/${unit_id}/char/${char_id}/update`}>
+                    Update the informations
+                </NavButton>
+                <DeleteButton element_id={character.id} />
+            </nav>
         </main>
     );
 }

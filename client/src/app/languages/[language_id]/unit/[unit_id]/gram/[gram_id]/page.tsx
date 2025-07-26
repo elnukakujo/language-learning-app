@@ -21,13 +21,17 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
             <section>
                 <h1>{grammar.title}</h1>
                 <Markdown>{grammar.explanation}</Markdown>
-                <p>Score: {grammar.score.toFixed(1)}/100</p>
-                <p>Last seen: {new Date(grammar.last_seen).toLocaleDateString('en-US')}</p>
+                <p>Score: {grammar.score?.toFixed(1) || 0}/100</p>
+                <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>
             </section>
-            <NavButton path={updatePath}>
-                Update the informations
-            </NavButton>
-            <DeleteButton element_id={gram_id} />
+            <nav className="flex flex-row space-x-4">
+                <NavButton path={`/languages/${language_id}/unit/${unit_id}/gram/${gram_id}/update`}>
+                    Update the Grammar
+                </NavButton>
+                <DeleteButton element_id={grammar.id}>
+                    Delete Grammar
+                </DeleteButton>
+            </nav>
         </main>
     );
 }

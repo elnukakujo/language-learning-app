@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 
@@ -10,6 +10,27 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
     const [question, setQuestion] = useState<string>("")
     const [answer, setAnswer] = useState<string>("")
     const [textareaToDisplay, setTextareaToDisplay] = useState<Array<string>>([]);
+
+    const questionRef = useRef<HTMLTextAreaElement>(null);
+    const supportRef = useRef<HTMLTextAreaElement>(null);
+    const answerRef = useRef<HTMLTextAreaElement>(null);
+
+    function useAutoResize(
+          ref: React.RefObject<HTMLTextAreaElement | null>,
+          value: string
+        ) {
+      useEffect(() => {
+      const textarea = ref.current;
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+      }, [value, ref]);
+    }
+
+    useAutoResize(questionRef, question);
+    useAutoResize(supportRef, support);
+    useAutoResize(answerRef, answer);
 
     useEffect(() => {
       switch (exerciseType) {
@@ -78,6 +99,7 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
               Question
             </label>
             <textarea
+              ref={questionRef}
               id="question"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -92,6 +114,7 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
               Support
             </label>
             <textarea
+              ref={supportRef}
               id="support"
               value={support}
               onChange={(e) => setSupport(e.target.value)}
@@ -132,6 +155,7 @@ export default function CreateExerciseForm({ unit_id }: { unit_id: string }) {
               </div>)
               :
               <textarea
+                ref={answerRef}
                 id="answer"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}

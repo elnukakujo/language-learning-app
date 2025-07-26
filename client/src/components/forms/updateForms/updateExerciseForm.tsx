@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Exercise from "@/interface/Exercise";
@@ -12,6 +12,27 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId }: { exer
 
     const [unitId, setUnitId] = useState<string>(exercise.unit_id);
 
+    const questionRef = useRef<HTMLTextAreaElement>(null);
+    const supportRef = useRef<HTMLTextAreaElement>(null);
+    const answerRef = useRef<HTMLTextAreaElement>(null);
+
+    function useAutoResize(
+          ref: React.RefObject<HTMLTextAreaElement | null>,
+          value: string
+        ) {
+      useEffect(() => {
+      const textarea = ref.current;
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+      }, [value, ref]);
+    }
+
+    useAutoResize(questionRef, question);
+    useAutoResize(supportRef, support);
+    useAutoResize(answerRef, answer);
+
     return (
       <form className="flex flex-col space-y-4">
           <div className="flex flex-col space-y-2 h-fit">
@@ -22,6 +43,7 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId }: { exer
                         {["Question*", "Support", "Answer*"][index]}
                     </label>
                     <textarea
+                        ref={index === 0 ? questionRef : index === 1 ? supportRef : answerRef}
                         value={value}
                         onChange={(e) => {
                             const newValue = e.target.value;

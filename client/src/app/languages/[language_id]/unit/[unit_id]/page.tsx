@@ -53,7 +53,7 @@ export default async function Unit({ params }: { params: { language_id: string, 
                 <p>{unit.description}</p>
                 <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
                 <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
-                <nav>
+                <nav className="flex flex-row space-x-4">
                     <NavButton path={`/languages/${language_id}/unit/${unit_id}/update`}>
                         <p>Update this Unit Informations</p>
                     </NavButton>
