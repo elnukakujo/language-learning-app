@@ -40,11 +40,13 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
             >
                 <p>Add New Vocabulary</p>
             </NavButton>
-            {vocProps.items.length > 0 && <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/voc/${vocProps.items[0]?.id}/flashcard`}
+            <NavButton
+                path={`/languages/${language_id}/unit/${unit_id}/voc/${
+                    vocProps.items[Math.floor(Math.random() * vocProps.items.length)].id
+                }/flashcard`}
             >
                 <p>Flashcard Practice</p>
-            </NavButton>}
+            </NavButton>
         </section>
     );
 }

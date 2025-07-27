@@ -1,11 +1,9 @@
 from datetime import date
-from fileinput import filename
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func
-from datetime import datetime
 import random
 from fastapi import UploadFile, File, HTTPException
 
@@ -36,6 +34,7 @@ IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 def get_random(element_id: str):
     _, session = init_db()
     unit_id = "_".join(element_id.split("_")[:2])  # Extract the unit_id from the element_id
+    print(element_id)
 
     element_type = str_to_modelclass(element_id)
 
@@ -43,8 +42,7 @@ def get_random(element_id: str):
     elements = session.query(element_type).filter(element_type.id != element_id).filter(element_type.unit_id == unit_id, element_type.score == lowest_score).all()
 
     if not elements:
-        session.close()
-        return {"error": f"No elements found for unit {unit_id}."}
+        elements = session.query(element_type).filter(element_type.unit_id == unit_id).filter(element_type.id != element_id).all()
 
     next_element = random.choice(elements)
 
@@ -202,27 +200,34 @@ def score_update(data: UpdateScoreRequest):
 
     new_score = update_score(score=element.score, last_seen=element.last_seen, success=data.success)
 
-    associated_voc = session.query(Vocabulary).filter(Vocabulary.id.in_(element.associated_to.get("vocabulary", []))).all()
-    associated_char = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.id.in_(element.associated_to.get("characters", []))).all()
-    associated_gram = session.query(GrammarRule).filter(GrammarRule.id.in_(element.associated_to.get("grammar", []))).all()
-    print(associated_char, associated_voc, associated_gram)
+    if element_type == Exercise:
+        associated_voc = session.query(Vocabulary).filter(Vocabulary.id.in_(element.associated_to.get("vocabulary", []))).all()
+        associated_char = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.id.in_(element.associated_to.get("characters", []))).all()
+        associated_gram = session.query(GrammarRule).filter(GrammarRule.id.in_(element.associated_to.get("grammar", []))).all()
+        print(associated_char, associated_voc, associated_gram)
 
-    for associated_element in associated_voc + associated_char + associated_gram:
-        associated_element.score = update_score(score=associated_element.score, last_seen=associated_element.last_seen, success=data.success)
-        modify(session, associated_element)
+        for associated_element in associated_voc + associated_char + associated_gram:
+            associated_element.score = update_score(score=associated_element.score, last_seen=associated_element.last_seen, success=data.success)
+            modify(session, associated_element)
 
-    # In case an associated element has been deleted, we need to update the associated_to field
-    if len(associated_voc) < len(element.associated_to.get("vocabulary", [])) or len(associated_char) < len(element.associated_to.get("characters", [])) or len(associated_gram) < len(element.associated_to.get("grammar", [])):
-        updated_element = element_type(
-            id=element.id,
-            score=new_score,
-            last_seen=date.today(),
-            associated_to= {
-                "vocabulary": [v.id for v in associated_voc],
-                "characters": [c.id for c in associated_char],
-                "grammar": [g.id for g in associated_gram]
-            }
-        )
+        # In case an associated element has been deleted, we need to update the associated_to field
+        if len(associated_voc) < len(element.associated_to.get("vocabulary", [])) or len(associated_char) < len(element.associated_to.get("characters", [])) or len(associated_gram) < len(element.associated_to.get("grammar", [])):
+            updated_element = element_type(
+                id=element.id,
+                score=new_score,
+                last_seen=date.today(),
+                associated_to= {
+                    "vocabulary": [v.id for v in associated_voc],
+                    "characters": [c.id for c in associated_char],
+                    "grammar": [g.id for g in associated_gram]
+                }
+            )
+        else:
+            updated_element = element_type(
+                id=element.id,
+                score=new_score,
+                last_seen=date.today()
+            )
     else:
         updated_element = element_type(
             id=element.id,
@@ -231,7 +236,7 @@ def score_update(data: UpdateScoreRequest):
         )
 
     updated_element = modify(session, updated_element)
-    print(f"Updated element {updated_element.id} with new score: {updated_element.score}, and associated elements: {updated_element.associated_to}")
+    print(f"Updated element {updated_element.id} with new score: {updated_element.score}")
 
     average_vocab_score = session.query(func.avg(Vocabulary.score)).filter(Vocabulary.unit_id == updated_element.unit_id).scalar()
     average_char_score = session.query(func.avg(CalligraphyCharacter.score)).filter(CalligraphyCharacter.unit_id == updated_element.unit_id).scalar()

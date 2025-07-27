@@ -13,9 +13,8 @@ export default function VocabularyFlashCard({ vocabulary }: { vocabulary: Vocabu
     };
     return (
         <div className="flashcard">
-            <h2>{vocabulary.word}</h2>
-            <p>{vocabulary.phonetic}</p>
-            <p >{vocabulary.example_sentence}</p>
+            <h2>{vocabulary.word}{vocabulary.phonetic && ` (${vocabulary.phonetic})`}</h2>
+            <p>{vocabulary.example_sentence}</p>
             {!showAnswer && <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                 Show Answer
             </button>}
