@@ -11,7 +11,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const wordsToOrganize = support.split('/').map(word => normalize(word));
+    const wordsToOrganize = question.split('/').map(word => normalize(word));
     const [userAnswer, setUserAnswer] = useState<string[]>([]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -30,7 +30,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            {question && <h3>{question}</h3>}
+            <h3>Organize the following word/characters sequence</h3>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import Exercise from "@/interface/Exercise";
 
-import { updateScoreById } from "@/api";
+import { updateScoreById, getElementbyId } from "@/api";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const { question, support = '', answer } = exercise;
@@ -13,6 +13,8 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [userAnswer, setUserAnswer] = useState<boolean>(true);
+
+    
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,6 +30,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     return (
         <form className="flex flex-col space-y-4">
+            <h3>Answer with true or false to the following statement:</h3>
             {question && (
                 <h3>{question}</h3>
             )}

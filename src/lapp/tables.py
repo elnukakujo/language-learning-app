@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .dbms import Base
 from datetime import date
@@ -109,6 +109,7 @@ class Exercise(Base):
     answer = Column(String)
     score = Column(Integer, default=0)  # e.g., how much the exercise has been practiced
     last_seen = Column(Date, default=date.today)  # e.g., when the exercise was last seen
+    associated_to = Column(JSON, default={})
 
     parent: Mapped["Unit"] = relationship("Unit", back_populates="exercises")
     unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))

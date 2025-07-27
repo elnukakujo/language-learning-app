@@ -7,4 +7,5 @@ export default interface Exercise {
     score?: number;
     last_seen?: Date;
     unit_id: string;
+    associated_to?: { [key: string]: string[] };
 };

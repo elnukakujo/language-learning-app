@@ -132,6 +132,7 @@ def update_by_id(data: UpdatebyIdRequest):
 @app.post("/new_element")
 def new_element(data: NewElementRequest):
     # Initialise la base de données pour la langue spécifiée et crée une session
+    print(data)
     _, session = init_db()
 
     # Récupère l'ID de l'unité au format "ZH_1"
@@ -190,14 +191,36 @@ def score_update(data: UpdateScoreRequest):
 
     new_score = update_score(score=element.score, last_seen=element.last_seen, success=data.success)
 
-    updated_element = element_type(
-        id=element.id,
-        score=new_score,
-        last_seen=date.today()
-    )
+    associated_voc = session.query(Vocabulary).filter(Vocabulary.id.in_(element.associated_to.get("vocabulary", []))).all()
+    associated_char = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.id.in_(element.associated_to.get("characters", []))).all()
+    associated_gram = session.query(GrammarRule).filter(GrammarRule.id.in_(element.associated_to.get("grammar", []))).all()
+    print(associated_char, associated_voc, associated_gram)
+
+    for associated_element in associated_voc + associated_char + associated_gram:
+        associated_element.score = update_score(score=associated_element.score, last_seen=associated_element.last_seen, success=data.success)
+        modify(session, associated_element)
+
+    # In case an associated element has been deleted, we need to update the associated_to field
+    if len(associated_voc) < len(element.associated_to.get("vocabulary", [])) or len(associated_char) < len(element.associated_to.get("characters", [])) or len(associated_gram) < len(element.associated_to.get("grammar", [])):
+        updated_element = element_type(
+            id=element.id,
+            score=new_score,
+            last_seen=date.today(),
+            associated_to= {
+                "vocabulary": [v.id for v in associated_voc],
+                "characters": [c.id for c in associated_char],
+                "grammar": [g.id for g in associated_gram]
+            }
+        )
+    else:
+        updated_element = element_type(
+            id=element.id,
+            score=new_score,
+            last_seen=date.today()
+        )
 
     updated_element = modify(session, updated_element)
-    print(f"Updated element {updated_element.id} with new score: {updated_element.score}")
+    print(f"Updated element {updated_element.id} with new score: {updated_element.score}, and associated elements: {updated_element.associated_to}")
 
     average_vocab_score = session.query(func.avg(Vocabulary.score)).filter(Vocabulary.unit_id == updated_element.unit_id).scalar()
     average_char_score = session.query(func.avg(CalligraphyCharacter.score)).filter(CalligraphyCharacter.unit_id == updated_element.unit_id).scalar()
@@ -356,15 +379,6 @@ def exercises_overview(unit_id: str):
 
 @app.get("/exercise/next/{ex_id}")
 def next_exercise(ex_id: str):
-    """
-    Returns the next exercise for a given unit.
-    
-    Parameters:
-        unit_id (str): The ID of the unit to fetch the next exercise for.
-    
-    Returns:
-        dict: A dictionary representation of the next exercise, or an error message if not found.
-    """
     _, session = init_db()
     unit_id = "_".join(ex_id.split("_")[:2])  # Extract the unit_id from the ex_id
 

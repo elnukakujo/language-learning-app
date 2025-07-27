@@ -15,8 +15,13 @@ export default async function ExercisePage( { params } : { params: { language_id
 
     const exercise: Exercise = await getElementbyId(ex_id);
     const next_ex_id: string = await getNext(ex_id);
+
+    const voc_associated = await Promise.all(exercise.associated_to?.vocabulary.map(id => getElementbyId(id)) || []);
+    const char_associated = await Promise.all(exercise.associated_to?.characters.map(id => getElementbyId(id)) || []);
+    const gram_associated = await Promise.all(exercise.associated_to?.grammar.map(id => getElementbyId(id)) || []);
+
     return(
-        <main>
+        <main className="flex flex-col space-y-4">
             {exercise.exercise_type === 'fill-in-the-blank' && (
                 <FillInTheBlankExercise exercise={exercise} />
             )}
@@ -34,6 +39,40 @@ export default async function ExercisePage( { params } : { params: { language_id
             )}
             {exercise.exercise_type === 'answering' && (
                 <AnsweringExercise exercise={ exercise } />
+            )}
+            {exercise.associated_to && (
+                <div>
+                    {voc_associated && voc_associated.length > 0 && (
+                        <div>
+                            <p className="font-medium">Associated to the following vocabulary:</p>
+                            <ul>
+                                {voc_associated.map((item, index) => (
+                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.word} — {item.translation}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {gram_associated && gram_associated.length > 0 && (
+                        <div>
+                            <p className="font-medium">Associated to the following grammar:</p>
+                            <ul>
+                                {gram_associated.map((item, index) => (
+                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.title}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {char_associated && char_associated.length > 0 && (
+                        <div>
+                            <p className="font-medium">Associated to the following characters:</p>
+                            <ul>
+                                {char_associated.map((item, index) => (
+                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.character} - {item.meaning}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
             )}
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>

@@ -61,6 +61,7 @@ class ExerciseDict(BaseModel):
     answer: str
     score: Optional[float] = 0.0
     last_seen: Optional[date] = date.today()
+    associated_to: Optional[dict[str, list[str]]] = None  # e.g., {"vocabulary": ["id1", "id2"], "grammar": ["id3"], "characters": ["id4"]}
 
 class RandomRequest(BaseModel):
     language_id: str

@@ -31,9 +31,8 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     return (
         <form className="flex flex-col space-y-4">
-            {question && (
-                <h3>{question}</h3>
-            )}
+            <h3>Translate the following sentence</h3>
+            <p>{question}</p>
             {support && (
                 <p>{support}</p>
             )}

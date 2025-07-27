@@ -21,7 +21,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
     // Split support text using double underscore as blank markers
-    const parts = support.split('__');
+    const parts = question.split('__');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,9 +45,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
 
   return (
     <form className="flex flex-col space-y-4">
-        {question && (
-            <h3>{question}</h3>
-        )}
+        <h3>Fill in the blanks</h3>
         <p>
           {parts.map((part, index) => (
             <span key={index}>
