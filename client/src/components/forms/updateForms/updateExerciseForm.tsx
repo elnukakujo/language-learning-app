@@ -5,6 +5,8 @@ import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Exercise from "@/interface/Exercise";
 
+import ImageLoader from "@/components/imageLoader";
+
 interface UnitElements {
     vocabulary: {
         items: Array<{
@@ -33,9 +35,11 @@ interface UnitElements {
 
 export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElements }: { exercise: Exercise, existingUnitsId: string[], unitElements: UnitElements }) {
     const [question, setQuestion] = useState<string>(exercise.question);
-    const [support, setSupport] = useState<string>(exercise.support || '');
     const [answer, setAnswer] = useState<string>(exercise.answer);
 
+    const [supportText, setSupportText] = useState<string>(exercise.support?.replace(/<image_url>.*?<\/image_url>/, '').trim() || "");
+    const [imageUrl, setImageUrl] = useState<string | null>(exercise.support?.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null);
+    
     const [unitId, setUnitId] = useState<string>(exercise.unit_id);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.associated_to?.vocabulary || []);
@@ -64,31 +68,61 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
     }
 
     useAutoResize(questionRef, question);
-    useAutoResize(supportRef, support);
+    useAutoResize(supportRef, supportText);
     useAutoResize(answerRef, answer);
 
     return (
       <form className="flex flex-col space-y-4">
         <section className="flex flex-col space-y-2 h-fit">
           <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
-          {[question, support, answer].map((value, index) => (
-              <div key={index}>
-                  <label htmlFor={`field-${index}`} key={index}>
-                      {["Question*", "Support", "Answer*"][index]}
-                  </label>
-                  <textarea
-                      ref={index === 0 ? questionRef : index === 1 ? supportRef : answerRef}
-                      value={value}
-                      onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (index === 0) setQuestion(newValue);
-                          if (index === 1) setSupport(newValue);
-                          if (index === 2) setAnswer(newValue);
-                      }}
-                      className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
-                  />
-              </div>
-            ))}
+          <article>
+            <label htmlFor="">
+              Question
+            </label>
+            <textarea
+                ref={questionRef}
+                value={question}
+                onChange={(e) => {
+                    const newValue = e.target.value;
+                    setQuestion(newValue);
+                }}
+                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+            />
+          </article>
+          <article>
+            <label htmlFor="">
+              Support
+            </label>
+            <textarea
+                ref={supportRef}
+                value={supportText}
+                onChange={(e) => {
+                    const newValue = e.target.value;
+                    setSupportText(newValue);
+                }}
+                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+            />
+            <ImageLoader
+              previewUrl={imageUrl}
+              setPreviewUrl={(url) => {
+                setImageUrl(url);
+              }}
+            />
+          </article>
+          <article>
+            <label htmlFor="">
+              Answer
+            </label>
+            <textarea
+                ref={answerRef}
+                value={answer}
+                onChange={(e) => {
+                    const newValue = e.target.value;
+                    setAnswer(newValue);
+                }}
+                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+            />
+          </article>
         </section>
         <section>
           <label className="block text-sm font-medium text-gray-700">
@@ -194,7 +228,7 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
               id: exercise.id,
               exercise_type: exercise.exercise_type,
               question: question,
-              support: support,
+              support: supportText + (imageUrl ? `\n<image_url>${imageUrl}</image_url>` : ''),
               answer: answer,
               score: exercise.score,
               last_seen: exercise.last_seen,

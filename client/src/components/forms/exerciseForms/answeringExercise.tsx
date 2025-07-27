@@ -1,19 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import Image from 'next/image';
 
 import type Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
 
 export default function AnsweringExercise({ exercise }: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
+
+    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [showCorrection, setShowCorrection] = useState<boolean>(false);
 
     return (
         <form className="flex flex-col space-y-4">
             {question && <h3>{question}</h3>}
-            {support && <p>{support}</p>}
+            {support && (
+                <>
+                    {supportText && <p>{supportText}</p>}
+                    {imageUrl && 
+                        <Image 
+                            src={imageUrl} 
+                            alt="Support" 
+                            className="mt-2" 
+                            width={300}
+                            height={300}
+                        />}
+                </> 
+            )}
             <textarea
                 name="user-answer"
                 value={userAnswer}

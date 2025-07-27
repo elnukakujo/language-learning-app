@@ -45,7 +45,7 @@ export default async function ExercisePage( { params } : { params: { language_id
                     {voc_associated && voc_associated.length > 0 && (
                         <div>
                             <p className="font-medium">Associated to the following vocabulary:</p>
-                            <ul>
+                            <ul className="flex flex-row flex-wrap gap-2">
                                 {voc_associated.map((item, index) => (
                                     <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.word} — {item.translation}</li>
                                 ))}
@@ -55,7 +55,7 @@ export default async function ExercisePage( { params } : { params: { language_id
                     {gram_associated && gram_associated.length > 0 && (
                         <div>
                             <p className="font-medium">Associated to the following grammar:</p>
-                            <ul>
+                            <ul className="flex flex-row flex-wrap gap-2">
                                 {gram_associated.map((item, index) => (
                                     <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.title}</li>
                                 ))}
@@ -65,7 +65,7 @@ export default async function ExercisePage( { params } : { params: { language_id
                     {char_associated && char_associated.length > 0 && (
                         <div>
                             <p className="font-medium">Associated to the following characters:</p>
-                            <ul>
+                            <ul className="flex flex-row flex-wrap gap-2">
                                 {char_associated.map((item, index) => (
                                     <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.character} - {item.meaning}</li>
                                 ))}

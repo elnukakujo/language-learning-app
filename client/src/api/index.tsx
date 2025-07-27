@@ -110,3 +110,25 @@ export async function getNext(element_id: string) {
   if (!res.ok) throw new Error("Failed to get next element");
   return res.json();
 }
+
+export async function uploadImage(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);  // Changed from 'image' to 'file'
+
+  try {
+    const res = await fetch(`${BASE_URL}/upload_image`, {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header - let the browser set it automatically
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || 'Failed to upload image');
+    }
+    return await res.json();
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+}

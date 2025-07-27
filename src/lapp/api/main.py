@@ -1,15 +1,19 @@
 from datetime import date
-from pyexpat import model
+from fileinput import filename
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-
+from sqlalchemy import func
+from datetime import datetime
 import random
+from fastapi import UploadFile, File, HTTPException
 
 from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest, VocabularyDict, GrammarRuleDict, CalligraphyCharacterDict, ExerciseDict, UnitDict, LanguageDict
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_id
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
-from sqlalchemy import func
+import os
 
 app = FastAPI()
 
@@ -20,6 +24,13 @@ app.add_middleware(
     allow_methods=["*"],  # Or ["POST"] if you want to restrict
     allow_headers=["*"],
 )
+
+
+REPO_ROOT = Path(__file__).parent.parent.parent.parent
+app.mount("/assets", StaticFiles(directory=REPO_ROOT / "assets"), name="assets")
+
+IMAGE_DIR = REPO_ROOT / "assets" / "images"
+IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 @app.get("/next/{element_id}")
 def get_random(element_id: str):
@@ -396,3 +407,24 @@ def next_exercise(ex_id: str):
     session.close()
 
     return result["id"]
+
+@app.post("/upload_image")
+async def upload_image(file: UploadFile = File(...)):
+    try:
+        # Generate unique filename with original extension
+        file_ext = file.filename.split('.')[-1]
+        file_name = f"{file.filename.split('.')[0]}.{file_ext}"
+        file_path = IMAGE_DIR / file_name
+        
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return {
+            "file_url": f"/assets/images/{file_name}",  # URL path
+            "file_path": str(file_path),  # Physical path (for reference)
+            "message": "Image uploaded successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

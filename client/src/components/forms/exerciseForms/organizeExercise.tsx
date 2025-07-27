@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Image from 'next/image';
+
 import Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
+
+    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
@@ -45,6 +51,19 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             </button>
                         ))}
                     </div>
+                    {support && (
+                        <>
+                            {supportText && <p>{supportText}</p>}
+                            {imageUrl && 
+                                <Image 
+                                    src={imageUrl} 
+                                    alt="Support" 
+                                    className="mt-2" 
+                                    width={300}
+                                    height={300}
+                                />}
+                        </> 
+                    )}
                     <label htmlFor="userAnswer">Your Answer:</label>
                     <div className="flex flex-wrap space-x-2">
                         {userAnswer.map((word, index) => (

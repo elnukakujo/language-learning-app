@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Image from 'next/image';
 
 import Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const { question, support = '', answer } = exercise;
+    
+    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -34,7 +39,17 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             <h3>Translate the following sentence</h3>
             <p>{question}</p>
             {support && (
-                <p>{support}</p>
+                <>
+                    {supportText && <p>{supportText}</p>}
+                    {imageUrl && 
+                        <Image 
+                            src={imageUrl} 
+                            alt="Support" 
+                            className="mt-2" 
+                            width={300}
+                            height={300}
+                        />}
+                </> 
             )}
             <textarea 
                 name="user-answer"

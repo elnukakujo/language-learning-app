@@ -3,10 +3,14 @@
 import { updateScoreById } from "@/api";
 import type Exercise from "@/interface/Exercise";
 import { useState } from "react";
+import Image from 'next/image';
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
   
     // Parse answer with double underscore separator
     const correctAnswers = answer.split('__').map(a => a.trim()).filter(Boolean);
@@ -46,6 +50,21 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
   return (
     <form className="flex flex-col space-y-4">
         <h3>Fill in the blanks</h3>
+
+        {support && (
+            <>
+                {supportText && <p>{supportText}</p>}
+                {imageUrl && 
+                    <Image 
+                        src={imageUrl} 
+                        alt="Support" 
+                        className="mt-2" 
+                        width={300}
+                        height={300}
+                    />}
+            </> 
+        )}
+
         <p>
           {parts.map((part, index) => (
             <span key={index}>

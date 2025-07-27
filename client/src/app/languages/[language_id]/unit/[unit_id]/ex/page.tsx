@@ -28,6 +28,7 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                             {exercises.map((exercise, index) => (
                                 <li key={index}>
                                     <Markdown>{exercise.question}</Markdown>
+                                    <p>Score: {exercise.score?.toFixed(2)}/100</p>
                                     <nav className="flex flex-row space-x-2">
                                         <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>
                                             <p>Practice this Exercise</p>

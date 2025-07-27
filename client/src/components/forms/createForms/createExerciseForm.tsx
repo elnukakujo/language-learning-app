@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import ImageLoader from "@/components/imageLoader";
 
 interface UnitElements {
     vocabulary: {
@@ -35,6 +36,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     const [support, setSupport] = useState<string>("")
     const [question, setQuestion] = useState<string>("")
     const [answer, setAnswer] = useState<string>("")
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>([]);
     const [charAssociated, setCharAssociated] = useState<string[]>([]);
@@ -146,6 +148,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
                 className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
                 required
               />
+              <ImageLoader previewUrl={imageUrl} setPreviewUrl={setImageUrl} />
             </section>
             <section>
               <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
@@ -290,7 +293,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
                   id: "",
                   exercise_type: exerciseType,
                   question: question,
-                  support: support,
+                  support: support+"\n<image_url>"+imageUrl+"</image_url>",
                   answer: answer,
                   score: 0.0,
                   last_seen: new Date,
