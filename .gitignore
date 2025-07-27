@@ -8,4 +8,7 @@ venv/
 .vscode/
 __pycache__/
 
+assets/images/*
+assets/audio/*
+
 .env
