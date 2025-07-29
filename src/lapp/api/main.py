@@ -39,7 +39,13 @@ def get_random(element_id: str):
     element_type = str_to_modelclass(element_id)
 
     lowest_score = session.query(func.min(element_type.score)).filter(element_type.unit_id == unit_id).scalar()
-    elements = session.query(element_type).filter(element_type.id != element_id).filter(element_type.unit_id == unit_id, element_type.score == lowest_score).all()
+    threshold = 2  # adjust threshold as needed
+    elements = session.query(element_type).filter(
+        element_type.id != element_id,
+        element_type.unit_id == unit_id,
+        element_type.score >= lowest_score,
+        element_type.score <= lowest_score + threshold
+    ).all()
 
     if not elements:
         elements = session.query(element_type).filter(element_type.unit_id == unit_id).filter(element_type.id != element_id).all()
