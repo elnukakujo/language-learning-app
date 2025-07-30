@@ -2,6 +2,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import shutil
+import os
 
 # Use absolute paths to avoid issues from different working directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -17,10 +18,11 @@ def restore_sqlite():
     if not backup_files:
         print(f"[Restore] No backups found in {BACKUP_DIR}. Restore skipped.")
         return
-    elif len(backup_files) > 10:
+    elif len(backup_files) > 20:
         # If more than 10 backups, delete the oldest one
         oldest_backup = min(backup_files, key=lambda f: f.stat().st_ctime)
         oldest_backup.unlink()
+        os.remove(oldest_backup)
 
     latest_backup = max(backup_files, key=lambda f: f.stat().st_ctime)
     shutil.copy(latest_backup, DB_PATH)

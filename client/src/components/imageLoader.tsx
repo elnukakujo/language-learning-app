@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useRef, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { uploadImage } from "@/api";
 
@@ -53,8 +53,8 @@ export default function ImageLoader({ previewUrl, setPreviewUrl }: ImageLoaderPr
           </button>
         )}
       </div>
-      
-      {previewUrl && (
+
+      {previewUrl && previewUrl !== null && (
         <div className="mt-4 relative h-48 w-full">
           <Image
             src={previewUrl}

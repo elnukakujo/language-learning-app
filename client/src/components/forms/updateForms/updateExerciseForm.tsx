@@ -40,6 +40,10 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
     const [supportText, setSupportText] = useState<string>(exercise.support?.replace(/<image_url>.*?<\/image_url>/, '').trim() || "");
     const [imageUrl, setImageUrl] = useState<string | null>(exercise.support?.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null);
     
+    if (imageUrl === "null") {
+      setImageUrl(null);
+    }
+
     const [unitId, setUnitId] = useState<string>(exercise.unit_id);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.associated_to?.vocabulary || []);

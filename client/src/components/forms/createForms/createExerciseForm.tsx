@@ -33,9 +33,9 @@ interface UnitElements {
 
 export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id: string, unitElements: UnitElements }) {
     const [exerciseType, setExerciseType] = useState<string>("")
-    const [support, setSupport] = useState<string>("")
     const [question, setQuestion] = useState<string>("")
     const [answer, setAnswer] = useState<string>("")
+    const [supportText, setSupportText] = useState<string>("")
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>([]);
@@ -64,44 +64,44 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     }
 
     useAutoResize(questionRef, question);
-    useAutoResize(supportRef, support);
+    useAutoResize(supportRef, supportText);
     useAutoResize(answerRef, answer);
 
     useEffect(() => {
       switch (exerciseType) {
         case "translate":
           setQuestion("-- A sentence to translate --");
-          setSupport("");
+          setSupportText("");
           setAnswer("-- The translation --");
           break;
         case "fill-in-the-blank":
           setQuestion("-- The house is __ and __. --");
-          setSupport("");
+          setSupportText("");
           setAnswer("-- big__small --");
           break;
         case "essay":
           setQuestion("-- Write here some requirements about the essay, and details --");
-          setSupport("");
+          setSupportText("");
           setAnswer("-- Some helps and tips to write the essay --");
           break;
         case "true-false":
           setQuestion("-- A statement to evaluate --");
-          setSupport("");
+          setSupportText("");
           setAnswer("true");
           break;
         case "organize":
           setQuestion("-- My/house/small/purple/and/is --");
-          setSupport("");
+          setSupportText("");
           setAnswer("-- My house is small and purple --");
           break;
         case "answering":
           setQuestion("-- A question to answer --");
-          setSupport("");
+          setSupportText("");
           setAnswer("-- The answer to the question --");
           break;
         default:
           setQuestion("");
-          setSupport("");
+          setSupportText("");
           setAnswer("");
           break;
       }
@@ -143,8 +143,8 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               <textarea
                 ref={supportRef}
                 id="support"
-                value={support}
-                onChange={(e) => setSupport(e.target.value)}
+                value={supportText}
+                onChange={(e) => setSupportText(e.target.value)}
                 className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
                 required
               />
@@ -293,7 +293,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
                   id: "",
                   exercise_type: exerciseType,
                   question: question,
-                  support: support+"\n<image_url>"+imageUrl+"</image_url>",
+                  support: supportText + (imageUrl ? "\n<image_url>"+imageUrl+"</image_url>" : ""),
                   answer: answer,
                   score: 0.0,
                   last_seen: new Date,
