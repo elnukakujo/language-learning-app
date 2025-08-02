@@ -29,11 +29,6 @@ def init_db() -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]
     """
     db_path = Path(__file__).resolve().parent.parent.parent / "db" / "languages.db"
 
-    if db_path.exists():
-        logger.info(f"Found existing database {db_path.name}.")
-    else:
-        logger.info(f"Creating new database {db_path.name}.")
-
     DATABASE_URL = f"sqlite:///{db_path}"  # Absolute path
 
     engine = create_engine(DATABASE_URL)
@@ -41,7 +36,6 @@ def init_db() -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]
     session = session()
 
     Base.metadata.create_all(engine)
-    logger.info(f"Database languages.db initialized successfully.")
 
     return engine, session
 

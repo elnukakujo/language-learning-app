@@ -8,6 +8,7 @@ type CharactersProps = {
         id: string;
         character: string;
         meaning: string;
+        score: number;
     }>;
     count: number;
 };
@@ -19,9 +20,20 @@ export default function CharacterList({ charProps}: { charProps: CharactersProps
     const handleClick = (id: string) => {
         router.push(`/languages/${language_id}/unit/${unit_id}/char/${id}`);
     };
+
+    const averageScore = charProps.items.reduce((acc, item) => acc + item.score, 0) / charProps.count;
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
-            <h2>Characters</h2>
+            <header>
+                <h2>Characters</h2>
+                {charProps.count > 0 && (
+                    <>
+                        <p>Total: {charProps.count}</p>
+                        <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                    </>
+                )}
+            </header>
             {charProps.count === 0 ? <p>Empty</p> :
                 <ul className="list-item pl-5 space-y-1">
                     {charProps.items.map((item, index) => (

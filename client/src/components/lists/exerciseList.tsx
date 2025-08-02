@@ -7,6 +7,7 @@ type ExerciseProps = {
     items: Array<{
         type: string;
         count: number;
+        score: number;
     }>;
     count: number;
 }
@@ -17,9 +18,20 @@ export default function ExerciseList({ exProps}: { exProps: ExerciseProps}) {
     const handleClick = () => {
         router.push(`/languages/${language_id}/unit/${unit_id}/ex`)
     }
+
+    const averageScore = exProps.items.reduce((acc, item) => acc + item.score, 0) / exProps.items.length;
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
-            <h2>Exercises</h2>
+            <header>
+                <h2>Exercises</h2>
+                {exProps.count > 0 && (
+                    <>
+                        <p>Total: {exProps.count}</p>
+                        <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                    </>
+                )}
+            </header>
             {exProps.count === 0 ? <p>Empty</p> :
                 <ul className="list-item pl-5 space-y-1">
                     {exProps.items.map((item, index) => (

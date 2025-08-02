@@ -7,11 +7,14 @@ from sqlalchemy import func
 import random
 from fastapi import UploadFile, File, HTTPException
 
-from lapp.api.models import RandomRequest, UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest, VocabularyDict, GrammarRuleDict, CalligraphyCharacterDict, ExerciseDict, UnitDict, LanguageDict
+from lapp.api.models import UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest
 from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_id
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
-import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -34,7 +37,6 @@ IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 def get_random(element_id: str):
     _, session = init_db()
     unit_id = "_".join(element_id.split("_")[:2])  # Extract the unit_id from the element_id
-    print(element_id)
 
     element_type = str_to_modelclass(element_id)
 
@@ -51,6 +53,7 @@ def get_random(element_id: str):
         elements = session.query(element_type).filter(element_type.unit_id == unit_id).filter(element_type.id != element_id).all()
 
     next_element = random.choice(elements)
+    logger.info(f"Found next element for element_id: {element_id} in unit_id: {unit_id}: {next_element.id}")
 
     result = orm_to_dict(next_element)
 
@@ -133,8 +136,6 @@ def update_by_id(data: UpdatebyIdRequest):
     if "unit_id" in data.updates and data.updates["unit_id"] != element.unit_id:
         data.updates["id"] = f'{data.updates["unit_id"]}_{element_type.__name__[0].upper()}'+str(generate_new_id(session, unit_id=data.updates["unit_id"], model_class=element_type))
 
-    print(data.updates)
-
     for key, value in data.updates.items():
         setattr(element, key, value)
     
@@ -147,7 +148,6 @@ def update_by_id(data: UpdatebyIdRequest):
 @app.post("/new_element")
 def new_element(data: NewElementRequest):
     # Initialise la base de données pour la langue spécifiée et crée une session
-    print(data)
     _, session = init_db()
 
     # Récupère l'ID de l'unité au format "ZH_1"
@@ -205,12 +205,12 @@ def score_update(data: UpdateScoreRequest):
         return {"error": "Element not found."}
 
     new_score = update_score(score=element.score, last_seen=element.last_seen, success=data.success)
+    logger.info(f"Updating score for element {data.element_id} of type {element_type.__name__}: new score is {new_score}")
 
     if element_type == Exercise:
         associated_voc = session.query(Vocabulary).filter(Vocabulary.id.in_(element.associated_to.get("vocabulary", []))).all()
         associated_char = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.id.in_(element.associated_to.get("characters", []))).all()
         associated_gram = session.query(GrammarRule).filter(GrammarRule.id.in_(element.associated_to.get("grammar", []))).all()
-        print(associated_char, associated_voc, associated_gram)
 
         for associated_element in associated_voc + associated_char + associated_gram:
             associated_element.score = update_score(score=associated_element.score, last_seen=associated_element.last_seen, success=data.success)
@@ -242,12 +242,10 @@ def score_update(data: UpdateScoreRequest):
         )
 
     updated_element = modify(session, updated_element)
-    print(f"Updated element {updated_element.id} with new score: {updated_element.score}")
 
     average_vocab_score = session.query(func.avg(Vocabulary.score)).filter(Vocabulary.unit_id == updated_element.unit_id).scalar()
     average_char_score = session.query(func.avg(CalligraphyCharacter.score)).filter(CalligraphyCharacter.unit_id == updated_element.unit_id).scalar()
     average_exercise_score = session.query(func.avg(Exercise.score)).filter(Exercise.unit_id == updated_element.unit_id).scalar()
-    print(f"Average scores: vocab={average_vocab_score}, char={average_char_score}, exercise={average_exercise_score}")
 
     scores = [s for s in (average_vocab_score, average_char_score, average_exercise_score) if s is not None]
     average_score = sum(scores) / len(scores) if scores else None
@@ -263,7 +261,6 @@ def score_update(data: UpdateScoreRequest):
         last_seen = date.today()
     )
     updated_unit = modify(session, updated_unit)
-    print(f"Updated unit with average score: {updated_unit.score}")
 
     average_unit_score = session.query(func.avg(Unit.score)).filter(Unit.language_id == updated_unit.language_id).scalar()
 
@@ -279,7 +276,6 @@ def score_update(data: UpdateScoreRequest):
     )
 
     updated_language = modify(session, updated_language)
-    print(f"Updated language with average score: {updated_language.score}")
 
     result = orm_to_dict(updated_element)
     session.close()
@@ -361,28 +357,32 @@ def unit_details(unit_id: str):
     characters = session.query(CalligraphyCharacter).filter(CalligraphyCharacter.unit_id == unit.id).all()
     exercises = session.query(Exercise).filter(Exercise.unit_id == unit.id).all()
 
-    exercise_count = {}
+    exercise_types = {}
     for e in exercises:
-        if e.exercise_type not in exercise_count:
-            exercise_count[e.exercise_type] = 0
-        exercise_count[e.exercise_type] += 1
+        if e.exercise_type not in exercise_types:
+            exercise_types[e.exercise_type] = {"count": 0, "score": 0}
+        exercise_types[e.exercise_type]["count"] += 1
+        exercise_types[e.exercise_type]["score"] += e.score
+
+    for _, data in exercise_types.items():
+        data["score"] /= data["count"]
 
     result = {
         **result,
         "vocabulary": {
-            "items": [{"id": v.id, "word": v.word, "translation": v.translation} for v in vocabularies],
+            "items": [{"id": v.id, "word": v.word, "translation": v.translation, "score": v.score} for v in vocabularies],
             "count": len(vocabularies)
         },
         "grammar": {
-            "items": [{"id": g.id, "title": g.title} for g in grammar],
+            "items": [{"id": g.id, "title": g.title, "score": g.score} for g in grammar],
             "count": len(grammar)
         },
         "characters": {
-            "items": [{"id": c.id, "character": c.character, "meaning": c.meaning} for c in characters],
+            "items": [{"id": c.id, "character": c.character, "meaning": c.meaning, "score": c.score} for c in characters],
             "count": len(characters)
         },
         "exercises": {
-            "items": [{"type": exercise_type, "count": count} for exercise_type, count in exercise_count.items()],
+            "items": [{"type": exercise_type, "count": data["count"], "score": data["score"]} for exercise_type, data in exercise_types.items()],
             "count": len(exercises)
         }
     }

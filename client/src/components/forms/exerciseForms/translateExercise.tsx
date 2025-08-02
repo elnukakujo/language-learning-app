@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
+import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const { question, support = '', answer } = exercise;
@@ -12,7 +13,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
     const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
     
-    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalize = (str: string) => str.toLowerCase();
     
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
@@ -37,10 +38,10 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     return (
         <form className="flex flex-col space-y-4">
             <h3>Translate the following sentence</h3>
-            <p>{question}</p>
+            <Markdown>{question}</Markdown>
             {support && (
                 <>
-                    {supportText && <p>{supportText}</p>}
+                    {supportText && <Markdown>{supportText}</Markdown>}
                     {imageUrl && 
                         <Image 
                             src={imageUrl} 

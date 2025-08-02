@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from 'next/image';
+import Markdown from "react-markdown";
 
 import Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
@@ -15,15 +16,14 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
-    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
-
+    const normalize = (str: string) => str.toLowerCase();
     const wordsToOrganize = question.split('/').map(word => normalize(word));
+
     const [userAnswer, setUserAnswer] = useState<string[]>([]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("submit")
-        if (userAnswer.join(' ') === answer.split(' ').map(word => normalize(word)).filter(word => word.length > 1).join(' ')) {
+        if (userAnswer.join('') === answer.normalize()) {
             setIsCorrect(true);
             updateScoreById(exercise.id, true).catch(console.error);
         } else {
@@ -36,7 +36,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h3>Organize the following word/characters sequence</h3>
+            <Markdown>Organize the following word/characters sequence</Markdown>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">
@@ -53,7 +53,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                     </div>
                     {support && (
                         <>
-                            {supportText && <p>{supportText}</p>}
+                            {supportText && <Markdown>{supportText}</Markdown>}
                             {imageUrl && 
                                 <Image 
                                     src={imageUrl} 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from 'next/image';
+import Markdown from "react-markdown";
 
 import type Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
@@ -17,10 +18,10 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4">
-            {question && <h3>{question}</h3>}
+            {question && <Markdown>{question}</Markdown>}
             {support && (
                 <>
-                    {supportText && <p>{supportText}</p>}
+                    {supportText && <Markdown>{supportText}</Markdown>}
                     {imageUrl && 
                         <Image 
                             src={imageUrl} 

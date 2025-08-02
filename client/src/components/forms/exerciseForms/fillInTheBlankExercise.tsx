@@ -4,10 +4,11 @@ import { updateScoreById } from "@/api";
 import type Exercise from "@/interface/Exercise";
 import { useState } from "react";
 import Image from 'next/image';
+import Markdown from "react-markdown";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
-    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalize = (str: string) => str.toLowerCase();
 
     const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
     const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
@@ -23,7 +24,8 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
-
+    
+    console.log(question);
     // Split support text using double underscore as blank markers
     const parts = question.split('__');
 
@@ -49,11 +51,11 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
 
   return (
     <form className="flex flex-col space-y-4">
-        <h3>Fill in the blanks</h3>
+        <Markdown>Fill in the blanks</Markdown>
 
         {support && (
             <>
-                {supportText && <p>{supportText}</p>}
+                {supportText && <Markdown>{supportText}</Markdown>}
                 {imageUrl && 
                     <Image 
                         src={imageUrl} 

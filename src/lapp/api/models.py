@@ -63,11 +63,6 @@ class ExerciseDict(BaseModel):
     last_seen: Optional[date] = date.today()
     associated_to: Optional[dict[str, list[str]]] = None  # e.g., {"vocabulary": ["id1", "id2"], "grammar": ["id3"], "characters": ["id4"]}
 
-class RandomRequest(BaseModel):
-    language_id: str
-    unit_id: int
-    type: str
-
 class UpdatebyIdRequest(BaseModel):
     element_id: str
     updates: dict[str, Any]  # e.g. {"word": "new_word", "translation": "new_translation"}

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Exercise from "@/interface/Exercise";
 
 import { updateScoreById, getElementbyId } from "@/api";
+import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const { question, support = '', answer } = exercise;
@@ -36,11 +37,11 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         <form className="flex flex-col space-y-4">
             <h3>Answer with true or false to the following statement:</h3>
             {question && (
-                <h3>{question}</h3>
+                <Markdown>{question}</Markdown>
             )}
             {support && (
                 <>
-                    {supportText && <p>{supportText}</p>}
+                    {supportText && <Markdown>{supportText}</Markdown>}
                     {imageUrl && 
                         <Image 
                             src={imageUrl} 

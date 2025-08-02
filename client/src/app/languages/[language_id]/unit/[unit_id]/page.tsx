@@ -15,6 +15,7 @@ interface ExtendedUnit extends Unit {
             id: string;
             word: string;
             translation: string;
+            score: number;
         }>;
         count: number;
     };
@@ -22,6 +23,7 @@ interface ExtendedUnit extends Unit {
         items: Array<{
             id: string;
             title: string;
+            score: number;
         }>;
         count: number;
     };
@@ -30,6 +32,7 @@ interface ExtendedUnit extends Unit {
             id: string;
             character: string;
             meaning: string;
+            score: number;
         }>;
         count: number;
     };
@@ -37,6 +40,7 @@ interface ExtendedUnit extends Unit {
         items: Array<{
             type: string;
             count: number;
+            score: number;
         }>;
         count: number;
     };

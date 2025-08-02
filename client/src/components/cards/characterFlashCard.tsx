@@ -13,7 +13,7 @@ export default function CharacterFlashCard({ character }: { character: Character
     };
     return (
         <div className="flashcard">
-            <h2>{character.character}{character.phonetic && ` (${character.phonetic})`}</h2>
+            <h2>{character.character}</h2>
             {!showAnswer && <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                 Show Answer
             </button>}
