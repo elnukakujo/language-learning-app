@@ -2,9 +2,10 @@
 
 import { updateScoreById } from "@/api";
 import type Exercise from "@/interface/Exercise";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
@@ -23,25 +24,34 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
-    const [isCorrect, setIsCorrect] = useState<boolean>(false);
-    
-    console.log(question);
-    // Split support text using double underscore as blank markers
+
     const parts = question.split('__');
+    const [isCorrect, setIsCorrect] = useState<boolean[]>(Array(parts.length-1).fill(false));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitted(true);
-        if (normalize(correctAnswers.join('__')) === normalize(userAnswers.join('__'))) {
-            setIsCorrect(true);
-            updateScoreById(exercise.id, true).catch(console.error);
-        } else {
-            setAttempts(prev => prev + 1);
-            if (attempts >= 2) {
-                updateScoreById(exercise.id, false).catch(console.error);
+        userAnswers.forEach((answer, index) => {
+            if (normalize(correctAnswers[index]) === normalize(answer)) {
+                setIsCorrect(prev => {
+                    const newIsCorrect = [...prev];
+                    newIsCorrect[index] = true;
+                    return newIsCorrect;
+                });
             }
-        };
+        });
+        console.log(isCorrect);
     };
+    useEffect(() => {
+      if (isCorrect.every(val => val)) {
+          updateScoreById(exercise.id, true).catch(console.error);
+      } else {
+          setAttempts(prev => prev + 1);
+          if (attempts >= 2) {
+              updateScoreById(exercise.id, false).catch(console.error);
+          }
+      };
+    }, [isCorrect]);
 
     const handleAnswerChange = (index: number, value: string) => {
         const newAnswers = [...userAnswers];
@@ -66,43 +76,46 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                     />}
             </> 
         )}
-
         <p>
           {parts.map((part, index) => (
             <span key={index}>
               {part}
               {index < parts.length - 1 && (
-                <input
-                  type="text"
+                <AutoWidthInput
                   value={userAnswers[index]}
                   onChange={(e) => handleAnswerChange(index, e.target.value)}
-                  className={`border-b-2 mx-1 w-24 text-center ${isSubmitted && 
-                    (isCorrect ? 'border-green-500 text-green-700' : 'border-red-500 text-red-700')}`}
-                  disabled={isSubmitted && isCorrect}
+                  className={`border-b-2 mx-1 w-auto text-center ${
+                    isSubmitted &&
+                    (isCorrect[index]
+                      ? 'border-green-500 text-green-700'
+                      : 'border-red-500 text-red-700')
+                  }`}
+                  disabled={isSubmitted && isCorrect[index]}
                   aria-label={`Blank ${index + 1}`}
                 />
+                
               )}
             </span>
           ))}
         </p>
 
-        {!isSubmitted || !isCorrect ? (
+        {!isSubmitted || !isCorrect.every(val => val) ? (
           <button 
             type="button" 
             onClick={handleSubmit}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            disabled={isSubmitted && isCorrect}
+            disabled={isSubmitted && isCorrect.every(val => val)}
           >
             {isSubmitted ? 'Try Again' : 'Check Answers'}
           </button>
         ) : null}
 
         {isSubmitted && (
-          <div className={`mt-4 p-3 rounded-lg ${isCorrect ? 
+          <div className={`mt-4 p-3 rounded-lg ${isCorrect.every(val => val) ? 
             'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {isCorrect ? '✓ Correct! Well done!' : `✗ Some answers are incorrect (Attempt ${attempts}/3)`}
+            {isCorrect.every(val => val) ? '✓ Correct! Well done!' : `✗ Some answers are incorrect (Attempt ${attempts}/3)`}
             
-            {attempts >= 3 && !isCorrect && (
+            {attempts >= 3 && !isCorrect.every(val => val) && (
               <div className="mt-2">
                 <p className="font-medium">Correct answers:</p>
                 <div className="flex gap-2 mt-1">
