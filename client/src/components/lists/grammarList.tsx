@@ -49,6 +49,16 @@ export default function GrammarList({ gramProps}: { gramProps: GrammarProps}) {
             >
                 <span>Add New Grammar</span>
             </NavButton>
+
+            {gramProps.items.length > 0 && (
+                <NavButton
+                    path={`/languages/${language_id}/unit/${unit_id}/gram/${
+                            gramProps.items[Math.floor(Math.random() * gramProps.items.length)].id
+                        }/flashcard`}
+                >
+                    <p>Flashcard Practice</p>
+                </NavButton>)
+            }
         </section>
     );
 }

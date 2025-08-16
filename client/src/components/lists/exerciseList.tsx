@@ -21,6 +21,8 @@ export default function ExerciseList({ exProps}: { exProps: ExerciseProps}) {
 
     const averageScore = exProps.items.reduce((acc, item) => acc + item.score, 0) / exProps.items.length;
 
+    console.log(exProps.count);
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>
@@ -48,6 +50,14 @@ export default function ExerciseList({ exProps}: { exProps: ExerciseProps}) {
             >
                 <span>Add New Exercise</span>
             </NavButton>
+            {exProps.items.length > 0 && (
+                <NavButton 
+                    path={`/languages/${language_id}/unit/${unit_id}/ex/${
+                            unit_id+"_E"+Number(Math.floor(Math.random() * exProps.count)+1)
+                        }`}
+                >
+                    <p>Exercise Practice</p>
+                </NavButton>)}
         </section>
     );
 }
