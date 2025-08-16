@@ -21,6 +21,11 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
             <section>
                 <h1>{grammar.title}</h1>
                 <Markdown>{grammar.explanation}</Markdown>
+                {grammar.learnable_sentence && (
+                    <p>
+                        <strong>Learnable Sentence:</strong> {grammar.learnable_sentence}
+                    </p>
+                )}
                 <p>Score: {grammar.score?.toFixed(1) || 0}/100</p>
                 <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>
             </section>

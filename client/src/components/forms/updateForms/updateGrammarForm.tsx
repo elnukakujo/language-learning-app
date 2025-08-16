@@ -1,66 +1,54 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Grammar from "@/interface/Grammar";
+import AutoWidthInput from "@/components/input/autoWidthInput";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
 export default function updateGrammarForm({ grammar, existingUnitsId }: { grammar: Grammar, existingUnitsId: string[] }) {
+  const [updatedUnitId, setUpdatedUnitId] = useState<string>(grammar.unit_id);
   const [updatedTitle, setUpdatedTitle] = useState<string>(grammar.title);
   const [updatedExplanation, setUpdatedExplanation] = useState<string>(grammar.explanation);
-
-  const [unitId, setUnitId] = useState<string>(grammar.unit_id);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, []);
+  const [updatedLearnableSentence, setUpdatedLearnableSentence] = useState<string>(grammar.learnable_sentence || "");
 
   return (
-    <form className="flex flex-col space-y-4">
-      <div className="flex flex-col space-y-2 h-fit">
-        <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
-        <label htmlFor="title">Title</label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          value={updatedTitle}
-          onChange={(e) => setUpdatedTitle(e.target.value)}
-          className="border border-gray-300 rounded-md p-2 h-fit"
-        />
-      </div>
-
-      <div className="flex flex-col space-y-2 h-fit">
-        <label htmlFor="explanation">Explanation</label>
-        <textarea
-          ref={textareaRef}
-          id="explanation"
-          name="explanation"
-          value={updatedExplanation}
-          onChange={(e) => {
-            setUpdatedExplanation(e.target.value);
-            e.target.style.height = "auto";
-            e.target.style.height = `${e.target.scrollHeight}px`;
-          }}
-          className="flex resize-none overflow-hidden border border-gray-300 rounded-md p-2"
-        />
-      </div>
-
+    <form className="flex flex-col space-y-4 items-center">
+      <ChangeUnitMenu
+        unitsId={existingUnitsId}
+        unitId={updatedUnitId}
+        onChange={setUpdatedUnitId}
+      />
+      <AutoWidthInput
+        label="Title*"
+        value={updatedTitle}
+        onChange={(e) => setUpdatedTitle(e.target.value)}
+        className="border border-gray-300 rounded-md p-2 h-fit"
+      />
+      <AutoSizeTextArea
+        value={updatedExplanation}
+        onChange={(e) => setUpdatedExplanation(e.target.value)}
+        label="Explanation"
+        className="border border-gray-300 rounded-md p-2 h-fit"
+      />
+      <AutoWidthInput
+        label="Learnable Sentence"
+        value={updatedLearnableSentence}
+        onChange={(e) => setUpdatedLearnableSentence(e.target.value)}
+        className="border border-gray-300 rounded-md p-2 h-fit"
+        minWidth={1}
+      />
       <UpdateButton
         element={{
           type_element: "gram",
           id: grammar.id,
           title: updatedTitle,
           explanation: updatedExplanation,
+          learnable_sentence: updatedLearnableSentence,
           score: grammar.score,
           last_seen: grammar.last_seen,
-          unit_id: unitId,
+          unit_id: updatedUnitId,
         }}
       />
     </form>

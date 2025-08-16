@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from 'next/image';
 
 import Exercise from "@/interface/Exercise";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import { updateScoreById } from "@/api";
 import Markdown from "react-markdown";
 
@@ -52,15 +53,12 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
                         />}
                 </> 
             )}
-            <textarea 
-                name="user-answer"
+            <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 className={`border-2 p-2 rounded-lg ${isSubmitted && (isCorrect ? 'border-green-500' : 'border-red-500')}`}
-                rows={4}
                 placeholder="Type your answer here..."
             />
-
             { !isCorrect && attempts < 3 ? (
                 <button 
                     type="button" 

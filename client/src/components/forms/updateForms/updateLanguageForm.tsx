@@ -1,69 +1,66 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
+import AutoWidthInput from "@/components/input/autoWidthInput";
 import type Language from "@/interface/Language";
 
 export default function UpdateLanguageForm({ language }: { language: Language }) {
-    const [name, setName] = useState<string>(language.name);
-    const [nativeName, setNativeName] = useState<string>(language.native_name || "");
-    const [flag, setFlag] = useState<string>(language.flag || "");
-    const [level, setLevel] = useState<string>(language.level || "A1");
-
-    const [description, setDescription] = useState<string>(language.description||"");
-
-    const descriptionRef = useRef<HTMLTextAreaElement>(null);
-    useEffect(() => {
-        if (descriptionRef.current) {
-            descriptionRef.current.style.height = "auto";
-            descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
-        }
-    }, [description]);
+    const [updatedName, setUpdatedName] = useState<string>(language.name);
+    const [updatedNativeName, setUpdatedNativeName] = useState<string>(language.native_name || "");
+    const [updatedFlag, setUpdatedFlag] = useState<string>(language.flag || "");
+    const [updatedLevel, setUpdatedLevel] = useState<string>(language.level || "A1");
+    const [updatedDescription, setUpdatedDescription] = useState<string>(language.description||"");
 
     return (
-        <form className="flex flex-col space-y-4">
-            <div className="flex flex-col space-y-2 h-fit">
-                {[name, nativeName, flag, level].map((field, index) => (
-                    <span key={index} className="flex flex-col space-y-2 h-fit">
-                        <label htmlFor={`field-${index}`} key={index}>
-                            {["Name*", "Native Name", "Flag", "Level"][index]}
-                        </label>
-                        <input
-                            key={'char'+index}
-                            type="text"
-                            value={field}
-                            onChange={(e) => {
-                                const newValue = e.target.value;
-                                if (index === 0) setName(newValue);
-                                if (index === 1) setNativeName(newValue);
-                                if (index === 2) setFlag(newValue);
-                                if (index === 3) setLevel(newValue);
-                            }}
-                            className="border border-gray-300 rounded p-2 w-full"
-                        />
-                    </span>   
-                ))}
-                <span className="flex flex-col space-y-2 h-fit">
-                    <label htmlFor="description">Description</label>
-                    <textarea 
-                        ref={descriptionRef}
-                        name="description" 
-                        id="description" 
-                        value={description} 
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="border border-gray-300 rounded-md p-2 h-fit"
-                    />
-                </span>
-            </div>
+        <form className="flex flex-col space-y-4 items-center">
+            <AutoWidthInput
+                value={updatedName}
+                label="Name"
+                onChange={(e) => setUpdatedName(e.target.value)}
+                placeholder="Enter language name"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={updatedNativeName}
+                label="Native Name"
+                onChange={(e) => setUpdatedNativeName(e.target.value)}
+                placeholder="Enter native name"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={updatedFlag}
+                label="Flag"
+                onChange={(e) => setUpdatedFlag(e.target.value)}
+                placeholder="Enter flag"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={updatedLevel}
+                label="Level"
+                onChange={(e) => setUpdatedLevel(e.target.value)}
+                placeholder="Enter level"
+                className="border border-gray-300"
+            />
+
+            <AutoSizeTextArea
+                value={updatedDescription}
+                label="Description"
+                onChange={(e) => setUpdatedDescription(e.target.value)}
+                placeholder="Enter description"
+                className="border border-gray-300"
+            />
+            
             <UpdateButton
                 element={{
                     type_element: "lang",
                     id: language.id,
-                    name: name,
-                    native_name: nativeName,
-                    flag: flag,
-                    level: level,
-                    description: description
+                    name: updatedName,
+                    native_name: updatedNativeName,
+                    flag: updatedFlag,
+                    level: updatedLevel,
+                    description: updatedDescription
                 }}
             />
         </form>

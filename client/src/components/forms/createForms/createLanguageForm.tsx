@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
+import AutoWidthInput from "@/components/input/autoWidthInput";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
 export default function CreateLanguageForm() {
     const [name, setName] = useState<string>("");
@@ -10,49 +12,42 @@ export default function CreateLanguageForm() {
     const [level, setLevel] = useState<string>("");
     const [description, setDescription] = useState<string>("");
 
-    const descriptionRef = useRef<HTMLTextAreaElement>(null);
-    useEffect(() => {
-        if (descriptionRef.current) {
-            descriptionRef.current.style.height = "auto";
-            descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
-        }
-    }, [description]);
-
     return (
-        <form className="flex flex-col space-y-4">
-            <div className="flex flex-col space-y-2 h-fit">
-                {[name, nativeName, flag, level].map((field, index) => (
-                    <span key={index} className="flex flex-col space-y-2 h-fit">
-                        <label htmlFor={`field-${index}`} key={index}>
-                            {["Name*", "Native Name", "Flag", "Level"][index]}
-                        </label>
-                        <input
-                            key={'char'+index}
-                            type="text"
-                            value={field}
-                            onChange={(e) => {
-                                const newValue = e.target.value;
-                                if (index === 0) setName(newValue);
-                                if (index === 1) setNativeName(newValue);
-                                if (index === 2) setFlag(newValue);
-                                if (index === 3) setLevel(newValue);
-                            }}
-                            className="border border-gray-300 rounded p-2 w-full"
-                        />
-                    </span>   
-                ))}
-                <span className="flex flex-col space-y-2 h-fit">
-                    <label htmlFor="description">Description</label>
-                    <textarea 
-                        ref={descriptionRef}
-                        name="description" 
-                        id="description" 
-                        value={description} 
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="border border-gray-300 rounded-md p-2 h-fit"
-                    />
-                </span>
-            </div>
+        <form className="flex flex-col space-y-4 items-center">
+            <AutoWidthInput
+                value={name}
+                label="Name"
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter language name"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={nativeName}
+                label="Native Name"
+                onChange={(e) => setNativeName(e.target.value)}
+                placeholder="Enter native name"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={flag}
+                label="Flag"
+                onChange={(e) => setFlag(e.target.value)}
+                placeholder="Enter flag"
+                className="border border-gray-300"
+            />
+            <AutoWidthInput
+                value={level}
+                label="Level"
+                onChange={(e) => setLevel(e.target.value)}
+                placeholder="Enter level"
+                className="border border-gray-300"
+            />
+            <AutoSizeTextArea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="border border-gray-300"
+                label="Description"
+            />
             <NewElementButton
                 element={{
                     type_element: "lang",

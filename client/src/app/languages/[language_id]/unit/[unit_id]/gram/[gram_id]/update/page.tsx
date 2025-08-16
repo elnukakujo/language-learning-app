@@ -15,7 +15,7 @@ export default async function UpdateGrammarPage({ params }: { params: paramsType
 
 
     return (
-        <main className="p-4">
+        <main className="flex flex-col items-center">
             <h1 className="text-2xl font-semibold mb-4">Update Grammar</h1>
             <UpdateGrammarForm grammar={grammar} existingUnitsId={existingUnitsId} />
         </main>

@@ -49,6 +49,7 @@ class GrammarRuleDict(BaseModel):
     unit_id: str
     title: str
     explanation: str
+    learnable_sentence: str
     score: Optional[float] = 0.0
     last_seen: Optional[date] = date.today()
 

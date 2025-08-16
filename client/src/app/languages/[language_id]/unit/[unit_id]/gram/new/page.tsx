@@ -4,7 +4,7 @@ export default async function createGrammarPage({ params }: { params: { unit_id:
     const { unit_id } = await params;
 
     return (
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center">
             <h1 className="text-2xl font-bold mb-4">Create New Grammar</h1>
             <CreateGrammarForm unit_id={unit_id} />
         </div>

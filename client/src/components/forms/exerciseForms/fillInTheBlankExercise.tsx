@@ -76,9 +76,9 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                     />}
             </> 
         )}
-        <p>
+        <p className="flex flex-row space-x-2 max-w-[32rem] flex-wrap">
           {parts.map((part, index) => (
-            <span key={index}>
+            <span key={index} className="flex flex-row space-x-2">
               {part}
               {index < parts.length - 1 && (
                 <AutoWidthInput
@@ -92,8 +92,9 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                   }`}
                   disabled={isSubmitted && isCorrect[index]}
                   aria-label={`Blank ${index + 1}`}
+                  width={4}
+                  maxWidth={null}
                 />
-                
               )}
             </span>
           ))}

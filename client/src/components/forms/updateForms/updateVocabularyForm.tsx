@@ -4,55 +4,67 @@ import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import type Vocabulary from "@/interface/Vocabulary";
+import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function updateVocabularyForm({ vocabulary, existingUnitsId }: { vocabulary: Vocabulary, existingUnitsId: string[] }) {
-    const [word, setWord] = useState<string>(vocabulary.word);
-    const [translation, setTranslation] = useState<string>(vocabulary.translation);
-    const [phonetic, setPhonetic] = useState<string | undefined>(vocabulary.phonetic);
-    const [type, setType] = useState<string | undefined>(vocabulary.type);
-    const [example_sentence, setExampleSentence] = useState<string | undefined>(vocabulary.example_sentence);
-
-    const [unitId, setUnitId] = useState<string>(vocabulary.unit_id);
+    const [updatedWord, setUpdatedWord] = useState<string>(vocabulary.word);
+    const [updatedTranslation, setUpdatedTranslation] = useState<string>(vocabulary.translation);
+    const [updatedPhonetic, setUpdatedPhonetic] = useState<string>(vocabulary.phonetic || "");
+    const [updatedType, setUpdatedType] = useState<string>(vocabulary.type || "");
+    const [updatedExampleSentence, setUpdatedExampleSentence] = useState<string>(vocabulary.example_sentence || "");
+    const [updatedUnitId, setUpdatedUnitId] = useState<string>(vocabulary.unit_id || "");
 
     return (
       <form className="flex flex-col space-y-4">
-        <div className="flex flex-col space-y-2 h-fit">
-          <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
-          {[word, translation, type, phonetic, example_sentence].map((value, index) => (
-              <div key={index}>
-                <label htmlFor={`field-${index}`} key={index}>
-                  {["Word", "Translation", "Type", "Phonetic", "Example Sentence"][index]}
-                </label>
-                <input
-                      key={'voc'+index}
-                      type="text"
-                      value={value}
-                      onChange={(e) => {
-                          const newValue = e.target.value;
-                          if (index === 0) setWord(newValue);
-                          if (index === 1) setTranslation(newValue);
-                          if (index === 2) setPhonetic(newValue);
-                          if (index === 3) setType(newValue);
-                          if (index === 4) setExampleSentence(newValue);
-                      }}
-                      className="border border-gray-300 rounded p-2 w-full"
-                  />
-              </div>
-            ))}
-        </div>
+        <ChangeUnitMenu unitsId={existingUnitsId} unitId={updatedUnitId} onChange={setUpdatedUnitId} />
+        <AutoWidthInput
+          value={updatedWord}
+          label="Word"
+          onChange={(e) => setUpdatedWord(e.target.value)}
+          placeholder="Enter word"
+          className="border border-gray-300"
+        />
+        <AutoWidthInput
+          value={updatedTranslation}
+          label="Translation"
+          onChange={(e) => setUpdatedTranslation(e.target.value)}
+          placeholder="Enter translation"
+          className="border border-gray-300"
+        />
+        <AutoWidthInput
+          value={updatedType}
+          label="Type"
+          onChange={(e) => setUpdatedType(e.target.value)}
+          placeholder="Enter type"
+          className="border border-gray-300"
+        />
+        <AutoWidthInput
+          value={updatedPhonetic}
+          label="Phonetic"
+          onChange={(e) => setUpdatedPhonetic(e.target.value)}
+          placeholder="Enter phonetic"
+          className="border border-gray-300"
+        />
+        <AutoWidthInput
+          value={updatedExampleSentence}
+          label="Example Sentence"
+          onChange={(e) => setUpdatedExampleSentence(e.target.value)}
+          placeholder="Enter example sentence"
+          className="border border-gray-300"
+        />
 
         <UpdateButton
           element={{
               type_element: "voc",
               id: vocabulary.id,
-              word: word,
-              translation: translation,
-              phonetic: phonetic,
-              type: type,
-              example_sentence: example_sentence,          
+              word: updatedWord,
+              translation: updatedTranslation,
+              phonetic: updatedPhonetic,
+              type: updatedType,
+              example_sentence: updatedExampleSentence,
               score: vocabulary.score,
               last_seen: vocabulary.last_seen,
-              unit_id: unitId,
+              unit_id: updatedUnitId,
           }}
         />
       </form>

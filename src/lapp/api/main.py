@@ -52,6 +52,10 @@ def get_random(element_id: str):
     if not elements:
         elements = session.query(element_type).filter(element_type.unit_id == unit_id).filter(element_type.id != element_id).all()
 
+    if not elements:
+        logger.info(f"No elements found for element_id: {element_id} in unit_id: {unit_id}. Returning empty string.")
+        session.close()
+        return ""
     next_element = random.choice(elements)
     logger.info(f"Found next element for element_id: {element_id} in unit_id: {unit_id}: {next_element.id}")
 

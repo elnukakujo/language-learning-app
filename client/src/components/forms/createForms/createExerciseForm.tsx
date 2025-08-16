@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import ImageLoader from "@/components/imageLoader";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
+import TrueFalseInput from "@/components/input/trueFalseInput";
 
 interface UnitElements {
     vocabulary: {
@@ -46,27 +48,6 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     const [isOpenChar, setIsOpenChar] = useState<boolean>(false);
     const [isOpenGram, setIsOpenGram] = useState<boolean>(false);
 
-    const questionRef = useRef<HTMLTextAreaElement>(null);
-    const supportRef = useRef<HTMLTextAreaElement>(null);
-    const answerRef = useRef<HTMLTextAreaElement>(null);
-
-    function useAutoResize(
-          ref: React.RefObject<HTMLTextAreaElement | null>,
-          value: string
-        ) {
-      useEffect(() => {
-      const textarea = ref.current;
-      if (textarea) {
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-      }, [value, ref]);
-    }
-
-    useAutoResize(questionRef, question);
-    useAutoResize(supportRef, supportText);
-    useAutoResize(answerRef, answer);
-
     useEffect(() => {
       switch (exerciseType) {
         case "translate":
@@ -108,7 +89,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     }, [exerciseType]); 
 
     return (
-      <form className="flex flex-col space-y-4 min-w-[40rem]">
+      <form className="flex flex-col space-y-4 items-center min-w-[40rem]">
         <ClassicSelectMenu
           options={[
             "translate",
@@ -123,74 +104,35 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
         />
         {exerciseType !== "" && (
           <>
-            <section>
-              <label htmlFor="question" className="block text-sm font-medium text-gray-700">
-                Question
-              </label>
-              <textarea
-                ref={questionRef}
-                id="question"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
-                required
+            <AutoSizeTextArea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+              label="Question"
+            />
+            <AutoSizeTextArea
+              value={supportText}
+              onChange={(e) => setSupportText(e.target.value)}
+              className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
+              label="Support"
+            />
+            <ImageLoader previewUrl={imageUrl} setPreviewUrl={setImageUrl} />
+
+            {exerciseType === "true-false" ? (
+              <TrueFalseInput
+                value={answer === "true"}
+                onChange={(e) => setAnswer(e.target.value)}
+                label="Answer"
               />
-            </section>
-            <section>
-              <label htmlFor="support" className="block text-sm font-medium text-gray-700">
-                Support
-              </label>
-              <textarea
-                ref={supportRef}
-                id="support"
-                value={supportText}
-                onChange={(e) => setSupportText(e.target.value)}
-                className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
-                required
+            ) : 
+              <AutoSizeTextArea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                label="Answer"
               />
-              <ImageLoader previewUrl={imageUrl} setPreviewUrl={setImageUrl} />
-            </section>
-            <section>
-              <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
-                Answer
-              </label>
-              {exerciseType === "true-false" ? (
-                <div className="flex flex-row space-x-2">
-                  <span className="flex items-center space-x-2">
-                    <input
-                      id="answer-true"
-                      type="radio"
-                      checked={answer === "true"}
-                      onChange={() => setAnswer("true")}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                      required
-                    />
-                    <label htmlFor="answer-true">True</label>
-                  </span>
-                  <span className="flex items-center space-x-2">
-                    <input
-                      id="answer-false"
-                      type="radio"
-                      checked={answer === "false"}
-                      onChange={() => setAnswer("false")}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                      required
-                    />
-                    <label htmlFor="answer-false">False</label>
-                  </span>
-                </div>)
-                :
-                <textarea
-                  ref={answerRef}
-                  id="answer"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
-                  required
-                />
-              }
-            </section>
-            <section>
+            }
+            
+            <section className="flex flex-col space-y-4 w-full items-baseline">
               <label className="block text-sm font-medium text-gray-700">
                 Associated Vocabulary
               </label>

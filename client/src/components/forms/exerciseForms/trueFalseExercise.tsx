@@ -4,8 +4,9 @@ import { useState } from "react";
 import Image from 'next/image';
 
 import Exercise from "@/interface/Exercise";
+import TrueFalseInput from "@/components/input/trueFalseInput";
 
-import { updateScoreById, getElementbyId } from "@/api";
+import { updateScoreById } from "@/api";
 import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
@@ -18,8 +19,6 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [userAnswer, setUserAnswer] = useState<boolean>(true);
-
-    
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,22 +53,10 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             )}
             {!isSubmitted && (
                 <>
-                    <div className="flex space-x-4">
-                        <button
-                            type="button"
-                            onClick={() => setUserAnswer(true)}
-                            className={`px-4 py-2 border rounded ${userAnswer ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-                        >
-                            True
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setUserAnswer(false)}
-                            className={`px-4 py-2 border rounded ${!userAnswer ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"}`}
-                        >
-                            False
-                        </button>
-                    </div>
+                    <TrueFalseInput
+                        value={userAnswer}
+                        onChange={(e) => setUserAnswer(e.target.value === "true")}
+                    />
                     <button 
                         type="button" 
                         onClick={handleSubmit}

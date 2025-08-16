@@ -6,6 +6,7 @@ import Markdown from "react-markdown";
 
 import type Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
+import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
 export default function AnsweringExercise({ exercise }: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
@@ -33,13 +34,10 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
                         />}
                 </> 
             )}
-            <textarea
-                name="user-answer"
+            <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 className="border p-2 rounded-lg"
-                rows={5}
-                disabled={showCorrection}
             />
             {!showCorrection ? (
                 <button

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import NewElementButton from "@/components/buttons/newElementButton";
+import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function createCharacterForm({unit_id}: {unit_id: string}) {
     const [characterName, setCharacterName] = useState<string>("");
@@ -12,30 +13,37 @@ export default function createCharacterForm({unit_id}: {unit_id: string}) {
     const [exampleWord, setExampleWord] = useState<string>("");
 
   return (
-    <form className="flex flex-col space-y-4">
-      <div className="flex flex-col space-y-2 h-fit">
-        {[characterName, components, meaning, phonetic, exampleWord].map((value, index) => (
-            <div key={index}>
-              <label htmlFor={`field-${index}`} key={index}>
-                {["Character*", "Components", "Meaning*", "Phonetic", "Example Word"][index]}
-              </label>
-              <input
-                    key={'char'+index}
-                    type="text"
-                    value={value}
-                    onChange={(e) => {
-                        const newValue = e.target.value;
-                        if (index === 0) setCharacterName(newValue);
-                        if (index === 1) setComponents(newValue);
-                        if (index === 2) setMeaning(newValue);
-                        if (index === 3) setPhonetic(newValue);
-                        if (index === 4) setExampleWord(newValue);
-                    }}
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-            </div>
-          ))}
-      </div>
+    <form className="flex flex-col space-y-4 items-center">
+      <AutoWidthInput
+        value={characterName}
+        onChange={(e) => setCharacterName(e.target.value)}
+        label="Character*"
+        className="border border-gray-300 "
+      />
+      <AutoWidthInput
+        value={components}
+        onChange={(e) => setComponents(e.target.value)}
+        label="Components"
+        className="border border-gray-300 "
+      />
+      <AutoWidthInput
+        value={meaning}
+        onChange={(e) => setMeaning(e.target.value)}
+        label="Meaning*"
+        className="border border-gray-300 "
+      />
+      <AutoWidthInput
+        value={phonetic}
+        onChange={(e) => setPhonetic(e.target.value)}
+        label="Phonetic"
+        className="border border-gray-300 "
+      />
+      <AutoWidthInput
+        value={exampleWord}
+        onChange={(e) => setExampleWord(e.target.value)}
+        label="Example Word"
+        className="border border-gray-300 "
+      />
 
       <NewElementButton
         element={{

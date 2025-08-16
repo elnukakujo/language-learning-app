@@ -70,7 +70,7 @@ class CalligraphyCharacter(Base):
     last_seen = Column(Date, default=date.today)  # e.g., when the character was last seen
 
     parent: Mapped["Unit"] = relationship("Unit", back_populates="characters")
-    unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
 
 class GrammarRule(Base):
     __tablename__ = 'grammar_rule'
@@ -78,11 +78,12 @@ class GrammarRule(Base):
     id = Column(String, primary_key=True, index=True)
     title = Column(String, index=True)
     explanation = Column(String)
+    learnable_sentence = Column(String, default="")
     score = Column(Integer, default=0)
     last_seen = Column(Date, default=date.today)  # e.g., when the grammar rule was last seen
 
     parent: Mapped["Unit"] = relationship("Unit", back_populates="grammars")
-    unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
 
 class Vocabulary(Base):
     __tablename__ = 'vocabulary'
@@ -97,7 +98,7 @@ class Vocabulary(Base):
     last_seen = Column(Date, default=date.today)  # e.g., when the vocabulary was last seen
 
     parent: Mapped["Unit"] = relationship("Unit", back_populates="vocs")
-    unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
 
 class Exercise(Base):
     __tablename__ = 'exercises'
@@ -112,4 +113,4 @@ class Exercise(Base):
     associated_to = Column(JSON, default={})
 
     parent: Mapped["Unit"] = relationship("Unit", back_populates="exercises")
-    unit_id: Mapped[int] = mapped_column(ForeignKey("unit.id"))
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
