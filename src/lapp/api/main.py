@@ -12,6 +12,7 @@ from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -428,7 +429,7 @@ async def upload_image(file: UploadFile = File(...)):
     try:
         # Generate unique filename with original extension
         file_ext = file.filename.split('.')[-1]
-        file_name = f"{file.filename.split('.')[0]}.{file_ext}"
+        file_name = datetime.now().strftime("%Y%m%d%H%M%S") + f".{file_ext}"
         file_path = IMAGE_DIR / file_name
         
         # Save the file

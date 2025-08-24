@@ -11,6 +11,7 @@ export default function AutoWidthInput({
   maxWidth = 25,
   height = 2.5,
   placeholder = "",
+  disabled = false,
   ...props
 
 }: {
@@ -22,6 +23,7 @@ export default function AutoWidthInput({
   height?: number;
   maxWidth?: number;
   placeholder?: string;
+  disabled?: boolean;
 }) {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [resizeWidth, setResizeWidth] = useState<number>(minWidth);
@@ -32,8 +34,6 @@ export default function AutoWidthInput({
   useEffect(() => {
     if (spanRef.current) {
       const newWidth = pxToRem(spanRef.current.offsetWidth);
-      console.log("New width:", newWidth);
-      console.log("Min width:", minWidth, "Max width:", maxWidth);
       if (newWidth < minWidth) {
         setResizeWidth(minWidth);
       } else if (maxWidth) {
@@ -68,6 +68,7 @@ export default function AutoWidthInput({
         style={{ width: `${resizeWidth+1}rem`, height: `${height}rem` }}
         className={`outline-none rounded-md p-2 ${className}`}
         placeholder={placeholder}
+        disabled={disabled}
       />
     </span>
   );

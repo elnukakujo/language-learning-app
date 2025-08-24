@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import OpenCloseMenu from "@/components/selectMenu/openCloseMenu";
 import ImageLoader from "@/components/imageLoader";
+
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import TrueFalseInput from "@/components/input/trueFalseInput";
+import DiscreteInput from "@/components/input/discreteInput";
 
 interface UnitElements {
     vocabulary: {
@@ -44,41 +47,32 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     const [charAssociated, setCharAssociated] = useState<string[]>([]);
     const [gramAssociated, setGramAssociated] = useState<string[]>([]);
 
-    const [isOpenVoc, setIsOpenVoc] = useState<boolean>(false);
-    const [isOpenChar, setIsOpenChar] = useState<boolean>(false);
-    const [isOpenGram, setIsOpenGram] = useState<boolean>(false);
-
     useEffect(() => {
       switch (exerciseType) {
         case "translate":
-          setQuestion("-- A sentence to translate --");
+          setQuestion("A sentence to translate");
           setSupportText("");
-          setAnswer("-- The translation --");
+          setAnswer("The translation");
           break;
         case "fill-in-the-blank":
-          setQuestion("-- The house is __ and __. --");
+          setQuestion("The house is __ and __.");
           setSupportText("");
-          setAnswer("-- big__small --");
+          setAnswer("big__small");
           break;
         case "essay":
-          setQuestion("-- Write here some requirements about the essay, and details --");
+          setQuestion("Write here some requirements about the essay, and details");
           setSupportText("");
-          setAnswer("-- Some helps and tips to write the essay --");
+          setAnswer("Some helps and tips to write the essay");
           break;
         case "true-false":
-          setQuestion("-- A statement to evaluate --");
+          setQuestion("A statement to evaluate");
           setSupportText("");
           setAnswer("true");
           break;
-        case "organize":
-          setQuestion("-- My/house/small/purple/and/is --");
-          setSupportText("");
-          setAnswer("-- My house is small and purple --");
-          break;
         case "answering":
-          setQuestion("-- A question to answer --");
+          setQuestion("A question to answer");
           setSupportText("");
-          setAnswer("-- The answer to the question --");
+          setAnswer("The answer to the question");
           break;
         default:
           setQuestion("");
@@ -98,18 +92,20 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
             "true-false",
             "organize",
             "answering",
+            "matching"
           ]}
           selectedOption={exerciseType}
           onChange={setExerciseType}
         />
         {exerciseType !== "" && (
           <>
-            <AutoSizeTextArea
+            {!["matching", "organize"].includes(exerciseType) && <AutoSizeTextArea
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
               label="Question"
-            />
+            />}
+
             <AutoSizeTextArea
               value={supportText}
               onChange={(e) => setSupportText(e.target.value)}
@@ -117,14 +113,25 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               label="Support"
             />
             <ImageLoader previewUrl={imageUrl} setPreviewUrl={setImageUrl} />
-
-            {exerciseType === "true-false" ? (
+            
+            {exerciseType === "true-false" && 
               <TrueFalseInput
                 value={answer === "true"}
                 onChange={(e) => setAnswer(e.target.value)}
                 label="Answer"
               />
-            ) : 
+            }
+
+            {["matching", "organize"].includes(exerciseType) && 
+              <DiscreteInput
+                value={answer}
+                setValue={setAnswer}
+                label="Answer"
+                is2D={exerciseType === "matching"}
+              />
+            }
+
+            { !["true-false", "matching", "organize"].includes(exerciseType) && 
               <AutoSizeTextArea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
@@ -133,101 +140,24 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
             }
             
             <section className="flex flex-col space-y-4 w-full items-baseline">
-              <label className="block text-sm font-medium text-gray-700">
-                Associated Vocabulary
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsOpenVoc(!isOpenVoc)}
-                className="text-blue-600 button"
-              >
-                {isOpenVoc ? "Hide" : "Show"} Vocabulary
-              </button>
-              {isOpenVoc && (
-                <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-                  {unitElements.vocabulary.items.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVocAssociated((prev) => 
-                            prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                          );
-                        }}
-                        className={`px-2 py-1 rounded-md ${
-                          vocAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                        }`}
-                      >
-                        {item.word} - {item.translation}
-                      </button>
-                      
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <label className="block text-sm font-medium text-gray-700">
-                Associated Grammar
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsOpenGram(!isOpenGram)}
-                className="text-blue-600 button"
-              >
-                {isOpenGram ? "Hide" : "Show"} Grammar
-              </button>
-              {isOpenGram && (
-                <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-                  {unitElements.grammar.items.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGramAssociated((prev) =>
-                            prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                          );
-                        }}
-                        className={`px-2 py-1 rounded-md ${
-                          gramAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                        }`}
-                      >
-                        {item.title}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <label className="block text-sm font-medium text-gray-700">
-                Associated Characters
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsOpenChar(!isOpenChar)}
-                className="text-blue-600 button"
-              >
-                {isOpenChar ? "Hide" : "Show"} Characters
-              </button>
-              {isOpenChar && (
-                <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-                  {unitElements.characters.items.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCharAssociated((prev) => 
-                            prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                          );
-                        }}
-                        className={`px-2 py-1 rounded-md ${
-                          charAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                        }`}
-                      >
-                        {item.character} - {item.meaning}
-                      </button>
-                      
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <OpenCloseMenu
+                elements={unitElements.vocabulary.items.map(item => ({id: item.id, value: item.word + " - " + item.translation}))}
+                selectedElements={vocAssociated}
+                setSelectedElements={setVocAssociated}
+                label="Associated Vocabulary"
+              />
+              <OpenCloseMenu
+                elements={unitElements.grammar.items.map(item => ({id: item.id, value: item.title}))}
+                selectedElements={gramAssociated}
+                setSelectedElements={setGramAssociated}
+                label="Associated Grammar"
+              />
+              <OpenCloseMenu
+                elements={unitElements.characters.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
+                selectedElements={charAssociated}
+                setSelectedElements={setCharAssociated}
+                label="Associated Characters"
+              />
             </section>
             <NewElementButton
               element={{

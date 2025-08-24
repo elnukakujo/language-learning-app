@@ -9,6 +9,7 @@ import EssayExercise from "@/components/forms/exerciseForms/essayExercise";
 import TrueFalseExercise from "@/components/forms/exerciseForms/trueFalseExercise";
 import OrganizeExercise from "@/components/forms/exerciseForms/organizeExercise";
 import AnsweringExercise from "@/components/forms/exerciseForms/answeringExercise";
+import MatchingExercise from "@/components/forms/exerciseForms/matchingExercise";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; unit_id: string; ex_id: string }}) {
     const { language_id, unit_id, ex_id } = await params;
@@ -39,6 +40,9 @@ export default async function ExercisePage( { params } : { params: { language_id
             )}
             {exercise.exercise_type === 'answering' && (
                 <AnsweringExercise exercise={ exercise } />
+            )}
+            {exercise.exercise_type === 'matching' && (
+                <MatchingExercise exercise={ exercise } />
             )}
             {exercise.associated_to && (
                 <div>

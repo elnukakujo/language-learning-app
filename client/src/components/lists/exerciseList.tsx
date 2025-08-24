@@ -21,8 +21,6 @@ export default function ExerciseList({ exProps}: { exProps: ExerciseProps}) {
 
     const averageScore = exProps.items.reduce((acc, item) => acc + item.score, 0) / exProps.items.length;
 
-    console.log(exProps.count);
-
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>

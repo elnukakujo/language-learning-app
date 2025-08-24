@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import shuffle from 'lodash/shuffle';
 
 import Exercise from "@/interface/Exercise";
 import { updateScoreById } from "@/api";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const { question, support = '', answer } = exercise;
+    const { support = '' } = exercise;
 
     const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
     const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
@@ -17,13 +18,20 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
     const normalize = (str: string) => str.toLowerCase();
-    const wordsToOrganize = question.split('/').map(word => normalize(word));
+
+    const [wordsToOrganize, setWordsToOrganize] = useState<string[]>([]);
+
+    const answer = exercise.answer.split('__').map(word => normalize(word));
+
+    useEffect(() => {
+        setWordsToOrganize(shuffle(answer));
+    }, []);
 
     const [userAnswer, setUserAnswer] = useState<string[]>([]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (userAnswer.join('') === answer.normalize()) {
+        if (userAnswer.join('') === answer.join('')) {
             setIsCorrect(true);
             updateScoreById(exercise.id, true).catch(console.error);
         } else {
@@ -94,7 +102,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                     <div className="mt-2">
                         <p className="font-medium">Correct answers:</p>
                         <p className="flex gap-2 mt-1">
-                            {answer.split(' ').map(word => normalize(word)).filter(word => word.length > 1).join(' ')}
+                            {answer.join(' ')}
                         </p>
                     </div>
                     )}

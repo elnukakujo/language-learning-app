@@ -9,7 +9,7 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
     const { question, support = '', answer } = exercise;
-    const normalize = (str: string) => str.toLowerCase();
+    const normalize = (str: string) => str.toLowerCase().trim();
 
     const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
     const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
@@ -40,7 +40,6 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                 });
             }
         });
-        console.log(isCorrect);
     };
     useEffect(() => {
       if (isCorrect.every(val => val)) {
@@ -76,7 +75,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                     />}
             </> 
         )}
-        <p className="flex flex-row space-x-2 max-w-[32rem] flex-wrap">
+        <p className="flex flex-row space-x-2 flex-wrap">
           {parts.map((part, index) => (
             <span key={index} className="flex flex-row space-x-2">
               {part}
@@ -92,8 +91,6 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                   }`}
                   disabled={isSubmitted && isCorrect[index]}
                   aria-label={`Blank ${index + 1}`}
-                  width={4}
-                  maxWidth={null}
                 />
               )}
             </span>
