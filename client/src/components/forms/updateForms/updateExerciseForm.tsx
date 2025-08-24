@@ -7,6 +7,7 @@ import type Exercise from "@/interface/Exercise";
 
 import ImageLoader from "@/components/imageLoader";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
+import OpenCloseMenu from "@/components/selectMenu/openCloseMenu";
 
 interface UnitElements {
     vocabulary: {
@@ -51,10 +52,6 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
     const [charAssociated, setCharAssociated] = useState<string[]>(exercise.associated_to?.characters || []);
     const [gramAssociated, setGramAssociated] = useState<string[]>(exercise.associated_to?.grammar || []);
 
-    const [isOpenVoc, setIsOpenVoc] = useState<boolean>(false);
-    const [isOpenChar, setIsOpenChar] = useState<boolean>(false);
-    const [isOpenGram, setIsOpenGram] = useState<boolean>(false);
-
     return (
       <form className="flex flex-col space-y-4 items-center">
         <ChangeUnitMenu unitsId={existingUnitsId} unitId={unitId} onChange={setUnitId} />
@@ -90,101 +87,24 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
         />
 
         <section className="flex flex-col space-y-4 w-full items-baseline">
-          <label className="block text-sm font-medium text-gray-700">
-            Associated Vocabulary
-          </label>
-          <button
-            type="button"
-            onClick={() => setIsOpenVoc(!isOpenVoc)}
-            className="text-blue-600 button"
-          >
-            {isOpenVoc ? "Hide" : "Show"} Vocabulary
-          </button>
-          {isOpenVoc && (
-            <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-              {unitElements.vocabulary.items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVocAssociated((prev) => 
-                        prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                      );
-                    }}
-                    className={`px-2 py-1 rounded-md ${
-                      vocAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                    }`}
-                  >
-                    {item.word} - {item.translation}
-                  </button>
-                  
-                </li>
-              ))}
-            </ul>
-          )}
-          <label className="block text-sm font-medium text-gray-700">
-            Associated Grammar
-          </label>
-          <button
-            type="button"
-            onClick={() => setIsOpenGram(!isOpenGram)}
-            className="text-blue-600 button"
-          >
-            {isOpenGram ? "Hide" : "Show"} Grammar
-          </button>
-          {isOpenGram && (
-            <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-              {unitElements.grammar.items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGramAssociated((prev) =>
-                        prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                      );
-                    }}
-                    className={`px-2 py-1 rounded-md ${
-                      gramAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                    }`}
-                  >
-                    {item.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <label className="block text-sm font-medium text-gray-700">
-            Associated Characters
-          </label>
-          <button
-            type="button"
-            onClick={() => setIsOpenChar(!isOpenChar)}
-            className="text-blue-600 button"
-          >
-            {isOpenChar ? "Hide" : "Show"} Characters
-          </button>
-          {isOpenChar && (
-            <ul className="max-w-[40rem] flex flex-row flex-wrap gap-2 mt-2">
-              {unitElements.characters.items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCharAssociated((prev) => 
-                        prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
-                      );
-                    }}
-                    className={`px-2 py-1 rounded-md ${
-                      charAssociated.includes(item.id) ? "bg-blue-600" : "bg-gray-700"
-                    }`}
-                  >
-                    {item.character} - {item.meaning}
-                  </button>
-                  
-                </li>
-              ))}
-            </ul>
-          )}
+          <OpenCloseMenu
+            elements={unitElements.vocabulary.items.map(item => ({id: item.id, value: item.word + " - " + item.translation}))}
+            selectedElements={vocAssociated}
+            setSelectedElements={setVocAssociated}
+            label="Associated Vocabulary"
+          />
+          <OpenCloseMenu
+            elements={unitElements.grammar.items.map(item => ({id: item.id, value: item.title}))}
+            selectedElements={gramAssociated}
+            setSelectedElements={setGramAssociated}
+            label="Associated Grammar"
+          />
+          <OpenCloseMenu
+            elements={unitElements.characters.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
+            selectedElements={charAssociated}
+            setSelectedElements={setCharAssociated}
+            label="Associated Characters"
+          />
         </section>
 
         <UpdateButton

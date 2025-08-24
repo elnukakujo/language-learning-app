@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import AutoWidthInput from "./autoWidthInput";
-import { set } from "lodash";
 
 export default function DiscreteInput({ value, setValue, label, is2D=false }: { value: string, setValue: (val: string) => void, label: string, is2D?: boolean }) {
     const [values, setValues] = useState<string[][]>([[""]]);
