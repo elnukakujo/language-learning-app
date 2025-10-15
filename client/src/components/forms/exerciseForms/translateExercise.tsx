@@ -58,6 +58,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
                 onChange={(e) => setUserAnswer(e.target.value)}
                 className={`border-2 p-2 rounded-lg ${isSubmitted && (isCorrect ? 'border-green-500' : 'border-red-500')}`}
                 placeholder="Type your answer here..."
+                disabled={isCorrect || attempts >= 3}
             />
             { !isCorrect && attempts < 3 ? (
                 <button 

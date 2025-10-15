@@ -109,20 +109,27 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
             )}
 
             {(!isSuccess && attempts > 0) && 
-                <section className="w-[32rem] mx-auto flex flex-col space-y-2">
-                    {shuffledPairs.map((pair, index) => (
-                        <div key={index} className={`flex justify-around`}>
-                            {pair.map((item, colIndex) => (
-                                <button 
-                                    type="button" 
-                                    key={colIndex}  
-                                    onClick={() => handleClick(item)} 
-                                    className={`border-2 rounded px-4 py-2 ${selection.includes(item) ? 'bg-blue-500 text-black border-blue-500' : ''} transition-colors duration-300 ${!remainingPairs.some(row => row.some(p => p.value === item.value && p.column === item.column)) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    disabled={!remainingPairs.some(row => row.some(p => p.value === item.value && p.column === item.column)) || (selection.length >= 2 && selection.map(sel => sel.column).includes(colIndex)) || attempts < 0}
-                                >
-                                    {item.value}
-                                </button>
-                            ))}
+                <section className="w-[32rem] mx-auto flex flex-row space-x-5">
+                    {Array.from({ length: numColumns }, (_, colIndex) => (
+                        <div key={colIndex} className="flex flex-col space-y-2 justify-around mb-2">
+                            {shuffledPairs.map((row, rowIndex) => {
+                                const item = row[colIndex];
+                                return (
+                                    <button
+                                        type="button"
+                                        key={rowIndex}
+                                        onClick={() => handleClick(item)}
+                                        className={`w-fit border-2 rounded px-4 py-2 ${selection.includes(item) ? 'bg-blue-500 text-black border-blue-500' : ''} transition-colors duration-300 ${!remainingPairs.some(pair => pair.some(p => p.value === item.value && p.column === item.column)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        disabled={
+                                            !remainingPairs.some(pair => pair.some(p => p.value === item.value && p.column === item.column)) ||
+                                            selection.map(sel => sel.column).includes(colIndex) ||
+                                            attempts < 0
+                                        }
+                                    >
+                                        {item.value}
+                                    </button>
+                                );
+                            })}
                         </div>
                     ))}
                 </section>

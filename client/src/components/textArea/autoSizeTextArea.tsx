@@ -11,6 +11,7 @@ export default function AutoSizeTextArea({
   maxWidth = 25,
   maxHeight,
   placeholder = "",
+  disabled = false,
   ...props
 }: {
   value: string;
@@ -22,6 +23,7 @@ export default function AutoSizeTextArea({
   maxWidth?: number;
   maxHeight?: number;
   placeholder?: string;
+  disabled?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dimensions, setDimensions] = useState({ width: minWidth, height: minHeight });
@@ -125,6 +127,7 @@ export default function AutoSizeTextArea({
           width: `${dimensions.width}rem`,
           height: `${dimensions.height}rem`,
         }}
+        disabled={disabled}
       />
     </span>
   );

@@ -38,6 +38,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
                 onChange={(e) => setUserAnswer(e.target.value)}
                 className="border p-2 rounded-lg"
                 placeholder="Type your answer here..."
+                disabled={showCorrection}
             />
             {!showCorrection ? (
                 <button
