@@ -1,220 +1,419 @@
-from pyexpat import model
+# src/lapp/core/database.py
+import logging
+from pathlib import Path
+from typing import Optional, Type, TypeVar, Any
+
 import sqlalchemy
-from sqlalchemy import create_engine, select, func
+from sqlalchemy import create_engine, select
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from pathlib import Path
+from flask import Flask
 
-import os
-import logging
 logger = logging.getLogger(__name__)
 
+# Create base for models
 Base = declarative_base()
 
-def init_db() -> tuple[sqlalchemy.engine.Engine, sqlalchemy.orm.session.Session]:
+# Type variable for model classes
+model_types = TypeVar('T', bound="Base")
+
+class DatabaseManager:
     """
-    Initializes the SQLite database for the given language.
-
-    If the database file already exists, this will log that the existing database is found.
-    Otherwise, it creates a new database and logs its creation. The function then creates all
-    the tables defined by the SQLAlchemy Base metadata.
-
-    Args:
-        language_name (str): The name of the language used to name the database file.
-
-    Returns:
-        tuple: A tuple containing the created SQLAlchemy Engine and Session.
-    """
-    db_path = Path(__file__).resolve().parent.parent.parent / "db" / "languages.db"
-
-    DATABASE_URL = f"sqlite:///{db_path}"  # Absolute path
-
-    engine = create_engine(DATABASE_URL)
-    session = sessionmaker(bind=engine)
-    session = session()
-
-    Base.metadata.create_all(engine)
-
-    return engine, session
-
-def inserts(session: Session, objs: list[sqlalchemy.orm.decl_api.DeclarativeMeta]) -> None:
-    """
-    Inserts multiple objects into the database within a given session.
-
-    Iterates over each object in the list and inserts it individually using the insert() function.
-
-    Args:
-        session (Session): The SQLAlchemy session used for database operations.
-        objs (list): A list of SQLAlchemy model instances to insert.
+    Manages database connections, sessions, and CRUD operations.
     
-    Returns:
-        None
+    This class provides a centralized interface for database operations,
+    including initialization, session management, and common CRUD methods.
     """
-    for obj in objs:
-        insert(session, obj)
-
-def insert(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> None:
-    """
-    Inserts a single object into the database.
-
-    Attempts to add and commit the object to the session. If an IntegrityError or other SQLAlchemyError
-    occurs, it logs a warning, rolls back the session and attempts to modify the existing record instead.
-
-    Args:
-        session (Session): The SQLAlchemy session to use for the operation.
-        obj (DeclarativeMeta): The model instance to insert.
-
-    Returns:
-        None
-    """
-    try:
-        session.add(obj)
-        session.commit()
-    except (SQLAlchemyError, IntegrityError) as e:
-        logger.warning(f"Insert failed: {e}. Attempting to modify an existing record.")
-        session.rollback()
-        modify(session, obj)  # Attempt to modify if insert fails
-
-def find_by_pk(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> tuple[sqlalchemy.orm.decl_api.DeclarativeMeta, sqlalchemy.orm.Mapper, dict]:
-    """
-    Finds an existing record based on the primary key(s) of the provided object.
-
-    Inspects the model to extract the primary key attributes, then queries the database for a matching record.
-    If found, returns the record along with its mapper and the primary key attribute values.
-
-    Args:
-        session (Session): The SQLAlchemy session used for querying.
-        obj (DeclarativeMeta): The instance containing primary key values.
-
-    Returns:
-        tuple: A tuple containing the existing record, its mapper, and a dictionary of primary key attributes.
-                If no record is found, logs a warning and returns None.
-    """
-    model_class = type(obj)
-    mapper = inspect(model_class)
-
-    # Get the unique/primary key attributes
-    pk_attrs = {key.name: getattr(obj, key.name) for key in mapper.primary_key}
-
-    # Query for the existing row
-    existing = session.query(model_class).filter_by(**pk_attrs).first()
     
-    if existing:
-        return existing, mapper, pk_attrs
-    else:
-        logger.warning("No record found with matching unique attributes.")
-        return None, None, None
-
-def modify(session: Session, obj: sqlalchemy.orm.decl_api.DeclarativeMeta) -> sqlalchemy.orm.decl_api.DeclarativeMeta:
-    """
-    Modifies an existing database record or adds a new one using the provided SQLAlchemy session and object.
-
-    This function first attempts to locate an existing record in the database that matches the primary key of the given object.
-    If a matching record is found, it iterates over all attributes of the object's mapped columns (excluding primary key attributes)
-    and for each attribute that is explicitly set on the new object and not None, update the existing record if the values differ.
-    If no matching record is found, the object is added as a new record.
-
-    After applying the changes, the function attempts to commit the transaction. 
-    If an error occurs during commit (SQLAlchemyError), the transaction is rolled back and the error is logged.
-
-    Args:
-        session (Session): The SQLAlchemy session used to interact with the database.
-        obj (DeclarativeMeta): The SQLAlchemy declarative model instance representing the record to modify or insert.
-
-    Returns:
-        Updated Object (DeclarativeMeta): The modified or newly created object after the commit.
+    def __init__(self, database_uri: Optional[str] = None):
+        """
+        Initialize the DatabaseManager.
+        
+        Args:
+            database_uri: SQLAlchemy database URI. If None, will be set later via init_app()
+        """
+        self.engine: Optional[sqlalchemy.engine.Engine] = None
+        self.SessionLocal: Optional[sessionmaker] = None
+        self._scoped_session: Optional[scoped_session] = None
+        
+        if database_uri:
+            self._create_engine(database_uri)
     
-    Raises:
-        SQLAlchemyError: If the commit fails, the exception is caught, and an error message is logged after rolling back the session.
-    """
-    try:
-        merged_obj = session.merge(obj)  # Automatically handles updates
-        session.commit()
-        return merged_obj
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"Error committing modify: {e}")
-        return None
-
-def delete(session: Session, obj: sqlalchemy.orm.DeclarativeMeta) -> None:
-    """
-    Deletes a record from the database along with its orphaned children,
-    using SQLAlchemy's cascade functionality.
-
-    Args:
-        session (Session): SQLAlchemy session
-        obj (DeclarativeMeta): The instance to delete
-
-    Returns:
-        None
-    """
-    result = find_by_pk(session, obj)
-
-    if result:
-        existing, _, _ = result
+    def _create_engine(self, database_uri: str) -> None:
+        """Create SQLAlchemy engine and session factory."""
+        self.engine = create_engine(
+            database_uri,
+            echo=False,  # Set to True for SQL debugging
+            pool_pre_ping=True,  # Verify connections before using
+        )
+        self.SessionLocal = sessionmaker(
+            bind=self.engine,
+            autocommit=False,
+            autoflush=False
+        )
+        self._scoped_session = scoped_session(self.SessionLocal)
+    
+    def init_app(self, app: Flask) -> None:
+        """
+        Initialize database with Flask app.
+        
+        Args:
+            app: Flask application instance
+        """
+        database_uri = app.config.get('SQLALCHEMY_DATABASE_URI')
+        
+        if not database_uri:
+            raise ValueError("SQLALCHEMY_DATABASE_URI not found in app config")
+        
+        # Ensure database directory exists
+        if database_uri.startswith('sqlite:///'):
+            db_path = Path(database_uri.replace('sqlite:///', ''))
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Database path: {db_path}")
+        
+        self._create_engine(database_uri)
+        
+        # Register teardown to close sessions
+        @app.teardown_appcontext
+        def shutdown_session(exception=None):
+            self.close_session()
+        
+        logger.info("DatabaseManager initialized with Flask app")
+    
+    def create_tables(self) -> None:
+        """Create all tables defined in models."""
+        if not self.engine:
+            raise RuntimeError("Database engine not initialized. Call init_app() first.")
+        
+        Base.metadata.create_all(self.engine)
+        logger.info("Database tables created successfully")
+    
+    def drop_tables(self) -> None:
+        """Drop all tables (use with caution!)."""
+        if not self.engine:
+            raise RuntimeError("Database engine not initialized")
+        
+        Base.metadata.drop_all(self.engine)
+        logger.warning("All database tables dropped")
+    
+    def get_session(self) -> Session:
+        """
+        Get a new database session.
+        
+        Returns:
+            Session: SQLAlchemy session instance
+        """
+        if not self._scoped_session:
+            raise RuntimeError("Database not initialized. Call init_app() first.")
+        
+        return self._scoped_session()
+    
+    def close_session(self) -> None:
+        """Close the current scoped session."""
+        if self._scoped_session:
+            self._scoped_session.remove()
+    
+    # ==================== CRUD Operations ====================
+    
+    def insert(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+        """
+        Insert a single object into the database.
+        
+        Args:
+            obj: SQLAlchemy model instance to insert
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            The inserted object, or None if failed
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
         try:
-            # ⚠️ Ensure children are loaded so orphan detection works
-            _ = [getattr(existing, rel.key) for rel in inspect(existing.__class__).relationships]
-
+            session.add(obj)
+            session.commit()
+            session.refresh(obj)  # Refresh to get generated IDs
+            logger.info(f"Inserted {type(obj).__name__} with id: {obj.id}")
+            return obj
+        except IntegrityError as e:
+            session.rollback()
+            logger.warning(f"Insert failed due to integrity error: {e}")
+            # Attempt to modify existing record
+            return self.modify(obj, session)
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Insert failed: {e}")
+            return None
+        finally:
+            if close_session:
+                session.close()
+    
+    def insert_many(self, objs: list[model_types], session: Optional[Session] = None) -> bool:
+        """
+        Insert multiple objects into the database.
+        
+        Args:
+            objs: List of SQLAlchemy model instances
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            True if all inserts succeeded, False otherwise
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            session.add_all(objs)
+            session.commit()
+            logger.info(f"Inserted {len(objs)} records")
+            return True
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Bulk insert failed: {e}")
+            return False
+        finally:
+            if close_session:
+                session.close()
+    
+    def modify(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+        """
+        Update an existing record or insert if not found.
+        
+        Uses SQLAlchemy's merge() which handles both update and insert.
+        
+        Args:
+            obj: SQLAlchemy model instance
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            The merged object, or None if failed
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            merged_obj = session.merge(obj)
+            session.commit()
+            logger.info(f"Modified {type(obj).__name__} with id: {obj.id}")
+            return merged_obj
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Modify failed: {e}")
+            return None
+        finally:
+            if close_session:
+                session.close()
+    
+    def delete(self, obj: model_types, session: Optional[Session] = None) -> bool:
+        """
+        Delete a record from the database.
+        
+        Args:
+            obj: SQLAlchemy model instance to delete
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            True if deletion succeeded, False otherwise
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            # Find existing record by primary key
+            existing = self.find_by_pk(obj, session)
+            
+            if not existing:
+                logger.warning(f"Delete failed: Record not found")
+                return False
+            
+            # Load relationships to trigger cascade deletions
+            for rel in inspect(existing.__class__).relationships:
+                getattr(existing, rel.key)
+            
             session.delete(existing)
             session.commit()
+            logger.info(f"Deleted {type(obj).__name__} with id: {obj.id}")
+            return True
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"Delete failed: {e}")
-    else:
-        logger.warning("Delete failed: No record found with matching unique attributes.")
-
-def find_by_attr(session: Session, attr_values: dict, model_class: sqlalchemy.orm.decl_api.DeclarativeMeta) -> dict:
-    """
-    Finds a record by specific attribute values.
-
-    Given a dictionary of attribute names and values and a model class, queries the database for a record
-    that matches all the provided attributes. If a matching record is found, returns a dictionary
-    with the record's column names and values (excluding any private attributes).
-
-    Args:
-        session (Session): The SQLAlchemy session used for querying.
-        attr_values (dict): A dictionary of column names and their respective values to filter by.
-        model_class (DeclarativeMeta): The SQLAlchemy declarative model class to query.
-
-    Returns:
-        dict: A dictionary of attributes and values for the found record, or None if no record matches.
+            return False
+        finally:
+            if close_session:
+                session.close()
     
-    Raises:
-        ValueError: If no model_class is provided.
-    """
-    if not model_class:
-        raise ValueError("Model class must be provided.")
-
-    # Query for the existing row
-    existing = session.query(model_class).filter_by(**attr_values).first()
-
-    if existing:
-        return {k: v for k, v in existing.__dict__.items() if not k.startswith('_')}
-    else:
-        logger.warning("No record found with matching attributes.")
-        return None
-    
-def generate_new_id(session, unit_id, model_class) -> str:
-    # Get next sequence value in a transaction-safe way
-    # Get the current maximum number for this prefix in the unit
-    existing_ids = session.scalars(
-        select(model_class.id)
-        .where(model_class.unit_id == unit_id)
-    ).all()
-    
-    # Extract the numeric parts
-    numbers = []
-    for id_str in existing_ids:
+    def find_by_pk(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+        """
+        Find an existing record by primary key.
+        
+        Args:
+            obj: Model instance containing primary key values
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            Existing record or None if not found
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
         try:
-            num = int(id_str.split("_")[-1][1:])
-            numbers.append(num)
-        except ValueError:
-            continue
+            model_class = type(obj)
+            mapper = inspect(model_class)
+            
+            # Extract primary key values
+            pk_attrs = {key.name: getattr(obj, key.name) for key in mapper.primary_key}
+            
+            # Query for existing record
+            existing = session.query(model_class).filter_by(**pk_attrs).first()
+            return existing
+        finally:
+            if close_session:
+                session.close()
     
-    # Calculate next number
-    next_num = max(numbers) + 1 if numbers else 1
+    def find_by_attr(
+        self,
+        model_class: Type[model_types],
+        attr_values: dict[str, Any],
+        session: Optional[Session] = None
+    ) -> Optional[dict]:
+        """
+        Find a record by specific attributes.
+        
+        Args:
+            model_class: The SQLAlchemy model class to query
+            attr_values: Dictionary of attribute names and values
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            Dictionary of record attributes or None if not found
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            existing = session.query(model_class).filter_by(**attr_values).first()
+            
+            if existing:
+                return {k: v for k, v in existing.__dict__.items() if not k.startswith('_')}
+            else:
+                logger.warning(f"No {model_class.__name__} found with attributes: {attr_values}")
+                return None
+        finally:
+            if close_session:
+                session.close()
+    
+    def find_all(
+        self,
+        model_class: Type[model_types] | list[Type[model_types]],
+        filters: Optional[dict[str, Any]] = None,
+        session: Optional[Session] = None
+    ) -> list[model_types]:
+        """
+        Find all records matching optional filters.
+        
+        Args:
+            model_class: The SQLAlchemy model class to query
+            filters: Optional dictionary of filter conditions
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            List of matching records
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            if not isinstance(model_class, list):
+                model_class = list(model_class)
+            
+            results = []
 
-    return next_num
+            for model in model_class:
+                query = session.query(model)
+                
+                if filters:
+                    query = query.filter_by(**filters)
+            
+                results += query.all()
+            return results
+        finally:
+            if close_session:
+                session.close()
+    
+    def generate_new_id(
+        self,
+        model_class: Type[model_types],
+        unit_id: str,
+        session: Optional[Session] = None
+    ) -> int:
+        """
+        Generate a new sequential ID for a unit.
+        
+        Args:
+            model_class: The model class to generate ID for
+            unit_id: The unit ID to scope the sequence
+            session: Optional session. If None, creates a new one.
+        
+        Returns:
+            Next sequential number
+        """
+        close_session = False
+        if session is None:
+            session = self.get_session()
+            close_session = True
+        
+        try:
+            # Get all existing IDs for this unit
+            existing_ids = session.scalars(
+                select(model_class.id).where(model_class.unit_id == unit_id)
+            ).all()
+            
+            # Extract numeric parts
+            numbers = []
+            for id_str in existing_ids:
+                try:
+                    num = int(id_str.split("_")[-1][1:])
+                    numbers.append(num)
+                except (ValueError, IndexError):
+                    continue
+            
+            # Return next number
+            return max(numbers) + 1 if numbers else 1
+        finally:
+            if close_session:
+                session.close()
+
+
+# Global instance
+db_manager = DatabaseManager()
+
+# Convenience function for Flask initialization
+def init_db(app: Flask) -> DatabaseManager:
+    """
+    Initialize database with Flask app.
+    
+    Args:
+        app: Flask application instance
+    
+    Returns:
+        DatabaseManager instance
+    """
+    db_manager.init_app(app)
+    db_manager.create_tables()
+    return db_manager

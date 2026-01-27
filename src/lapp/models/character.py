@@ -4,6 +4,9 @@ from datetime import date
 
 from ..core.database import Base
 from .unit import Unit
+from .language import Language
+from .exercise import Exercise
+from .associations import exercise_character_association
 
 class Character(Base):
     __tablename__ = 'character'
@@ -17,8 +20,17 @@ class Character(Base):
     score = Column(Integer, default=0)  # e.g., how much the character is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the character was last seen
 
-    parent: Mapped["Unit"] = relationship("Unit", back_populates="characters")
-    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
+    parent_unit: Mapped["Unit"] = relationship("Unit", back_populates="characters")
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+
+    parent_language: Mapped["Language"] = relationship("Language", back_populates="characters")
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
+
+    associated_exercises: Mapped[list["Exercise"]] = relationship(
+        "Exercise",
+        secondary=exercise_character_association,
+        back_populates="associated_char"
+    )
 
     def to_dict(self):
         return {
@@ -30,5 +42,6 @@ class Character(Base):
             "example_word": self.example_word,
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
-            "unit_id": self.unit_id
+            "unit_id": self.unit_id,
+            "language_id": self.language_id
         }

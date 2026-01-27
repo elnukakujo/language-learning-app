@@ -3,7 +3,10 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import date
 
 from ..core.database import Base
+from .language import Language
 from .unit import Unit
+from .exercise import Exercise
+from .associations import exercise_vocabulary_association
 
 class Vocabulary(Base):
     __tablename__ = 'vocabulary'
@@ -17,8 +20,17 @@ class Vocabulary(Base):
     score = Column(Integer, default=0)  # e.g., how much the vocabulary is mastered
     last_seen = Column(Date, default=date.today)  # e.g., when the vocabulary was last seen
 
-    parent: Mapped["Unit"] = relationship("Unit", back_populates="vocs")
-    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
+    parent_unit: Mapped["Unit"] = relationship("Unit", back_populates="vocs")
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id")) 
+
+    parent_language: Mapped["Language"] = relationship("Language", back_populates="vocs")
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
+
+    associated_exercises: Mapped[list["Exercise"]] = relationship(
+        "Exercise",
+        secondary=exercise_vocabulary_association,
+        back_populates="associated_voc"
+    )
 
     def to_dict(self):
         return {
@@ -30,5 +42,6 @@ class Vocabulary(Base):
             "type": self.type,
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
-            "unit_id": self.unit_id
+            "unit_id": self.unit_id,
+            "language_id": self.language_id
         }

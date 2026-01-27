@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import date
 
 from ..core.database import Base
-from . import Character, Grammar, Vocabulary, Exercise, Language
 
 class Unit(Base):
     __tablename__ = 'unit'
@@ -14,20 +13,32 @@ class Unit(Base):
     level = Column(String)
     score = Column(Integer, default=0)
     last_seen = Column(Date, default=date.today)
-    
-    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
     # Many-to-one: parent language
-    parent: Mapped["Language"] = relationship(
-        "Language",
-        back_populates="units",
-        foreign_keys=[language_id]
-    )
+    parent_language: Mapped["Language"] = relationship("Language",back_populates="units")
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
-    characters: Mapped[list["Character"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
-    grammars: Mapped[list["Grammar"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
-    vocs: Mapped[list["Vocabulary"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
-    exercises: Mapped[list["Exercise"]] = relationship(back_populates="parent", cascade="all, delete-orphan")
+    # One-to-many: all related models
+    characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        back_populates="parent_unit",
+        cascade="all, delete-orphan"
+    )
+    grammars: Mapped[list["Grammar"]] = relationship(
+        "Grammar",
+        back_populates="parent_unit",
+        cascade="all, delete-orphan"
+    )
+    vocabularies: Mapped[list["Vocabulary"]] = relationship(
+        "Vocabulary",
+        back_populates="parent_unit",
+        cascade="all, delete-orphan"
+    )
+    exercises: Mapped[list["Exercise"]] = relationship(
+        "Exercise",
+        back_populates="parent_unit",
+        cascade="all, delete-orphan"
+    )
 
     def to_dict(self):
         return {

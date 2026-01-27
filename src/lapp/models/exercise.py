@@ -4,6 +4,15 @@ from datetime import date
 
 from ..core.database import Base
 from .unit import Unit
+from .language import Language
+from .vocabulary import Vocabulary
+from .character import Character
+from .grammar import Grammar
+from .associations import (
+    exercise_vocabulary_association,
+    exercise_character_association,
+    exercise_grammar_association
+)
 
 class Exercise(Base):
     __tablename__ = 'exercises'
@@ -19,10 +28,29 @@ class Exercise(Base):
     answer = Column(String)
     score = Column(Integer, default=0)  # e.g., how much the exercise has been practiced
     last_seen = Column(Date, default=date.today)  # e.g., when the exercise was last seen
-    associated_to = Column(JSON, default={})
 
-    parent: Mapped["Unit"] = relationship("Unit", back_populates="exercises")
-    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))  # Fixed: should be str, not int
+    parent_unit: Mapped["Unit"] = relationship("Unit", back_populates="exercises")
+    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id")) 
+
+    parent_language: Mapped["Language"] = relationship("Language", back_populates="exercises")
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
+
+    # Relationships to learning components
+    associated_vocs: Mapped[list["Vocabulary"]] = relationship(
+        "Vocabulary",
+        secondary=exercise_vocabulary_association,
+        back_populates="associated_exercises"
+    )
+    associated_characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        secondary=exercise_character_association,
+        back_populates="associated_exercises"
+    )
+    associated_grammars: Mapped[list["Grammar"]] = relationship(
+        "Grammar",
+        secondary=exercise_grammar_association,
+        back_populates="associated_exercises"
+    )
 
     def to_dict(self):
         return {
@@ -36,5 +64,6 @@ class Exercise(Base):
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
             "associated_to": self.associated_to,
-            "unit_id": self.unit_id
+            "unit_id": self.unit_id,
+            "language_id": self.language_id
         }

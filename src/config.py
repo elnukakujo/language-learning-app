@@ -31,7 +31,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/languages.db'
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/dev_languages.db'
 
 class TestingConfig(Config):
     """Testing configuration"""

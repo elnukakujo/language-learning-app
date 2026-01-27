@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Date, ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped
 from datetime import date
 
 from ..core.database import Base
@@ -28,12 +28,28 @@ class Language(Base):
         foreign_keys=lambda: [Unit.language_id]
     )
 
-    # One-to-one: current unit relationship (optional, but useful)
-    current_unit_obj: Mapped["Unit"] = relationship(
-        "Unit",
-        foreign_keys=[current_unit],
-        uselist=False
+    # One-to-many: all characters/grammars/vocabularies/exercises belonging to this language
+    characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        back_populates="parent_language",
+        cascade="all, delete-orphan"
     )
+    grammars: Mapped[list["Grammar"]] = relationship(
+        "Grammar",
+        back_populates="parent_language",
+        cascade="all, delete-orphan"
+    )
+    vocabularies: Mapped[list["Vocabulary"]] = relationship(
+        "Vocabulary",
+        back_populates="parent_language",
+        cascade="all, delete-orphan"
+    )
+    exercises: Mapped[list["Exercise"]] = relationship(
+        "Exercise",
+        back_populates="parent_language",
+        cascade="all, delete-orphan"
+    )
+
 
     def to_dict(self):
         return {
