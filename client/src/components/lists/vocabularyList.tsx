@@ -25,7 +25,7 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
     const averageScore = vocProps.items.reduce((acc, item) => acc + item.score, 0) / vocProps.count;
 
     return (
-        <section className="flex flex-col space-y-2 w-[14rem]">
+        <section className="flex flex-col gap-4 w-[14rem]">
             <header>
                 <h2>Vocabulary</h2>
                 {vocProps.count > 0 && (
@@ -51,13 +51,15 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
             >
                 <p>Add New Vocabulary</p>
             </NavButton>
-            <NavButton
-                path={`/languages/${language_id}/unit/${unit_id}/voc/${
-                    vocProps.items[Math.floor(Math.random() * vocProps.items.length)].id
-                }/flashcard`}
-            >
-                <p>Flashcard Practice</p>
-            </NavButton>
+            {vocProps.count > 0 && (
+                <NavButton
+                    path={`/languages/${language_id}/unit/${unit_id}/voc/${
+                        vocProps.items[Math.floor(Math.random() * vocProps.items.length)].id
+                    }/flashcard`}
+                >
+                    <p>Flashcard Practice</p>
+                </NavButton>
+            )}
         </section>
     );
 }

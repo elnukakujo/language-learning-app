@@ -8,7 +8,7 @@ import random
 from fastapi import UploadFile, File, HTTPException
 
 from lapp.api.models import UpdatebyIdRequest, NewElementRequest, UpdateScoreRequest
-from lapp.dbms import find_by_pk, init_db, insert, modify, delete, generate_new_id
+from lapp.core.database import find_by_pk, init_db, insert, modify, delete, generate_new_id
 from lapp.tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
 from lapp.utils import update_score, orm_to_dict, str_to_modelclass
 import logging

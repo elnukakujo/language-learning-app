@@ -1,14 +1,25 @@
-venv/
-.venv
-.vnv
-
-.DS_Store
 *.db
 *.sqlite
-.vscode/
-__pycache__/
+*.sqlite3
+media/images/*
+media/audio/*
 
-assets/images/*
-assets/audio/*
+# Instance folder (except .gitkeep)
+instance/*
+!instance/.gitkeep
 
+# Environment files
 .env
+.env.local
+.vscode/
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/

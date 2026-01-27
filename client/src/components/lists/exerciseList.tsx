@@ -48,7 +48,7 @@ export default function ExerciseList({ exProps}: { exProps: ExerciseProps}) {
             >
                 <span>Add New Exercise</span>
             </NavButton>
-            {exProps.items.length > 0 && (
+            {exProps.count > 0 && (
                 <NavButton 
                     path={`/languages/${language_id}/unit/${unit_id}/ex/${
                             unit_id+"_E"+Number(Math.floor(Math.random() * exProps.count)+1)

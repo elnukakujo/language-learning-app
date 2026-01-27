@@ -1,3 +1,3 @@
-from .backup import start_backup_scheduler
+from .core.backup import start_backup_scheduler
 
 start_backup_scheduler()

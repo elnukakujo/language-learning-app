@@ -51,7 +51,7 @@ export default async function Unit({ params }: { params: { language_id: string, 
     const unit: ExtendedUnit = await getUnitData(unit_id);
 
     return (
-        <main>
+        <main className="flex flex-col gap-8">
             <header>
                 <h1>{unit.title}</h1>
                 <p>{unit.description}</p>

@@ -50,7 +50,7 @@ export default function CharacterList({ charProps}: { charProps: CharactersProps
             >
                 <span>Add New Character</span>
             </NavButton>
-            {charProps.items.length > 0 && (
+            {charProps.count > 0 && (
             <NavButton
                 path={`/languages/${language_id}/unit/${unit_id}/char/${
                         charProps.items[Math.floor(Math.random() * charProps.items.length)].id

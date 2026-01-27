@@ -1,8 +1,7 @@
-import math
-import time
-from sqlalchemy.ext.declarative import DeclarativeMeta
 from datetime import date
-from .tables import Language, Unit, Vocabulary, GrammarRule, CalligraphyCharacter, Exercise
+import math
+from sqlalchemy.ext.declarative import DeclarativeMeta
+from ..models import Language, Unit, Vocabulary, Grammar, Character, Exercise
 
 def update_score(score: float, last_seen: date, success: bool) -> float:
     days = (date.today() - last_seen).days
@@ -14,25 +13,6 @@ def update_score(score: float, last_seen: date, success: bool) -> float:
     score += success * time_weight - (1-success) * time_weight
 
     return min(max(0, score), 100)
-
-def orm_to_dict(instance: DeclarativeMeta) -> dict:
-    """
-    Automatically converts any SQLAlchemy ORM instance to a dictionary of its column values.
-
-    Args:
-        instance (DeclarativeMeta): An instance of a SQLAlchemy declarative class.
-
-    Returns:
-        dict: Dictionary of the instance's column names and their values.
-    """
-    result = {}
-    for column in instance.__table__.columns:
-        value = getattr(instance, column.name)
-        # Optionally convert date/datetime to string
-        if isinstance(value, date):
-            value = value.isoformat()
-        result[column.name] = value
-    return result
 
 def str_to_modelclass(element_id: str) -> DeclarativeMeta:
     """
@@ -55,8 +35,8 @@ def str_to_modelclass(element_id: str) -> DeclarativeMeta:
         Language: ["lang", "l"],
         Unit: ["unit", "u"],
         Vocabulary: ["voc", "v"],
-        GrammarRule: ["gram", "g"],
-        CalligraphyCharacter: ["char", "c"],
+        Grammar: ["gram", "g"],
+        Character: ["char", "c"],
         Exercise: ["ex", "e"]
     }
     for model_class, aliases in alias_map.items():
