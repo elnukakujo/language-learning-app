@@ -29,11 +29,11 @@ class Character(Base):
     associated_exercises: Mapped[list["Exercise"]] = relationship(
         "Exercise",
         secondary=exercise_character_association,
-        back_populates="associated_char"
+        back_populates="associated_characters"
     )
-
-    def to_dict(self):
-        return {
+    
+    def to_dict(self, include_relationships: bool = False) -> dict:
+        base_dict = {
             "id": self.id,
             "character": self.character,
             "components": self.components,
@@ -45,3 +45,8 @@ class Character(Base):
             "unit_id": self.unit_id,
             "language_id": self.language_id
         }
+        if include_relationships:
+            base_dict.update({
+                "exercise_ids": [ex.id for ex in self.associated_exercises],
+            })
+        return base_dict

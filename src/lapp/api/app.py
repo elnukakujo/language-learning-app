@@ -1,10 +1,10 @@
 import logging
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
-from pathlib import Path
 
-from lapp.core.database import init_db
-from lapp.core.backup import init_backup_manager
+from ..core.database import init_db
+from ..core.backup import init_backup_manager
 from config import config, INSTANCE_DIR, BACKUP_DIR
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,9 @@ def create_app(config_name: str = 'default') -> Flask:
     
     # Register CLI commands
     register_commands(app)
+
+    # Register health check endpoint
+    register_health_check(app)
     
     logger.info(f"🚀 Flask app created with config: {config_name}")
     
@@ -61,11 +64,17 @@ def configure_logging(app: Flask) -> None:
 
 def initialize_extensions(app: Flask) -> None:
     """Initialize Flask extensions and database."""
-    
-    # Initialize database
+
+    # Detect the real process (not the reloader)
+    is_main_process = (
+        not app.debug
+        or os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    )
+
+    # Initialize database (safe to do twice, usually)
     db = init_db(app)
     logger.info("✅ Database initialized")
-    
+
     # Initialize backup manager
     db_path = INSTANCE_DIR / 'languages.db'
     backup_mgr = init_backup_manager(
@@ -73,46 +82,27 @@ def initialize_extensions(app: Flask) -> None:
         backup_dir=BACKUP_DIR,
         config=app.config
     )
-    
-    # Start automatic backups (skip in testing)
-    if not app.config.get('TESTING'):
+
+    # Start automatic backups ONLY once
+    if is_main_process and not app.config.get('TESTING'):
         backup_mgr.start_scheduler()
         logger.info("✅ Backup scheduler started")
-    
-    # Store backup manager in app context for access in routes
+
     app.backup_manager = backup_mgr
-    
-    # Cleanup on shutdown
-    @app.teardown_appcontext
-    def shutdown(exception=None):
-        if hasattr(app, 'backup_manager') and not app.config.get('TESTING'):
-            app.backup_manager.stop_scheduler()
 
 
 def register_blueprints(app: Flask) -> None:
     """Register all API blueprints."""
     
-    from lapp.api.routes import (
+    from ..api.routes import (
         language_bp,
-        unit_bp,
-        vocabulary_bp,
-        character_bp,
-        grammar_bp,
-        exercise_bp,
-        media_bp,
-        backup_bp
+        unit_bp
     )
     
     # Register blueprints
     blueprints = [
         language_bp,
-        unit_bp,
-        vocabulary_bp,
-        character_bp,
-        grammar_bp,
-        exercise_bp,
-        media_bp,
-        backup_bp
+        unit_bp
     ]
     
     for blueprint in blueprints:
@@ -160,7 +150,7 @@ def register_commands(app: Flask) -> None:
     @app.cli.command()
     def init_db():
         """Initialize the database."""
-        from lapp.core.database import db_manager
+        from ..core.database import db_manager
         db_manager.create_tables()
         print("✅ Database initialized")
     

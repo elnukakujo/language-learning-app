@@ -27,11 +27,14 @@ class Grammar(Base):
     associated_exercises: Mapped[list["Exercise"]] = relationship(
         "Exercise",
         secondary=exercise_grammar_association,
-        back_populates="associated_grammar"
+        back_populates="associated_grammars"
     )
 
     def to_dict(self):
-        return {
+        return 
+    
+    def to_dict(self, include_relationships: bool = False) -> dict:
+        base_dict = {
             "id": self.id,
             "title": self.title,
             "explanation": self.explanation,
@@ -41,3 +44,8 @@ class Grammar(Base):
             "unit_id": self.unit_id,
             "language_id": self.language_id
         }
+        if include_relationships:
+            base_dict.update({
+                "exercise_ids": [ex.id for ex in self.associated_exercises],
+            })
+        return base_dict

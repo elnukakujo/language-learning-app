@@ -1,78 +1,78 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
-from lapp.services import LanguageService
-from lapp.schemas.element_dict import LanguageDict
+from ...services import UnitService
+from ...schemas.element_dict import UnitDict
 
-bp = Blueprint('language', __name__, url_prefix='/api/languages')
-language_service = LanguageService()
+bp = Blueprint('unit', __name__, url_prefix='/api/units')
+unit_service = UnitService()
 
 @bp.route('/', methods=['GET'])
-def get_all_languages():
-    """Get all languages."""
-    languages = language_service.get_all()
-    return jsonify([lang.to_dict() for lang in languages])
+def get_all_units():
+    """Get all units."""
+    units = unit_service.get_all()
+    return jsonify([unit.to_dict(include_relationships=False) for unit in units])
 
 
-@bp.route('/<language_id>', methods=['GET'])
-def get_language(language_id: str):
-    """Get a specific language by ID."""
-    language = language_service.get_by_id(language_id)
+@bp.route('/<unit_id>', methods=['GET'])
+def get_unit(unit_id: str):
+    """Get a specific unit by ID."""
+    unit = unit_service.get_by_id(unit_id)
     
-    if not language:
-        return jsonify({'error': 'Language not found'}), 404
+    if not unit:
+        return jsonify({'error': 'Unit not found'}), 404
     
-    return jsonify(language.to_dict())
+    return jsonify(unit.to_dict(include_relationships=True))
 
 
 @bp.route('/', methods=['POST'])
-def create_language():
-    """Create a new language."""
+def create_unit():
+    """Create a new unit."""
     try:
         # Validate request data
-        data = LanguageDict(**request.json)
+        data = UnitDict(**request.json)
         
-        # Create language
-        language = language_service.create(data)
+        # Create unit
+        unit = unit_service.create(data)
         
-        if language:
+        if unit:
             return jsonify({
                 'success': True,
-                'language': language.to_dict()
+                'unit': unit.to_dict(include_relationships=True)
             }), 201
         else:
-            return jsonify({'error': 'Failed to create language'}), 400
+            return jsonify({'error': 'Failed to create unit'}), 400
             
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
 
 
-@bp.route('/<language_id>', methods=['PUT', 'PATCH'])
-def update_language(language_id: str):
-    """Update a language."""
+@bp.route('/<unit_id>', methods=['PUT', 'PATCH'])
+def update_unit(unit_id: str):
+    """Update a unit."""
     try:
-        data = LanguageDict(**request.json)
+        data = UnitDict(**request.json)
         
-        language = language_service.update(language_id, data)
+        unit = unit_service.update(unit_id, data)
         
-        if language:
+        if unit:
             return jsonify({
                 'success': True,
-                'language': language.to_dict()
+                'unit': unit.to_dict(include_relationships=True)
             })
         else:
-            return jsonify({'error': 'Language not found'}), 404
+            return jsonify({'error': 'Unit not found'}), 404
             
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
 
 
-@bp.route('/<language_id>', methods=['DELETE'])
-def delete_language(language_id: str):
-    """Delete a language."""
-    success = language_service.delete(language_id)
+@bp.route('/<unit_id>', methods=['DELETE'])
+def delete_unit(unit_id: str):
+    """Delete a unit."""
+    success = unit_service.delete(unit_id)
     
     if success:
         return jsonify({'success': True}), 204
     else:
-        return jsonify({'error': 'Language not found'}), 404
+        return jsonify({'error': 'Unit not found'}), 404

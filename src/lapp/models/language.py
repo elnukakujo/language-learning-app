@@ -23,7 +23,7 @@ class Language(Base):
     # One-to-many: all units belonging to this language
     units: Mapped[list["Unit"]] = relationship(
         "Unit",
-        back_populates="parent",
+        back_populates="parent_language",
         cascade="all, delete-orphan",
         foreign_keys=lambda: [Unit.language_id]
     )
@@ -50,16 +50,24 @@ class Language(Base):
         cascade="all, delete-orphan"
     )
 
-
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relationships: bool = False) -> dict:
+        base_dict = {
             "id": self.id,
             "name": self.name,
             "native_name": self.native_name,
             "level": self.level,
             "description": self.description,
+            "flag": self.flag,
+            "current_unit": self.current_unit,
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
-            "flag": self.flag,
-            "current_unit": self.current_unit
         }
+        if include_relationships:
+            base_dict.update({
+                "unit_ids": [unit.id for unit in self.units],
+                "character_ids": [char.id for char in self.characters],
+                "grammar_ids": [gram.id for gram in self.grammars],
+                "vocabulary_ids": [vocab.id for vocab in self.vocabularies],
+                "exercise_ids": [ex.id for ex in self.exercises],
+            })
+        return base_dict

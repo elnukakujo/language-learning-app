@@ -5,9 +5,6 @@ from datetime import date
 from ..core.database import Base
 from .unit import Unit
 from .language import Language
-from .vocabulary import Vocabulary
-from .character import Character
-from .grammar import Grammar
 from .associations import (
     exercise_vocabulary_association,
     exercise_character_association,
@@ -36,7 +33,7 @@ class Exercise(Base):
     language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
     # Relationships to learning components
-    associated_vocs: Mapped[list["Vocabulary"]] = relationship(
+    associated_vocabularies: Mapped[list["Vocabulary"]] = relationship(
         "Vocabulary",
         secondary=exercise_vocabulary_association,
         back_populates="associated_exercises"
@@ -53,7 +50,10 @@ class Exercise(Base):
     )
 
     def to_dict(self):
-        return {
+        return 
+    
+    def to_dict(self, include_relationships: bool = False) -> dict:
+        base_dict = {
             "id": self.id,
             "exercise_type": self.exercise_type,
             "question": self.question,
@@ -63,7 +63,13 @@ class Exercise(Base):
             "answer": self.answer,
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
-            "associated_to": self.associated_to,
             "unit_id": self.unit_id,
             "language_id": self.language_id
         }
+        if include_relationships:
+            base_dict.update({
+                "character_ids": [char.id for char in self.associated_characters],
+                "grammar_ids": [gram.id for gram in self.associated_grammars],
+                "vocabulary_ids": [vocab.id for vocab in self.associated_vocabularies],
+            })
+        return base_dict

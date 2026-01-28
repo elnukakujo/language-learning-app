@@ -6,8 +6,12 @@ logger = logging.getLogger(__name__)
 
 from ..schemas.element_dict import VocabularyDict
 from ..models import Vocabulary
+from . import UnitService, LanguageService
 from ..core.database import db_manager
 from ..utils import update_score
+
+unit_service = UnitService()
+language_service = LanguageService()
 
 class VocabularyService:
     def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Vocabulary]:
@@ -184,11 +188,21 @@ class VocabularyService:
             logger.warning(f"Vocabulary item not found: {voc_id}")
             return None
         
+        previous_score = vocabulary.score
+        
         vocabulary.score = update_score(
             current_score=vocabulary.score,
             last_seen=vocabulary.last_seen,
             success=success
         )
+
+        if vocabulary.score != previous_score:
+            if vocabulary.unit_id:
+                unit_service.update_score(vocabulary.unit_id)
+                logger.info(f"Updated unit {vocabulary.unit_id} score due to vocabulary {voc_id}")
+            if vocabulary.language_id:
+                language_service.update_score(vocabulary.language_id)
+                logger.info(f"Updated language {vocabulary.language_id} score due to vocabulary {voc_id}")
         
         # Update last_seen
         vocabulary.last_seen = date.today()

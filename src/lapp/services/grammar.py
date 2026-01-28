@@ -7,8 +7,12 @@ logger = logging.getLogger(__name__)
 
 from ..schemas.element_dict import GrammarDict
 from ..models import Grammar
+from . import UnitService, LanguageService
 from ..core.database import db_manager
 from ..utils import update_score
+
+unit_service = UnitService()
+language_service = LanguageService()
 
 class GrammarService:
     def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Grammar]:
@@ -185,6 +189,8 @@ class GrammarService:
             logger.warning(f"Grammar item not found: {grammar_id}")
             return None
         
+        previous_score = grammar.score
+
         grammar.score = update_score(
             current_score=grammar.score,
             last_seen=grammar.last_seen,
@@ -193,6 +199,14 @@ class GrammarService:
         
         # Update last_seen
         grammar.last_seen = date.today()
+
+        if grammar.score != previous_score:
+            if grammar.unit_id:
+                unit_service.update_score(grammar.unit_id)
+                logger.info(f"Updated unit {grammar.unit_id} score due to grammar {grammar_id}")
+            if grammar.language_id:
+                language_service.update_score(grammar.language_id)
+                logger.info(f"Updated language {grammar.language_id} score due to grammar {grammar_id}")
         
         # Save changes
         result = db_manager.modify(grammar)

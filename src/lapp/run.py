@@ -1,5 +1,5 @@
 import argparse
-from src.lapp.api.app import create_app
+from .api.app import create_app
 
 def parse_args():
     """Parse command line arguments."""
@@ -7,8 +7,8 @@ def parse_args():
     parser.add_argument(
         '--env',
         choices=['dev', 'test', 'prod'],
-        default='prod',
-        help='Environment to run in (default: prod)'
+        default='dev',
+        help='Environment to run in (default: dev)'
     )
     parser.add_argument(
         '--host',

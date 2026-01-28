@@ -1,5 +1,7 @@
+# src/lapp/utils/file_handler.py
 import uuid
 from pathlib import Path
+from config import Config
 
 class MediaFileHandler:
     def __init__(self, media_root):
@@ -21,6 +23,9 @@ class MediaFileHandler:
         
         relative_path = Path(subfolder) / filename
         full_path = self.media_root / relative_path
+        
+        # Ensure subfolder exists
+        full_path.parent.mkdir(parents=True, exist_ok=True)
         
         file.save(str(full_path))
         return str(relative_path)
@@ -47,3 +52,13 @@ class MediaFileHandler:
         full_path = self.media_root / relative_path
         if full_path.exists():
             full_path.unlink()
+    
+    def _is_allowed_image(self, filename):
+        """Check if image file type is allowed"""
+        ext = Path(filename).suffix.lower().lstrip('.')
+        return ext in Config.ALLOWED_IMAGE_EXTENSIONS
+    
+    def _is_allowed_audio(self, filename):
+        """Check if audio file type is allowed"""
+        ext = Path(filename).suffix.lower().lstrip('.')
+        return ext in Config.ALLOWED_AUDIO_EXTENSIONS

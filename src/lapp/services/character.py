@@ -3,12 +3,17 @@ from typing import Optional
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 from ..schemas.element_dict import CharacterDict
 from ..models import Character
 from ..core.database import db_manager
+from . import UnitService, LanguageService
 from ..utils import update_score
+
+unit_service = UnitService()
+language_service = LanguageService()
 
 class CharacterService:
     def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Character]:
@@ -193,6 +198,16 @@ class CharacterService:
         
         # Update last_seen
         character.last_seen = date.today()
+
+        previous_score = character.score
+
+        if character.score != previous_score:
+            if character.unit_id:
+                unit_service.update_score(character.unit_id)
+                logger.info(f"Updated unit {character.unit_id} score due to character {char_id}")
+            if character.language_id:
+                language_service.update_score(character.language_id)
+                logger.info(f"Updated language {character.language_id} score due to character {char_id}")
         
         # Save changes
         result = db_manager.modify(character)
