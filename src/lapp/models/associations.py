@@ -13,7 +13,7 @@ exercise_character_association = Table(
     'exercise_character',
     Base.metadata,
     Column('exercise_id', String, ForeignKey('exercises.id'), primary_key=True),
-    Column('character_id', String, ForeignKey('characters.id'), primary_key=True)
+    Column('character_id', String, ForeignKey('character.id'), primary_key=True)
 )
 
 exercise_grammar_association = Table(

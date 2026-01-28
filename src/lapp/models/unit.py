@@ -15,8 +15,14 @@ class Unit(Base):
     last_seen = Column(Date, default=date.today)
 
     # Many-to-one: parent language
-    parent_language: Mapped["Language"] = relationship("Language",back_populates="units")
     language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
+    
+    # Relationships
+    parent_language: Mapped["Language"] = relationship(
+        "Language",
+        back_populates="units",
+        foreign_keys=[language_id]
+    )
 
     # One-to-many: all related models
     characters: Mapped[list["Character"]] = relationship(

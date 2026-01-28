@@ -45,7 +45,7 @@ def create_vocabulary():
         if vocabulary:
             return jsonify({
                 'success': True,
-                'vocabulary': vocabulary.to_dict(include_relationships=True)
+                'vocabulary': vocabulary.to_dict(include_relationships=False)
             }), 201
         else:
             return jsonify({'error': 'Failed to create vocabulary'}), 400

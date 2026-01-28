@@ -38,7 +38,7 @@ def create_unit():
         if unit:
             return jsonify({
                 'success': True,
-                'unit': unit.to_dict(include_relationships=True)
+                'unit': unit.to_dict(include_relationships=False)
             }), 201
         else:
             return jsonify({'error': 'Failed to create unit'}), 400

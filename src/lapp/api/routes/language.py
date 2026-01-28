@@ -22,7 +22,7 @@ def get_language(language_id: str):
     if not language:
         return jsonify({'error': 'Language not found'}), 404
     
-    return jsonify(language.to_dict())
+    return jsonify(language.to_dict(include_relationships=False))
 
 
 @bp.route('/', methods=['POST'])

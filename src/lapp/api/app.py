@@ -31,9 +31,6 @@ def create_app(config_name: str = 'default') -> Flask:
     # Enable CORS for frontend
     CORS(app, resources={r"/api/*": {"origins": "*"}})
     
-    # Initialize extensions
-    initialize_extensions(app)
-    
     # Register blueprints
     register_blueprints(app)
     
@@ -45,6 +42,9 @@ def create_app(config_name: str = 'default') -> Flask:
 
     # Register health check endpoint
     register_health_check(app)
+
+    # Initialize extensions
+    initialize_extensions(app)
     
     logger.info(f"🚀 Flask app created with config: {config_name}")
     
@@ -96,13 +96,25 @@ def register_blueprints(app: Flask) -> None:
     
     from ..api.routes import (
         language_bp,
-        unit_bp
+        unit_bp,
+        vocabulary_bp,
+        character_bp,
+        grammar_bp,
+        exercise_bp,
+        media_bp,
+        backup_bp,
     )
     
     # Register blueprints
     blueprints = [
         language_bp,
-        unit_bp
+        unit_bp,
+        vocabulary_bp,
+        character_bp,
+        grammar_bp,
+        exercise_bp,
+        media_bp,
+        backup_bp,
     ]
     
     for blueprint in blueprints:

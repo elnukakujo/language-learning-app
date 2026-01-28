@@ -287,7 +287,7 @@ class DatabaseManager:
         model_class: Type[model_types],
         attr_values: dict[str, Any],
         session: Optional[Session] = None
-    ) -> Optional[dict]:
+    ) -> Optional[model_types]:
         """
         Find a record by specific attributes.
         
@@ -297,7 +297,7 @@ class DatabaseManager:
             session: Optional session. If None, creates a new one.
         
         Returns:
-            Dictionary of record attributes or None if not found
+            The matching record or None if not found
         """
         close_session = False
         if session is None:
@@ -308,7 +308,7 @@ class DatabaseManager:
             existing = session.query(model_class).filter_by(**attr_values).first()
             
             if existing:
-                return {k: v for k, v in existing.__dict__.items() if not k.startswith('_')}
+                return existing
             else:
                 logger.warning(f"No {model_class.__name__} found with attributes: {attr_values}")
                 return None
@@ -359,19 +359,32 @@ class DatabaseManager:
     def generate_new_id(
         self,
         model_class: Type[model_types],
-        unit_id: str,
-        session: Optional[Session] = None
-    ) -> int:
+        session: Optional[Session] = None,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+    ) -> str:
         """
-        Generate a new sequential ID for a unit.
+        Generate a new sequential ID for any model type.
+        
+        ID Format:
+        - Language: "lang_L{n}" (global scope)
+        - Unit: "unit_U{n}" (scoped to language)
+        - Vocabulary: "voc_V{n}" (scoped to unit)
+        - Grammar: "gram_G{n}" (scoped to unit)
+        - Character: "char_C{n}" (scoped to unit)
+        - Exercise: "ex_E{n}" (scoped to unit)
         
         Args:
             model_class: The model class to generate ID for
-            unit_id: The unit ID to scope the sequence
             session: Optional session. If None, creates a new one.
+            language_id: Required for Unit model
+            unit_id: Required for Vocabulary, Grammar, Character, Exercise models
         
         Returns:
-            Next sequential number
+            New ID string (e.g., "voc_V42")
+        
+        Raises:
+            ValueError: If required scope parameters are missing
         """
         close_session = False
         if session is None:
@@ -379,22 +392,57 @@ class DatabaseManager:
             close_session = True
         
         try:
-            # Get all existing IDs for this unit
-            existing_ids = session.scalars(
-                select(model_class.id).where(model_class.unit_id == unit_id)
-            ).all()
+            # Define ID prefixes and letters for each model
+            id_config = {
+                "Language": {"prefix": "lang_L", "scope": None},
+                "Unit": {"prefix": "unit_U", "scope": "language"},
+                "Vocabulary": {"prefix": "voc_V", "scope": "unit"},
+                "Grammar": {"prefix": "gram_G", "scope": "unit"},
+                "Character": {"prefix": "char_C", "scope": "unit"},
+                "Exercise": {"prefix": "ex_E", "scope": "unit"},
+            }
+            
+            if model_class.__name__ not in id_config:
+                raise ValueError(f"Unsupported model class: {model_class.__name__}")
+            
+            config = id_config[model_class.__name__]
+            prefix = config["prefix"]
+            scope = config["scope"]
+            
+            # Build query based on scope
+            query = select(model_class.id)
+            
+            if scope == "language":
+                if not language_id:
+                    raise ValueError(f"{model_class.__name__} requires language_id")
+                query = query.where(model_class.language_id == language_id)
+            elif scope == "unit":
+                if not unit_id:
+                    raise ValueError(f"{model_class.__name__} requires unit_id")
+                query = query.where(model_class.unit_id == unit_id)
+            # else: global scope (no filter needed)
+            
+            # Get all existing IDs
+            existing_ids = session.scalars(query).all()
             
             # Extract numeric parts
             numbers = []
             for id_str in existing_ids:
                 try:
-                    num = int(id_str.split("_")[-1][1:])
+                    # Split by underscore and get the part after the letter
+                    # e.g., "voc_V42" -> ["voc", "V42"] -> "42"
+                    num_part = id_str.split("_")[-1][1:]  # Remove the letter prefix
+                    num = int(num_part)
                     numbers.append(num)
                 except (ValueError, IndexError):
                     continue
             
-            # Return next number
-            return max(numbers) + 1 if numbers else 1
+            # Generate next number
+            next_num = max(numbers) + 1 if numbers else 1
+            
+            # Return formatted ID
+            return f"{prefix}{next_num}"
+            
         finally:
             if close_session:
                 session.close()

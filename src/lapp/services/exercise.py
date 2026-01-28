@@ -9,6 +9,9 @@ from ..schemas.element_dict import ExerciseDict
 from ..models import Exercise
 from ..core.database import db_manager
 from ..utils import update_score
+from .unit import UnitService
+
+unit_service = UnitService()
 
 class ExerciseService:
     def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Exercise]:
@@ -88,7 +91,18 @@ class ExerciseService:
         Returns:
             Created Exercise object if successful, else None
         """
+        unit = unit_service.get_by_id(data.unit_id)
+
+        if not unit:
+            logger.warning(f"Cannot create exercise item, unit not found: {data.unit_id}")
+            return None
+
         exercise = Exercise(
+            id = db_manager.generate_new_id(
+                model_class=Exercise,
+                unit_id=data.unit_id
+            ),
+            language_id = unit.get("language_id"),
             **data.model_dump(exclude_none=True)
         )
         result = db_manager.insert(

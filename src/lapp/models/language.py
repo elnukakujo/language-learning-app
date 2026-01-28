@@ -25,7 +25,7 @@ class Language(Base):
         "Unit",
         back_populates="parent_language",
         cascade="all, delete-orphan",
-        foreign_keys=lambda: [Unit.language_id]
+        foreign_keys="[Unit.language_id]"
     )
 
     # One-to-many: all characters/grammars/vocabularies/exercises belonging to this language

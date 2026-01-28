@@ -45,7 +45,7 @@ def create_character():
         if character:
             return jsonify({
                 'success': True,
-                'character': character.to_dict(include_relationships=True)
+                'character': character.to_dict(include_relationships=False)
             }), 201
         else:
             return jsonify({'error': 'Failed to create character'}), 400

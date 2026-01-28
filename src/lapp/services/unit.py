@@ -66,6 +66,10 @@ class UnitService:
             Created Unit object if successful, else None
         """
         unit = Unit(
+            id = db_manager.generate_new_id(
+                model_class=Unit,
+                language_id=data.language_id
+            ),
             **data.model_dump(exclude_none=True)
         )
         result = db_manager.insert(
@@ -75,7 +79,7 @@ class UnitService:
         if result:
             logger.info(f"Created new unit with ID: {result.id}")
         else:
-            logger.error(f"Failed to create new unit: {unit.name}")
+            logger.error(f"Failed to create new unit: {unit.title}")
 
         return result
 

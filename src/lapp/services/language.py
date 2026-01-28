@@ -63,6 +63,7 @@ class LanguageService:
             Created Language object if successful, else None
         """
         language = Language(
+            id = db_manager.generate_new_id(model_class=Language),
             **data.model_dump(exclude_none=True)
         )
         result = db_manager.insert(

@@ -45,7 +45,7 @@ def create_grammar():
         if grammar:
             return jsonify({
                 'success': True,
-                'grammar': grammar.to_dict(include_relationships=True)
+                'grammar': grammar.to_dict(include_relationships=False)
             }), 201
         else:
             return jsonify({'error': 'Failed to create grammar'}), 400
