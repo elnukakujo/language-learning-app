@@ -100,10 +100,9 @@ class GrammarService:
 
         grammar = Grammar(
             id = db_manager.generate_new_id(
-                model_class=Grammar,
-                unit_id=data.unit_id
+                model_class=Grammar
             ),
-            language_id = unit.get("language_id"),
+            language_id = unit.language_id,
             **data.model_dump(exclude_none=True)
         )
         

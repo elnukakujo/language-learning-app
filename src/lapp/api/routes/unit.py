@@ -7,11 +7,11 @@ from ...schemas.element_dict import UnitDict
 bp = Blueprint('unit', __name__, url_prefix='/api/units')
 unit_service = UnitService()
 
-@bp.route('/', methods=['GET'])
-def get_all_units():
+@bp.route('/all/<language_id>', methods=['GET'])
+def get_all_units(language_id: str):
     """Get all units."""
-    units = unit_service.get_all()
-    return jsonify([unit.to_dict(include_relationships=False) for unit in units])
+    units = unit_service.get_all(language_id = language_id)
+    return jsonify([unit.to_dict() for unit in units])
 
 
 @bp.route('/<unit_id>', methods=['GET'])
@@ -22,7 +22,7 @@ def get_unit(unit_id: str):
     if not unit:
         return jsonify({'error': 'Unit not found'}), 404
     
-    return jsonify(unit.to_dict(include_relationships=True))
+    return jsonify(unit.to_dict())
 
 
 @bp.route('/', methods=['POST'])
@@ -38,7 +38,7 @@ def create_unit():
         if unit:
             return jsonify({
                 'success': True,
-                'unit': unit.to_dict(include_relationships=False)
+                'unit': unit.to_dict()
             }), 201
         else:
             return jsonify({'error': 'Failed to create unit'}), 400
@@ -58,7 +58,7 @@ def update_unit(unit_id: str):
         if unit:
             return jsonify({
                 'success': True,
-                'unit': unit.to_dict(include_relationships=True)
+                'unit': unit.to_dict()
             })
         else:
             return jsonify({'error': 'Unit not found'}), 404

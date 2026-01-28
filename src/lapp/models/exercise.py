@@ -49,11 +49,12 @@ class Exercise(Base):
         back_populates="associated_exercises"
     )
 
-    def to_dict(self):
-        return 
+    character_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    grammar_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    vocabulary_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     
-    def to_dict(self, include_relationships: bool = False) -> dict:
-        base_dict = {
+    def to_dict(self) -> dict:
+        return {
             "id": self.id,
             "exercise_type": self.exercise_type,
             "question": self.question,
@@ -64,12 +65,8 @@ class Exercise(Base):
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
             "unit_id": self.unit_id,
-            "language_id": self.language_id
+            "language_id": self.language_id,
+            "character_ids": self.character_ids,
+            "grammar_ids": self.grammar_ids,
+            "vocabulary_ids": self.vocabulary_ids,
         }
-        if include_relationships:
-            base_dict.update({
-                "character_ids": [char.id for char in self.associated_characters],
-                "grammar_ids": [gram.id for gram in self.associated_grammars],
-                "vocabulary_ids": [vocab.id for vocab in self.associated_vocabularies],
-            })
-        return base_dict

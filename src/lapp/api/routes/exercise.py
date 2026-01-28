@@ -11,14 +11,14 @@ exercise_service = ExerciseService()
 def get_all_exercise_from_language(language_id: str):
     """Get all exercise for a specific language."""
     exercise = exercise_service.get_all(language_id = language_id)
-    return jsonify([exercise.to_dict(include_relationships=False) for exercise in exercise])
+    return jsonify([exercise.to_dict() for exercise in exercise])
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
 def get_all_exercise_from_unit(unit_id: str):
     """Get all exercise for a specific unit."""
     exercise = exercise_service.get_all(unit_id = unit_id)
-    return jsonify([exercise.to_dict(include_relationships=False) for exercise in exercise])
+    return jsonify([exercise.to_dict() for exercise in exercise])
 
 
 @bp.route('/<exercise_id>', methods=['GET'])
@@ -29,7 +29,7 @@ def get_exercise(exercise_id: str):
     if not exercise:
         return jsonify({'error': 'exercise not found'}), 404
     
-    return jsonify(exercise.to_dict(include_relationships=True))
+    return jsonify(exercise.to_dict())
 
 
 @bp.route('/', methods=['POST'])
@@ -45,7 +45,7 @@ def create_exercise():
         if exercise:
             return jsonify({
                 'success': True,
-                'exercise': exercise.to_dict(include_relationships=True)
+                'exercise': exercise.to_dict()
             }), 201
         else:
             return jsonify({'error': 'Failed to create exercise'}), 400
@@ -65,7 +65,7 @@ def update_exercise(exercise_id: str):
         if exercise:
             return jsonify({
                 'success': True,
-                'exercise': exercise.to_dict(include_relationships=True)
+                'exercise': exercise.to_dict()
             })
         else:
             return jsonify({'error': 'exercise not found'}), 404
@@ -96,7 +96,7 @@ def score_exercise():
     if exercise:
         return jsonify({
             'success': True,
-            'exercise': exercise.to_dict(include_relationships=False)
+            'exercise': exercise.to_dict()
         })
     else:
         return jsonify({'error': 'exercise not found'}), 404

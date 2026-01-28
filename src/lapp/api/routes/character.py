@@ -11,14 +11,14 @@ character_service = CharacterService()
 def get_all_character_from_language(language_id: str):
     """Get all character for a specific language."""
     character = character_service.get_all(language_id = language_id)
-    return jsonify([character.to_dict(include_relationships=False) for character in character])
+    return jsonify([character.to_dict() for character in character])
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
 def get_all_character_from_unit(unit_id: str):
     """Get all character for a specific unit."""
     character = character_service.get_all(unit_id = unit_id)
-    return jsonify([character.to_dict(include_relationships=False) for character in character])
+    return jsonify([character.to_dict() for character in character])
 
 
 @bp.route('/<character_id>', methods=['GET'])
@@ -29,7 +29,7 @@ def get_character(character_id: str):
     if not character:
         return jsonify({'error': 'character not found'}), 404
     
-    return jsonify(character.to_dict(include_relationships=True))
+    return jsonify(character.to_dict())
 
 
 @bp.route('/', methods=['POST'])
@@ -45,7 +45,7 @@ def create_character():
         if character:
             return jsonify({
                 'success': True,
-                'character': character.to_dict(include_relationships=False)
+                'character': character.to_dict()
             }), 201
         else:
             return jsonify({'error': 'Failed to create character'}), 400
@@ -65,7 +65,7 @@ def update_character(character_id: str):
         if character:
             return jsonify({
                 'success': True,
-                'character': character.to_dict(include_relationships=True)
+                'character': character.to_dict()
             })
         else:
             return jsonify({'error': 'character not found'}), 404
@@ -96,7 +96,7 @@ def score_character():
     if character:
         return jsonify({
             'success': True,
-            'character': character.to_dict(include_relationships=False)
+            'character': character.to_dict()
         })
     else:
         return jsonify({'error': 'character not found'}), 404

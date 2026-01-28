@@ -11,14 +11,14 @@ grammar_service = GrammarService()
 def get_all_grammar_from_language(language_id: str):
     """Get all grammar for a specific language."""
     grammar = grammar_service.get_all(language_id = language_id)
-    return jsonify([grammar.to_dict(include_relationships=False) for grammar in grammar])
+    return jsonify([grammar.to_dict() for grammar in grammar])
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
 def get_all_grammar_from_unit(unit_id: str):
     """Get all grammar for a specific unit."""
     grammar = grammar_service.get_all(unit_id = unit_id)
-    return jsonify([grammar.to_dict(include_relationships=False) for grammar in grammar])
+    return jsonify([grammar.to_dict() for grammar in grammar])
 
 
 @bp.route('/<grammar_id>', methods=['GET'])
@@ -29,7 +29,7 @@ def get_grammar(grammar_id: str):
     if not grammar:
         return jsonify({'error': 'grammar not found'}), 404
     
-    return jsonify(grammar.to_dict(include_relationships=True))
+    return jsonify(grammar.to_dict())
 
 
 @bp.route('/', methods=['POST'])
@@ -45,7 +45,7 @@ def create_grammar():
         if grammar:
             return jsonify({
                 'success': True,
-                'grammar': grammar.to_dict(include_relationships=False)
+                'grammar': grammar.to_dict()
             }), 201
         else:
             return jsonify({'error': 'Failed to create grammar'}), 400
@@ -65,7 +65,7 @@ def update_grammar(grammar_id: str):
         if grammar:
             return jsonify({
                 'success': True,
-                'grammar': grammar.to_dict(include_relationships=True)
+                'grammar': grammar.to_dict()
             })
         else:
             return jsonify({'error': 'grammar not found'}), 404
@@ -96,7 +96,7 @@ def score_grammar():
     if grammar:
         return jsonify({
             'success': True,
-            'grammar': grammar.to_dict(include_relationships=False)
+            'grammar': grammar.to_dict()
         })
     else:
         return jsonify({'error': 'grammar not found'}), 404

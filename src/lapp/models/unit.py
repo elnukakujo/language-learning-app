@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Date, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import date
 
@@ -14,17 +14,12 @@ class Unit(Base):
     score = Column(Integer, default=0)
     last_seen = Column(Date, default=date.today)
 
-    # Many-to-one: parent language
-    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
-    
     # Relationships
     parent_language: Mapped["Language"] = relationship(
         "Language",
-        back_populates="units",
-        foreign_keys=[language_id]
+        back_populates="units"
     )
 
-    # One-to-many: all related models
     characters: Mapped[list["Character"]] = relationship(
         "Character",
         back_populates="parent_unit",
@@ -45,9 +40,18 @@ class Unit(Base):
         back_populates="parent_unit",
         cascade="all, delete-orphan"
     )
+    
+    # Save IDs of related models for quick access
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
-    def to_dict(self, include_relationships: bool = False) -> dict:
-        base_dict = {
+    character_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    grammar_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    vocabulary_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    exercise_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+
+    def to_dict(self) -> dict:
+        print(self.id)
+        return {
             "id": self.id,
             "title": self.title,
             "description": self.description,
@@ -55,12 +59,8 @@ class Unit(Base):
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
             "language_id": self.language_id,
+            "character_ids": self.character_ids,
+            "grammar_ids": self.grammar_ids,
+            "vocabulary_ids": self.vocabulary_ids,
+            "exercise_ids": self.exercise_ids,
         }
-        if include_relationships:
-            base_dict.update({
-                "character_ids": [char.id for char in self.characters],
-                "grammar_ids": [gram.id for gram in self.grammars],
-                "vocabulary_ids": [vocab.id for vocab in self.vocabularies],
-                "exercise_ids": [ex.id for ex in self.exercises],
-            })
-        return base_dict

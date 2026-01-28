@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Date, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import date
 
@@ -31,9 +31,11 @@ class Vocabulary(Base):
         secondary=exercise_vocabulary_association,
         back_populates="associated_vocabularies"
     )
+
+    exercise_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     
-    def to_dict(self, include_relationships: bool = False) -> dict:
-        base_dict = {
+    def to_dict(self) -> dict:
+        return {
             "id": self.id,
             "word": self.word,
             "translation": self.translation,
@@ -43,10 +45,6 @@ class Vocabulary(Base):
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
             "unit_id": self.unit_id,
-            "language_id": self.language_id
+            "language_id": self.language_id,
+            "exercise_ids": self.exercise_ids,
         }
-        if include_relationships:
-            base_dict.update({
-                "exercise_ids": [ex.id for ex in self.associated_exercises],
-            })
-        return base_dict

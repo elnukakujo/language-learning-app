@@ -67,8 +67,7 @@ class UnitService:
         """
         unit = Unit(
             id = db_manager.generate_new_id(
-                model_class=Unit,
-                language_id=data.language_id
+                model_class=Unit
             ),
             **data.model_dump(exclude_none=True)
         )

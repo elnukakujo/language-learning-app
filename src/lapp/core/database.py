@@ -171,6 +171,7 @@ class DatabaseManager:
         try:
             session.add_all(objs)
             session.commit()
+            session.refresh(objs)
             logger.info(f"Inserted {len(objs)} records")
             return True
         except SQLAlchemyError as e:
@@ -202,7 +203,8 @@ class DatabaseManager:
         try:
             merged_obj = session.merge(obj)
             session.commit()
-            logger.info(f"Modified {type(obj).__name__} with id: {obj.id}")
+            session.refresh(merged_obj)
+            logger.info(f"Modified {type(merged_obj).__name__} with id: {merged_obj.id}")
             return merged_obj
         except SQLAlchemyError as e:
             session.rollback()
@@ -340,7 +342,7 @@ class DatabaseManager:
         
         try:
             if not isinstance(model_class, list):
-                model_class = list(model_class)
+                model_class = [model_class]
             
             results = []
 
@@ -360,8 +362,6 @@ class DatabaseManager:
         self,
         model_class: Type[model_types],
         session: Optional[Session] = None,
-        language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
     ) -> str:
         """
         Generate a new sequential ID for any model type.
@@ -394,33 +394,21 @@ class DatabaseManager:
         try:
             # Define ID prefixes and letters for each model
             id_config = {
-                "Language": {"prefix": "lang_L", "scope": None},
-                "Unit": {"prefix": "unit_U", "scope": "language"},
-                "Vocabulary": {"prefix": "voc_V", "scope": "unit"},
-                "Grammar": {"prefix": "gram_G", "scope": "unit"},
-                "Character": {"prefix": "char_C", "scope": "unit"},
-                "Exercise": {"prefix": "ex_E", "scope": "unit"},
+                "Language": "lang_L",
+                "Unit": "unit_U",
+                "Vocabulary": "voc_V",
+                "Grammar": "gram_G",
+                "Character": "char_C",
+                "Exercise": "ex_E",
             }
             
             if model_class.__name__ not in id_config:
                 raise ValueError(f"Unsupported model class: {model_class.__name__}")
             
-            config = id_config[model_class.__name__]
-            prefix = config["prefix"]
-            scope = config["scope"]
+            prefix = id_config[model_class.__name__]
             
             # Build query based on scope
             query = select(model_class.id)
-            
-            if scope == "language":
-                if not language_id:
-                    raise ValueError(f"{model_class.__name__} requires language_id")
-                query = query.where(model_class.language_id == language_id)
-            elif scope == "unit":
-                if not unit_id:
-                    raise ValueError(f"{model_class.__name__} requires unit_id")
-                query = query.where(model_class.unit_id == unit_id)
-            # else: global scope (no filter needed)
             
             # Get all existing IDs
             existing_ids = session.scalars(query).all()

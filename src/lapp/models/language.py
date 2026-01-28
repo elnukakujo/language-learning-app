@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Integer, Date, ForeignKey
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy import Column, String, Integer, Date, ForeignKey, JSON
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import date
 
 from ..core.database import Base
@@ -18,14 +18,13 @@ class Language(Base):
     flag = Column(String, default="")
 
     # Foreign key to current unit
-    current_unit = Column(String, ForeignKey("unit.id"), nullable=True)
+    current_unit = Column(String, nullable=True)
 
     # One-to-many: all units belonging to this language
     units: Mapped[list["Unit"]] = relationship(
         "Unit",
         back_populates="parent_language",
         cascade="all, delete-orphan",
-        foreign_keys="[Unit.language_id]"
     )
 
     # One-to-many: all characters/grammars/vocabularies/exercises belonging to this language
@@ -50,8 +49,13 @@ class Language(Base):
         cascade="all, delete-orphan"
     )
 
-    def to_dict(self, include_relationships: bool = False) -> dict:
-        base_dict = {
+    character_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    grammar_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    vocabulary_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    exercise_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+
+    def to_dict(self) -> dict:
+        return {
             "id": self.id,
             "name": self.name,
             "native_name": self.native_name,
@@ -61,13 +65,8 @@ class Language(Base):
             "current_unit": self.current_unit,
             "score": self.score,
             "last_seen": self.last_seen.isoformat(),
+            "character_ids": self.character_ids,
+            "grammar_ids": self.grammar_ids,
+            "vocabulary_ids": self.vocabulary_ids,
+            "exercise_ids": self.exercise_ids,
         }
-        if include_relationships:
-            base_dict.update({
-                "unit_ids": [unit.id for unit in self.units],
-                "character_ids": [char.id for char in self.characters],
-                "grammar_ids": [gram.id for gram in self.grammars],
-                "vocabulary_ids": [vocab.id for vocab in self.vocabularies],
-                "exercise_ids": [ex.id for ex in self.exercises],
-            })
-        return base_dict

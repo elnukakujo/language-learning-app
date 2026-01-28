@@ -14,7 +14,7 @@ unit_service = UnitService()
 language_service = LanguageService()
 
 class VocabularyService:
-    def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Vocabulary]:
+    def get_all(self, language_id: Optional[str] = None , unit_id: Optional[str] = None) -> list[Vocabulary]:
         """
         Get all vocabulary for a specific language or unit.
 
@@ -99,10 +99,9 @@ class VocabularyService:
         
         vocabulary = Vocabulary(
             id = db_manager.generate_new_id(
-                model_class=Vocabulary,
-                unit_id=data.unit_id
+                model_class=Vocabulary
             ),
-            language_id = unit.get("language_id"),
+            language_id = unit.language_id,
             **data.model_dump(exclude_none=True)
         )
         result = db_manager.insert(
@@ -202,10 +201,19 @@ class VocabularyService:
         previous_score = vocabulary.score
         
         vocabulary.score = update_score(
-            current_score=vocabulary.score,
+            score=vocabulary.score,
             last_seen=vocabulary.last_seen,
             success=success
         )
+
+        # Update last_seen
+        vocabulary.last_seen = date.today()
+        
+        # Save changes
+        result = db_manager.modify(vocabulary)
+
+        if result:
+            logger.info(f"Updated vocabulary item {voc_id} score: {result.score}")
 
         if vocabulary.score != previous_score:
             if vocabulary.unit_id:
@@ -214,14 +222,5 @@ class VocabularyService:
             if vocabulary.language_id:
                 language_service.update_score(vocabulary.language_id)
                 logger.info(f"Updated language {vocabulary.language_id} score due to vocabulary {voc_id}")
-        
-        # Update last_seen
-        vocabulary.last_seen = date.today()
-        
-        # Save changes
-        result = db_manager.modify(vocabulary)
-        
-        if result:
-            logger.info(f"Updated vocabulary item {voc_id} score: {result.score}")
         
         return result

@@ -101,10 +101,9 @@ class CharacterService:
         
         character = Character(
             id = db_manager.generate_new_id(
-                model_class=Character,
-                unit_id=data.unit_id
+                model_class=Character
             ),
-            language_id = unit.get("language_id"),
+            language_id = unit.language_id,
             **data.model_dump(exclude_none=True)
         )
         result = db_manager.insert(
