@@ -15,13 +15,13 @@ unit_service = UnitService()
 language_service = LanguageService()
 
 class GrammarService:
-    def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Grammar]:
+    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Grammar]:
         """
         Get all grammars for a specific language or unit.
 
         Args:
-            language_id (Optional[str]): The id of the language to get all the grammars from
-            unit_id (Optional[str]): The id of the unit to get all the grammars from
+            language_id (Optional[str] = None): The id of the language to get all the grammars from
+            unit_id (Optional[str] = None): The id of the unit to get all the grammars from
 
         Returns:
             List of Grammar objects
@@ -55,7 +55,7 @@ class GrammarService:
             attr_values={'id': grammar_id}
         )
 
-    def get_by_level(self, language_id: Optional[str], unit_id: Optional[str], level: str) -> list[Grammar]:
+    def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Grammar]:
         """
         Get all grammar items of a specific level among a language.
         

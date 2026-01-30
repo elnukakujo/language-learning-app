@@ -2,13 +2,13 @@ import logging
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flasgger import Swagger
 
 from ..core.database import init_db
 from ..core.backup import init_backup_manager
 from config import config, INSTANCE_DIR, BACKUP_DIR
 
 logger = logging.getLogger(__name__)
-
 
 def create_app(config_name: str = 'default') -> Flask:
     """
@@ -47,6 +47,8 @@ def create_app(config_name: str = 'default') -> Flask:
     initialize_extensions(app)
     
     logger.info(f"🚀 Flask app created with config: {config_name}")
+    
+    Swagger(app)
     
     return app
 

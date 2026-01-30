@@ -1,20 +1,17 @@
-from ast import mod
 from typing import Optional
 from pydantic import model_validator
 
-from .base import BaseElementDict
+from .base import BaseComponentDict
 
-class ExerciseDict(BaseElementDict):
-    unit_id: str                                # e.g., "ZH_0"
+class ExerciseDict(BaseComponentDict):
     exercise_type: Optional[str] = None         # e.g., "fill_in_the_blank", "multiple_choice"
     question: str
-    
-    text_support: Optional[str] = None          # e.g., additional text information
-    image_files: Optional[list[str]] = None     # e.g. list of image file paths
-    audio_files: Optional[list[str]] = None     # e.g. list of audio file paths
-
     answer: str
-    associated_to: Optional[dict[str, list[str]]] = None  # e.g., {"vocabulary": ["id1", "id2"], "grammar": ["id3"], "characters": ["id4"]}
+    text_support: Optional[str] = None          # e.g., additional text information
+
+    vocabulary_ids: Optional[list[str]] = None # e.g., ["voc_V1"]
+    character_ids: Optional[list[str]] = None  # e.g., ["char_C1"]
+    grammar_ids: Optional[list[str]] = None    # e.g., ["gram_G1"]
 
     @model_validator(mode='after')
     def _validate(self):

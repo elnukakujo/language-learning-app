@@ -20,20 +20,28 @@ bp = Blueprint('backup', __name__, url_prefix='/api/backup')
 def create_backup():
     """
     Create a manual database backup.
-    
-    Returns:
-        JSON response with backup information
-    
-    Example:
-        POST /api/backup/create
-        
-        Response:
-        {
-            "success": true,
-            "backup_file": "backup_20250128_143022.sqlite",
-            "path": "/path/to/backups/backup_20250128_143022.sqlite",
-            "size_mb": 2.45
-        }
+    ---
+    tags:
+        - Backup
+    responses:
+        201:
+            description: Backup created successfully
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    backup_file:
+                        type: string
+        500:
+            description: Backup creation failed
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
     """
     try:
         backup_mgr = current_app.backup_manager
@@ -68,29 +76,41 @@ def create_backup():
 def restore_backup():
     """
     Restore database from a backup.
-    
-    Request body (optional):
-        {
-            "backup_file": "backup_20250128_143022.sqlite"
-        }
-    
-    If no backup_file specified, restores from latest backup.
-    
-    Returns:
-        JSON response with restore status
-    
-    Example:
-        POST /api/backup/restore
-        {
-            "backup_file": "backup_20250128_143022.sqlite"
-        }
-        
-        Response:
-        {
-            "success": true,
-            "restored_from": "backup_20250128_143022.sqlite",
-            "message": "Database restored successfully"
-        }
+    ---
+    tags:
+        - Backup
+    parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+                backup_file:
+                    type: string
+                    description: Name of the backup file to restore from. If omitted, restores from the latest backup.
+    responses:
+        200:
+            description: Restore successful
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    restored_from:
+                        type: string
+                    message:
+                        type: string
+        404:
+            description: Backup file not found
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
+        500:
+            description: Restore failed
     """
     try:
         backup_mgr = current_app.backup_manager
@@ -139,26 +159,42 @@ def restore_backup():
 def list_backups():
     """
     List all available backups with details.
-    
-    Returns:
-        JSON response with list of backups
-    
-    Example:
-        GET /api/backup/list
-        
-        Response:
-        {
-            "total": 15,
-            "backups": [
-                {
-                    "filename": "backup_20250128_143022.sqlite",
-                    "size_mb": 2.45,
-                    "created_at": "2025-01-28T14:30:22",
-                    "age_days": 0
-                },
-                ...
-            ]
-        }
+    tags:
+        - Backup
+    responses:
+        200:
+            description: List of backups
+            schema:
+                type: object
+                properties:
+                    total:
+                        type: integer
+                    backups:
+                        type: array
+                        items:
+                            type: object
+                            properties:
+                                filename:
+                                    type: string
+                                size_mb:
+                                    type: number
+                                size_bytes:
+                                    type: integer
+                                created_at:
+                                    type: string
+                                age_days:
+                                    type: integer
+                                is_latest:
+                                    type: boolean
+        500:
+            description: Failed to list backups
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
     """
     try:
         backup_mgr = current_app.backup_manager
@@ -197,24 +233,32 @@ def list_backups():
 def backup_info():
     """
     Get backup system information and statistics.
-    
-    Returns:
-        JSON response with backup statistics
-    
-    Example:
-        GET /api/backup/info
-        
-        Response:
-        {
-            "total_backups": 15,
-            "max_backups": 30,
-            "latest_backup": "backup_20250128_143022.sqlite",
-            "latest_backup_age_hours": 2,
-            "backup_dir": "/path/to/backups",
-            "scheduler_running": true,
-            "backup_interval_hours": 24,
-            "total_size_mb": 36.75
-        }
+    ---
+    tags:
+        - Backup
+    responses:
+        200:
+            description: Backup information
+            schema:
+                type: object
+                properties:
+                    total_backups:
+                        type: integer
+                    max_backups:
+                        type: integer
+                    total_size_mb:
+                        type: number
+                    latest_backup_age_hours:
+                        type: number
+        500:
+            description: Failed to get backup info
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
     """
     try:
         backup_mgr = current_app.backup_manager
@@ -251,22 +295,55 @@ def backup_info():
 def delete_backup(backup_file: str):
     """
     Delete a specific backup file.
-    
-    Args:
-        backup_file: Name of the backup file to delete
-    
-    Returns:
-        JSON response with deletion status
-    
-    Example:
-        DELETE /api/backup/delete/backup_20250128_143022.sqlite
-        
-        Response:
-        {
-            "success": true,
-            "message": "Backup deleted successfully",
-            "deleted_file": "backup_20250128_143022.sqlite"
-        }
+    ---
+    tags:
+        - Backup
+    parameters:
+        - in: path
+          name: backup_file
+          required: true
+          type: string
+          description: Name of the backup file to delete
+          example: backup_2024-01-01_12-00-00.sqlite
+    responses:
+        200:
+            description: Backup deleted successfully
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    message:
+                        type: string
+                    deleted_file:
+                        type: string
+        400:
+            description: Bad request (e.g., trying to delete the only backup)
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
+        404:
+            description: Backup file not found
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
+        500:
+            description: Failed to delete backup
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    error:
+                        type: string
     """
     try:
         backup_mgr = current_app.backup_manager
@@ -315,22 +392,28 @@ def delete_backup(backup_file: str):
 def cleanup_old_backups():
     """
     Manually trigger cleanup of old backups.
-    
     Removes backups exceeding the configured max_backups limit.
-    
-    Returns:
-        JSON response with cleanup statistics
-    
-    Example:
-        POST /api/backup/cleanup
-        
-        Response:
-        {
-            "success": true,
-            "deleted_count": 5,
-            "remaining_count": 30,
-            "message": "Cleanup completed"
-        }
+    ---
+    tags:
+        - Backup
+    responses:
+        200:
+            description: Cleanup completed successfully
+            schema:
+                type: object
+                properties:
+                    success:
+                        type: boolean
+                    deleted_count:
+                        type: integer
+                    remaining_count:
+                        type: integer
+                    message:
+                        type: string
+        500:
+            description: Cleanup failed
+            schema:
+                type: object
     """
     try:
         backup_mgr = current_app.backup_manager

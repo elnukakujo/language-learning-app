@@ -6,7 +6,7 @@ from typing import Optional, Type, TypeVar, Any
 import sqlalchemy
 from sqlalchemy import create_engine, select
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, scoped_session
+from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload, joinedload
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from flask import Flask
@@ -115,15 +115,62 @@ class DatabaseManager:
         if self._scoped_session:
             self._scoped_session.remove()
     
+    def _load_relationships(self, query, model_class: Type[model_types], load_relationships: bool = True):
+        """
+        Helper method to add relationship loading to a query.
+        
+        Args:
+            query: SQLAlchemy query object
+            model_class: The model class being queried
+            load_relationships: Whether to load relationships
+        
+        Returns:
+            Query with relationship loading options added
+        """
+        if not load_relationships:
+            return query
+        
+        # Get all relationships for the model
+        mapper = inspect(model_class)
+        
+        # Use selectinload for one-to-many relationships (more efficient for collections)
+        for relationship in mapper.relationships:
+            query = query.options(selectinload(getattr(model_class, relationship.key)))
+        
+        return query
+    
+    def _eager_load_object_relationships(self, obj: model_types, session: Session) -> None:
+        """
+        Eagerly load all relationships on an existing object.
+        This ensures the object can be used even after the session closes.
+        
+        Args:
+            obj: The object whose relationships should be loaded
+            session: The session containing the object
+        """
+        mapper = inspect(type(obj))
+        
+        # Access each relationship to trigger loading while session is still open
+        for relationship in mapper.relationships:
+            try:
+                # Access the relationship attribute to load it
+                attr = getattr(obj, relationship.key)
+                # If it's a list, access its length to ensure it's fully loaded
+                if isinstance(attr, list):
+                    len(attr)
+            except Exception as e:
+                logger.warning(f"Could not load relationship {relationship.key}: {e}")
+    
     # ==================== CRUD Operations ====================
     
-    def insert(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+    def insert(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True) -> Optional[model_types]:
         """
         Insert a single object into the database.
         
         Args:
             obj: SQLAlchemy model instance to insert
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships before closing session
         
         Returns:
             The inserted object, or None if failed
@@ -137,13 +184,18 @@ class DatabaseManager:
             session.add(obj)
             session.commit()
             session.refresh(obj)  # Refresh to get generated IDs
+            
+            # Load all relationships before closing the session
+            if load_relationships:
+                self._eager_load_object_relationships(obj, session)
+            
             logger.info(f"Inserted {type(obj).__name__} with id: {obj.id}")
             return obj
         except IntegrityError as e:
             session.rollback()
             logger.warning(f"Insert failed due to integrity error: {e}")
             # Attempt to modify existing record
-            return self.modify(obj, session)
+            return self.modify(obj, session, load_relationships)
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"Insert failed: {e}")
@@ -152,13 +204,14 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def insert_many(self, objs: list[model_types], session: Optional[Session] = None) -> bool:
+    def insert_many(self, objs: list[model_types], session: Optional[Session] = None, load_relationships: bool = True) -> bool:
         """
         Insert multiple objects into the database.
         
         Args:
             objs: List of SQLAlchemy model instances
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships before closing session
         
         Returns:
             True if all inserts succeeded, False otherwise
@@ -171,7 +224,11 @@ class DatabaseManager:
         try:
             session.add_all(objs)
             session.commit()
-            session.refresh(objs)
+            for obj in objs:
+                session.refresh(obj)
+                # Load all relationships before closing the session
+                if load_relationships:
+                    self._eager_load_object_relationships(obj, session)
             logger.info(f"Inserted {len(objs)} records")
             return True
         except SQLAlchemyError as e:
@@ -182,7 +239,7 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def modify(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+    def modify(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True) -> Optional[model_types]:
         """
         Update an existing record or insert if not found.
         
@@ -191,6 +248,7 @@ class DatabaseManager:
         Args:
             obj: SQLAlchemy model instance
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships before closing session
         
         Returns:
             The merged object, or None if failed
@@ -204,6 +262,11 @@ class DatabaseManager:
             merged_obj = session.merge(obj)
             session.commit()
             session.refresh(merged_obj)
+            
+            # Load all relationships before closing the session
+            if load_relationships:
+                self._eager_load_object_relationships(merged_obj, session)
+            
             logger.info(f"Modified {type(merged_obj).__name__} with id: {merged_obj.id}")
             return merged_obj
         except SQLAlchemyError as e:
@@ -231,16 +294,12 @@ class DatabaseManager:
             close_session = True
         
         try:
-            # Find existing record by primary key
-            existing = self.find_by_pk(obj, session)
+            # Find existing record by primary key with relationships loaded
+            existing = self.find_by_pk(obj, session, load_relationships=True)
             
             if not existing:
                 logger.warning(f"Delete failed: Record not found")
                 return False
-            
-            # Load relationships to trigger cascade deletions
-            for rel in inspect(existing.__class__).relationships:
-                getattr(existing, rel.key)
             
             session.delete(existing)
             session.commit()
@@ -254,13 +313,19 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def find_by_pk(self, obj: model_types, session: Optional[Session] = None) -> Optional[model_types]:
+    def find_by_pk(
+        self, 
+        obj: model_types, 
+        session: Optional[Session] = None,
+        load_relationships: bool = True
+    ) -> Optional[model_types]:
         """
         Find an existing record by primary key.
         
         Args:
             obj: Model instance containing primary key values
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships
         
         Returns:
             Existing record or None if not found
@@ -277,8 +342,13 @@ class DatabaseManager:
             # Extract primary key values
             pk_attrs = {key.name: getattr(obj, key.name) for key in mapper.primary_key}
             
-            # Query for existing record
-            existing = session.query(model_class).filter_by(**pk_attrs).first()
+            # Build query
+            query = session.query(model_class).filter_by(**pk_attrs)
+            
+            # Add relationship loading
+            query = self._load_relationships(query, model_class, load_relationships)
+            
+            existing = query.first()
             return existing
         finally:
             if close_session:
@@ -288,7 +358,8 @@ class DatabaseManager:
         self,
         model_class: Type[model_types],
         attr_values: dict[str, Any],
-        session: Optional[Session] = None
+        session: Optional[Session] = None,
+        load_relationships: bool = True
     ) -> Optional[model_types]:
         """
         Find a record by specific attributes.
@@ -297,6 +368,7 @@ class DatabaseManager:
             model_class: The SQLAlchemy model class to query
             attr_values: Dictionary of attribute names and values
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships
         
         Returns:
             The matching record or None if not found
@@ -307,7 +379,12 @@ class DatabaseManager:
             close_session = True
         
         try:
-            existing = session.query(model_class).filter_by(**attr_values).first()
+            query = session.query(model_class).filter_by(**attr_values)
+            
+            # Add relationship loading
+            query = self._load_relationships(query, model_class, load_relationships)
+            
+            existing = query.first()
             
             if existing:
                 return existing
@@ -322,15 +399,17 @@ class DatabaseManager:
         self,
         model_class: Type[model_types] | list[Type[model_types]],
         filters: Optional[dict[str, Any]] = None,
-        session: Optional[Session] = None
+        session: Optional[Session] = None,
+        load_relationships: bool = True
     ) -> list[model_types]:
         """
         Find all records matching optional filters.
         
         Args:
-            model_class: The SQLAlchemy model class to query
+            model_class: The SQLAlchemy model class to query (or list of classes)
             filters: Optional dictionary of filter conditions
             session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships
         
         Returns:
             List of matching records
@@ -351,12 +430,41 @@ class DatabaseManager:
                 
                 if filters:
                     query = query.filter_by(**filters)
+                
+                # Add relationship loading
+                query = self._load_relationships(query, model, load_relationships)
             
                 results += query.all()
             return results
         finally:
             if close_session:
                 session.close()
+    
+    def get_by_id(
+        self,
+        model_class: Type[model_types],
+        id_value: Any,
+        session: Optional[Session] = None,
+        load_relationships: bool = True
+    ) -> Optional[model_types]:
+        """
+        Convenience method to get a record by its ID.
+        
+        Args:
+            model_class: The SQLAlchemy model class to query
+            id_value: The ID value to search for
+            session: Optional session. If None, creates a new one.
+            load_relationships: If True, eagerly load all relationships
+        
+        Returns:
+            The matching record or None if not found
+        """
+        return self.find_by_attr(
+            model_class, 
+            {"id": id_value}, 
+            session, 
+            load_relationships
+        )
     
     def generate_new_id(
         self,
@@ -377,8 +485,6 @@ class DatabaseManager:
         Args:
             model_class: The model class to generate ID for
             session: Optional session. If None, creates a new one.
-            language_id: Required for Unit model
-            unit_id: Required for Vocabulary, Grammar, Character, Exercise models
         
         Returns:
             New ID string (e.g., "voc_V42")

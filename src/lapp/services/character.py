@@ -16,13 +16,13 @@ unit_service = UnitService()
 language_service = LanguageService()
 
 class CharacterService:
-    def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Character]:
+    def get_all(self, language_id: Optional[str]=None, unit_id: Optional[str]=None) -> list[Character]:
         """
         Get all characters for a specific language or unit.
 
         Args:
-            language_id (Optional[str]): The id of the language to get all the characters from
-            unit_id (Optional[str]): The id of the unit to get all the characters from
+            language_id (Optional[str]=None): The id of the language to get all the characters from
+            unit_id (Optional[str]=None): The id of the unit to get all the characters from
 
         Returns:
             List of Character objects
@@ -56,7 +56,7 @@ class CharacterService:
             attr_values={'id': char_id}
         )
 
-    def get_by_level(self, language_id: Optional[str], unit_id: Optional[str], level: str) -> list[Character]:
+    def get_by_level(self, level: str, language_id: Optional[str]=None, unit_id: Optional[str]=None) -> list[Character]:
         """
         Get all character items of a specific level among a language.
         

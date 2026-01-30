@@ -1,66 +1,58 @@
-from sqlalchemy import Column, String, Integer, Date, ForeignKey, JSON
+from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from datetime import date
 
-from ..core.database import Base
+from .base import BaseModel
 
-class Unit(Base):
+class Unit(BaseModel):
     __tablename__ = 'unit'
 
-    id = Column(String, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(String)
     level = Column(String)
-    score = Column(Integer, default=0)
-    last_seen = Column(Date, default=date.today)
+
+    language_id: Mapped[str] = mapped_column(ForeignKey('language.id'))
 
     # Relationships
-    parent_language: Mapped["Language"] = relationship(
+    language: Mapped["Language"] = relationship(
         "Language",
-        back_populates="units"
+        back_populates="unit",
     )
 
-    characters: Mapped[list["Character"]] = relationship(
+    character: Mapped[list["Character"]] = relationship(
         "Character",
-        back_populates="parent_unit",
+        back_populates="unit",
         cascade="all, delete-orphan"
     )
-    grammars: Mapped[list["Grammar"]] = relationship(
+    grammar: Mapped[list["Grammar"]] = relationship(
         "Grammar",
-        back_populates="parent_unit",
+        back_populates="unit",
         cascade="all, delete-orphan"
     )
-    vocabularies: Mapped[list["Vocabulary"]] = relationship(
+    vocabulary: Mapped[list["Vocabulary"]] = relationship(
         "Vocabulary",
-        back_populates="parent_unit",
+        back_populates="unit",
         cascade="all, delete-orphan"
     )
-    exercises: Mapped[list["Exercise"]] = relationship(
+    exercise: Mapped[list["Exercise"]] = relationship(
         "Exercise",
-        back_populates="parent_unit",
+        back_populates="unit",
         cascade="all, delete-orphan"
     )
-    
-    # Save IDs of related models for quick access
-    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"))
 
-    character_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
-    grammar_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
-    vocabulary_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
-    exercise_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
-
-    def to_dict(self) -> dict:
-        print(self.id)
-        return {
-            "id": self.id,
+    def to_dict(self, include_relations: bool = True) -> dict:
+        base_dict =  {
+            **super().to_dict(),
             "title": self.title,
             "description": self.description,
             "level": self.level,
-            "score": self.score,
-            "last_seen": self.last_seen.isoformat(),
-            "language_id": self.language_id,
-            "character_ids": self.character_ids,
-            "grammar_ids": self.grammar_ids,
-            "vocabulary_ids": self.vocabulary_ids,
-            "exercise_ids": self.exercise_ids,
+            "language_id": self.language_id
         }
+
+        if include_relations:
+            base_dict.update({
+                "character_ids": [character.id for character in self.character],
+                "grammar_ids": [grammar.id for grammar in self.grammar],
+                "vocabulary_ids": [vocab.id for vocab in self.vocabulary],
+                "exercise_ids": [ex.id for ex in self.exercise]
+            })
+        return base_dict

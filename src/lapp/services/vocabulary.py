@@ -13,6 +13,7 @@ from ..utils import update_score
 unit_service = UnitService()
 language_service = LanguageService()
 
+
 class VocabularyService:
     def get_all(self, language_id: Optional[str] = None , unit_id: Optional[str] = None) -> list[Vocabulary]:
         """

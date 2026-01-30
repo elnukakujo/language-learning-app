@@ -1,7 +1,8 @@
-from .base import BaseElementDict
+from typing import Optional
 
-class GrammarDict(BaseElementDict):
-    unit_id: str
+from .base import BaseComponentDict
+
+class GrammarDict(BaseComponentDict):
     title: str
     explanation: str
-    learnable_sentence: str
+    learnable_sentence: Optional[str] = None

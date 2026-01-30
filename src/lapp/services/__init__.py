@@ -4,6 +4,7 @@ from .vocabulary import VocabularyService
 from .character import CharacterService
 from .grammar import GrammarService
 from .exercise import ExerciseService
+from .media import MediaService
 
 __all__ = [
     LanguageService,
@@ -12,4 +13,5 @@ __all__ = [
     CharacterService,
     GrammarService,
     ExerciseService,
+    MediaService,
 ]

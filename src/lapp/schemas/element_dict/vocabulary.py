@@ -1,9 +1,8 @@
 from typing import Optional
 
-from .base import BaseElementDict
+from .base import BaseComponentDict
 
-class VocabularyDict(BaseElementDict):
-    unit_id: str
+class VocabularyDict(BaseComponentDict):
     word: str
     translation: str
     phonetic: Optional[str] = None  # e.g., pinyin for Chinese words

@@ -1,5 +1,5 @@
 from datetime import date
-
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class UnitService:
             attr_values={'id': unit_id}
         )
 
-    def get_by_level(self, language_id: str, level: str) -> list[Unit]:
+    def get_by_level(self,  level: str, language_id: Optional[str] = None) -> list[Unit]:
         """
         Get all units of a specific level among a language.
         
@@ -50,10 +50,16 @@ class UnitService:
         Returns:
             List of matching Unit objects
         """
-        return db_manager.find_all(
-            model_class=Unit,
-            filters={'level': level, 'language_id': language_id}
-        )
+        if language_id:
+            return db_manager.find_all(
+                model_class=Unit,
+                filters={'level': level, 'language_id': language_id}
+            )
+        else:
+            return db_manager.find_all(
+                model_class=Unit,
+                filters={'level': level}
+            )
     
     def create(self, data: UnitDict) -> Unit | None:
         """

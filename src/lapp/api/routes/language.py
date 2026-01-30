@@ -9,14 +9,44 @@ language_service = LanguageService()
 
 @bp.route('/', methods=['GET'])
 def get_all_languages():
-    """Get all languages."""
+    """
+    Get all languages
+    ---
+    tags:
+      - Languages
+    responses:
+      200:
+        description: List of languages
+        schema:
+          type: array
+          items:
+            type: object
+    """
     languages = language_service.get_all()
     return jsonify([lang.to_dict() for lang in languages])
 
 
 @bp.route('/<language_id>', methods=['GET'])
 def get_language(language_id: str):
-    """Get a specific language by ID."""
+    """
+    Get a specific language by ID
+    ---
+    tags:
+      - Languages
+    parameters:
+      - name: language_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the language to retrieve
+    responses:
+      200:
+        description: Language object
+        schema:
+          type: object
+      404:
+        description: Language not found
+    """
     language = language_service.get_by_id(language_id)
     
     if not language:
@@ -27,7 +57,43 @@ def get_language(language_id: str):
 
 @bp.route('/', methods=['POST'])
 def create_language():
-    """Create a new language."""
+    """Create a new language.
+    ---
+    tags:
+      - Languages
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+            type: object
+            properties:
+                name:
+                    type: string
+                    example: "French"
+                native_name:
+                    type: string
+                    example: "Français"
+                level:
+                    type: string
+                    example: "A1"
+                    required: false
+                description:
+                    type: string
+                    example: "A Romance language spoken in France."
+                    required: false
+                flag:
+                    type: string
+                    example: "🇫🇷"
+                    required: false
+    responses:
+      201:
+        description: Language created successfully
+        schema:
+          type: object
+      400:
+        description: Validation failed or creation error
+    """
     try:
         # Validate request data
         data = LanguageDict(**request.json)
@@ -49,7 +115,64 @@ def create_language():
 
 @bp.route('/<language_id>', methods=['PUT', 'PATCH'])
 def update_language(language_id: str):
-    """Update a language."""
+    """Update a language.
+    ---
+    tags:
+      - Languages
+    parameters:
+      - name: language_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the language to update
+      - name: body
+        in: body
+        required: true
+        schema:
+            type: object
+            properties:
+                name:
+                    type: string
+                    example: "French"
+                native_name:
+                    type: string
+                    example: "Français"
+                level:
+                    type: string
+                    example: "A1"
+                    required: false
+                description:
+                    type: string
+                    example: "A Romance language spoken in France."
+                    required: false
+                flag:
+                    type: string
+                    example: "🇫🇷"
+                    required: false
+                current_unit:
+                    type: string
+                    example: "unit_U1"
+                    required: false
+    responses:
+      200:
+        description: Language updated successfully
+        schema:
+          type: object
+          schema:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    example: true
+                    description: Indicates if the update was successful
+                language:
+                    type: object
+                    description: The updated language object
+      400:
+        description: Validation failed
+      404:
+        description: Language not found
+    """
     try:
         data = LanguageDict(**request.json)
         
@@ -69,7 +192,22 @@ def update_language(language_id: str):
 
 @bp.route('/<language_id>', methods=['DELETE'])
 def delete_language(language_id: str):
-    """Delete a language."""
+    """Delete a language.
+    ---
+    tags:
+      - Languages
+    parameters:
+      - name: language_id
+        in: path
+        type: string
+        required: true
+        description: The ID of the language to delete
+    responses:
+        204:
+            description: Language deleted successfully
+        404:
+            description: Language not found
+    """
     success = language_service.delete(language_id)
     
     if success:

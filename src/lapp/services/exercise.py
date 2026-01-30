@@ -2,7 +2,6 @@ from datetime import date
 from typing import Optional
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 from ..schemas.element_dict import ExerciseDict
@@ -10,34 +9,98 @@ from ..models import Exercise
 from ..core.database import db_manager
 from ..utils import update_score
 from .unit import UnitService
+from .character import CharacterService
+from .vocabulary import VocabularyService
+from .grammar import GrammarService
 
 unit_service = UnitService()
+character_service = CharacterService()
+vocabulary_service = VocabularyService()
+grammar_service = GrammarService()
 
 class ExerciseService:
-    def get_all(self, language_id: Optional[str], unit_id: Optional[str]) -> list[Exercise]:
+    def _check_associate_components(
+        self, 
+        character_ids: Optional[list[str]],
+        vocabulary_ids: Optional[list[str]],
+        grammar_ids: Optional[list[str]]
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Validate and filter associated component IDs."""
+        
+        valid_char_ids = [
+            cid for cid in (character_ids or [])
+            if character_service.get_by_id(char_id=cid)
+        ]
+        
+        valid_grammar_ids = [
+            gid for gid in (grammar_ids or [])
+            if grammar_service.get_by_id(grammar_id=gid)
+        ]
+        
+        valid_voc_ids = [
+            vid for vid in (vocabulary_ids or [])
+            if vocabulary_service.get_by_id(voc_id=vid)
+        ]
+        
+        return valid_char_ids, valid_voc_ids, valid_grammar_ids
+    
+    def _clean_exercise_associations(self, exercise: Exercise) -> bool:
+        """
+        Clean invalid association_ids from an exercise.
+        
+        Returns:
+            True if any associations were cleaned, False otherwise
+        """
+        if not (exercise.character_ids or exercise.vocabulary_ids or exercise.grammar_ids):
+            return False
+        
+        cleaned_char_ids, cleaned_voc_ids, cleaned_grammar_ids = self._check_associate_components(
+            character_ids=exercise.character_ids,
+            vocabulary_ids=exercise.vocabulary_ids,
+            grammar_ids=exercise.grammar_ids
+        )
+        
+        if (cleaned_char_ids != exercise.character_ids or
+            cleaned_voc_ids != exercise.vocabulary_ids or
+            cleaned_grammar_ids != exercise.grammar_ids):
+            
+            exercise.character_ids = cleaned_char_ids
+            exercise.vocabulary_ids = cleaned_voc_ids
+            exercise.grammar_ids = cleaned_grammar_ids
+            db_manager.modify(exercise)
+            return True
+        
+        return False
+        
+    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Exercise]:
         """
         Get all exercises for a specific language or unit.
 
         Args:
-            language_id (Optional[str]): The id of the language to get all the exercises from
-            unit_id (Optional[str]): The id of the unit to get all the exercises from
+            language_id (Optional[str] = None): The id of the language to get all the exercises from
+            unit_id (Optional[str] = None): The id of the unit to get all the exercises from
 
         Returns:
             List of Exercise objects
         """
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
         if language_id:
-            return db_manager.find_all(
+            exercises = db_manager.find_all(
                 model_class=Exercise,
                 filters={'language_id': language_id}
             )
         elif unit_id:
-            return db_manager.find_all(
+            exercises = db_manager.find_all(
                 model_class=Exercise,
                 filters={'unit_id': unit_id}
             )
         else:
             raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+        
+        if exercises:
+            for ex in exercises:
+                self._clean_exercise_associations(ex)
+        return exercises
 
     def get_by_id(self, ex_id:str) -> Exercise | None:
         """
@@ -49,12 +112,16 @@ class ExerciseService:
         Returns:
             Exercise object if found, else None
         """
-        return db_manager.find_by_attr(
+        exercise = db_manager.find_by_attr(
             model_class=Exercise,
             attr_values={'id': ex_id}
         )
 
-    def get_by_level(self, language_id: Optional[str], unit_id: Optional[str], level: str) -> list[Exercise]:
+        if exercise:
+            self._clean_exercise_associations(exercise)
+        return exercise
+
+    def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Exercise]:
         """
         Get all Exercise items of a specific level among a language.
         
@@ -69,17 +136,24 @@ class ExerciseService:
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
 
         if unit_id:
-            return db_manager.find_all(
+            exercises = db_manager.find_all(
                 model_class=Exercise,
                 filters={'level': level, 'unit_id': unit_id}
             )
         elif language_id:
-            return db_manager.find_all(
+            exercises = db_manager.find_all(
                 model_class=Exercise,
                 filters={'level': level, 'language_id': language_id}
             )
         else:
-            raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+            exercises = db_manager.find_all(
+                model_class=Exercise,
+                filters={'level': level}
+            )
+        
+        for ex in exercises:
+            self._clean_exercise_associations(ex)
+        return exercises
     
     def create(self, data: ExerciseDict) -> Exercise | None:
         """
@@ -96,6 +170,13 @@ class ExerciseService:
         if not unit:
             logger.warning(f"Cannot create exercise item, unit not found: {data.unit_id}")
             return None
+        
+        if data.character_ids or data.vocabulary_ids or data.grammar_ids:
+            data.character_ids, data.vocabulary_ids, data.grammar_ids = self._check_associate_components(
+                character_ids=data.character_ids,
+                vocabulary_ids=data.vocabulary_ids,
+                grammar_ids=data.grammar_ids
+            )
 
         exercise = Exercise(
             id = db_manager.generate_new_id(
@@ -130,6 +211,17 @@ class ExerciseService:
         if not existing:
             logger.warning(f"Exercise item not found: {ex_id}")
             return None
+        
+        if not unit_service.get_by_id(data.unit_id):
+            logger.warning(f"Unit not found: {data.unit_id}, keeping existing unit_id: {existing.unit_id}")
+            data.unit_id = existing.unit_id  # Revert to existing unit_id
+        
+        if data.character_ids or data.vocabulary_ids or data.grammar_ids:
+            data.character_ids, data.vocabulary_ids, data.grammar_ids = self._check_associate_components(
+                character_ids=data.character_ids,
+                vocabulary_ids=data.vocabulary_ids,
+                grammar_ids=data.grammar_ids
+            )
         
         # Only update fields that were provided (partial updates)
         update_data = data.model_dump(exclude_unset=True, exclude_none=True)
@@ -213,11 +305,22 @@ class ExerciseService:
             logger.info(f"Updated exercise item {ex_id} score: {result.score}")
 
         # Update scores of associated components
-        dependencies_lists = (
-            exercise.associated_vocs + 
-            exercise.associated_characters + 
-            exercise.associated_grammars
-        )
+        dependencies_lists = []
+        if exercise.vocabulary_ids:
+            for voc_id in exercise.vocabulary_ids:
+                voc = vocabulary_service.get_by_id(voc_id=voc_id)
+                if voc:
+                    dependencies_lists.append(voc)
+        if exercise.character_ids:
+            for char_id in exercise.character_ids:
+                char = character_service.get_by_id(char_id=char_id)
+                if char:
+                    dependencies_lists.append(char)
+        if exercise.grammar_ids:
+            for grammar_id in exercise.grammar_ids:
+                grammar = grammar_service.get_by_id(grammar_id=grammar_id)
+                if grammar:
+                    dependencies_lists.append(grammar)
 
         for component in dependencies_lists:
             component.score = update_score(
