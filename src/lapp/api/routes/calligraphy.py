@@ -2,135 +2,135 @@ from xml.etree.ElementInclude import include
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
-from ...services import CharacterService
-from ...schemas.element_dict import CharacterDict
+from ...services import CalligraphyService
+from ...schemas.features import CalligraphyDict
 
-bp = Blueprint('character', __name__, url_prefix='/api/character')
-character_service = CharacterService()
+bp = Blueprint('calligraphy', __name__, url_prefix='/api/calligraphy')
+calligraphy_service = CalligraphyService()
 
 @bp.route('/language/<language_id>', methods=['GET'])
-def get_all_character_from_language(language_id: str):
-    """Get all character for a specific language.
+def get_all_calligraphy_from_language(language_id: str):
+    """Get all calligraphy for a specific language.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
         - name: language_id
           in: path
           type: string
           required: true
-          description: The ID of the language to retrieve character from
+          description: The ID of the language to retrieve calligraphy from
           example: "lang_L1"
     responses:
         200:
-            description: List of character
+            description: List of calligraphy
             schema:
                 type: array
                 items:
                     type: object
-                    description: Character object
+                    description: calligraphy object
     """
-    character = character_service.get_all(language_id = language_id)
-    return jsonify([character.to_dict() for character in character])
+    calligraphy = calligraphy_service.get_all(language_id = language_id)
+    return jsonify([calligraphy.to_dict() for calligraphy in calligraphy])
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_character_from_unit(unit_id: str):
-    """Get all character for a specific unit.
+def get_all_calligraphy_from_unit(unit_id: str):
+    """Get all calligraphy for a specific unit.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
         - name: unit_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve character from
+          description: The ID of the unit to retrieve calligraphy from
           example: "unit_U1"
     responses:
         200:
-            description: List of character
+            description: List of calligraphy
             schema:
                 type: array
                 items:
                     type: object
-                    description: Character object    
+                    description: calligraphy object    
     """
-    character = character_service.get_all(unit_id = unit_id)
-    return jsonify([character.to_dict() for character in character])
+    calligraphy = calligraphy_service.get_all(unit_id = unit_id)
+    return jsonify([calligraphy.to_dict() for calligraphy in calligraphy])
 
 
-@bp.route('/<character_id>', methods=['GET'])
-def get_character(character_id: str):
-    """Get a specific character by ID.
+@bp.route('/<calligraphy_id>', methods=['GET'])
+def get_calligraphy(calligraphy_id: str):
+    """Get a specific calligraphy by ID.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
-        - name: character_id
+        - name: calligraphy_id
           in: path
           type: string
           required: true
-          description: The ID of the character to retrieve
+          description: The ID of the calligraphy to retrieve
           example: "char_C1"
     responses:
         200:
-            description: Character object
+            description: calligraphy object
             schema:
                 type: object
-                description: Character object
+                description: calligraphy object
     """
-    character = character_service.get_by_id(character_id)
+    calligraphy = calligraphy_service.get_by_id(calligraphy_id)
     
-    if not character:
-        return jsonify({'error': 'character not found'}), 404
+    if not calligraphy:
+        return jsonify({'error': 'calligraphy not found'}), 404
     
-    return jsonify(character.to_dict())
+    return jsonify(calligraphy.to_dict())
 
 
 @bp.route('/', methods=['POST'])
-def create_character():
-    """Create a new character.
+def create_calligraphy():
+    """Create a new calligraphy.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
-        - name: character
+        - name: calligraphy
           in: body
           required: true
-          description: The character to create
+          description: The calligraphy to create
           schema:
               type: object
               properties:
                   unit_id:
                       type: string
                       example: "unit_U1"
-                      description: The ID of the unit the character belongs to
+                      description: The ID of the unit the calligraphy belongs to
                       required: true
-                  character:
+                  calligraphy:
                       type: string
                       example: "漢"
-                      description: The character itself
+                      description: The calligraphy itself
                       required: true
                   components:
                       type: string
                       example: "氵, 艹"
-                      description: Components of the character
+                      description: Components of the calligraphy
                       required: false
                   phonetic:
                       type: string
                       example: "hàn"
-                      description: The phonetic representation of the character
+                      description: The phonetic representation of the calligraphy
                       required: true
                   meaning:
                       type: string
                       example: "Chinese"
-                      description: The meaning of the character
+                      description: The meaning of the calligraphy
                       required: true
                   example_word:
                       type: string
                       example: "漢字"
-                      description: Example word using the character
+                      description: Example word using the calligraphy
                       required: false
                   image_files:
                       type: array
@@ -148,44 +148,44 @@ def create_character():
                         description: List of audio file paths
     responses:
         201:
-            description: Character created successfully
+            description: calligraphy created successfully
             schema:
                 type: object
-                description: The created character object
+                description: The created calligraphy object
         400:
-            description: Character creation failed
+            description: calligraphy creation failed
     """
     try:
         # Validate request data
-        data = CharacterDict(**request.json)
+        data = CalligraphyDict(**request.json)
         
-        # Create character
-        character = character_service.create(data)
+        # Create calligraphy
+        calligraphy = calligraphy_service.create(data)
         
-        if character:
+        if calligraphy:
             return jsonify({
                 'success': True,
-                'character': character.to_dict()
+                'calligraphy': calligraphy.to_dict()
             }), 201
         else:
-            return jsonify({'error': 'Failed to create character'}), 400
+            return jsonify({'error': 'Failed to create calligraphy'}), 400
             
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
 
 
-@bp.route('/<character_id>', methods=['PUT', 'PATCH'])
-def update_character(character_id: str):
-    """Update a character.
+@bp.route('/<calligraphy_id>', methods=['PUT', 'PATCH'])
+def update_calligraphy(calligraphy_id: str):
+    """Update a calligraphy.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
-        - name: character_id
+        - name: calligraphy_id
           in: path
           type: string
           required: true
-          description: The ID of the character to update
+          description: The ID of the calligraphy to update
           example: "char_C1"
         - name: body
           in: body
@@ -197,7 +197,7 @@ def update_character(character_id: str):
                       type: string
                       example: "unit_U1"
                       required: true
-                  character:
+                  calligraphy:
                       type: string
                       example: "漢"
                       required: true
@@ -233,62 +233,62 @@ def update_character(character_id: str):
                         description: List of audio file paths
     responses:
         201:
-            description: Character updated successfully
+            description: calligraphy updated successfully
             schema:
                 type: object
-                description: The updated character object
+                description: The updated calligraphy object
         400:
-            description: Character update failed
+            description: calligraphy update failed
     """
     try:
-        data = CharacterDict(**request.json)
+        data = CalligraphyDict(**request.json)
         
-        character = character_service.update(character_id, data)
+        calligraphy = calligraphy_service.update(calligraphy_id, data)
         
-        if character:
+        if calligraphy:
             return jsonify({
                 'success': True,
-                'character': character.to_dict()
+                'calligraphy': calligraphy.to_dict()
             }), 201
         else:
-            return jsonify({'error': 'character not found'}), 404
+            return jsonify({'error': 'calligraphy not found'}), 404
             
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
 
 
-@bp.route('/<character_id>', methods=['DELETE'])
-def delete_character(character_id: str):
-    """Delete a character.
+@bp.route('/<calligraphy_id>', methods=['DELETE'])
+def delete_calligraphy(calligraphy_id: str):
+    """Delete a calligraphy.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
-        - name: character_id
+        - name: calligraphy_id
           in: path
           type: string
           required: true
-          description: The ID of the character to delete
+          description: The ID of the calligraphy to delete
           example: "char_C1"
     responses:
         204:
-            description: Character deleted successfully
+            description: calligraphy deleted successfully
         404:
-            description: Character not found
+            description: calligraphy not found
     """
-    success = character_service.delete(character_id)
+    success = calligraphy_service.delete(calligraphy_id)
     
     if success:
         return jsonify({'success': True}), 204
     else:
-        return jsonify({'error': 'character not found'}), 404
+        return jsonify({'error': 'calligraphy not found'}), 404
     
 @bp.route('/score', methods=['POST'])
-def score_character():
-    """Score a character.
+def score_calligraphy():
+    """Score a calligraphy.
     ---
     tags:
-        - Character
+        - Calligraphy
     parameters:
         - name: body
           in: body
@@ -296,10 +296,10 @@ def score_character():
           schema:
               type: object
               properties:
-                  character_id:
+                  calligraphy_id:
                       type: string
                       example: "char_C1"
-                      description: The ID of the character to score
+                      description: The ID of the calligraphy to score
                       required: true
                   success:
                       type: string
@@ -308,23 +308,23 @@ def score_character():
                       required: true
     responses:
         200:
-            description: Character scored successfully
+            description: calligraphy scored successfully
             schema:
                 type: object
-                description: The scored character object
+                description: The scored calligraphy object
         404:
-            description: character not found
+            description: calligraphy not found
     """
     data = request.json
-    character_id = data['character_id']
+    calligraphy_id = data['calligraphy_id']
     success = data['success'].lower() == "true"
 
-    character = character_service.update_score(character_id, success)
+    calligraphy = calligraphy_service.update_score(calligraphy_id, success)
     
-    if character:
+    if calligraphy:
         return jsonify({
             'success': True,
-            'character': character.to_dict(include_relations=False)
+            'calligraphy': calligraphy.to_dict(include_relations=False)
         })
     else:
-        return jsonify({'error': 'character not found'}), 404
+        return jsonify({'error': 'calligraphy not found'}), 404

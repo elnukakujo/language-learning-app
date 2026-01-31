@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import ExerciseService
-from ...schemas.element_dict import ExerciseDict
+from ...schemas.features import ExerciseDict
 
 bp = Blueprint('exercise', __name__, url_prefix='/api/exercise')
 exercise_service = ExerciseService()
@@ -149,12 +149,12 @@ def create_exercise():
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                character_ids:
+                calligraphy_ids:
                     type: array
                     items:
                         type: string
-                    example: ["char_C1"]
-                    description: "List of associated character IDs"
+                    example: ["call_C1"]
+                    description: "List of associated calligraphy IDs"
                     required: false
                 grammar_ids:
                     type: array
@@ -257,12 +257,12 @@ def update_exercise(exercise_id: str):
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                character_ids:
+                calligraphy_ids:
                     type: array
                     items:
                         type: string
-                    example: ["char_C1"]
-                    description: "List of associated character IDs"
+                    example: ["call_C1"]
+                    description: "List of associated calligraphy IDs"
                     required: false
                 grammar_ids:
                     type: array

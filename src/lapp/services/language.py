@@ -3,8 +3,8 @@ from datetime import date
 import logging
 logger = logging.getLogger(__name__)
 
-from ..schemas.element_dict import LanguageDict
-from ..models import Language, Unit
+from ..schemas.containers import LanguageDict
+from ..models.containers import Language, Unit
 from ..core.database import db_manager
 
 class LanguageService:

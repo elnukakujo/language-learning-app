@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import VocabularyService
-from ...schemas.element_dict import VocabularyDict
+from ...schemas.features import VocabularyDict
 
 bp = Blueprint('vocabulary', __name__, url_prefix='/api/vocabulary')
 vocabulary_service = VocabularyService()
@@ -105,25 +105,65 @@ def create_vocabulary():
                       example: "unit_U1"
                       required: true
                   word:
-                      type: string
-                      example: "Bonjour"
-                      required: true
-                  translation:
-                      type: string
-                      example: "Hello"
-                      required: true
-                  phonetic:
-                      type: string
-                      example: "bɔ̃ʒuʁ"
-                      required: false
-                  example_sentence:
-                      type: string
-                      example: "Bonjour! Comment ça va?"
-                      required: false
-                  type:
-                      type: string
-                      example: "Expression"
-                      required: false
+                      type: object
+                      properties:
+                          word:
+                              type: string
+                              example: "Bonjour"
+                              required: true
+                          translation:
+                              type: string
+                              example: "Hello"
+                              required: true
+                          phonetic:
+                              type: string
+                              example: "bɔ̃ʒuʁ"
+                              required: false
+                          type:
+                              type: string
+                              example: "interjection"
+                              required: false
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                              description: List of image file paths
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
+                              description: List of audio file paths
+                  example_sentences:
+                      type: array
+                      items:
+                          type: object
+                          properties:
+                              text:
+                                  type: string
+                                  example: "Bonjour! Comment ça va?"
+                                  required: true
+                              translation:
+                                  type: string
+                                  example: "Hello! How are you?"
+                                  required: true
+                              image_files:
+                                  type: array
+                                  items:
+                                      type: string
+                                      example: "/path/to/image1.jpg"
+                                  required: false
+                                  description: List of image file paths
+                              audio_files:
+                                  type: array
+                                  items:
+                                      type: string
+                                      example: "/path/to/audio1.mp3"
+                                  required: false
+                                  description: List of audio file paths
                   image_files:
                       type: array
                       items:
@@ -188,25 +228,65 @@ def update_vocabulary(vocabulary_id: str):
                       example: "unit_U1"
                       required: true
                   word:
-                      type: string
-                      example: "Bonjour"
-                      required: true
-                  translation:
-                      type: string
-                      example: "Hello"
-                      required: true
-                  phonetic:
-                      type: string
-                      example: "bɔ̃ʒuʁ"
-                      required: false
-                  example_sentence:
-                      type: string
-                      example: "Bonjour! Comment ça va?"
-                      required: false
-                  type:
-                      type: string
-                      example: "Expression"
-                      required: false
+                      type: object
+                      properties:
+                          word:
+                              type: string
+                              example: "Bonjour"
+                              required: true
+                          translation:
+                              type: string
+                              example: "Hello"
+                              required: true
+                          phonetic:
+                              type: string
+                              example: "bɔ̃ʒuʁ"
+                              required: false
+                          type:
+                              type: string
+                              example: "interjection"
+                              required: false
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                              description: List of image file paths
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
+                              description: List of audio file paths
+                  example_sentences:
+                      type: array
+                      items:
+                          type: object
+                          properties:
+                              text:
+                                  type: string
+                                  example: "Bonjour! Comment ça va?"
+                                  required: true
+                              translation:
+                                  type: string
+                                  example: "Hello! How are you?"
+                                  required: true
+                              image_files:
+                                  type: array
+                                  items:
+                                      type: string
+                                      example: "/path/to/image1.jpg"
+                                  required: false
+                                  description: List of image file paths
+                              audio_files:
+                                  type: array
+                                  items:
+                                      type: string
+                                      example: "/path/to/audio1.mp3"
+                                  required: false
+                                  description: List of audio file paths
                   image_files:
                       type: array
                       items:

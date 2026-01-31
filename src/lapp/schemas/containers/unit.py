@@ -1,8 +1,8 @@
 from typing import Optional
 
-from .base import BaseElementDict
+from ..base import BaseContainerDict
 
-class UnitDict(BaseElementDict):
+class UnitDict(BaseContainerDict):
     language_id: str
     title: str
     description: Optional[str] = None

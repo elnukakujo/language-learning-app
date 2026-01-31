@@ -1,15 +1,16 @@
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from .base import BaseModel
+from ..base import BaseContainerModel
 
-class Unit(BaseModel):
+class Unit(BaseContainerModel):
     __tablename__ = 'unit'
 
     title = Column(String, index=True)
     description = Column(String)
     level = Column(String)
 
+    # Foreign key
     language_id: Mapped[str] = mapped_column(ForeignKey('language.id'))
 
     # Relationships
@@ -17,9 +18,8 @@ class Unit(BaseModel):
         "Language",
         back_populates="unit",
     )
-
-    character: Mapped[list["Character"]] = relationship(
-        "Character",
+    calligraphy: Mapped[list["Calligraphy"]] = relationship(
+        "Calligraphy",
         back_populates="unit",
         cascade="all, delete-orphan"
     )
@@ -50,7 +50,7 @@ class Unit(BaseModel):
 
         if include_relations:
             base_dict.update({
-                "character_ids": [character.id for character in self.character],
+                "calligraphy_ids": [calligraphy.id for calligraphy in self.calligraphy],
                 "grammar_ids": [grammar.id for grammar in self.grammar],
                 "vocabulary_ids": [vocab.id for vocab in self.vocabulary],
                 "exercise_ids": [ex.id for ex in self.exercise]

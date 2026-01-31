@@ -6,7 +6,7 @@ from typing import Optional, Type, TypeVar, Any
 import sqlalchemy
 from sqlalchemy import create_engine, select
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload, joinedload
+from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from flask import Flask
@@ -87,6 +87,8 @@ class DatabaseManager:
         if not self.engine:
             raise RuntimeError("Database engine not initialized. Call init_app() first.")
         
+        import lapp.models  # Ensure models are imported in the right order
+
         Base.metadata.create_all(self.engine)
         logger.info("Database tables created successfully")
     
@@ -475,12 +477,15 @@ class DatabaseManager:
         Generate a new sequential ID for any model type.
         
         ID Format:
-        - Language: "lang_L{n}" (global scope)
-        - Unit: "unit_U{n}" (scoped to language)
-        - Vocabulary: "voc_V{n}" (scoped to unit)
-        - Grammar: "gram_G{n}" (scoped to unit)
-        - Character: "char_C{n}" (scoped to unit)
-        - Exercise: "ex_E{n}" (scoped to unit)
+        - Language: "lang_L{n}"
+        - Unit: "unit_U{n}"
+        - Vocabulary: "voc_V{n}"
+        - Grammar: "gram_G{n}"
+        - Calligraphy: "call_C{n}"
+        - Exercise: "ex_E{n}"
+        - Character: "char_C{n}"
+        - Word: "word_W{n}"
+        - Passage: "pass_P{n}"
         
         Args:
             model_class: The model class to generate ID for
@@ -504,8 +509,11 @@ class DatabaseManager:
                 "Unit": "unit_U",
                 "Vocabulary": "voc_V",
                 "Grammar": "gram_G",
-                "Character": "char_C",
+                "Calligraphy": "call_C",
                 "Exercise": "ex_E",
+                "Character": "char_C",
+                "Word": "word_W",
+                "Passage": "pass_P",
             }
             
             if model_class.__name__ not in id_config:

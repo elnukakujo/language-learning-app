@@ -4,8 +4,9 @@ from typing import Optional
 import logging
 logger = logging.getLogger(__name__)
 
-from ..schemas.element_dict import VocabularyDict
-from ..models import Vocabulary
+from ..schemas.features import VocabularyDict
+from ..models.features import Vocabulary
+from ..models.components import Word, Passage
 from . import UnitService, LanguageService
 from ..core.database import db_manager
 from ..utils import update_score
@@ -24,14 +25,21 @@ class VocabularyService:
             unit_id (Optional[str]): The id of the unit to get all the vocabulary from
 
         Returns:
-            List of Vocabulary objects
+            List of VocabularyFeature objects
         """
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
         if language_id:
-            return db_manager.find_all(
-                model_class=Vocabulary,
-                filters={'language_id': language_id}
-            )
+            units = unit_service.get_all(language_id=language_id)
+
+            vocabulary = []
+            for unit in units:
+                vocabulary.extend(
+                    db_manager.find_all(
+                        model_class=Vocabulary,
+                        filters={'unit_id': unit.id}
+                    )
+                )
+            return vocabulary
         elif unit_id:
             return db_manager.find_all(
                 model_class=Vocabulary,
@@ -48,7 +56,7 @@ class VocabularyService:
             voc_id: The ID of the vocabulary item to retrieve.
 
         Returns:
-            Vocabulary object if found, else None
+            VocabularyFeature object if found, else None
         """
         return db_manager.find_by_attr(
             model_class=Vocabulary,
@@ -65,19 +73,26 @@ class VocabularyService:
             level: Vocabulary level (e.g., 'A1', 'B2')
         
         Returns:
-            List of matching Vocabulary objects
+            List of matching VocabularyFeature objects
         """
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
 
-        if unit_id:
+        if language_id:
+            units = unit_service.get_all(language_id=language_id)
+
+            vocabulary = []
+            for unit in units:
+                vocabulary.extend(
+                    db_manager.find_all(
+                        model_class=Vocabulary,
+                        filters={'unit_id': unit.id, 'level': level}
+                    )
+                )
+            return vocabulary
+        elif unit_id:
             return db_manager.find_all(
                 model_class=Vocabulary,
                 filters={'level': level, 'unit_id': unit_id}
-            )
-        elif language_id:
-            return db_manager.find_all(
-                model_class=Vocabulary,
-                filters={'level': level, 'language_id': language_id}
             )
         else:
             raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
@@ -90,7 +105,7 @@ class VocabularyService:
             data: VocabularyDict containing vocabulary item details.
 
         Returns:
-            Created Vocabulary object if successful, else None
+            Created VocabularyFeature object if successful, else None
         """
         unit = unit_service.get_by_id(data.unit_id)
 
@@ -98,39 +113,59 @@ class VocabularyService:
             logger.warning(f"Cannot create vocabulary item, unit not found: {data.unit_id}")
             return None
         
+        word = Word(
+            id = db_manager.generate_new_id(
+                model_class=Word
+            ),
+            **data.word.model_dump(exclude_none=True)
+        )
+
+        example_sentences = []
+        for _, example_sentence in enumerate(data.example_sentences or []):
+            passage = Passage(
+                id = db_manager.generate_new_id(
+                    model_class=Passage
+                ),
+                **example_sentence.model_dump(exclude_none=True)
+            )
+            example_sentences.append(passage)
+
         vocabulary = Vocabulary(
             id = db_manager.generate_new_id(
                 model_class=Vocabulary
             ),
-            language_id = unit.language_id,
-            **data.model_dump(exclude_none=True)
+            word=word,
+            example_sentences=example_sentences,
+            unit_id=data.unit_id,
+            image_files=data.image_files,
+            audio_files=data.audio_files
         )
         result = db_manager.insert(
             obj=vocabulary
         )
 
         if result:
-            logger.info(f"Created new vocabulary item with ID: {result.id}")
+            logger.info(f"Created new VocabularyFeature item with ID: {result.id}")
         else:
-            logger.error(f"Failed to create new vocabulary item: {vocabulary.word}")
+            logger.error(f"Failed to create new VocabularyFeature item: {vocabulary.word}")
 
         return result
 
     def update(self, voc_id: str, data: VocabularyDict) -> Vocabulary | None:
         """
-        Update an existing vocabulary item.
+        Update an existing VocabularyFeature item.
 
         Args:
-            voc_id: The ID of the vocabulary item to update.
+            voc_id: The ID of the VocabularyFeature item to update.
             data: VocabularyDict containing updated vocabulary item details.
 
         Returns:
-            Updated Vocabulary object if successful, else None
+            Updated VocabularyFeature object if successful, else None
         """
         existing = self.get_by_id(voc_id)
         
         if not existing:
-            logger.warning(f"Vocabulary item not found: {voc_id}")
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
             return None
         
         # Only update fields that were provided (partial updates)
@@ -147,18 +182,18 @@ class VocabularyService:
         result = db_manager.modify(existing)
         
         if result:
-            logger.info(f"Updated vocabulary item: {voc_id}")
+            logger.info(f"Updated VocabularyFeature item: {voc_id}")
         else:
-            logger.error(f"Failed to update vocabulary item: {voc_id}")
+            logger.error(f"Failed to update VocabularyFeature item: {voc_id}")
         
         return result
 
     def delete(self, voc_id: str) -> bool:
         """
-        Delete a vocabulary item by its ID.
+        Delete a VocabularyFeature item by its ID.
 
         Args:
-            voc_id: The ID of the vocabulary item to delete.
+            voc_id: The ID of the VocabularyFeature item to delete.
 
         Returns:
             True if deletion was successful, else False
@@ -167,36 +202,36 @@ class VocabularyService:
         existing = self.get_by_id(voc_id)
         
         if not existing:
-            logger.warning(f"Vocabulary item not found: {voc_id}")
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
             return False
         
         # Delete from database
         success = db_manager.delete(existing)
         
         if success:
-            logger.info(f"Deleted vocabulary item: {voc_id}")
+            logger.info(f"Deleted VocabularyFeature item: {voc_id}")
         else:
-            logger.error(f"Failed to delete vocabulary item: {voc_id}")
+            logger.error(f"Failed to delete VocabularyFeature item: {voc_id}")
         
         return success
 
     def update_score(self, voc_id: str, success: bool) -> Vocabulary | None:
         """
-        Update vocabulary item score based on average of all of its components scores.
+        Update VocabularyFeature item score based on average of all of its components scores.
         
         This should be called whenever a component's score changes.
         
         Args:
-            voc_id: The ID of the vocabulary item to update
+            voc_id: The ID of the VocabularyFeature item to update
             success: Whether the latest attempt was successful
         
         Returns:
-            Updated Vocabulary object if successful, None otherwise
+            Updated VocabularyFeature object if successful, None otherwise
         """
         vocabulary = self.get_by_id(voc_id)
         
         if not vocabulary:
-            logger.warning(f"Vocabulary item not found: {voc_id}")
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
             return None
         
         previous_score = vocabulary.score
@@ -214,14 +249,14 @@ class VocabularyService:
         result = db_manager.modify(vocabulary)
 
         if result:
-            logger.info(f"Updated vocabulary item {voc_id} score: {result.score}")
+            logger.info(f"Updated VocabularyFeature item {voc_id} score: {result.score}")
 
         if vocabulary.score != previous_score:
             if vocabulary.unit_id:
                 unit_service.update_score(vocabulary.unit_id)
-                logger.info(f"Updated unit {vocabulary.unit_id} score due to vocabulary {voc_id}")
+                logger.info(f"Updated unit {vocabulary.unit_id} score due to VocabularyFeature {voc_id}")
             if vocabulary.language_id:
                 language_service.update_score(vocabulary.language_id)
-                logger.info(f"Updated language {vocabulary.language_id} score due to vocabulary {voc_id}")
+                logger.info(f"Updated language {vocabulary.language_id} score due to VocabularyFeature {voc_id}")
         
         return result

@@ -1,9 +1,8 @@
 from typing import Optional
-from datetime import date
 
-from .base import BaseElementDict
+from ..base import BaseContainerDict
 
-class LanguageDict(BaseElementDict):
+class LanguageDict(BaseContainerDict):
     name: str
     native_name: Optional[str] = None
     level: Optional[str] = "A1"  # Default level

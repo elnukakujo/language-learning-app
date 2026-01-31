@@ -1,16 +1,16 @@
 from typing import Optional
 from pydantic import model_validator
 
-from .base import BaseComponentDict
+from ..base import BaseFeatureDict
 
-class ExerciseDict(BaseComponentDict):
+class ExerciseDict(BaseFeatureDict):
     exercise_type: Optional[str] = None         # e.g., "fill_in_the_blank", "multiple_choice"
     question: str
     answer: str
     text_support: Optional[str] = None          # e.g., additional text information
 
     vocabulary_ids: Optional[list[str]] = None # e.g., ["voc_V1"]
-    character_ids: Optional[list[str]] = None  # e.g., ["char_C1"]
+    calligraphy_ids: Optional[list[str]] = None  # e.g., ["call_C1"]
     grammar_ids: Optional[list[str]] = None    # e.g., ["gram_G1"]
 
     @model_validator(mode='after')

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import UnitService
-from ...schemas.element_dict import UnitDict
+from ...schemas.containers import UnitDict
 
 bp = Blueprint('unit', __name__, url_prefix='/api/units')
 unit_service = UnitService()

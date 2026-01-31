@@ -4,8 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from ..schemas.element_dict import UnitDict
-from ..models import Unit, Character, Vocabulary, Grammar, Exercise
+from ..schemas.containers import UnitDict
+from ..models.containers import Unit
+from ..models.features import Calligraphy, Vocabulary, Grammar, Exercise
 from ..core.database import db_manager
 
 class UnitService:
@@ -17,7 +18,7 @@ class UnitService:
             language_id (str): The id of the language to get all the units from
 
         Returns:
-            List of Unit objects
+            List of UnitContainer objects
         """
         return db_manager.find_all(
             model_class=Unit,
@@ -32,7 +33,7 @@ class UnitService:
             unit_id: The ID of the unit to retrieve.
 
         Returns:
-            Unit object if found, else None
+            UnitContainer object if found, else None
         """
         return db_manager.find_by_attr(
             model_class=Unit,
@@ -48,7 +49,7 @@ class UnitService:
             level: Unit level (e.g., 'A1', 'B2')
         
         Returns:
-            List of matching Unit objects
+            List of matching UnitContainer objects
         """
         if language_id:
             return db_manager.find_all(
@@ -69,7 +70,7 @@ class UnitService:
             data: UnitDict containing unit details.
 
         Returns:
-            Created Unit object if successful, else None
+            Created UnitContainer object if successful, else None
         """
         unit = Unit(
             id = db_manager.generate_new_id(
@@ -97,12 +98,12 @@ class UnitService:
             data: UnitDict containing updated language details.
 
         Returns:
-            Updated Unit object if successful, else None
+            Updated UnitContainer object if successful, else None
         """
         existing = self.get_by_id(unit_id)
         
         if not existing:
-            logger.warning(f"Unit not found: {unit_id}")
+            logger.warning(f"UnitContainer not found: {unit_id}")
             return None
         
         # Only update fields that were provided (partial updates)
@@ -162,17 +163,17 @@ class UnitService:
             unit_id: The ID of the unit to update
         
         Returns:
-            Updated Unit object if successful, None otherwise
+            Updated UnitContainer object if successful, None otherwise
         """
         unit = self.get_by_id(unit_id)
         
         if not unit:
-            logger.warning(f"Unit not found: {unit_id}")
+            logger.warning(f"UnitContainer not found: {unit_id}")
             return None
         
         # Get all components for this language
         components = db_manager.find_all(
-            model_class=[Vocabulary, Grammar, Character, Exercise],
+            model_class=[Vocabulary, Grammar, Calligraphy, Exercise],
             filters={'unit_id': unit_id}
         )
 

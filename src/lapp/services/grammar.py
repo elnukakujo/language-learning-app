@@ -5,8 +5,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from ..schemas.element_dict import GrammarDict
-from ..models import Grammar
+from ..schemas.features import GrammarDict
+from ..models.features import Grammar
 from . import UnitService, LanguageService
 from ..core.database import db_manager
 from ..utils import update_score
@@ -17,7 +17,7 @@ language_service = LanguageService()
 class GrammarService:
     def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Grammar]:
         """
-        Get all grammars for a specific language or unit.
+        Get all Grammar items for a specific language or unit.
 
         Args:
             language_id (Optional[str] = None): The id of the language to get all the grammars from
@@ -28,10 +28,17 @@ class GrammarService:
         """
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
         if language_id:
-            return db_manager.find_all(
-                model_class=Grammar,
-                filters={'language_id': language_id}
-            )
+            units = unit_service.get_all(language_id=language_id)
+
+            grammars = []
+            for unit in units:
+                grammars.extend(
+                    db_manager.find_all(
+                        model_class=Grammar,
+                        filters={'unit_id': unit.id}
+                    )
+                )
+            return grammars
         elif unit_id:
             return db_manager.find_all(
                 model_class=Grammar,
@@ -42,10 +49,10 @@ class GrammarService:
 
     def get_by_id(self, grammar_id:str) -> Grammar | None:
         """
-        Get a grammar item by its ID.
+        Get a Grammar item by its ID.
 
         Args:
-            grammar_id: The ID of the grammar item to retrieve.
+            grammar_id: The ID of the Grammar item to retrieve.
 
         Returns:
             Grammar object if found, else None
@@ -57,11 +64,11 @@ class GrammarService:
 
     def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None) -> list[Grammar]:
         """
-        Get all grammar items of a specific level among a language.
+        Get all Grammar items of a specific level among a language.
         
         Args:
-            language_id: The id of the language to filter grammar items
-            unit_id: The id of the unit to filter grammar items
+            language_id: The id of the language to filter Grammar items
+            unit_id: The id of the unit to filter Grammar items
             level: Grammar level (e.g., 'A1', 'B2')
         
         Returns:
@@ -69,25 +76,32 @@ class GrammarService:
         """
         assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
 
-        if unit_id:
+        if language_id:
+            units = unit_service.get_all(language_id=language_id)
+
+            grammars = []
+            for unit in units:
+                grammars.extend(
+                    db_manager.find_all(
+                        model_class=Grammar,
+                        filters={'level': level, 'unit_id': unit.id}
+                    )
+                )
+            return grammars
+        elif unit_id:
             return db_manager.find_all(
                 model_class=Grammar,
                 filters={'level': level, 'unit_id': unit_id}
-            )
-        elif language_id:
-            return db_manager.find_all(
-                model_class=Grammar,
-                filters={'level': level, 'language_id': language_id}
             )
         else:
             raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
     
     def create(self, data: GrammarDict) -> Grammar | None:
         """
-        Create a new grammar item.
+        Create a new Grammar item.
 
         Args:
-            data: GrammarDict containing grammar item details.
+            data: GrammarDict containing Grammar item details.
 
         Returns:
             Created Grammar object if successful, else None
@@ -95,14 +109,13 @@ class GrammarService:
         unit = unit_service.get_by_id(data.unit_id)
 
         if not unit:
-            logger.warning(f"Cannot create grammar item, unit not found: {data.unit_id}")
+            logger.warning(f"Cannot create Grammar item, unit not found: {data.unit_id}")
             return None
 
         grammar = Grammar(
             id = db_manager.generate_new_id(
                 model_class=Grammar
             ),
-            language_id = unit.language_id,
             **data.model_dump(exclude_none=True)
         )
         
@@ -111,19 +124,19 @@ class GrammarService:
         )
 
         if result:
-            logger.info(f"Created new grammar item with ID: {result.id}")
+            logger.info(f"Created new Grammar item with ID: {result.id}")
         else:
-            logger.error(f"Failed to create new grammar item: {grammar.title}")
+            logger.error(f"Failed to create new Grammar item: {grammar.title}")
 
         return result
 
     def update(self, grammar_id: str, data: GrammarDict) -> Grammar | None:
         """
-        Update an existing grammar item.
+        Update an existing Grammar item.
 
         Args:
-            grammar_id: The ID of the grammar item to update.
-            data: GrammarDict containing updated grammars item details.
+            grammar_id: The ID of the Grammar item to update.
+            data: GrammarDict containing updated Grammar item details.
 
         Returns:
             Updated Grammar object if successful, else None
@@ -148,19 +161,18 @@ class GrammarService:
         result = db_manager.modify(existing)
         
         if result:
-            logger.info(f"Updated grammar item: {grammar_id}")
+            logger.info(f"Updated Grammar item: {grammar_id}")
         else:
-            logger.error(f"Failed to update grammar item: {grammar_id}")
+            logger.error(f"Failed to update Grammar item: {grammar_id}")
         
         return result
 
     def delete(self, grammar_id: str) -> bool:
         """
-        Delete a grammar item by its ID.
+        Delete a Grammar item by its ID.
 
         Args:
-            grammar_id: The ID of the grammar item to delete.
-
+            grammar_id: The ID of the Grammar item to delete.
         Returns:
             True if deletion was successful, else False
         """
@@ -175,20 +187,20 @@ class GrammarService:
         success = db_manager.delete(existing)
         
         if success:
-            logger.info(f"Deleted grammar item: {grammar_id}")
+            logger.info(f"Deleted Grammar item: {grammar_id}")
         else:
-            logger.error(f"Failed to delete grammar item: {grammar_id}")
+            logger.error(f"Failed to delete Grammar item: {grammar_id}")
         
         return success
 
     def update_score(self, grammar_id: str, success: bool) -> Grammar | None:
         """
-        Update grammar item score based on average of all of its components scores.
+        Update Grammar item score based on average of all of its components scores.
         
         This should be called whenever a component's score changes.
         
         Args:
-            grammar_id: The ID of the grammar item to update
+            grammar_id: The ID of the Grammar item to update
             success: Whether the latest attempt was successful
         
         Returns:
@@ -214,15 +226,15 @@ class GrammarService:
         if grammar.score != previous_score:
             if grammar.unit_id:
                 unit_service.update_score(grammar.unit_id)
-                logger.info(f"Updated unit {grammar.unit_id} score due to grammar {grammar_id}")
+                logger.info(f"Updated unit {grammar.unit_id} score due to Grammar {grammar_id}")
             if grammar.language_id:
                 language_service.update_score(grammar.language_id)
-                logger.info(f"Updated language {grammar.language_id} score due to grammar {grammar_id}")
+                logger.info(f"Updated language {grammar.language_id} score due to Grammar {grammar_id}")
         
         # Save changes
         result = db_manager.modify(grammar)
         
         if result:
-            logger.info(f"Updated grammar item {grammar_id} score: {result.score}")
+            logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
         
         return result

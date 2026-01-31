@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import GrammarService
-from ...schemas.element_dict import GrammarDict
+from ...schemas.features import GrammarDict
 
 bp = Blueprint('grammar', __name__, url_prefix='/api/grammar')
 grammar_service = GrammarService()

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import LanguageService
-from ...schemas.element_dict import LanguageDict
+from ...schemas.containers import LanguageDict
 
 bp = Blueprint('language', __name__, url_prefix='/api/languages')
 language_service = LanguageService()
