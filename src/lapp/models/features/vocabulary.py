@@ -20,7 +20,7 @@ class Vocabulary(BaseFeatureModel):
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
             **super().to_dict(include_relations=include_relations),
-            "word": self.word.to_dict(include_relations=include_relations),
-            "example_sentences": [sentence.to_dict() for sentence in self.example_sentences],
+            "word": self.word.to_dict(include_relations=False),
+            "example_sentences": [sentence.to_dict(include_relations=False) for sentence in self.example_sentences],
         }
         return base_dict

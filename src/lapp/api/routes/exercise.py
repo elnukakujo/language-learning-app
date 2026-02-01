@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import ExerciseService
-from ...schemas.features import ExerciseDict
+from ...schemas import ExerciseDict
 
 bp = Blueprint('exercise', __name__, url_prefix='/api/exercise')
 exercise_service = ExerciseService()

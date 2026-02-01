@@ -4,8 +4,8 @@ from .calligraphy import CalligraphyDict
 from .exercise import ExerciseDict
 
 __all__ = [
-    VocabularyDict,
-    GrammarDict,
-    CalligraphyDict,
-    ExerciseDict,
+    "VocabularyDict",
+    "GrammarDict",
+    "CalligraphyDict",
+    "ExerciseDict",
 ]

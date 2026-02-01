@@ -1,9 +1,8 @@
-from xml.etree.ElementInclude import include
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
 from ...services import CalligraphyService
-from ...schemas.features import CalligraphyDict
+from ...schemas import CalligraphyDict
 
 bp = Blueprint('calligraphy', __name__, url_prefix='/api/calligraphy')
 calligraphy_service = CalligraphyService()

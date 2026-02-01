@@ -3,7 +3,7 @@ from .word import WordDict
 from .passage import PassageDict
 
 __all__ = [
-    CharacterDict,
-    WordDict,
-    PassageDict,
+    "CharacterDict",
+    "WordDict",
+    "PassageDict",
 ]
