@@ -71,7 +71,7 @@ def get_calligraphy(calligraphy_id: str):
           type: string
           required: true
           description: The ID of the calligraphy to retrieve
-          example: "char_C1"
+          example: "call_C1"
     responses:
         200:
             description: calligraphy object
@@ -94,7 +94,7 @@ def create_calligraphy():
     tags:
         - Calligraphy
     parameters:
-        - name: calligraphy
+        - name: body
           in: body
           required: true
           description: The calligraphy to create
@@ -106,45 +106,94 @@ def create_calligraphy():
                       example: "unit_U1"
                       description: The ID of the unit the calligraphy belongs to
                       required: true
-                  calligraphy:
-                      type: string
-                      example: "漢"
-                      description: The calligraphy itself
+                  character:
+                      type: object
                       required: true
-                  components:
-                      type: string
-                      example: "氵, 艹"
-                      description: Components of the calligraphy
-                      required: false
-                  phonetic:
-                      type: string
-                      example: "hàn"
-                      description: The phonetic representation of the calligraphy
-                      required: true
-                  meaning:
-                      type: string
-                      example: "Chinese"
-                      description: The meaning of the calligraphy
-                      required: true
+                      description: Character information
+                      properties:
+                          character:
+                              type: string
+                              example: "漢"
+                              required: true
+                              description: The character itself
+                          phonetic:
+                              type: string
+                              example: "hàn"
+                              required: true
+                              description: The phonetic representation
+                          meaning:
+                              type: string
+                              example: "Chinese"
+                              required: false
+                              description: The meaning of the character
+                          radical:
+                              type: string
+                              example: "氵"
+                              required: false
+                              description: The radical of the character
+                          strokes:
+                              type: integer
+                              example: 15
+                              required: false
+                              description: Number of strokes
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
                   example_word:
-                      type: string
-                      example: "漢字"
-                      description: Example word using the calligraphy
+                      type: object
                       required: false
+                      description: Example word using the character
+                      properties:
+                          word:
+                              type: string
+                              example: "漢字"
+                              required: true
+                              description: The word text
+                          phonetic:
+                              type: string
+                              example: "hànzì"
+                              required: true
+                              description: The phonetic representation
+                          translation:
+                              type: string
+                              example: "Chinese characters"
+                              required: true
+                              description: Translation of the word
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
                   image_files:
                       type: array
                       items:
                         type: string
                         example: "/path/to/image1.jpg"
                         required: false
-                        description: List of image file paths
+                        description: List of image file paths for the calligraphy item
                   audio_files:
                       type: array
                       items:
                         type: string
                         example: "/path/to/audio1.mp3"
                         required: false
-                        description: List of audio file paths
+                        description: List of audio file paths for the calligraphy item
     responses:
         201:
             description: calligraphy created successfully
@@ -185,7 +234,7 @@ def update_calligraphy(calligraphy_id: str):
           type: string
           required: true
           description: The ID of the calligraphy to update
-          example: "char_C1"
+          example: "call_C1"
         - name: body
           in: body
           required: true
@@ -195,27 +244,82 @@ def update_calligraphy(calligraphy_id: str):
                   unit_id:
                       type: string
                       example: "unit_U1"
-                      required: true
-                  calligraphy:
-                      type: string
-                      example: "漢"
-                      required: true
-                  components:
-                      type: string
-                      example: "氵, 艹"
                       required: false
-                  phonetic:
-                      type: string
-                      example: "hàn"
-                      required: true
-                  meaning:
-                      type: string
-                      example: "Chinese"
-                      required: true
+                      description: The ID of the unit the calligraphy belongs to
+                  character:
+                      type: object
+                      required: false
+                      description: Character information
+                      properties:
+                          character:
+                              type: string
+                              example: "漢"
+                              required: false
+                              description: The character itself
+                          phonetic:
+                              type: string
+                              example: "hàn"
+                              required: false
+                              description: The phonetic representation
+                          meaning:
+                              type: string
+                              example: "Chinese"
+                              required: false
+                              description: The meaning of the character
+                          radical:
+                              type: string
+                              example: "氵"
+                              required: false
+                              description: The radical of the character
+                          strokes:
+                              type: integer
+                              example: 15
+                              required: false
+                              description: Number of strokes
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
                   example_word:
-                      type: string
-                      example: "漢字"
+                      type: object
                       required: false
+                      description: Example word using the character
+                      properties:
+                          word:
+                              type: string
+                              example: "漢字"
+                              required: false
+                              description: The word text
+                          phonetic:
+                              type: string
+                              example: "hànzì"
+                              required: false
+                              description: The phonetic representation
+                          translation:
+                              type: string
+                              example: "Chinese characters"
+                              required: false
+                              description: Translation of the word
+                          image_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/image1.jpg"
+                              required: false
+                          audio_files:
+                              type: array
+                              items:
+                                type: string
+                                example: "/path/to/audio1.mp3"
+                              required: false
                   image_files:
                       type: array
                       items:
@@ -268,7 +372,7 @@ def delete_calligraphy(calligraphy_id: str):
           type: string
           required: true
           description: The ID of the calligraphy to delete
-          example: "char_C1"
+          example: "call_C1"
     responses:
         204:
             description: calligraphy deleted successfully
@@ -297,7 +401,7 @@ def score_calligraphy():
               properties:
                   calligraphy_id:
                       type: string
-                      example: "char_C1"
+                      example: "call_C1"
                       description: The ID of the calligraphy to score
                       required: true
                   success:

@@ -97,6 +97,34 @@ class PassageService:
         finally:
             if owns_session:
                 session.close()
+    def get_by_text(self, text: str, session: Optional[Session] = None) -> Passage | None:
+        """
+        Get a passage by its text.
+
+        Args:
+            text: The text of the passage to retrieve.
+
+        Returns:
+            Passage object if found, else None
+        """
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+        
+        try:
+            return db_manager.find_by_attr(
+                model_class=Passage,
+                attr_values={'text': text},
+                session=session
+            )
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to get passage with text {text}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
 
     def get_by_grammar_id(self, grammar_id: str, session: Optional[Session] = None) -> list[Passage]:
         """
@@ -142,6 +170,14 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
+            if existing := self.get_by_text(data.text, session=session):
+                logger.info(f"Passage already exists: {data.text} with ID: {existing.id}")
+
+                if existing not in session:
+                    existing = session.merge(existing)
+                    
+                return existing
+            
             passage = Passage(
                 id=db_manager.generate_new_id(model_class=Passage, session=session),
                 **data.model_dump(exclude_none=True)

@@ -12,7 +12,7 @@ class Word(BaseComponentModel):
     type = Column(String(100), nullable=True)  # e.g., noun, verb, adjective
     
     # Relationship
-    vocabulary = relationship('Vocabulary', back_populates='word')      # 1 to Many
+    vocabulary = relationship('Vocabulary', back_populates='word')      # One to Many
     calligraphy = relationship('Calligraphy', back_populates='example_word')  # One to Many
 
     def to_dict(self, include_relations: bool = True) -> dict:

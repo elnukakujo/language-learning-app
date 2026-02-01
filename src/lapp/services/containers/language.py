@@ -71,7 +71,7 @@ class LanguageService:
             for unit in units:
                 if unit.score < score_threshold:
                     return unit.id
-            return None
+            return units[-1].id if units else None
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -213,7 +213,7 @@ class LanguageService:
             language.last_seen = date.today()
             language.score = 0.0
             language.current_unit = self._find_current_unit(
-                language=language,
+                language_id=language.id,
                 score_threshold=0.75,
                 session=session
             )

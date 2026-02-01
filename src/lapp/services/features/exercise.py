@@ -369,8 +369,6 @@ class ExerciseService:
         finally:
             if owns_session:
                 session.close()
-        
-        return success
 
     def update_score(self, ex_id: str, success: bool, session: Optional[Session] = None) -> Exercise | None:
         """
@@ -396,8 +394,10 @@ class ExerciseService:
                 logger.warning(f"Exercise item not found: {ex_id}")
                 return None
             
+            previous_score = exercise.score
+            
             exercise.score = update_score(
-                current_score=exercise.score,
+                score=exercise.score,
                 last_seen=exercise.last_seen,
                 success=success
             )
@@ -431,13 +431,21 @@ class ExerciseService:
 
             for feature in dependencies_lists:
                 feature.score = update_score(
-                    current_score=feature.score,
+                    score=feature.score,
                     last_seen=feature.last_seen,
                     success=success
                 )
                 feature.last_seen = date.today()
 
                 db_manager.modify(feature, session=session)
+
+            if exercise.score != previous_score:
+                unit_service.update_score(exercise.unit_id, session=session)
+                logger.info(f"Updated unit {exercise.unit_id} score due to Exercise {ex_id}")
+            
+            # Ensure all attributes are loaded before closing session
+            if owns_session and result:
+                session.refresh(result)
             
             return result
         except Exception as e:

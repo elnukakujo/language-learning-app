@@ -5,4 +5,4 @@ from ..components import CharacterDict, WordDict
 
 class CalligraphyDict(BaseFeatureDict):
     character: CharacterDict
-    example_words: Optional[WordDict] = None  # Example word using the character
+    example_word: Optional[WordDict] = None  # Example word using the character

@@ -6,7 +6,7 @@ from ..base import BaseComponentModel
 class Passage(BaseComponentModel):
     __tablename__ = 'passage'
     
-    text = Column(Text, nullable=False)
+    text = Column(Text, nullable=False, unique=True)
     translation = Column(Text, nullable=False)
     
     # Foreign key

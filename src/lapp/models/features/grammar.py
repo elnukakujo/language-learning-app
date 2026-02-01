@@ -20,10 +20,7 @@ class Grammar(BaseFeatureModel):
         base_dict = {
             **super().to_dict(include_relations=include_relations),
             "title": self.title,
-            "explanation": self.explanation
+            "explanation": self.explanation,
+            "learnable_sentences": [p.to_dict(include_relations=False) for p in self.learnable_sentences]
         }
-        if include_relations:
-            base_dict.update({
-                "learnable_sentences_ids": [p.id for p in self.learnable_sentences]
-            })
         return base_dict

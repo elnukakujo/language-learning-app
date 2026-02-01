@@ -22,8 +22,8 @@ class Calligraphy(BaseFeatureModel):
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {
             **super().to_dict(include_relations=include_relations),
-            **self.character.to_dict(include_relations=include_relations),
-            **self.example_word.to_dict(include_relations=include_relations)
+            "character": self.character.to_dict(include_relations=False),
+            "example_word": self.example_word.to_dict(include_relations=False)
         }
 
         return base_dict

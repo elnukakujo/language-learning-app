@@ -341,24 +341,24 @@ class GrammarService:
             previous_score = grammar.score
 
             grammar.score = update_score(
-                current_score=grammar.score,
+                score=grammar.score,
                 last_seen=grammar.last_seen,
                 success=success
             )
             
             # Update last_seen
             grammar.last_seen = date.today()
+            # Save changes
+            result = db_manager.modify(grammar, session=session)
+            
+            if result:
+                logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
 
             if grammar.score != previous_score:
                 if grammar.unit_id:
                     unit_service.update_score(grammar.unit_id, session=session)
                     logger.info(f"Updated unit {grammar.unit_id} score due to Grammar {grammar_id}")
             
-            # Save changes
-            result = db_manager.modify(grammar, session=session)
-            
-            if result:
-                logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
             
             return result
         except Exception as e:

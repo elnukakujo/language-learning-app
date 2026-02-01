@@ -111,6 +111,14 @@ class WordService:
             session = db_manager.get_session()
         
         try:
+            if existing := self.get_by_word(data.word, session=session):
+                logger.info(f"Word already exists: {data.word} with ID: {existing.id}")
+
+                if existing not in session:
+                    existing = session.merge(existing)
+                    
+                return existing
+            
             word = Word(
                 id=db_manager.generate_new_id(model_class=Word, session=session),
                 **data.model_dump(exclude_none=True)

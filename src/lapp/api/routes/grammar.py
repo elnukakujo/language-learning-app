@@ -102,6 +102,11 @@ def create_grammar():
             type: object
             description: Grammar data
             properties:
+                unit_id:
+                    type: string
+                    example: "unit_U1"
+                    required: true
+                    description: "The ID of the unit the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"
@@ -112,11 +117,35 @@ def create_grammar():
                     example: "The past tense is used to describe actions that have already happened."
                     required: true
                     description: "Explanation of the grammar"
-                learnable_sentence:
-                    type: string
-                    example: "I walked to the store yesterday."
+                learnable_sentences:
+                    type: array
                     required: false
-                    description: "A sentence that illustrates the grammar point"
+                    description: "Array of passages that illustrate the grammar point"
+                    items:
+                        type: object
+                        properties:
+                            text:
+                                type: string
+                                example: "I walked to the store yesterday."
+                                required: true
+                                description: "The sentence text"
+                            translation:
+                                type: string
+                                example: "J'ai marché au magasin hier."
+                                required: true
+                                description: "Translation of the sentence"
+                            image_files:
+                                type: array
+                                items:
+                                    type: string
+                                    example: "/path/to/image1.jpg"
+                                required: false
+                            audio_files:
+                                type: array
+                                items:
+                                    type: string
+                                    example: "/path/to/audio1.mp3"
+                                required: false
                 image_files:
                     type: array
                     items:
@@ -178,21 +207,50 @@ def update_grammar(grammar_id: str):
             type: object
             description: Grammar data
             properties:
+                unit_id:
+                    type: string
+                    example: "unit_U1"
+                    required: false
+                    description: "The ID of the unit the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"
-                    required: true
+                    required: false
                     description: "Title of the grammar"
                 explanation:
                     type: string
                     example: "The past tense is used to describe actions that have already happened."
-                    required: true
-                    description: "Explanation of the grammar"
-                learnable_sentence:
-                    type: string
-                    example: "I walked to the store yesterday."
                     required: false
-                    description: "A sentence that illustrates the grammar point"
+                    description: "Explanation of the grammar"
+                learnable_sentences:
+                    type: array
+                    required: false
+                    description: "Array of passages that illustrate the grammar point"
+                    items:
+                        type: object
+                        properties:
+                            text:
+                                type: string
+                                example: "I walked to the store yesterday."
+                                required: true
+                                description: "The sentence text"
+                            translation:
+                                type: string
+                                example: "J'ai marché au magasin hier."
+                                required: true
+                                description: "Translation of the sentence"
+                            image_files:
+                                type: array
+                                items:
+                                    type: string
+                                    example: "/path/to/image1.jpg"
+                                required: false
+                            audio_files:
+                                type: array
+                                items:
+                                    type: string
+                                    example: "/path/to/audio1.mp3"
+                                required: false
                 image_files:
                     type: array
                     items:

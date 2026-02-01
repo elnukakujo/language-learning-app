@@ -115,6 +115,10 @@ class CharacterService:
         try:
             if existing := self.get_by_character(data.character, session=session):
                 logger.info(f"Character already exists: {data.character} with ID: {existing.id}")
+
+                if existing not in session:
+                    existing = session.merge(existing)
+                    
                 return existing
             
             character = Character(

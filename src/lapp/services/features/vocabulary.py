@@ -409,6 +409,7 @@ class VocabularyService:
                 if vocabulary.unit_id:
                     unit_service.update_score(vocabulary.unit_id, session=session)
                     logger.info(f"Updated unit {vocabulary.unit_id} score due to VocabularyFeature {voc_id}")
+                    
             return result
         except Exception as e:
             if owns_session:

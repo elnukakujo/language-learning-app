@@ -65,12 +65,12 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, char_id: str, session: Optional[Session] = None) -> Calligraphy | None:
+    def get_by_id(self, calligraphy_id: str, session: Optional[Session] = None) -> Calligraphy | None:
         """
         Get a Calligraphy item by its ID.
 
         Args:
-            char_id: The ID of the Calligraphy item to retrieve.
+            calligraphy_id: The ID of the Calligraphy item to retrieve.
 
         Returns:
             Calligraphy object if found, else None
@@ -82,7 +82,7 @@ class CalligraphyService:
         try:
             return db_manager.find_by_attr(
                 model_class=Calligraphy,
-                attr_values={'id': char_id},
+                attr_values={'id': calligraphy_id},
                 session=session
             )
         except Exception as e:
@@ -170,22 +170,33 @@ class CalligraphyService:
                 logger.error(f"Failed to create character for calligraphy")
                 return None
             
+            # Ensure character is loaded in session
+            if character and not session.get(Calligraphy.character.property.mapper.class_, character.id):
+                raise ValueError(f"Character not found in session after creation for calligraphy")
+            
             # Create example_word using WordService if provided
             example_word = None
-            if data.example_words:
-                example_word = word_service.create(data.example_words, session=session)
+            if data.example_word:
+                example_word = word_service.create(data.example_word, session=session)
                 if not example_word:
                     logger.warning(f"Failed to create example_word for calligraphy")
+
+            # Ensure example_word is loaded in session
+            if example_word and not session.get(Calligraphy.example_word.property.mapper.class_, example_word.id):
+                raise ValueError(f"Example word not found in session after creation for calligraphy")
             
             calligraphy = Calligraphy(
                 id = db_manager.generate_new_id(
                     model_class=Calligraphy,
                     session=session
                 ),
-                character_id=character.id,
-                example_word_id=example_word.id if example_word else None,
-                **data.model_dump(exclude={'character', 'example_words'}, exclude_none=True)
+                **data.model_dump(exclude={'character', 'example_word'}, exclude_none=True)
             )
+
+            calligraphy.character_id = character.id
+            calligraphy.character = character
+            calligraphy.example_word_id = example_word.id if example_word else None
+            calligraphy.example_word = example_word
             
             result = db_manager.insert(
                 obj=calligraphy,
@@ -207,12 +218,12 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def update(self, char_id: str, data: CalligraphyDict, session: Optional[Session] = None) -> Calligraphy | None:
+    def update(self, calligraphy_id: str, data: CalligraphyDict, session: Optional[Session] = None) -> Calligraphy | None:
         """
         Update an existing Calligraphy item.
 
         Args:
-            char_id: The ID of the Calligraphy item to update.
+            calligraphy_id: The ID of the Calligraphy item to update.
             data: calligraphyDict containing updated Calligraphy item details.
 
         Returns:
@@ -223,30 +234,30 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            existing = self.get_by_id(char_id, session=session)
+            existing = self.get_by_id(calligraphy_id, session=session)
             
             if not existing:
-                logger.warning(f"Calligraphy item not found: {char_id}")
+                logger.warning(f"Calligraphy item not found: {calligraphy_id}")
                 return None
             
             # Handle Character update through CharacterService if provided
             if data.character is not None:
                 updated_character = character_service.update(existing.character_id, data.character, session=session)
                 if not updated_character:
-                    logger.error(f"Failed to update character for calligraphy: {char_id}")
+                    logger.error(f"Failed to update character for calligraphy: {calligraphy_id}")
                     return None
                 existing.character = updated_character
             
             # Handle example_word update through WordService if provided
-            if data.example_words is not None:
+            if data.example_word is not None:
                 if existing.example_word_id:
                     # Update existing word
-                    updated_word = word_service.update(existing.example_word_id, data.example_words, session=session)
+                    updated_word = word_service.update(existing.example_word_id, data.example_word, session=session)
                     if updated_word:
                         existing.example_word = updated_word
                 else:
                     # Create new word
-                    new_word = word_service.create(data.example_words, session=session)
+                    new_word = word_service.create(data.example_word, session=session)
                     if new_word:
                         existing.example_word_id = new_word.id
                         existing.example_word = new_word
@@ -256,7 +267,7 @@ class CalligraphyService:
             
             # Remove nested objects from update_data
             update_data.pop('character', None)
-            update_data.pop('example_words', None)
+            update_data.pop('example_word', None)
             
             # Update the existing object's attributes
             for key, value in update_data.items():
@@ -270,9 +281,9 @@ class CalligraphyService:
             result = db_manager.modify(existing, session=session)
             
             if result:
-                logger.info(f"Updated Calligraphy item: {char_id}")
+                logger.info(f"Updated Calligraphy item: {calligraphy_id}")
             else:
-                logger.error(f"Failed to update Calligraphy item: {char_id}")
+                logger.error(f"Failed to update Calligraphy item: {calligraphy_id}")
             
             return result
         except Exception as e:
@@ -284,12 +295,12 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def delete(self, char_id: str, session: Optional[Session] = None) -> bool:
+    def delete(self, calligraphy_id: str, session: Optional[Session] = None) -> bool:
         """
         Delete a Calligraphy item by its ID.
 
         Args:
-            char_id: The ID of the Calligraphy item to delete.
+            calligraphy_id: The ID of the Calligraphy item to delete.
         Returns:
             True if deletion was successful, else False
         """
@@ -299,19 +310,19 @@ class CalligraphyService:
         
         try:
             # Check if Calligraphy item exists before deleting
-            existing = self.get_by_id(char_id, session=session)
+            existing = self.get_by_id(calligraphy_id, session=session)
             
             if not existing:
-                logger.warning(f"Calligraphy item not found: {char_id}")
+                logger.warning(f"Calligraphy item not found: {calligraphy_id}")
                 return False
             
             # Delete from database
             success = db_manager.delete(existing, session=session)
             
             if success:
-                logger.info(f"Deleted Calligraphy item: {char_id}")
+                logger.info(f"Deleted Calligraphy item: {calligraphy_id}")
             else:
-                logger.error(f"Failed to delete Calligraphy item: {char_id}")
+                logger.error(f"Failed to delete Calligraphy item: {calligraphy_id}")
             
             return success
         except Exception as e:
@@ -322,22 +333,15 @@ class CalligraphyService:
         finally:
             if owns_session:
                 session.close()
-        
-        if success:
-            logger.info(f"Deleted Calligraphy item: {char_id}")
-        else:
-            logger.error(f"Failed to delete Calligraphy item: {char_id}")
-        
-        return success
 
-    def update_score(self, char_id: str, success: bool, session: Optional[Session] = None) -> Calligraphy | None:
+    def update_score(self, calligraphy_id: str, success: bool, session: Optional[Session] = None) -> Calligraphy | None:
         """
         Update Calligraphy item score based on average of all of its components scores.
         
         This should be called whenever a component's score changes.
         
         Args:
-            char_id: The ID of the Calligraphy item to update
+            calligraphy_id: The ID of the Calligraphy item to update
             success: Whether the latest attempt was successful
         
         Returns:
@@ -348,33 +352,35 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            calligraphy = self.get_by_id(char_id, session=session)
+            calligraphy = self.get_by_id(calligraphy_id, session=session)
 
             if not calligraphy:
-                logger.warning(f"Calligraphy item not found: {char_id}")
+                logger.warning(f"Calligraphy item not found: {calligraphy_id}")
                 return None
             
+            previous_score = calligraphy.score
+
             calligraphy.score = update_score(
-                current_score=calligraphy.score,
+                score=calligraphy.score,
                 last_seen=calligraphy.last_seen,
                 success=success
             )
             
             # Update last_seen
             calligraphy.last_seen = date.today()
-
-            previous_score = calligraphy.score
-
-            if calligraphy.score != previous_score:
-                if calligraphy.unit_id:
-                    unit_service.update_score(calligraphy.unit_id, session=session)
-                    logger.info(f"Updated unit {calligraphy.unit_id} score due to calligraphy {char_id}")
             
             # Save changes
             result = db_manager.modify(calligraphy, session=session)
             
             if result:
-                logger.info(f"Updated Calligraphy item {char_id} score: {result.score}")
+                logger.info(f"Updated Calligraphy item {calligraphy_id} score: {result.score}")
+
+            if calligraphy.score != previous_score:
+                if calligraphy.unit_id:
+                    unit_service.update_score(calligraphy.unit_id, session=session)
+                    logger.info(f"Updated unit {calligraphy.unit_id} score due to calligraphy {calligraphy_id}")
+            
+            
             
             return result
         except Exception as e:
