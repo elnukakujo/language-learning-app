@@ -3,7 +3,7 @@
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 
 import ImageLoader from "@/components/imageLoader";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
@@ -25,7 +25,7 @@ interface UnitElements {
         }>;
         count: number;
     };
-    characters: {
+    calligraphies: {
         items: Array<{
             id: string;
             character: string;
@@ -39,8 +39,8 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
     const [updatedQuestion, setUpdatedQuestion] = useState<string>(exercise.question);
     const [updatedAnswer, setUpdatedAnswer] = useState<string>(exercise.answer);
 
-    const [updatedSupportText, setUpdatedSupportText] = useState<string>(exercise.support?.replace(/<image_url>.*?<\/image_url>/, '').trim() || "");
-    const [updatedImageUrl, setUpdatedImageUrl] = useState<string | null>(exercise.support?.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null);
+    const [updatedSupportText, setUpdatedSupportText] = useState<string>(exercise.text_support?.replace(/<image_url>.*?<\/image_url>/, '').trim() || "");
+    const [updatedImageUrl, setUpdatedImageUrl] = useState<string | null>(exercise.text_support?.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null);
 
     if (updatedImageUrl === "null") {
       setUpdatedImageUrl(null);
@@ -48,9 +48,9 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
 
     const [unitId, setUnitId] = useState<string>(exercise.unit_id);
 
-    const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.associated_to?.vocabulary || []);
-    const [charAssociated, setCharAssociated] = useState<string[]>(exercise.associated_to?.characters || []);
-    const [gramAssociated, setGramAssociated] = useState<string[]>(exercise.associated_to?.grammar || []);
+    const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.vocabulary_ids || []);
+    const [callAssociated, setCallAssociated] = useState<string[]>(exercise.calligraphy_ids || []);
+    const [gramAssociated, setGramAssociated] = useState<string[]>(exercise.grammar_ids || []);
 
     return (
       <form className="flex flex-col space-y-4 items-center">
@@ -100,10 +100,10 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
             label="Associated Grammar"
           />
           <OpenCloseMenu
-            elements={unitElements.characters.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
-            selectedElements={charAssociated}
-            setSelectedElements={setCharAssociated}
-            label="Associated Characters"
+            elements={unitElements.calligraphies.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
+            selectedElements={callAssociated}
+            setSelectedElements={setCallAssociated}
+            label="Associated Calligraphies"
           />
         </section>
 
@@ -113,16 +113,14 @@ export default function UpdateExerciseForm({ exercise, existingUnitsId, unitElem
               id: exercise.id,
               exercise_type: exercise.exercise_type,
               question: updatedQuestion,
-              support: updatedSupportText + (updatedImageUrl ? `\n<image_url>${updatedImageUrl}</image_url>` : ''),
+              text_support: updatedSupportText + (updatedImageUrl ? `\n<image_url>${updatedImageUrl}</image_url>` : ''),
               answer: updatedAnswer,
               score: exercise.score,
               last_seen: exercise.last_seen,
               unit_id: unitId,
-              associated_to: {
-                vocabulary: vocAssociated,
-                grammar: gramAssociated,
-                characters: charAssociated
-              }
+              vocabulary_ids: vocAssociated,
+              grammar_ids: gramAssociated,
+              calligraphy_ids: callAssociated
           }}
         />
       </form>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
-import type Unit from "@/interface/Unit";
+import type Unit from "@/interface/containers/Unit";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 

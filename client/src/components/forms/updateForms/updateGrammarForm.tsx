@@ -3,7 +3,7 @@
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
-import type Grammar from "@/interface/Grammar";
+import type Grammar from "@/interface/features/Grammar";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
@@ -11,7 +11,7 @@ export default function updateGrammarForm({ grammar, existingUnitsId }: { gramma
   const [updatedUnitId, setUpdatedUnitId] = useState<string>(grammar.unit_id);
   const [updatedTitle, setUpdatedTitle] = useState<string>(grammar.title);
   const [updatedExplanation, setUpdatedExplanation] = useState<string>(grammar.explanation);
-  const [updatedLearnableSentence, setUpdatedLearnableSentence] = useState<string>(grammar.learnable_sentence || "");
+  const [updatedLearnableSentence, setUpdatedLearnableSentence] = useState<string>(grammar.learnable_sentences?.[0]?.text || "");
 
   return (
     <form className="flex flex-col space-y-4 items-center">
@@ -45,7 +45,10 @@ export default function updateGrammarForm({ grammar, existingUnitsId }: { gramma
           id: grammar.id,
           title: updatedTitle,
           explanation: updatedExplanation,
-          learnable_sentence: updatedLearnableSentence,
+          learnable_sentences: updatedLearnableSentence ? [{
+            text: updatedLearnableSentence,
+            translation: ""
+          }] : undefined,
           score: grammar.score,
           last_seen: grammar.last_seen,
           unit_id: updatedUnitId,

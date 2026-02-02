@@ -1,5 +1,5 @@
 import { getElementbyId, getLanguageData, getUnitData } from "@/api";
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 import UpdateExerciseForm from "@/components/forms/updateForms/updateExerciseForm";
 
 type paramsType = {

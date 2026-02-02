@@ -1,20 +1,11 @@
 "use client";
 
-import { getNext } from "@/api";
 import { useParams, useRouter } from "next/navigation";
 import NavButton from "../buttons/navButton";
 
-type VocabularyProps = {
-    items: Array<{
-        id: string;
-        word: string;
-        translation: string;
-        score: number;
-    }>;
-    count: number;
-};
+import Vocabulary from "@/interface/features/Vocabulary";
 
-export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}) {
+export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
     const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
 
     const router = useRouter();
@@ -22,25 +13,25 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
         router.push(`/languages/${language_id}/unit/${unit_id}/voc/${id}`);
     };
 
-    const averageScore = vocProps.items.reduce((acc, item) => acc + item.score, 0) / vocProps.count;
+    const averageScore = vocProps.reduce((acc, item) => acc + item.score!, 0) / vocProps.length;
 
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>
                 <h2>Vocabulary</h2>
-                {vocProps.count > 0 && (
+                {vocProps.length > 0 && (
                     <>
-                        <p>Total: {vocProps.count}</p>
+                        <p>Total: {vocProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
                     </>
                 )}
             </header>
-            {vocProps.count === 0 ? <p>Empty</p> :
+            {vocProps.length === 0 ? <p>Empty</p> :
                 <ul className="list-item pl-5 space-y-1">
-                    {vocProps.items.map((item, index) => (
+                    {vocProps.map((item, index) => (
                         <li key={index}>
-                            <button onClick={() => handleClick(item.id)}>
-                                {(item as VocabularyProps["items"][0]).word} –{" "}{(item as VocabularyProps["items"][0]).translation}
+                            <button onClick={() => handleClick(item.id!)}>
+                                {item.word.word} –{" "}{item.word.translation}
                             </button>
                         </li>
                     ))}
@@ -51,11 +42,9 @@ export default function VocabularyList({ vocProps}: { vocProps: VocabularyProps}
             >
                 <p>Add New Vocabulary</p>
             </NavButton>
-            {vocProps.count > 0 && (
+            {vocProps.length > 0 && (
                 <NavButton
-                    path={`/languages/${language_id}/unit/${unit_id}/voc/${
-                        vocProps.items[Math.floor(Math.random() * vocProps.items.length)].id
-                    }/flashcard`}
+                    path={`/languages/${language_id}/unit/${unit_id}/voc/flashcard`}
                 >
                     <p>Flashcard Practice</p>
                 </NavButton>

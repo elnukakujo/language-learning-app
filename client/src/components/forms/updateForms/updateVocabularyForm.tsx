@@ -3,15 +3,15 @@
 import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
-import type Vocabulary from "@/interface/Vocabulary";
+import type Vocabulary from "@/interface/features/Vocabulary";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function updateVocabularyForm({ vocabulary, existingUnitsId }: { vocabulary: Vocabulary, existingUnitsId: string[] }) {
-    const [updatedWord, setUpdatedWord] = useState<string>(vocabulary.word);
-    const [updatedTranslation, setUpdatedTranslation] = useState<string>(vocabulary.translation);
-    const [updatedPhonetic, setUpdatedPhonetic] = useState<string>(vocabulary.phonetic || "");
-    const [updatedType, setUpdatedType] = useState<string>(vocabulary.type || "");
-    const [updatedExampleSentence, setUpdatedExampleSentence] = useState<string>(vocabulary.example_sentence || "");
+    const [updatedWord, setUpdatedWord] = useState<string>(vocabulary.word.word);
+    const [updatedTranslation, setUpdatedTranslation] = useState<string>(vocabulary.word.translation);
+    const [updatedPhonetic, setUpdatedPhonetic] = useState<string>(vocabulary.word.phonetic || "");
+    const [updatedType, setUpdatedType] = useState<string>(vocabulary.word.type || "");
+    const [updatedExampleSentence, setUpdatedExampleSentence] = useState<string>(vocabulary.example_sentences?.[0]?.text || "");
     const [updatedUnitId, setUpdatedUnitId] = useState<string>(vocabulary.unit_id || "");
 
     return (
@@ -57,11 +57,16 @@ export default function updateVocabularyForm({ vocabulary, existingUnitsId }: { 
           element={{
               type_element: "voc",
               id: vocabulary.id,
-              word: updatedWord,
-              translation: updatedTranslation,
-              phonetic: updatedPhonetic,
-              type: updatedType,
-              example_sentence: updatedExampleSentence,
+              word: {
+                word: updatedWord,
+                translation: updatedTranslation,
+                phonetic: updatedPhonetic || undefined,
+                type: updatedType || undefined
+              },
+              example_sentences: updatedExampleSentence ? [{
+                text: updatedExampleSentence,
+                translation: ""
+              }] : undefined,
               score: vocabulary.score,
               last_seen: vocabulary.last_seen,
               unit_id: updatedUnitId,

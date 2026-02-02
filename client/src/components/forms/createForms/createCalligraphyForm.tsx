@@ -5,8 +5,8 @@ import { useState } from "react";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
-export default function createCharacterForm({unit_id}: {unit_id: string}) {
-    const [characterName, setCharacterName] = useState<string>("");
+export default function createCalligraphyForm({unit_id}: {unit_id: string}) {
+    const [calligraphyName, setCalligraphyName] = useState<string>("");
     const [components, setComponents] = useState<string>("");
     const [meaning, setMeaning] = useState<string>("");
     const [phonetic, setPhonetic] = useState<string>("");
@@ -15,15 +15,15 @@ export default function createCharacterForm({unit_id}: {unit_id: string}) {
   return (
     <form className="flex flex-col space-y-4 items-center">
       <AutoWidthInput
-        value={characterName}
-        onChange={(e) => setCharacterName(e.target.value)}
-        label="Character*"
+        value={calligraphyName}
+        onChange={(e) => setCalligraphyName(e.target.value)}
+        label="Calligraphy Character*"
         className="border border-gray-300 "
       />
       <AutoWidthInput
         value={components}
         onChange={(e) => setComponents(e.target.value)}
-        label="Components"
+        label="Radical"
         className="border border-gray-300 "
       />
       <AutoWidthInput
@@ -47,17 +47,19 @@ export default function createCharacterForm({unit_id}: {unit_id: string}) {
 
       <NewElementButton
         element={{
-          type_element: "char",
-          id: "",
-          character: characterName,
-          meaning: meaning,
-          components: components,
-          phonetic: phonetic,
-          example_word: exampleWord,
-          score: 0,
-          last_seen: new Date(),
+          character: {
+            character: calligraphyName,
+            phonetic: phonetic,
+            meaning: meaning,
+            radical: components
+          },
+          example_word: exampleWord ? {
+            word: exampleWord,
+            translation: ""
+          } : undefined,
           unit_id: unit_id
         }}
+        type="call"
       />
     </form>
   );

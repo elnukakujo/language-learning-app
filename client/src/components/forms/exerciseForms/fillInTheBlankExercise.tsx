@@ -1,18 +1,18 @@
 "use client";
 
 import { updateScoreById } from "@/api";
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
-    const { question, support = '', answer } = exercise;
+    const { question, text_support = '', answer } = exercise;
     const normalize = (str: string) => str.toLowerCase().trim();
 
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
   
     // Parse answer with double underscore separator
     const correctAnswers = answer.split('__').map(a => a.trim()).filter(Boolean);

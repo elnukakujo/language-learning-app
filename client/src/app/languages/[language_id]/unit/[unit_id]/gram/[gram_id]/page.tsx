@@ -1,5 +1,5 @@
 import { getElementbyId } from "@/api";
-import type Grammar from "@/interface/Grammar";
+import type Grammar from "@/interface/features/Grammar";
 import Markdown from "react-markdown";
 
 import NavButton from "@/components/buttons/navButton";
@@ -21,10 +21,15 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
             <section>
                 <h1>{grammar.title}</h1>
                 <Markdown>{grammar.explanation}</Markdown>
-                {grammar.learnable_sentence && (
-                    <p>
-                        <strong>Learnable Sentence:</strong> {grammar.learnable_sentence}
-                    </p>
+                {grammar.learnable_sentences && grammar.learnable_sentences.length > 0 && (
+                    <div>
+                        <strong>Learnable Sentences:</strong>
+                        <ul>
+                            {grammar.learnable_sentences.map((sentence, index) => (
+                                <li key={index}>{sentence.text}</li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
                 <p>Score: {grammar.score?.toFixed(1) || 0}/100</p>
                 <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>

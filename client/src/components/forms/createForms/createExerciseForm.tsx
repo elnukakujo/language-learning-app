@@ -26,7 +26,7 @@ interface UnitElements {
         }>;
         count: number;
     };
-    characters: {
+    calligraphies: {
         items: Array<{
             id: string;
             character: string;
@@ -37,14 +37,14 @@ interface UnitElements {
 }
 
 export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id: string, unitElements: UnitElements }) {
-    const [exerciseType, setExerciseType] = useState<string>("")
+    const [exerciseType, setExerciseType] = useState<'essay' | 'answering' | 'translate' | 'organize' | 'fill_in_the_blank' | 'matching' | 'true_false' | "">("")
     const [question, setQuestion] = useState<string>("")
     const [answer, setAnswer] = useState<string>("")
     const [supportText, setSupportText] = useState<string>("")
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>([]);
-    const [charAssociated, setCharAssociated] = useState<string[]>([]);
+    const [callAssociated, setCallAssociated] = useState<string[]>([]);
     const [gramAssociated, setGramAssociated] = useState<string[]>([]);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
           setSupportText("");
           setAnswer("The translation");
           break;
-        case "fill-in-the-blank":
+        case "fill_in_the_blank":
           setQuestion("The house is __ and __.");
           setSupportText("");
           setAnswer("big__small");
@@ -64,7 +64,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
           setSupportText("");
           setAnswer("Some helps and tips to write the essay");
           break;
-        case "true-false":
+        case "true_false":
           setQuestion("A statement to evaluate");
           setSupportText("");
           setAnswer("true");
@@ -87,15 +87,15 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
         <ClassicSelectMenu
           options={[
             "translate",
-            "fill-in-the-blank",
+            "fill_in_the_blank",
             "essay",
-            "true-false",
+            "true_false",
             "organize",
             "answering",
             "matching"
           ]}
           selectedOption={exerciseType}
-          onChange={setExerciseType}
+          onChange={(value) => setExerciseType(value as typeof exerciseType)}
         />
         {exerciseType !== "" && (
           <>
@@ -114,7 +114,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
             />
             <ImageLoader previewUrl={imageUrl} setPreviewUrl={setImageUrl} />
             
-            {exerciseType === "true-false" && 
+            {exerciseType === "true_false" && 
               <TrueFalseInput
                 value={answer === "true"}
                 onChange={(e) => setAnswer(e.target.value)}
@@ -131,7 +131,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               />
             }
 
-            { !["true-false", "matching", "organize"].includes(exerciseType) && 
+            { !["true_false", "matching", "organize"].includes(exerciseType) && 
               <AutoSizeTextArea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
@@ -153,29 +153,27 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
                 label="Associated Grammar"
               />
               <OpenCloseMenu
-                elements={unitElements.characters.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
-                selectedElements={charAssociated}
-                setSelectedElements={setCharAssociated}
-                label="Associated Characters"
+                elements={unitElements.calligraphies.items.map(item => ({id: item.id, value: item.character + " - " + item.meaning}))}
+                selectedElements={callAssociated}
+                setSelectedElements={setCallAssociated}
+                label="Associated Calligraphies"
               />
             </section>
             <NewElementButton
               element={{
-                  type_element: "ex",
-                  id: "",
                   exercise_type: exerciseType,
                   question: question,
-                  support: supportText + (imageUrl ? "\n<image_url>"+imageUrl+"</image_url>" : ""),
+                  text_support: supportText,
+                  image_files: imageUrl ? [imageUrl] : [],
                   answer: answer,
                   score: 0.0,
-                  last_seen: new Date,
+                  last_seen: new Date().toISOString(),
                   unit_id: unit_id,
-                  associated_to: {
-                    vocabulary: vocAssociated,
-                    grammar: gramAssociated,
-                    characters: charAssociated
-                  }
-            }}
+                  vocabulary_ids: vocAssociated,
+                  grammar_ids: gramAssociated,
+                  calligraphy_ids: callAssociated
+              }}
+              type="ex"
             />
           </>
         )}

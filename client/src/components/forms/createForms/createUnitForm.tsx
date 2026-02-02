@@ -26,12 +26,11 @@ export default function CreateUnitForm({ language_id }: { language_id: string })
             />
             <NewElementButton
                 element={{
-                    type_element: "unit",
-                    id: "",
                     title: title,
                     description: description,
                     language_id: language_id,
                 }}
+                type="unit"
             />
         </form>
     );

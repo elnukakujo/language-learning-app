@@ -1,28 +1,44 @@
 "use client";
 
 import { updateScoreById } from "@/api";
-import { useState } from "react";
-import type Character from "@/interface/Character";
+import { useEffect, useState } from "react";
+import Calligraphy from "@/interface/features/Calligraphy";
+import BackButton from "../buttons/backButton";
 
-export default function CharacterFlashCard({ character }: { character: Character }) {
+export default function CalligraphyFlashCard({ calligraphies }: { calligraphies: Calligraphy[] }) {
+    const [currentIndex, setCurrentIndex] = useState<number>(0);
+    let calligraphy: Calligraphy = calligraphies[currentIndex];
+
+    useEffect(() => {
+        calligraphy = calligraphies[currentIndex];
+        console.log("Current Calligraphy:", calligraphy);
+    }, [currentIndex]);
+        
     const [showAnswer, setShowAnswer] = useState<boolean>(false);
     const [graded, setGraded] = useState<boolean>(false);
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(character.id, isCorrect);
+        updateScoreById(calligraphy.id!, isCorrect);
     };
+
+    const handleGoNext = () => {
+        setCurrentIndex(currentIndex + 1);
+        setShowAnswer(false);
+        setGraded(false);
+    }
+
     return (
         <div className="flashcard">
-            <h2>{character.character}</h2>
+            <h2>{calligraphy.character.character}</h2>
             {!showAnswer && <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                 Show Answer
             </button>}
             {showAnswer && (
                 <>
-                    <p>{character.components}</p>
-                    {character.phonetic && <p>{character.phonetic}</p>}
-                    {character.meaning && <p>{character.meaning}</p>}
-                    {character.example_word && <p>{character.example_word}</p>}
+                    {calligraphy.character.radical && <p>Radical: {calligraphy.character.radical}</p>}
+                    {calligraphy.character.phonetic && <p>Phonetic: {calligraphy.character.phonetic}</p>}
+                    {calligraphy.character.meaning && <p>Meaning: {calligraphy.character.meaning}</p>}
+                    {calligraphy.example_word && <p>Example: {calligraphy.example_word.word}</p>}
                 </>
             )}
             {showAnswer && !graded && (
@@ -34,6 +50,16 @@ export default function CharacterFlashCard({ character }: { character: Character
                         Wrong?
                     </button>
                 </>
+            )}
+            {graded && currentIndex < calligraphies.length - 1 && (
+                <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => handleGoNext()}>
+                    <p>Next Calligraphy</p>
+                </button>
+            )}
+            {graded && currentIndex === calligraphies.length - 1 && (
+                <BackButton>
+                    <p>Back to Unit</p>
+                </BackButton>
             )}
         </div>
     );

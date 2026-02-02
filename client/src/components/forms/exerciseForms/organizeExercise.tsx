@@ -5,14 +5,14 @@ import Image from 'next/image';
 import Markdown from "react-markdown";
 import shuffle from 'lodash/shuffle';
 
-import Exercise from "@/interface/Exercise";
+import Exercise from "@/interface/features/Exercise";
 import { updateScoreById } from "@/api";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const { support = '' } = exercise;
+    const { text_support = '' } = exercise;
 
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -33,18 +33,18 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         e.preventDefault();
         if (userAnswer.join('') === answer.join('')) {
             setIsCorrect(true);
-            updateScoreById(exercise.id, true).catch(console.error);
+            updateScoreById(exercise.id!, true).catch(console.error);
         } else {
             setAttempts(prev => prev + 1);
             if (attempts >= 2) {
-                updateScoreById(exercise.id, false).catch(console.error);
+                updateScoreById(exercise.id!, false).catch(console.error);
             }
         }
     };
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <Markdown>Organize the following word/characters sequence</Markdown>
+            <Markdown>Organize the following word/calligraphy sequence</Markdown>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">
@@ -59,7 +59,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             </button>
                         ))}
                     </div>
-                    {support && (
+                    {supportText && (
                         <>
                             {supportText && <Markdown>{supportText}</Markdown>}
                             {imageUrl && 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import AutoWidthInput from "@/components/input/autoWidthInput";
-import type Language from "@/interface/Language";
+import type Language from "@/interface/containers/Language";
 
 export default function UpdateLanguageForm({ language }: { language: Language }) {
     const [updatedName, setUpdatedName] = useState<string>(language.name);

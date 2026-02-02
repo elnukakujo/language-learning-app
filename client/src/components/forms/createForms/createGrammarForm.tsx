@@ -31,15 +31,17 @@ export default function createGrammarForm({unit_id}: {unit_id: string}) {
         />
         <NewElementButton
           element={{
-            type_element: "gram",
-            id: "",
             title: title,
             explanation: explanation,
-            learnable_sentence: learnableSentence,
+            learnable_sentences: learnableSentence ? [{
+              text: learnableSentence,
+              translation: ""
+            }] : undefined,
             score: 0,
-            last_seen: new Date(),
+            last_seen: new Date().toISOString(),
             unit_id: unit_id
           }}
+          type="gram"
         />
     </form>
   );

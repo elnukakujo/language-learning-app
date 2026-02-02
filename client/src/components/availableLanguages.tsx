@@ -1,6 +1,6 @@
 import { getAvailableLanguages } from "@/api";
 import LanguageOverviewCard from "./cards/languageOverviewCard";
-import Language from "@/interface/Language";
+import Language from "@/interface/containers/Language";
 import NavButton from "@/components/buttons/navButton";
 
 type LanguagesObject = {

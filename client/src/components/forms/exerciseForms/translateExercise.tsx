@@ -3,16 +3,16 @@
 import { useState } from "react";
 import Image from 'next/image';
 
-import Exercise from "@/interface/Exercise";
+import Exercise from "@/interface/features/Exercise";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import { updateScoreById } from "@/api";
 import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
-    const { question, support = '', answer } = exercise;
+    const { question, text_support = '', answer } = exercise;
     
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
     
     const normalize = (str: string) => str.toLowerCase();
     

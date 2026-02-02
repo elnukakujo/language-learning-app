@@ -50,17 +50,21 @@ export default function createVocabularyForm({ unit_id }: { unit_id: string }) {
       />
       <NewElementButton
         element={{
-            type_element: "voc",
-            id: "",
-            word: word,
-            translation: translation,
-            phonetic: phonetic,
-            type: type,
-            example_sentence: example_sentence,          
+            word: {
+              word: word,
+              translation: translation,
+              phonetic: phonetic || undefined,
+              type: type || undefined
+            },
+            example_sentences: example_sentence ? [{
+              text: example_sentence,
+              translation: ""
+            }] : undefined,          
             score: 0.0,
-            last_seen: new Date(),
+            last_seen: new Date().toISOString(),
             unit_id: unit_id
         }}
+        type="voc"
       />
     </form>
   );

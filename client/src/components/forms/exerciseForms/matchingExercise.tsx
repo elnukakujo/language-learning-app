@@ -1,6 +1,6 @@
 "use client";
 
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
@@ -13,7 +13,7 @@ type Item = {
 };
 
 export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
-    const { support = '', answer } = exercise;
+    const { text_support = '', answer } = exercise;
 
     const pairs: Item[][] = answer.split("\n")
         .map(pair => pair.split("__"))

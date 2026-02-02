@@ -4,16 +4,15 @@ import { useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 import { updateScoreById } from "@/api";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
 export default function EssayExercise({ exercise }: { exercise: Exercise }) {
-    const { question, support = '', answer } = exercise;
-
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
-
+    const { question, text_support = '', answer } = exercise;
+    
+    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
+    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [showCorrection, setShowCorrection] = useState<boolean>(false);
 

@@ -1,21 +1,36 @@
 "use client";
 
+import BackButton from "@/components/buttons/backButton";
 import { updateScoreById } from "@/api";
-import { useState } from "react";
-import type Vocabulary from "@/interface/Vocabulary";
+import { useEffect, useState } from "react";
+import type Vocabulary from "@/interface/features/Vocabulary";
 
-export default function VocabularyFlashCard({ vocabulary }: { vocabulary: Vocabulary }) {
+export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vocabulary[] }) {
+    const [currentIndex, setCurrentIndex] = useState<number>(0);
+    let vocabulary: Vocabulary = vocabularies[currentIndex];
+
+    useEffect(() => {
+        vocabulary = vocabularies[currentIndex];
+    }, [currentIndex]);
+
     const [showAnswer, setShowAnswer] = useState<boolean>(false);
     const [graded, setGraded] = useState<boolean>(false);
     const [revealPhonetic, setRevealPhonetic] = useState<boolean>(false);
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(vocabulary.id, isCorrect);
+        updateScoreById(vocabulary.id!, isCorrect);
     };
+
+    const handleGoNext = () => {
+        setCurrentIndex(currentIndex + 1);
+        setShowAnswer(false);
+        setGraded(false);
+        setRevealPhonetic(false);
+    }
     return (
         <div className="flashcard flex flex-col space-y-2">
-            <h2>{vocabulary.word}{revealPhonetic && vocabulary.phonetic && ` (${vocabulary.phonetic})`}</h2>
-            {vocabulary.example_sentence && <p>{vocabulary.example_sentence}</p>}
+            <h2>{vocabulary.word.word}{revealPhonetic && vocabulary.word.phonetic && ` (${vocabulary.word.phonetic})`}</h2>
+            {vocabulary.example_sentences && vocabulary.example_sentences[0] && <p>{vocabulary.example_sentences[0].text}</p>}
             {!showAnswer && <div className="flex flex-row space-x-4">
                 <button className="bg-yellow-500 text-white rounded-md p-2" onClick={() => setRevealPhonetic(!revealPhonetic)}>
                     {revealPhonetic ? "Hide Phonetic" : "Show Phonetic"}
@@ -24,7 +39,7 @@ export default function VocabularyFlashCard({ vocabulary }: { vocabulary: Vocabu
                     Show Answer
                 </button>
             </div>}
-            {showAnswer && <p>{vocabulary.translation}</p>}
+            {showAnswer && <p>{vocabulary.word.translation}</p>}
             {showAnswer && !graded && (
                 <div className="flex flex-row space-x-4">
                     <button className="bg-green-500 text-white rounded-md p-2" onClick={() => handleGrade(true)}>
@@ -34,6 +49,16 @@ export default function VocabularyFlashCard({ vocabulary }: { vocabulary: Vocabu
                         Wrong?
                     </button>
                 </div>
+            )}
+            {graded && currentIndex < vocabularies.length - 1 && (
+                <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => handleGoNext()}>
+                    <p>Next Vocabulary</p>
+                </button>
+            )}
+            {graded && currentIndex === vocabularies.length - 1 && (
+                <BackButton>
+                    <p>Back to Unit</p>
+                </BackButton>
             )}
         </div>
     );

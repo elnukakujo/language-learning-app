@@ -4,30 +4,30 @@ import { useState } from "react";
 import UpdateButton from "@/components/buttons/updateButton";
 import ChangeUnitMenu from "@/components/selectMenu/changeUnitMenu";
 import AutoWidthInput from "@/components/input/autoWidthInput";
-import type Character from "@/interface/Character";
+import type Character from "@/interface/features/Calligraphy";
 
-export default function updateCharacterForm({ character, existingUnitsId }: { character: Character, existingUnitsId: string[] }) {
-    const [updatedCharacterName, setUpdatedCharacterName] = useState<string>(character.character);
-    const [updatedComponents, setUpdatedComponents] = useState<string>(character.components || "");
-    const [updatedMeaning, setUpdatedMeaning] = useState<string>(character.meaning);
-    const [updatedPhonetic, setUpdatedPhonetic] = useState<string>(character.phonetic || "");
-    const [updatedExampleWord, setUpdatedExampleWord] = useState<string>(character.example_word || "");
-    const [updatedUnitId, setUpdatedUnitId] = useState<string>(character.unit_id);
+export default function updateCalligraphyForm({ calligraphy, existingUnitsId }: { calligraphy: Character, existingUnitsId: string[] }) {
+    const [updatedCalligraphyName, setUpdatedCalligraphyName] = useState<string>(calligraphy.character.character);
+    const [updatedRadical, setUpdatedRadical] = useState<string>(calligraphy.character.radical || "");
+    const [updatedMeaning, setUpdatedMeaning] = useState<string>(calligraphy.character.meaning || "");
+    const [updatedPhonetic, setUpdatedPhonetic] = useState<string>(calligraphy.character.phonetic || "");
+    const [updatedExampleWord, setUpdatedExampleWord] = useState<string>(calligraphy.example_word?.word || "");
+    const [updatedUnitId, setUpdatedUnitId] = useState<string>(calligraphy.unit_id);
 
   return (
     <form className="flex flex-col space-y-4 items-center">
       <AutoWidthInput
-        value={updatedCharacterName}
-        label="Character Name"
-        onChange={(e) => setUpdatedCharacterName(e.target.value)}
-        placeholder="Enter character name"
+        value={updatedCalligraphyName}
+        label="Calligraphy Character"
+        onChange={(e) => setUpdatedCalligraphyName(e.target.value)}
+        placeholder="Enter calligraphy character"
         className="border border-gray-300"
       />
       <AutoWidthInput
-        value={updatedComponents}
-        label="Components"
-        onChange={(e) => setUpdatedComponents(e.target.value)}
-        placeholder="Enter components"
+        value={updatedRadical}
+        label="Radical"
+        onChange={(e) => setUpdatedRadical(e.target.value)}
+        placeholder="Enter radical"
         className="border border-gray-300"
       />
       <AutoWidthInput
@@ -55,14 +55,19 @@ export default function updateCharacterForm({ character, existingUnitsId }: { ch
       <UpdateButton
         element={{
             type_element: "char",
-            id: character.id,
-            character: updatedCharacterName,
-            meaning: updatedMeaning,
-            components: updatedComponents,
-            phonetic: updatedPhonetic,
-            example_word: updatedExampleWord,
-            score: character.score,
-            last_seen: character.last_seen,
+            id: calligraphy.id!,
+            character: {
+              character: updatedCalligraphyName,
+              phonetic: updatedPhonetic,
+              meaning: updatedMeaning,
+              radical: updatedRadical
+            },
+            example_word: updatedExampleWord ? {
+              word: updatedExampleWord,
+              translation: ""
+            } : undefined,
+            score: calligraphy.score,
+            last_seen: calligraphy.last_seen,
             unit_id: updatedUnitId,
         }}
       />

@@ -50,14 +50,13 @@ export default function CreateLanguageForm() {
             />
             <NewElementButton
                 element={{
-                    type_element: "lang",
-                    id: "",
                     name: name,
                     native_name: nativeName,
                     flag: flag,
                     level: level,
                     description: description
                 }}
+                type="lang"
             />
         </form>
     );

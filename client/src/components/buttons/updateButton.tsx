@@ -1,16 +1,16 @@
 "use client";
 
-import CharacterBase from "@/interface/Character";
-import ExerciseBase from "@/interface/Exercise";
-import GrammarBase from "@/interface/Grammar";
-import VocabularyBase from "@/interface/Vocabulary";
-import UnitBase from "@/interface/Unit";
-import LanguageBase from "@/interface/Language";
+import CalligraphyBase from "@/interface/features/Calligraphy";
+import ExerciseBase from "@/interface/features/Exercise";
+import GrammarBase from "@/interface/features/Grammar";
+import VocabularyBase from "@/interface/features/Vocabulary";
+import UnitBase from "@/interface/containers/Unit";
+import LanguageBase from "@/interface/containers/Language";
 
 import { updateElement } from "@/api";
 import { useRouter } from "next/navigation";
 
-interface Character extends CharacterBase { type_element: 'char'; };
+interface Calligraphy extends CalligraphyBase { type_element: 'char'; };
 interface Grammar extends GrammarBase { type_element: 'gram'; };
 interface Vocabulary extends VocabularyBase { type_element: 'voc'; };
 interface Exercise extends ExerciseBase { type_element: 'ex'; };
@@ -19,7 +19,7 @@ interface Language extends LanguageBase { type_element: 'lang'; };
 
 
 type UpdateButtonProps = {
-    element: Character | Grammar | Vocabulary | Exercise | Unit | Language;
+    element: Calligraphy | Grammar | Vocabulary | Exercise | Unit | Language;
     children?: React.ReactNode;
 };
 

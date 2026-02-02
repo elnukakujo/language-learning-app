@@ -1,36 +1,40 @@
-import CharacterBase from "@/interface/Character";
-import ExerciseBase from "@/interface/Exercise";
-import GrammarBase from "@/interface/Grammar";
-import VocabularyBase from "@/interface/Vocabulary";
-import UnitBase from "@/interface/Unit";
-import LanguageBase from "@/interface/Language";
+import Calligraphy from "@/interface/features/Calligraphy";
+import Exercise from "@/interface/features/Exercise";
+import Grammar from "@/interface/features/Grammar";
+import Vocabulary from "@/interface/features/Vocabulary";
+import Unit from "@/interface/containers/Unit";
+import Language from "@/interface/containers/Language";
 
-import { addNewElement } from "@/api";
+import { createCalligraphy, createExercise, createGrammar, createLanguage, createUnit, createVocabulary } from "@/api";
 import { useRouter } from "next/navigation";
 
-interface Character extends CharacterBase { type_element: 'char'; };
-interface Grammar extends GrammarBase { type_element: 'gram'; };
-interface Vocabulary extends VocabularyBase { type_element: 'voc'; };
-interface Exercise extends ExerciseBase { type_element: 'ex'; };
-interface Unit extends UnitBase { type_element: 'unit'; };
-interface Language extends LanguageBase { type_element: 'lang'; };
-
 type NewElementButtonProps = {
-    element: Character | Grammar | Vocabulary | Exercise | Unit | Language;
+    type: 'call' | 'gram' | 'voc' | 'ex' | 'unit' | 'lang';
+    element: Calligraphy | Grammar | Vocabulary | Exercise | Unit | Language;
     children?: React.ReactNode;
 };
 
-export default function NewElementButton({ element, children }: NewElementButtonProps) {
+export default function NewElementButton({ type, element, children }: NewElementButtonProps) {
     const router = useRouter();
 
     const handleCreate = async () => {
-        addNewElement(element);
-        if (element.type_element === 'lang') {
-            router.push(`/`);
-        } else if (element.type_element === 'unit') {
-            router.push(`/languages/${element.language_id}`);
+        if (type === 'lang') {
+            createLanguage(element as Language).then(() => router.push(`/`));
+        } else if (type === 'unit' && 'language_id' in element) {
+            createUnit(element as Unit).then(() => router.push(`/languages/${element.language_id}`));
+        } else if ((type === 'voc' || type === 'gram' || type === 'call' || type === 'ex') && 'unit_id' in element) {
+            const router_path = '/languages/' + element.unit_id.split('_')[0].toUpperCase() + '/unit/' + element.unit_id;
+            if (type === 'voc') {
+                createVocabulary(element as Vocabulary).then(() => { router.push(router_path);})
+            } else if (type === 'gram') {
+                createGrammar(element as Grammar).then(() => { router.push(router_path);})
+            } else if (type === 'call') {
+                createCalligraphy(element as Calligraphy).then(() => { router.push(router_path);})
+            } else if (type === 'ex') {
+                createExercise(element as Exercise).then(() => { router.push(router_path);})
+            }
         } else {
-            router.push('/languages/' + element.unit_id.split('_')[0].toUpperCase() + '/unit/' + element.unit_id);
+            throw new Error("Invalid element type or missing IDs for navigation.");
         }
     };
 

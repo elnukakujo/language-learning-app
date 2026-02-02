@@ -1,5 +1,5 @@
 import { getElementbyId, getLanguageData } from "@/api";
-import type Grammar from "@/interface/Grammar";
+import type Grammar from "@/interface/features/Grammar";
 import UpdateGrammarForm from "@/components/forms/updateForms/updateGrammarForm";
 
 type paramsType = {
