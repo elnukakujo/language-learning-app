@@ -10,8 +10,6 @@ export default async function Language({ params }: { params: { language_id: stri
     const { language, units } = await getLanguageData(language_id);
     const hasUnits = units && units.length > 0;
 
-    console.log(language)
-
     return (
         <main className="flex flex-col space-y-4">
             <header className="flex flex-col">

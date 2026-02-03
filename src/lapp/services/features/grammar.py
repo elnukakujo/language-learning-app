@@ -19,7 +19,24 @@ language_service = LanguageService()
 passage_service = PassageService()
 
 class GrammarService:
-    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Grammar]:
+    def _serialize(self, grammar: Grammar | None, as_dict: bool, include_relations: bool) -> Grammar | dict | None:
+        if not as_dict or grammar is None:
+            return grammar
+        return grammar.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, grammars: list[Grammar], as_dict: bool, include_relations: bool) -> list[Grammar] | list[dict]:
+        if not as_dict:
+            return grammars
+        return [grammar.to_dict(include_relations=include_relations) for grammar in grammars]
+
+    def get_all(
+        self,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Grammar] | list[dict]:
         """
         Get all Grammar items for a specific language or unit.
 
@@ -48,13 +65,14 @@ class GrammarService:
                             session=session
                         )
                     )
-                return grammars
+                return self._serialize_list(grammars, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                grammars = db_manager.find_all(
                     model_class=Grammar,
                     filters={'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(grammars, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -66,7 +84,13 @@ class GrammarService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, grammar_id: str, session: Optional[Session] = None) -> Grammar | None:
+    def get_by_id(
+        self,
+        grammar_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Grammar | dict | None:
         """
         Get a Grammar item by its ID.
 
@@ -81,11 +105,12 @@ class GrammarService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_by_attr(
+            grammar = db_manager.find_by_attr(
                 model_class=Grammar,
                 attr_values={'id': grammar_id},
                 session=session
             )
+            return self._serialize(grammar, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -95,7 +120,15 @@ class GrammarService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Grammar]:
+    def get_by_level(
+        self,
+        level: str,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Grammar] | list[dict]:
         """
         Get all Grammar items of a specific level among a language.
         
@@ -126,13 +159,14 @@ class GrammarService:
                             session=session
                         )
                     )
-                return grammars
+                return self._serialize_list(grammars, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                grammars = db_manager.find_all(
                     model_class=Grammar,
                     filters={'level': level, 'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(grammars, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -144,7 +178,13 @@ class GrammarService:
             if owns_session:
                 session.close()
     
-    def create(self, data: GrammarDict, session: Optional[Session] = None) -> Grammar | None:
+    def create(
+        self,
+        data: GrammarDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Grammar | dict | None:
         """
         Create a new Grammar item.
 
@@ -197,7 +237,7 @@ class GrammarService:
             else:
                 logger.error(f"Failed to create new Grammar item: {grammar.title}")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -207,7 +247,14 @@ class GrammarService:
             if owns_session:
                 session.close()
 
-    def update(self, grammar_id: str, data: GrammarDict, session: Optional[Session] = None) -> Grammar | None:
+    def update(
+        self,
+        grammar_id: str,
+        data: GrammarDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Grammar | dict | None:
         """
         Update an existing Grammar item.
 
@@ -265,7 +312,7 @@ class GrammarService:
             else:
                 logger.error(f"Failed to update Grammar item: {grammar_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -314,7 +361,14 @@ class GrammarService:
             if owns_session:
                 session.close()
 
-    def update_score(self, grammar_id: str, success: bool, session: Optional[Session] = None) -> Grammar | None:
+    def update_score(
+        self,
+        grammar_id: str,
+        success: bool,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Grammar | dict | None:
         """
         Update Grammar item score based on average of all of its components scores.
         
@@ -360,7 +414,7 @@ class GrammarService:
                     logger.info(f"Updated unit {grammar.unit_id} score due to Grammar {grammar_id}")
             
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()

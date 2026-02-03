@@ -1,26 +1,32 @@
 "use client";
 
-import { useRef, ChangeEvent } from 'react';
+import { useRef, ChangeEvent, useState } from 'react';
 import Image from 'next/image';
-import { uploadImage } from "@/api";
+import { BASE_URL, uploadImage } from "@/api";
 
-interface ImageLoaderProps {
-  previewUrl: string | null;
-  setPreviewUrl: (imageUrl: string|null) => void;
-}
-
-export default function ImageLoader({ previewUrl, setPreviewUrl }: ImageLoaderProps) {
+export default function ImageLoader({ 
+  imageUrl = undefined, 
+  setImageUrl 
+}: {
+  imageUrl?: string|undefined;
+  setImageUrl: (imageUrl: string|undefined) => void;
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [previewUrl, setPreviewUrl] = useState<string|undefined>(imageUrl ? `${BASE_URL}${imageUrl}` : undefined);
 
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      const { file_url } = await uploadImage(file);
-      setPreviewUrl("http://localhost:8000"+file_url);
+      const { url } = await uploadImage(file);
+  
+      setPreviewUrl(`${BASE_URL}${url}`);
+      setImageUrl(url);
     } catch (error) {
-      setPreviewUrl(null);
+      console.error("Error uploading image:", error);
+      throw error;
     }
   };
 
@@ -45,7 +51,8 @@ export default function ImageLoader({ previewUrl, setPreviewUrl }: ImageLoaderPr
           <button
             type='button'
             onClick={() => {
-              setPreviewUrl(null);
+              setPreviewUrl(undefined);
+              setImageUrl(undefined);
             }}
             className="px-4 py-2 bg-blue-500 text-white rounded"
           >
@@ -54,7 +61,7 @@ export default function ImageLoader({ previewUrl, setPreviewUrl }: ImageLoaderPr
         )}
       </div>
 
-      {previewUrl && previewUrl !== null && (
+      {previewUrl && previewUrl !== undefined && (
         <div className="mt-4 relative h-48 w-full">
           <Image
             src={previewUrl}

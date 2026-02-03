@@ -30,7 +30,7 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
                     {callProps.map((item, index) => (
                         <li key={index}>
                             <button onClick={() => handleClick(item.id!)}>
-                                {item.character.character} –{" "}{item.character.meaning}
+                                {item.character.character} –{" "}{item.character.phonetic}
                             </button>
                         </li>
                     ))}

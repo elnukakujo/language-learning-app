@@ -29,8 +29,8 @@ def get_all_grammar_from_language(language_id: str):
                     type: object
                     description: "A Grammar object"
     """
-    grammar = grammar_service.get_all(language_id = language_id)
-    return jsonify([grammar.to_dict() for grammar in grammar])
+    grammar = grammar_service.get_all(language_id=language_id, as_dict=True)
+    return jsonify(grammar)
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
@@ -55,8 +55,8 @@ def get_all_grammar_from_unit(unit_id: str):
                     type: object
                     description: "A Grammar object"
     """
-    grammar = grammar_service.get_all(unit_id = unit_id)
-    return jsonify([grammar.to_dict() for grammar in grammar])
+    grammar = grammar_service.get_all(unit_id=unit_id, as_dict=True)
+    return jsonify(grammar)
 
 
 @bp.route('/<grammar_id>', methods=['GET'])
@@ -80,12 +80,12 @@ def get_grammar(grammar_id: str):
         404:
             description: Grammar not found
     """
-    grammar = grammar_service.get_by_id(grammar_id)
+    grammar = grammar_service.get_by_id(grammar_id, as_dict=True)
     
     if not grammar:
         return jsonify({'error': 'grammar not found'}), 404
     
-    return jsonify(grammar.to_dict()), 200
+    return jsonify(grammar), 200
 
 
 @bp.route('/', methods=['POST'])
@@ -173,12 +173,12 @@ def create_grammar():
         data = GrammarDict(**request.json)
         
         # Create grammar
-        grammar = grammar_service.create(data)
+        grammar = grammar_service.create(data, as_dict=True)
         
         if grammar:
             return jsonify({
                 'success': True,
-                'grammar': grammar.to_dict()
+                'grammar': grammar
             }), 201
         else:
             return jsonify({'error': 'Failed to create grammar'}), 400
@@ -278,12 +278,12 @@ def update_grammar(grammar_id: str):
     try:
         data = GrammarDict(**request.json)
         
-        grammar = grammar_service.update(grammar_id, data)
+        grammar = grammar_service.update(grammar_id, data, as_dict=True)
         
         if grammar:
             return jsonify({
                 'success': True,
-                'grammar': grammar.to_dict()
+                'grammar': grammar
             })
         else:
             return jsonify({'error': 'grammar not found'}), 404
@@ -350,12 +350,12 @@ def score_grammar():
     grammar_id = data['grammar_id']
     success = data['success'].lower() == "true"
 
-    grammar = grammar_service.update_score(grammar_id, success)
+    grammar = grammar_service.update_score(grammar_id, success, as_dict=True, include_relations=False)
     
     if grammar:
         return jsonify({
             'success': True,
-            'grammar': grammar.to_dict(include_relations=False)
+            'grammar': grammar
         })
     else:
         return jsonify({'error': 'grammar not found'}), 404

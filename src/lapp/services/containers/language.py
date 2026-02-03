@@ -10,6 +10,16 @@ from ...models.containers import Language, Unit
 from ...core.database import db_manager
 
 class LanguageService:
+    def _serialize(self, language: Language | None, as_dict: bool, include_relations: bool) -> Language | dict | None:
+        if not as_dict or language is None:
+            return language
+        return language.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, languages: list[Language], as_dict: bool, include_relations: bool) -> list[Language] | list[dict]:
+        if not as_dict:
+            return languages
+        return [language.to_dict(include_relations=include_relations) for language in languages]
+
     def _check_current_unit(self, language: Language, current_unit_id: str, session: Optional[Session] = None) -> bool:
         """
         Check if the current unit ID is valid for the given language.
@@ -81,7 +91,12 @@ class LanguageService:
             if owns_session:
                 session.close()
         
-    def get_all(self, session: Optional[Session] = None) -> list[Language]:
+    def get_all(
+        self,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Language] | list[dict]:
         """
         Get all languages.
 
@@ -107,7 +122,7 @@ class LanguageService:
                     current_unit_id=language.current_unit,
                     session=session
                 )
-            return languages
+            return self._serialize_list(languages, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -117,7 +132,13 @@ class LanguageService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, language_id: str, session: Optional[Session] = None) -> Language | None:
+    def get_by_id(
+        self,
+        language_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Language | dict | None:
         """
         Get a language by its ID.
 
@@ -143,7 +164,7 @@ class LanguageService:
                     current_unit_id=language.current_unit,
                     session=session
                 )
-            return language
+            return self._serialize(language, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -153,7 +174,13 @@ class LanguageService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, level: str, session: Optional[Session] = None) -> list[Language]:
+    def get_by_level(
+        self,
+        level: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Language] | list[dict]:
         """
         Get all languages of a specific level.
         
@@ -180,7 +207,7 @@ class LanguageService:
                     current_unit_id=language.current_unit,
                     session=session
                 )
-            return languages
+            return self._serialize_list(languages, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -190,7 +217,13 @@ class LanguageService:
             if owns_session:
                 session.close()
     
-    def create(self, data: LanguageDict, session: Optional[Session] = None) -> Language | None:
+    def create(
+        self,
+        data: LanguageDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Language | dict | None:
         """
         Create a new language.
 
@@ -228,7 +261,7 @@ class LanguageService:
             else:
                 logger.error(f"Failed to create new language: {language.name}")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -238,7 +271,14 @@ class LanguageService:
             if owns_session:
                 session.close()
 
-    def update(self, language_id: str, data: LanguageDict, session: Optional[Session] = None) -> Language | None:
+    def update(
+        self,
+        language_id: str,
+        data: LanguageDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Language | dict | None:
         """
         Update an existing language.
 
@@ -283,7 +323,7 @@ class LanguageService:
             else:
                 logger.error(f"Failed to update language: {language_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()

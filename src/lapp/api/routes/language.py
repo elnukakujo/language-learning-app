@@ -22,8 +22,8 @@ def get_all_languages():
           items:
             type: object
     """
-    languages = language_service.get_all()
-    return jsonify([lang.to_dict() for lang in languages])
+    languages = language_service.get_all(as_dict=True)
+    return jsonify(languages)
 
 
 @bp.route('/<language_id>', methods=['GET'])
@@ -47,12 +47,12 @@ def get_language(language_id: str):
       404:
         description: Language not found
     """
-    language = language_service.get_by_id(language_id)
+    language = language_service.get_by_id(language_id, as_dict=True)
     
     if not language:
         return jsonify({'error': 'Language not found'}), 404
     
-    return jsonify(language.to_dict())
+    return jsonify(language)
 
 
 @bp.route('/', methods=['POST'])
@@ -99,12 +99,12 @@ def create_language():
         data = LanguageDict(**request.json)
         
         # Create language
-        language = language_service.create(data)
+        language = language_service.create(data, as_dict=True)
         
         if language:
             return jsonify({
                 'success': True,
-                'language': language.to_dict()
+                'language': language
             }), 201
         else:
             return jsonify({'error': 'Failed to create language'}), 400
@@ -176,12 +176,12 @@ def update_language(language_id: str):
     try:
         data = LanguageDict(**request.json)
         
-        language = language_service.update(language_id, data)
+        language = language_service.update(language_id, data, as_dict=True)
         
         if language:
             return jsonify({
                 'success': True,
-                'language': language.to_dict()
+                'language': language
             })
         else:
             return jsonify({'error': 'Language not found'}), 404

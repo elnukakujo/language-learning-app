@@ -12,7 +12,7 @@ def get_media_service() -> MediaService:
     """Get MediaService instance with current app config."""
     return MediaService(current_app.config['MEDIA_ROOT'])
 
-@bp.route('/<path:filename>')
+@bp.route('/<path:filename>', methods=['GET'])
 def serve_media(filename: str):
     """
     Serve media files (images, audio).

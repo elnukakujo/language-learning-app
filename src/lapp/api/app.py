@@ -29,7 +29,10 @@ def create_app(config_name: str = 'default') -> Flask:
     configure_logging(app)
     
     # Enable CORS for frontend
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={
+        r"/api/*": {"origins": "*"},
+        r"/media/*": {"origins": "*"}
+    })
     
     # Register blueprints
     register_blueprints(app)

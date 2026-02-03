@@ -76,7 +76,7 @@ class BaseFeatureModel(BaseContainerModel):
             return []
         
         # Get media root from Flask config
-        media_root = Path(current_app.config['MEDIA_ROOT'])
+        media_root = Path(current_app.config['MEDIA_ROOT']).parent
         
         # Filter valid files
         valid_files = []
@@ -88,22 +88,24 @@ class BaseFeatureModel(BaseContainerModel):
             if value == "image_files" and not file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 logger.warning(f"Invalid image file extension: {file_path}")
                 continue
-            elif value == "image_files" and not file_path.lower().startswith('/images/'):
-                logger.warning(f"Image file path must start with '/images/': {file_path}")
+            elif value == "image_files" and not file_path.lower().startswith('/media/images/'):
+                logger.warning(f"Image file path must start with '/media/images/': {file_path}")
                 continue
 
             if value == "audio_files" and not file_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
                 logger.warning(f"Invalid audio file extension: {file_path}")
                 continue
-            elif value == "audio_files" and not file_path.lower().startswith('/audio/'):
-                logger.warning(f"Audio file path must start with '/audio/': {file_path}")
+            elif value == "audio_files" and not file_path.lower().startswith('/media/audio/'):
+                logger.warning(f"Audio file path must start with '/media/audio/': {file_path}")
                 continue
             
             # Check if file exists in media root
             full_path = Path(os.path.join(media_root, file_path.lstrip('/')))
+            logger.info(full_path)
             if full_path.exists() and full_path.is_file():
                 valid_files.append(file_path)
         
+        logger.info(valid_files)
         return valid_files
     
 class BaseComponentModel(Base):
@@ -134,7 +136,7 @@ class BaseComponentModel(Base):
             return []
         
         # Get media root from Flask config
-        media_root = Path(current_app.config['MEDIA_ROOT'])
+        media_root = Path(current_app.config['MEDIA_ROOT']).parent
         
         # Filter valid files
         valid_files = []
@@ -146,20 +148,22 @@ class BaseComponentModel(Base):
             if value == "image_files" and not file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 logger.warning(f"Invalid image file extension: {file_path}")
                 continue
-            elif value == "image_files" and not file_path.lower().startswith('/images/'):
-                logger.warning(f"Image file path must start with '/images/': {file_path}")
+            elif value == "image_files" and not file_path.lower().startswith('/media/images/'):
+                logger.warning(f"Image file path must start with '/media/images/': {file_path}")
                 continue
 
             if value == "audio_files" and not file_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
                 logger.warning(f"Invalid audio file extension: {file_path}")
                 continue
-            elif value == "audio_files" and not file_path.lower().startswith('/audio/'):
-                logger.warning(f"Audio file path must start with '/audio/': {file_path}")
+            elif value == "audio_files" and not file_path.lower().startswith('/media/audio/'):
+                logger.warning(f"Audio file path must start with '/media/audio/': {file_path}")
                 continue
             
             # Check if file exists in media root
             full_path = Path(os.path.join(media_root, file_path.lstrip('/')))
+            logger.info(full_path)
             if full_path.exists() and full_path.is_file():
                 valid_files.append(file_path)
-        
+
+        logger.info(valid_files)
         return valid_files

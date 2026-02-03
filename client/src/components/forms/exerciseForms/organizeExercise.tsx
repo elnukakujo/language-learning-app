@@ -6,22 +6,20 @@ import Markdown from "react-markdown";
 import shuffle from 'lodash/shuffle';
 
 import Exercise from "@/interface/features/Exercise";
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const { text_support = '' } = exercise;
+    const normalize = (str: string) => str.toLowerCase();
 
-    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const question = exercise.question || "";
+    const answer = exercise.answer.split('__').map(word => normalize(word));
+    const text_support = exercise.text_support || "";
+    const image_support = exercise.image_files || "";
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
-    const normalize = (str: string) => str.toLowerCase();
-
     const [wordsToOrganize, setWordsToOrganize] = useState<string[]>([]);
-
-    const answer = exercise.answer.split('__').map(word => normalize(word));
 
     useEffect(() => {
         setWordsToOrganize(shuffle(answer));
@@ -44,7 +42,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <Markdown>Organize the following word/calligraphy sequence</Markdown>
+            <Markdown>Organize the following words/characters sequence</Markdown>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">
@@ -59,17 +57,19 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             </button>
                         ))}
                     </div>
-                    {supportText && (
+                    {text_support && (
                         <>
-                            {supportText && <Markdown>{supportText}</Markdown>}
-                            {imageUrl && 
+                            {text_support && <Markdown>{text_support}</Markdown>}
+                            {image_support && image_support.map((imgSrc, index) => (
                                 <Image 
-                                    src={imageUrl} 
+                                    key={index}
+                                    src={`${BASE_URL}${imgSrc}`} 
                                     alt="Support" 
                                     className="mt-2" 
                                     width={300}
                                     height={300}
-                                />}
+                                />
+                            ))}
                         </> 
                     )}
                     <label htmlFor="userAnswer">Your Answer:</label>

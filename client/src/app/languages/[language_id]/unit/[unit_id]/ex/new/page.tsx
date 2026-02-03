@@ -1,36 +1,27 @@
 import CreateExerciseForm from "@/components/forms/createForms/createExerciseForm";
-import { getUnitData } from "@/api";
+import { getCalligraphyByUnit, getGrammarByUnit, getVocabularyByUnit } from "@/api";
+import Calligraphy from "@/interface/features/Calligraphy";
+import Grammar from "@/interface/features/Grammar";
+import Vocabulary from "@/interface/features/Vocabulary";
 
 interface UnitElements {
-    vocabulary: {
-        items: Array<{
-            id: string;
-            word: string;
-            translation: string;
-        }>;
-        count: number;
-    };
-    grammar: {
-        items: Array<{
-            id: string;
-            title: string;
-        }>;
-        count: number;
-    };
-    characters: {
-        items: Array<{
-            id: string;
-            character: string;
-            meaning: string;
-        }>;
-        count: number;
-    };
+    vocabularies: Vocabulary[];
+    grammars: Grammar[];
+    calligraphies: Calligraphy[];
 }
 
 export default async function createExercisePage({ params }: { params: { unit_id: string } }) {
     const { unit_id } = await params;
 
-    const unitElements: UnitElements = await getUnitData(unit_id);
+    const calligraphies: Calligraphy[] = await getCalligraphyByUnit(unit_id);
+    const grammars: Grammar[] = await getGrammarByUnit(unit_id);
+    const vocabularies: Vocabulary[] = await getVocabularyByUnit(unit_id);
+
+    const unitElements: UnitElements = {
+        vocabularies,
+        grammars,
+        calligraphies
+    };
 
     return (
         <div className="flex flex-col items-center justify-center h-full">

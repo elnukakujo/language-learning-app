@@ -29,8 +29,8 @@ def get_all_vocabulary_from_language(language_id: str):
                     type: object
                     description: Vocabulary object
     """
-    vocabulary = vocabulary_service.get_all(language_id = language_id)
-    return jsonify([vocab.to_dict() for vocab in vocabulary])
+    vocabulary = vocabulary_service.get_all(language_id=language_id, as_dict=True)
+    return jsonify(vocabulary)
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
@@ -55,8 +55,8 @@ def get_all_vocabulary_from_unit(unit_id: str):
                     type: object
                     description: Vocabulary object
     """
-    vocabulary = vocabulary_service.get_all(unit_id = unit_id)
-    return jsonify([vocab.to_dict() for vocab in vocabulary])
+    vocabulary = vocabulary_service.get_all(unit_id=unit_id, as_dict=True)
+    return jsonify(vocabulary)
 
 
 @bp.route('/<vocabulary_id>', methods=['GET'])
@@ -79,12 +79,12 @@ def get_vocabulary(vocabulary_id: str):
         404:
             description: Vocabulary not found
     """
-    vocabulary = vocabulary_service.get_by_id(vocabulary_id)
+    vocabulary = vocabulary_service.get_by_id(vocabulary_id, as_dict=True)
     
     if not vocabulary:
         return jsonify({'error': 'Vocabulary not found'}), 404
     
-    return jsonify(vocabulary.to_dict())
+    return jsonify(vocabulary)
 
 
 @bp.route('/', methods=['POST'])
@@ -191,12 +191,12 @@ def create_vocabulary():
         data = VocabularyDict(**request.json)
         
         # Create vocabulary
-        vocabulary = vocabulary_service.create(data)
+        vocabulary = vocabulary_service.create(data, as_dict=True)
         
         if vocabulary:
             return jsonify({
                 'success': True,
-                'vocabulary': vocabulary.to_dict()
+                'vocabulary': vocabulary
             }), 201
         else:
             return jsonify({'error': 'Failed to create vocabulary'}), 400
@@ -314,12 +314,12 @@ def update_vocabulary(vocabulary_id: str):
     try:
         data = VocabularyDict(**request.json)
         
-        vocabulary = vocabulary_service.update(vocabulary_id, data)
+        vocabulary = vocabulary_service.update(vocabulary_id, data, as_dict=True)
         
         if vocabulary:
             return jsonify({
                 'success': True,
-                'vocabulary': vocabulary.to_dict()
+                'vocabulary': vocabulary
             })
         else:
             return jsonify({'error': 'Vocabulary not found'}), 404
@@ -388,12 +388,12 @@ def score_vocabulary():
     vocabulary_id = data['vocabulary_id']
     success = data['success'].lower() == "true"
 
-    vocabulary = vocabulary_service.update_score(vocabulary_id, success)
+    vocabulary = vocabulary_service.update_score(vocabulary_id, success, as_dict=True, include_relations=False)
     
     if vocabulary:
         return jsonify({
             'success': True,
-            'vocabulary': vocabulary.to_dict(include_relations=False)
+            'vocabulary': vocabulary
         })
     else:
         return jsonify({'error': 'Vocabulary not found'}), 404

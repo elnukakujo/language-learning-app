@@ -19,7 +19,24 @@ character_service = CharacterService()
 word_service = WordService()
 
 class CalligraphyService:
-    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Calligraphy]:
+    def _serialize(self, calligraphy: Calligraphy | None, as_dict: bool, include_relations: bool) -> Calligraphy | dict | None:
+        if not as_dict or calligraphy is None:
+            return calligraphy
+        return calligraphy.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, calligraphies: list[Calligraphy], as_dict: bool, include_relations: bool) -> list[Calligraphy] | list[dict]:
+        if not as_dict:
+            return calligraphies
+        return [calligraphy.to_dict(include_relations=include_relations) for calligraphy in calligraphies]
+
+    def get_all(
+        self,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Calligraphy] | list[dict]:
         """
         Get all calligraphies for a specific language or unit.
 
@@ -47,13 +64,14 @@ class CalligraphyService:
                             session=session
                         )
                     )
-                return calligraphies
+                return self._serialize_list(calligraphies, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                calligraphies = db_manager.find_all(
                     model_class=Calligraphy,
                     filters={'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(calligraphies, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -65,7 +83,13 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, calligraphy_id: str, session: Optional[Session] = None) -> Calligraphy | None:
+    def get_by_id(
+        self,
+        calligraphy_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Calligraphy | dict | None:
         """
         Get a Calligraphy item by its ID.
 
@@ -80,11 +104,12 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_by_attr(
+            calligraphy = db_manager.find_by_attr(
                 model_class=Calligraphy,
                 attr_values={'id': calligraphy_id},
                 session=session
             )
+            return self._serialize(calligraphy, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -94,7 +119,15 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Calligraphy]:
+    def get_by_level(
+        self,
+        level: str,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Calligraphy] | list[dict]:
         """
         Get all Calligraphy items of a specific level among a language.
         
@@ -125,13 +158,14 @@ class CalligraphyService:
                             session=session
                         )
                     )
-                return calligraphies
+                return self._serialize_list(calligraphies, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                calligraphies = db_manager.find_all(
                     model_class=Calligraphy,
                     filters={'level': level, 'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(calligraphies, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -143,7 +177,13 @@ class CalligraphyService:
             if owns_session:
                 session.close()
     
-    def create(self, data: CalligraphyDict, session: Optional[Session] = None) -> Calligraphy | None:
+    def create(
+        self,
+        data: CalligraphyDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Calligraphy | dict | None:
         """
         Create a new Calligraphy item.
 
@@ -208,7 +248,7 @@ class CalligraphyService:
             else:
                 logger.error(f"Failed to create new Calligraphy item")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -218,7 +258,14 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def update(self, calligraphy_id: str, data: CalligraphyDict, session: Optional[Session] = None) -> Calligraphy | None:
+    def update(
+        self,
+        calligraphy_id: str,
+        data: CalligraphyDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Calligraphy | dict | None:
         """
         Update an existing Calligraphy item.
 
@@ -285,7 +332,7 @@ class CalligraphyService:
             else:
                 logger.error(f"Failed to update Calligraphy item: {calligraphy_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -334,7 +381,14 @@ class CalligraphyService:
             if owns_session:
                 session.close()
 
-    def update_score(self, calligraphy_id: str, success: bool, session: Optional[Session] = None) -> Calligraphy | None:
+    def update_score(
+        self,
+        calligraphy_id: str,
+        success: bool,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Calligraphy | dict | None:
         """
         Update Calligraphy item score based on average of all of its components scores.
         
@@ -382,7 +436,7 @@ class CalligraphyService:
             
             
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()

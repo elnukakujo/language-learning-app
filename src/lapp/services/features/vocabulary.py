@@ -20,7 +20,24 @@ passage_service = PassageService()
 
 
 class VocabularyService:
-    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Vocabulary]:
+    def _serialize(self, vocabulary: Vocabulary | None, as_dict: bool, include_relations: bool) -> Vocabulary | dict | None:
+        if not as_dict or vocabulary is None:
+            return vocabulary
+        return vocabulary.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, vocabularies: list[Vocabulary], as_dict: bool, include_relations: bool) -> list[Vocabulary] | list[dict]:
+        if not as_dict:
+            return vocabularies
+        return [vocabulary.to_dict(include_relations=include_relations) for vocabulary in vocabularies]
+
+    def get_all(
+        self,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Vocabulary] | list[dict]:
         """
         Get all vocabulary for a specific language or unit.
 
@@ -49,13 +66,14 @@ class VocabularyService:
                             session=session
                         )
                     )
-                return vocabulary
+                return self._serialize_list(vocabulary, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                vocabulary = db_manager.find_all(
                     model_class=Vocabulary,
                     filters={'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(vocabulary, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -67,7 +85,13 @@ class VocabularyService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, voc_id: str, session: Optional[Session] = None) -> Vocabulary | None:
+    def get_by_id(
+        self,
+        voc_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Vocabulary | dict | None:
         """
         Get a vocabulary item by its ID.
 
@@ -82,11 +106,12 @@ class VocabularyService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_by_attr(
+            vocabulary = db_manager.find_by_attr(
                 model_class=Vocabulary,
                 attr_values={'id': voc_id},
                 session=session
             )
+            return self._serialize(vocabulary, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -96,7 +121,15 @@ class VocabularyService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, language_id: Optional[str], unit_id: Optional[str], level: str, session: Optional[Session] = None) -> list[Vocabulary]:
+    def get_by_level(
+        self,
+        language_id: Optional[str],
+        unit_id: Optional[str],
+        level: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Vocabulary] | list[dict]:
         """
         Get all vocabulary items of a specific level among a language.
         
@@ -127,13 +160,14 @@ class VocabularyService:
                             session=session
                         )
                     )
-                return vocabulary
+                return self._serialize_list(vocabulary, as_dict, include_relations)
             elif unit_id:
-                return db_manager.find_all(
+                vocabulary = db_manager.find_all(
                     model_class=Vocabulary,
                     filters={'level': level, 'unit_id': unit_id},
                     session=session
                 )
+                return self._serialize_list(vocabulary, as_dict, include_relations)
             else:
                 raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
         except Exception as e:
@@ -145,7 +179,13 @@ class VocabularyService:
             if owns_session:
                 session.close()
     
-    def create(self, data: VocabularyDict, session: Optional[Session] = None) -> Vocabulary | None:
+    def create(
+        self,
+        data: VocabularyDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Vocabulary | dict | None:
         """
         Create a new vocabulary item.
 
@@ -203,7 +243,7 @@ class VocabularyService:
             else:
                 logger.error(f"Failed to create new VocabularyFeature item: {word.word}")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -213,7 +253,14 @@ class VocabularyService:
             if owns_session:
                 session.close()
 
-    def update(self, voc_id: str, data: VocabularyDict, session: Optional[Session] = None) -> Vocabulary | None:
+    def update(
+        self,
+        voc_id: str,
+        data: VocabularyDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Vocabulary | dict | None:
         """
         Update an existing VocabularyFeature item.
 
@@ -314,7 +361,7 @@ class VocabularyService:
             else:
                 logger.error(f"Failed to update VocabularyFeature item: {voc_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -364,7 +411,14 @@ class VocabularyService:
             if owns_session:
                 session.close()
 
-    def update_score(self, voc_id: str, success: bool, session: Optional[Session] = None) -> Vocabulary | None:
+    def update_score(
+        self,
+        voc_id: str,
+        success: bool,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Vocabulary | dict | None:
         """
         Update VocabularyFeature item score based on average of all of its components scores.
         
@@ -410,7 +464,7 @@ class VocabularyService:
                     unit_service.update_score(vocabulary.unit_id, session=session)
                     logger.info(f"Updated unit {vocabulary.unit_id} score due to VocabularyFeature {voc_id}")
                     
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()

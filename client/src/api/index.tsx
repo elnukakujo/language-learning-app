@@ -5,26 +5,24 @@ import type Exercise from "@/interface/features/Exercise";
 import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
 
-let BASE_URL = process.env.LAPP_URL || "http://127.0.0.1:5000";
-BASE_URL = `${BASE_URL}/api`;
-const BASE_HOST = BASE_URL.replace(/\/api$/, "");
+export const BASE_URL = process.env.LAPP_URL || "http://127.0.0.1:5000";
 
 // ============= Language API =============
 export async function getAvailableLanguages() {
-  const res = await fetch(`${BASE_URL}/languages/`);
+  const res = await fetch(`${BASE_URL}/api/languages/`);
   if (!res.ok) throw new Error('Failed to fetch available languages');
   return res.json();
 }
 
 export async function getLanguageById(languageId: string) {
-  const res = await fetch(`${BASE_URL}/languages/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/languages/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch language ${languageId}`);
   return res.json();
 }
 
 export async function getLanguageData(languageId: string) {
   const language = await getLanguageById(languageId);
-  const units = await fetch(`${BASE_URL}/units/all/${languageId}`);
+  const units = await fetch(`${BASE_URL}/api/units/all/${languageId}`);
   if (!units.ok) throw new Error(`Failed to fetch units for language ${languageId}`);
   const unitsData = await units.json();
   return {
@@ -37,7 +35,7 @@ export async function createLanguage(data: Partial<Language>) {
   if (data.id) {
     data.id = undefined;
   }
-  const res = await fetch(`${BASE_URL}/languages/`, {
+  const res = await fetch(`${BASE_URL}/api/languages/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -47,7 +45,7 @@ export async function createLanguage(data: Partial<Language>) {
 }
 
 export async function updateLanguage(languageId: string, data: Partial<Language>) {
-  const res = await fetch(`${BASE_URL}/languages/${languageId}`, {
+  const res = await fetch(`${BASE_URL}/api/languages/${languageId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -57,7 +55,7 @@ export async function updateLanguage(languageId: string, data: Partial<Language>
 }
 
 export async function deleteLanguage(languageId: string) {
-  const res = await fetch(`${BASE_URL}/languages/${languageId}`, {
+  const res = await fetch(`${BASE_URL}/api/languages/${languageId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete language");
@@ -65,13 +63,13 @@ export async function deleteLanguage(languageId: string) {
 
 // ============= Unit API =============
 export async function getUnitData(unit_id: string) {
-  const res = await fetch(`${BASE_URL}/units/${unit_id}`);
+  const res = await fetch(`${BASE_URL}/api/units/${unit_id}`);
   if (!res.ok) throw new Error(`Failed to fetch data for unit ${unit_id}`);
   return res.json();
 }
 
 export async function getAllUnits(languageId: string) {
-  const res = await fetch(`${BASE_URL}/units/all/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/units/all/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch units for language ${languageId}`);
   return res.json();
 }
@@ -80,7 +78,7 @@ export async function createUnit(data: Partial<Unit>) {
   if (data.id) {
     data.id = undefined;
   }
-  const res = await fetch(`${BASE_URL}/units/`, {
+  const res = await fetch(`${BASE_URL}/api/units/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -90,7 +88,7 @@ export async function createUnit(data: Partial<Unit>) {
 }
 
 export async function updateUnit(unitId: string, data: Partial<Unit>) {
-  const res = await fetch(`${BASE_URL}/units/${unitId}`, {
+  const res = await fetch(`${BASE_URL}/api/units/${unitId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -100,7 +98,7 @@ export async function updateUnit(unitId: string, data: Partial<Unit>) {
 }
 
 export async function deleteUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/units/${unitId}`, {
+  const res = await fetch(`${BASE_URL}/api/units/${unitId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete unit");
@@ -108,19 +106,19 @@ export async function deleteUnit(unitId: string) {
 
 // ============= Vocabulary API =============
 export async function getVocabularyById(vocabularyId: string) {
-  const res = await fetch(`${BASE_URL}/vocabulary/${vocabularyId}`);
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`);
   if (!res.ok) throw new Error(`Failed to fetch vocabulary ${vocabularyId}`);
   return res.json();
 }
 
 export async function getVocabularyByLanguage(languageId: string) {
-  const res = await fetch(`${BASE_URL}/vocabulary/language/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/vocabulary/language/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch vocabulary for language ${languageId}`);
   return res.json();
 }
 
 export async function getVocabularyByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/vocabulary/unit/${unitId}`);
+  const res = await fetch(`${BASE_URL}/api/vocabulary/unit/${unitId}`);
   if (!res.ok) throw new Error(`Failed to fetch vocabulary for unit ${unitId}`);
   return res.json();
 }
@@ -129,7 +127,7 @@ export async function createVocabulary(data: Partial<Vocabulary>) {
   if (data.id) {
     data.id = undefined;
   }
-  const res = await fetch(`${BASE_URL}/vocabulary/`, {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -139,7 +137,7 @@ export async function createVocabulary(data: Partial<Vocabulary>) {
 }
 
 export async function updateVocabulary(vocabularyId: string, data: Partial<Vocabulary>) {
-  const res = await fetch(`${BASE_URL}/vocabulary/${vocabularyId}`, {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -149,7 +147,7 @@ export async function updateVocabulary(vocabularyId: string, data: Partial<Vocab
 }
 
 export async function deleteVocabulary(vocabularyId: string) {
-  const res = await fetch(`${BASE_URL}/vocabulary/${vocabularyId}`, {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete vocabulary");
@@ -157,19 +155,19 @@ export async function deleteVocabulary(vocabularyId: string) {
 
 // ============= Grammar API =============
 export async function getGrammarById(grammarId: string) {
-  const res = await fetch(`${BASE_URL}/grammar/${grammarId}`);
+  const res = await fetch(`${BASE_URL}/api/grammar/${grammarId}`);
   if (!res.ok) throw new Error(`Failed to fetch grammar ${grammarId}`);
   return res.json();
 }
 
 export async function getGrammarByLanguage(languageId: string) {
-  const res = await fetch(`${BASE_URL}/grammar/language/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/grammar/language/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch grammar for language ${languageId}`);
   return res.json();
 }
 
 export async function getGrammarByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/grammar/unit/${unitId}`);
+  const res = await fetch(`${BASE_URL}/api/grammar/unit/${unitId}`);
   if (!res.ok) throw new Error(`Failed to fetch grammar for unit ${unitId}`);
   return res.json();
 }
@@ -178,7 +176,7 @@ export async function createGrammar(data: Partial<Grammar>) {
   if (data.id) {
     data.id = undefined;
   }
-  const res = await fetch(`${BASE_URL}/grammar/`, {
+  const res = await fetch(`${BASE_URL}/api/grammar/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -188,7 +186,7 @@ export async function createGrammar(data: Partial<Grammar>) {
 }
 
 export async function updateGrammar(grammarId: string, data: Partial<Grammar>) {
-  const res = await fetch(`${BASE_URL}/grammar/${grammarId}`, {
+  const res = await fetch(`${BASE_URL}/api/grammar/${grammarId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -198,7 +196,7 @@ export async function updateGrammar(grammarId: string, data: Partial<Grammar>) {
 }
 
 export async function deleteGrammar(grammarId: string) {
-  const res = await fetch(`${BASE_URL}/grammar/${grammarId}`, {
+  const res = await fetch(`${BASE_URL}/api/grammar/${grammarId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete grammar");
@@ -206,19 +204,19 @@ export async function deleteGrammar(grammarId: string) {
 
 // ============= Calligraphy API =============
 export async function getCalligraphyById(calligraphyId: string) {
-  const res = await fetch(`${BASE_URL}/calligraphy/${calligraphyId}`);
+  const res = await fetch(`${BASE_URL}/api/calligraphy/${calligraphyId}`);
   if (!res.ok) throw new Error(`Failed to fetch calligraphy ${calligraphyId}`);
   return res.json();
 }
 
 export async function getCalligraphyByLanguage(languageId: string) {
-  const res = await fetch(`${BASE_URL}/calligraphy/language/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/calligraphy/language/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch calligraphy for language ${languageId}`);
   return res.json();
 }
 
 export async function getCalligraphyByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/calligraphy/unit/${unitId}`);
+  const res = await fetch(`${BASE_URL}/api/calligraphy/unit/${unitId}`);
   if (!res.ok) throw new Error(`Failed to fetch calligraphy for unit ${unitId}`);
   return res.json();
 }
@@ -227,7 +225,7 @@ export async function createCalligraphy(data: Partial<Calligraphy>) {
   if (data.id !== undefined) {
     delete data.id;
   }
-  const res = await fetch(`${BASE_URL}/calligraphy/`, {
+  const res = await fetch(`${BASE_URL}/api/calligraphy/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -237,7 +235,7 @@ export async function createCalligraphy(data: Partial<Calligraphy>) {
 }
 
 export async function updateCalligraphy(calligraphyId: string, data: Partial<Calligraphy>) {
-  const res = await fetch(`${BASE_URL}/calligraphy/${calligraphyId}`, {
+  const res = await fetch(`${BASE_URL}/api/calligraphy/${calligraphyId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -247,7 +245,7 @@ export async function updateCalligraphy(calligraphyId: string, data: Partial<Cal
 }
 
 export async function deleteCalligraphy(calligraphyId: string) {
-  const res = await fetch(`${BASE_URL}/calligraphy/${calligraphyId}`, {
+  const res = await fetch(`${BASE_URL}/api/calligraphy/${calligraphyId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete calligraphy");
@@ -255,19 +253,19 @@ export async function deleteCalligraphy(calligraphyId: string) {
 
 // ============= Exercise API =============
 export async function getExerciseById(exerciseId: string) {
-  const res = await fetch(`${BASE_URL}/exercise/${exerciseId}`);
+  const res = await fetch(`${BASE_URL}/api/exercise/${exerciseId}`);
   if (!res.ok) throw new Error(`Failed to fetch exercise ${exerciseId}`);
   return res.json();
 }
 
 export async function getExercisesByLanguage(languageId: string) {
-  const res = await fetch(`${BASE_URL}/exercise/language/${languageId}`);
+  const res = await fetch(`${BASE_URL}/api/exercise/language/${languageId}`);
   if (!res.ok) throw new Error(`Failed to fetch exercises for language ${languageId}`);
   return res.json();
 }
 
 export async function getExercisesByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/exercise/unit/${unitId}`);
+  const res = await fetch(`${BASE_URL}/api/exercise/unit/${unitId}`);
   if (!res.ok) throw new Error(`Failed to fetch exercises for unit ${unitId}`);
   return res.json();
 }
@@ -276,7 +274,7 @@ export async function createExercise(data: Partial<Exercise>) {
   if (data.id !== undefined) {
     delete data.id;
   }
-  const res = await fetch(`${BASE_URL}/exercise/`, {
+  const res = await fetch(`${BASE_URL}/api/exercise/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -286,7 +284,7 @@ export async function createExercise(data: Partial<Exercise>) {
 }
 
 export async function updateExercise(exerciseId: string, data: Partial<Exercise>) {
-  const res = await fetch(`${BASE_URL}/exercise/${exerciseId}`, {
+  const res = await fetch(`${BASE_URL}/api/exercise/${exerciseId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -296,7 +294,7 @@ export async function updateExercise(exerciseId: string, data: Partial<Exercise>
 }
 
 export async function deleteExercise(exerciseId: string) {
-  const res = await fetch(`${BASE_URL}/exercise/${exerciseId}`, {
+  const res = await fetch(`${BASE_URL}/api/exercise/${exerciseId}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete exercise");
@@ -307,16 +305,16 @@ export async function updateScoreById(elementId: string, success: boolean) {
   let payload: Record<string, string> = {};
 
   if (elementId.startsWith("voc_")) {
-    endpoint = `${BASE_URL}/vocabulary/score/`;
+    endpoint = `${BASE_URL}/api/vocabulary/score/`;
     payload = { vocabulary_id: elementId, success: success.toString() };
   } else if (elementId.startsWith("gram_")) {
-    endpoint = `${BASE_URL}/grammar/score`;
+    endpoint = `${BASE_URL}/api/grammar/score`;
     payload = { grammar_id: elementId, success: success.toString() };
   } else if (elementId.startsWith("call_")) {
-    endpoint = `${BASE_URL}/calligraphy/score`;
+    endpoint = `${BASE_URL}/api/calligraphy/score`;
     payload = { calligraphy_id: elementId, success: success.toString() };
   } else if (elementId.startsWith("ex_")) {
-    endpoint = `${BASE_URL}/exercise/score`;
+    endpoint = `${BASE_URL}/api/exercise/score`;
     payload = { exercise_id: elementId, success: success.toString() };
   } else {
     throw new Error(`Unsupported element ID for scoring: ${elementId}`);
@@ -337,7 +335,7 @@ export async function uploadImage(file: File) {
   formData.append("file", file);
 
   try {
-    const res = await fetch(`${BASE_HOST}/media/upload/image`, {
+    const res = await fetch(`${BASE_URL}/media/upload/image`, {
       method: "POST",
       body: formData,
     });

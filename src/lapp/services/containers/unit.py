@@ -15,7 +15,23 @@ from .language import LanguageService
 language_service = LanguageService()
 
 class UnitService:
-    def get_all(self, language_id: str, session: Optional[Session] = None) -> list[Unit]:
+    def _serialize(self, unit: Unit | None, as_dict: bool, include_relations: bool) -> Unit | dict | None:
+        if not as_dict or unit is None:
+            return unit
+        return unit.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, units: list[Unit], as_dict: bool, include_relations: bool) -> list[Unit] | list[dict]:
+        if not as_dict:
+            return units
+        return [unit.to_dict(include_relations=include_relations) for unit in units]
+
+    def get_all(
+        self,
+        language_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Unit] | list[dict]:
         """
         Get all units for a specific language.
 
@@ -30,11 +46,12 @@ class UnitService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_all(
+            units = db_manager.find_all(
                 model_class=Unit,
                 filters={'language_id': language_id},
                 session=session
             )
+            return self._serialize_list(units, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -44,7 +61,13 @@ class UnitService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, unit_id: str, session: Optional[Session] = None) -> Unit | None:
+    def get_by_id(
+        self,
+        unit_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Unit | dict | None:
         """
         Get a unit by its ID.
 
@@ -59,11 +82,12 @@ class UnitService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_by_attr(
+            unit = db_manager.find_by_attr(
                 model_class=Unit,
                 attr_values={'id': unit_id},
                 session=session
             )
+            return self._serialize(unit, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -73,7 +97,14 @@ class UnitService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, level: str, language_id: Optional[str] = None, session: Optional[Session] = None) -> list[Unit]:
+    def get_by_level(
+        self,
+        level: str,
+        language_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Unit] | list[dict]:
         """
         Get all units of a specific level among a language.
         
@@ -90,17 +121,19 @@ class UnitService:
         
         try:
             if language_id:
-                return db_manager.find_all(
+                units = db_manager.find_all(
                     model_class=Unit,
                     filters={'level': level, 'language_id': language_id},
                     session=session
                 )
+                return self._serialize_list(units, as_dict, include_relations)
             else:
-                return db_manager.find_all(
+                units = db_manager.find_all(
                     model_class=Unit,
                     filters={'level': level},
                     session=session
                 )
+                return self._serialize_list(units, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -110,7 +143,13 @@ class UnitService:
             if owns_session:
                 session.close()
     
-    def create(self, data: UnitDict, session: Optional[Session] = None) -> Unit | None:
+    def create(
+        self,
+        data: UnitDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Unit | dict | None:
         """
         Create a new unit.
 
@@ -142,7 +181,7 @@ class UnitService:
             else:
                 logger.error(f"Failed to create new unit: {unit.title}")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -152,7 +191,14 @@ class UnitService:
             if owns_session:
                 session.close()
 
-    def update(self, unit_id: str, data: UnitDict, session: Optional[Session] = None) -> Unit | None:
+    def update(
+        self,
+        unit_id: str,
+        data: UnitDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Unit | dict | None:
         """
         Update an existing unit.
 
@@ -192,7 +238,7 @@ class UnitService:
             else:
                 logger.error(f"Failed to update unit: {unit_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()

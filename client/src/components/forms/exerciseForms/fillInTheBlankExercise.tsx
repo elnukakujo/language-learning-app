@@ -1,6 +1,6 @@
 "use client";
 
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
@@ -8,11 +8,12 @@ import Markdown from "react-markdown";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
-    const { question, text_support = '', answer } = exercise;
-    const normalize = (str: string) => str.toLowerCase().trim();
+    const question = exercise.question || "";
+    const answer = exercise.answer || "";
+    const text_support = exercise.text_support || "";
+    const image_support = exercise.image_files || "";
 
-    const imageUrl = text_support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = text_support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const normalize = (str: string) => str.toLowerCase().trim();
   
     // Parse answer with double underscore separator
     const correctAnswers = answer.split('__').map(a => a.trim()).filter(Boolean);
@@ -43,11 +44,11 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     };
     useEffect(() => {
       if (isCorrect.every(val => val)) {
-          updateScoreById(exercise.id, true).catch(console.error);
+          updateScoreById(exercise.id!, true).catch(console.error);
       } else {
           setAttempts(prev => prev + 1);
           if (attempts >= 2) {
-              updateScoreById(exercise.id, false).catch(console.error);
+              updateScoreById(exercise.id!, false).catch(console.error);
           }
       };
     }, [isCorrect]);
@@ -62,18 +63,17 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     <form className="flex flex-col space-y-4">
         <Markdown>Fill in the blanks</Markdown>
 
-        {support && (
-            <>
-                {supportText && <Markdown>{supportText}</Markdown>}
-                {imageUrl && 
-                    <Image 
-                        src={imageUrl} 
-                        alt="Support" 
-                        className="mt-2" 
-                        width={300}
-                        height={300}
-                    />}
-            </> 
+        {text_support && <Markdown>{text_support}</Markdown>}
+        {image_support && image_support.map((imgSrc, index) => (
+            <Image 
+                key={index}
+                src={`${BASE_URL}${imgSrc}`} 
+                alt="Support" 
+                className="mt-2" 
+                width={300}
+                height={300}
+            />
+          )
         )}
         <p className="flex flex-row space-x-2 flex-wrap">
           {parts.map((part, index) => (

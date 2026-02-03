@@ -29,8 +29,8 @@ def get_all_calligraphy_from_language(language_id: str):
                     type: object
                     description: calligraphy object
     """
-    calligraphy = calligraphy_service.get_all(language_id = language_id)
-    return jsonify([calligraphy.to_dict() for calligraphy in calligraphy])
+    calligraphy = calligraphy_service.get_all(language_id=language_id, as_dict=True)
+    return jsonify(calligraphy)
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
@@ -55,8 +55,8 @@ def get_all_calligraphy_from_unit(unit_id: str):
                     type: object
                     description: calligraphy object    
     """
-    calligraphy = calligraphy_service.get_all(unit_id = unit_id)
-    return jsonify([calligraphy.to_dict() for calligraphy in calligraphy])
+    calligraphy = calligraphy_service.get_all(unit_id=unit_id, as_dict=True)
+    return jsonify(calligraphy)
 
 
 @bp.route('/<calligraphy_id>', methods=['GET'])
@@ -79,12 +79,12 @@ def get_calligraphy(calligraphy_id: str):
                 type: object
                 description: calligraphy object
     """
-    calligraphy = calligraphy_service.get_by_id(calligraphy_id)
+    calligraphy = calligraphy_service.get_by_id(calligraphy_id, as_dict=True)
     
     if not calligraphy:
         return jsonify({'error': 'calligraphy not found'}), 404
     
-    return jsonify(calligraphy.to_dict())
+    return jsonify(calligraphy)
 
 
 @bp.route('/', methods=['POST'])
@@ -208,12 +208,12 @@ def create_calligraphy():
         data = CalligraphyDict(**request.json)
         
         # Create calligraphy
-        calligraphy = calligraphy_service.create(data)
+        calligraphy = calligraphy_service.create(data, as_dict=True)
         
         if calligraphy:
             return jsonify({
                 'success': True,
-                'calligraphy': calligraphy.to_dict()
+                    'calligraphy': calligraphy
             }), 201
         else:
             return jsonify({'error': 'Failed to create calligraphy'}), 400
@@ -346,12 +346,12 @@ def update_calligraphy(calligraphy_id: str):
     try:
         data = CalligraphyDict(**request.json)
         
-        calligraphy = calligraphy_service.update(calligraphy_id, data)
+        calligraphy = calligraphy_service.update(calligraphy_id, data, as_dict=True)
         
         if calligraphy:
             return jsonify({
                 'success': True,
-                'calligraphy': calligraphy.to_dict()
+                    'calligraphy': calligraphy
             }), 201
         else:
             return jsonify({'error': 'calligraphy not found'}), 404
@@ -422,12 +422,12 @@ def score_calligraphy():
     calligraphy_id = data['calligraphy_id']
     success = data['success'].lower() == "true"
 
-    calligraphy = calligraphy_service.update_score(calligraphy_id, success)
+    calligraphy = calligraphy_service.update_score(calligraphy_id, success, as_dict=True, include_relations=False)
     
     if calligraphy:
         return jsonify({
             'success': True,
-            'calligraphy': calligraphy.to_dict(include_relations=False)
+                'calligraphy': calligraphy
         })
     else:
         return jsonify({'error': 'calligraphy not found'}), 404

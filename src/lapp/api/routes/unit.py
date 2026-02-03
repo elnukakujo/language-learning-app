@@ -28,8 +28,8 @@ def get_all_units(language_id: str):
                     type: object
                     description: Unit object
     """
-    units = unit_service.get_all(language_id = language_id)
-    return jsonify([unit.to_dict() for unit in units])
+    units = unit_service.get_all(language_id=language_id, as_dict=True)
+    return jsonify(units)
 
 
 @bp.route('/<unit_id>', methods=['GET'])
@@ -52,12 +52,12 @@ def get_unit(unit_id: str):
         404:
             description: Unit not found
     """
-    unit = unit_service.get_by_id(unit_id)
+    unit = unit_service.get_by_id(unit_id, as_dict=True)
     
     if not unit:
         return jsonify({'error': 'Unit not found'}), 404
     
-    return jsonify(unit.to_dict())
+    return jsonify(unit)
 
 
 @bp.route('/', methods=['POST'])
@@ -119,12 +119,12 @@ def create_unit():
         data = UnitDict(**request.json)
         
         # Create unit
-        unit = unit_service.create(data)
+        unit = unit_service.create(data, as_dict=True)
         
         if unit:
             return jsonify({
                 'success': True,
-                'unit': unit.to_dict()
+                'unit': unit
             }), 201
         else:
             return jsonify({'error': 'Failed to create unit'}), 400
@@ -175,12 +175,12 @@ def update_unit(unit_id: str):
     try:
         data = UnitDict(**request.json)
         
-        unit = unit_service.update(unit_id, data)
+        unit = unit_service.update(unit_id, data, as_dict=True)
         
         if unit:
             return jsonify({
                 'success': True,
-                'unit': unit.to_dict()
+                'unit': unit
             })
         else:
             return jsonify({'error': 'Unit not found'}), 404

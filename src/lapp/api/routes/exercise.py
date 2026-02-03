@@ -29,8 +29,8 @@ def get_all_exercise_from_language(language_id: str):
                     type: object
                     description: Exercise object
     """
-    exercise = exercise_service.get_all(language_id = language_id)
-    return jsonify([exercise.to_dict() for exercise in exercise])
+    exercise = exercise_service.get_all(language_id=language_id, as_dict=True)
+    return jsonify(exercise)
 
 
 @bp.route('/unit/<unit_id>', methods=['GET'])
@@ -55,8 +55,8 @@ def get_all_exercise_from_unit(unit_id: str):
                     type: object
                     description: Exercise object
     """
-    exercise = exercise_service.get_all(unit_id = unit_id)
-    return jsonify([exercise.to_dict() for exercise in exercise])
+    exercise = exercise_service.get_all(unit_id=unit_id, as_dict=True)
+    return jsonify(exercise)
 
 
 @bp.route('/<exercise_id>', methods=['GET'])
@@ -81,12 +81,12 @@ def get_exercise(exercise_id: str):
         404:
             description: Exercise not found
     """
-    exercise = exercise_service.get_by_id(exercise_id)
+    exercise = exercise_service.get_by_id(exercise_id, as_dict=True)
     
     if not exercise:
         return jsonify({'error': 'exercise not found'}), 404
     
-    return jsonify(exercise.to_dict())
+    return jsonify(exercise)
 
 
 @bp.route('/', methods=['POST'])
@@ -177,12 +177,12 @@ def create_exercise():
         data = ExerciseDict(**request.json)
         
         # Create exercise
-        exercise = exercise_service.create(data)
+        exercise = exercise_service.create(data, as_dict=True)
         
         if exercise:
             return jsonify({
                 'success': True,
-                'exercise': exercise.to_dict()
+                'exercise': exercise
             }), 201
         else:
             return jsonify({'error': 'Failed to create exercise'}), 400
@@ -283,12 +283,12 @@ def update_exercise(exercise_id: str):
     try:
         data = ExerciseDict(**request.json)
         
-        exercise = exercise_service.update(exercise_id, data)
+        exercise = exercise_service.update(exercise_id, data, as_dict=True)
         
         if exercise:
             return jsonify({
                 'success': True,
-                'exercise': exercise.to_dict()
+                'exercise': exercise
             })
         else:
             return jsonify({'error': 'exercise not found'}), 404
@@ -360,12 +360,12 @@ def score_exercise():
     exercise_id = data['exercise_id']
     success = data['success'].lower() == "true"
 
-    exercise = exercise_service.update_score(exercise_id, success)
+    exercise = exercise_service.update_score(exercise_id, success, as_dict=True, include_relations=False)
     
     if exercise:
         return jsonify({
             'success': True,
-            'exercise': exercise.to_dict(include_relations=False)
+            'exercise': exercise
         })
     else:
         return jsonify({'error': 'exercise not found'}), 404

@@ -21,6 +21,16 @@ vocabulary_service = VocabularyService()
 grammar_service = GrammarService()
 
 class ExerciseService:
+    def _serialize(self, exercise: Exercise | None, as_dict: bool, include_relations: bool) -> Exercise | dict | None:
+        if not as_dict or exercise is None:
+            return exercise
+        return exercise.to_dict(include_relations=include_relations)
+
+    def _serialize_list(self, exercises: list[Exercise], as_dict: bool, include_relations: bool) -> list[Exercise] | list[dict]:
+        if not as_dict:
+            return exercises
+        return [exercise.to_dict(include_relations=include_relations) for exercise in exercises]
+
     def _check_associate_components(
         self, 
         calligraphy_ids: Optional[list[str]],
@@ -76,7 +86,14 @@ class ExerciseService:
         
         return False
         
-    def get_all(self, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Exercise]:
+    def get_all(
+        self,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Exercise] | list[dict]:
         """
         Get all exercises for a specific language or unit.
 
@@ -117,7 +134,7 @@ class ExerciseService:
             if exercises:
                 for ex in exercises:
                     self._clean_exercise_associations(ex, session=session)
-            return exercises
+            return self._serialize_list(exercises, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -127,7 +144,13 @@ class ExerciseService:
             if owns_session:
                 session.close()
 
-    def get_by_id(self, ex_id: str, session: Optional[Session] = None) -> Exercise | None:
+    def get_by_id(
+        self,
+        ex_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Exercise | dict | None:
         """
         Get a Exercise item by its ID.
 
@@ -150,7 +173,7 @@ class ExerciseService:
 
             if exercise:
                 self._clean_exercise_associations(exercise, session=session)
-            return exercise
+            return self._serialize(exercise, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -160,7 +183,15 @@ class ExerciseService:
             if owns_session:
                 session.close()
 
-    def get_by_level(self, level: str, language_id: Optional[str] = None, unit_id: Optional[str] = None, session: Optional[Session] = None) -> list[Exercise]:
+    def get_by_level(
+        self,
+        level: str,
+        language_id: Optional[str] = None,
+        unit_id: Optional[str] = None,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> list[Exercise] | list[dict]:
         """
         Get all Exercise items of a specific level among a language.
         
@@ -202,7 +233,7 @@ class ExerciseService:
             
             for ex in exercises:
                 self._clean_exercise_associations(ex, session=session)
-            return exercises
+            return self._serialize_list(exercises, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -212,7 +243,13 @@ class ExerciseService:
             if owns_session:
                 session.close()
     
-    def create(self, data: ExerciseDict, session: Optional[Session] = None) -> Exercise | None:
+    def create(
+        self,
+        data: ExerciseDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Exercise | dict | None:
         """
         Create a new Exercise item.
 
@@ -258,7 +295,7 @@ class ExerciseService:
             else:
                 logger.error(f"Failed to create new Exercise item: {exercise.id}")
 
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -270,7 +307,14 @@ class ExerciseService:
 
         return result
 
-    def update(self, ex_id: str, data: ExerciseDict, session: Optional[Session] = None) -> Exercise | None:
+    def update(
+        self,
+        ex_id: str,
+        data: ExerciseDict,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Exercise | dict | None:
         """
         Update an existing Exercise item.
 
@@ -321,7 +365,7 @@ class ExerciseService:
             else:
                 logger.error(f"Failed to update Exercise item: {ex_id}")
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -370,7 +414,14 @@ class ExerciseService:
             if owns_session:
                 session.close()
 
-    def update_score(self, ex_id: str, success: bool, session: Optional[Session] = None) -> Exercise | None:
+    def update_score(
+        self,
+        ex_id: str,
+        success: bool,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> Exercise | dict | None:
         """
         Update Exercise item score based on average of all of its components scores.
         
@@ -447,7 +498,7 @@ class ExerciseService:
             if owns_session and result:
                 session.refresh(result)
             
-            return result
+            return self._serialize(result, as_dict, include_relations)
         except Exception as e:
             if owns_session:
                 session.rollback()
