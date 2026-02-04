@@ -9,12 +9,12 @@ import Grammar from "@/interface/features/Grammar";
 import Vocabulary from "@/interface/features/Vocabulary";
 import { updateExercise } from "@/api";
 
-import ImageLoader from "@/components/imageLoader";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import OpenCloseMenu from "@/components/selectMenu/openCloseMenu";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import TrueFalseInput from "@/components/input/trueFalseInput";
 import DiscreteInput from "@/components/input/discreteInput";
+import MediaLoader from "@/components/mediaLoader";
 
 interface UnitElements {
     vocabularies: Vocabulary[];
@@ -30,6 +30,7 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
     const [updatedAnswer, setUpdatedAnswer] = useState<string | undefined>(exercise.answer || undefined);
     const [updatedSupportText, setUpdatedSupportText] = useState<string | undefined>(exercise.text_support || undefined);
     const [updatedImageUrl, setUpdatedImageUrl] = useState<string | undefined>(exercise.image_files ? exercise.image_files[0] : undefined);
+    const [updatedAudioUrl, setUpdatedAudioUrl] = useState<string | undefined>(exercise.audio_files ? exercise.audio_files[0] : undefined);
   
     useEffect(() => {
       console.log(updatedImageUrl)
@@ -82,13 +83,13 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
       const pathParts = currentPath.split('/');
       const languageId = pathParts[2]; // From /languages/LANG_ID/...
       
-      const element = {
+      const element: Exercise = {
         exercise_type: updatedExerciseType as Exclude<typeof updatedExerciseType, "">,
-        question: updatedQuestion,
+        question: updatedQuestion!,
         text_support: updatedSupportText || undefined,
         image_files: updatedImageUrl ? [updatedImageUrl] : [],
-        audio_files: [],
-        answer: updatedAnswer,
+        audio_files: updatedAudioUrl ? [updatedAudioUrl] : [],
+        answer: updatedAnswer!,
         unit_id: exercise.unit_id,
         vocabulary_ids: vocAssociated,
         grammar_ids: gramAssociated,
@@ -142,7 +143,7 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
               className="flex w-full overflow-hidden border border-gray-300 rounded-md p-2"
               label="Support"
             />
-            <ImageLoader imageUrl={updatedImageUrl} setImageUrl={setUpdatedImageUrl} />
+            <MediaLoader imageUrl={updatedImageUrl} setImageUrl={setUpdatedImageUrl} audioUrl={updatedAudioUrl} setAudioUrl={setUpdatedAudioUrl} />
             
             {updatedExerciseType === "true_false" && 
               <TrueFalseInput
@@ -172,19 +173,19 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
             
             <section className="flex flex-col space-y-4 w-full items-baseline">
               <OpenCloseMenu
-                elements={unitElements.vocabularies.map(item => ({id: item.id, value: item.word.word + " - " + item.word.translation}))}
+                elements={unitElements.vocabularies.map(item => ({id: item.id!, value: item.word.word + " - " + item.word.translation}))}
                 selectedElements={vocAssociated}
                 setSelectedElements={setVocAssociated}
                 label="Associated Vocabulary"
               />
               <OpenCloseMenu
-                elements={unitElements.grammars.map(item => ({id: item.id, value: item.title}))}
+                elements={unitElements.grammars.map(item => ({id: item.id!, value: item.title}))}
                 selectedElements={gramAssociated}
                 setSelectedElements={setGramAssociated}
                 label="Associated Grammar"
               />
               <OpenCloseMenu
-                elements={unitElements.calligraphies.map(item => ({id: item.id, value: item.character.character + " - " + item.character.phonetic}))}
+                elements={unitElements.calligraphies.map(item => ({id: item.id!, value: item.character.character + " - " + item.character.phonetic}))}
                 selectedElements={callAssociated}
                 setSelectedElements={setCallAssociated}
                 label="Associated Calligraphies"

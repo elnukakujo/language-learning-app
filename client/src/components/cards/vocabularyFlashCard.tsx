@@ -1,7 +1,7 @@
 "use client";
 
 import BackButton from "@/components/buttons/backButton";
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import { useEffect, useState } from "react";
 import type Vocabulary from "@/interface/features/Vocabulary";
 
@@ -29,7 +29,18 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
     }
     return (
         <div className="flashcard flex flex-col space-y-2">
+            {vocabulary.word.image_files && vocabulary.word.image_files.length > 0 && <img
+                src={BASE_URL + vocabulary.word.image_files?.[0]}
+                alt={vocabulary.word.word}
+                width={200}
+                height={200}
+            />}
+            {vocabulary.word.audio_files && vocabulary.word.audio_files.length > 0 && <audio
+                src={BASE_URL + vocabulary.word.audio_files?.[0]}
+                controls
+            />}
             <h2>{vocabulary.word.word}{revealPhonetic && vocabulary.word.phonetic && ` (${vocabulary.word.phonetic})`}</h2>
+
             {vocabulary.example_sentences && vocabulary.example_sentences[0] && <p>{vocabulary.example_sentences[0].text}</p>}
             {!showAnswer && <div className="flex flex-row space-x-4">
                 <button className="bg-yellow-500 text-white rounded-md p-2" onClick={() => setRevealPhonetic(!revealPhonetic)}>

@@ -21,9 +21,9 @@ export default function UpdateLanguageForm({ language }: { language: Language })
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        const element = {
-          name: updatedName,
-          native_name: updatedNativeName,
+        const element: Language = {
+          name: updatedName!,
+          native_name: updatedNativeName!,
           description: updatedDescription || undefined,
           level: updatedLevel,
           flag: updatedFlag || undefined

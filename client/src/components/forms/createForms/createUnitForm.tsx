@@ -6,6 +6,7 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import { createUnit } from "@/api";
+import Unit from "@/interface/containers/Unit";
 
 export default function CreateUnitForm({ language_id }: { language_id: string }) {
   const router = useRouter();
@@ -17,8 +18,8 @@ export default function CreateUnitForm({ language_id }: { language_id: string })
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const element = {
-      title: title,
+    const element: Unit = {
+      title: title!,
       level: level,
       description: description || undefined,
       language_id: language_id,

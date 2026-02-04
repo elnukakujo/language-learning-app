@@ -1,4 +1,4 @@
-import { getElementbyId } from "@/api";
+import { BASE_URL, getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
 import Markdown from "react-markdown";
 
@@ -21,12 +21,25 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
             <section>
                 <h1>{grammar.title}</h1>
                 <Markdown>{grammar.explanation}</Markdown>
+
                 {grammar.learnable_sentences && grammar.learnable_sentences.length > 0 && (
                     <div>
-                        <strong>Learnable Sentences:</strong>
+                        <h3>Learnable Sentences:</h3>
                         <ul>
                             {grammar.learnable_sentences.map((sentence, index) => (
-                                <li key={index}>{sentence.text}</li>
+                                <li key={index}>
+                                    {sentence.image_files && sentence.image_files.length > 0 && <img
+                                        src={BASE_URL + sentence.image_files?.[0]}
+                                        alt={sentence.text}
+                                        width={200}
+                                        height={200}
+                                        />}
+                                    {sentence.audio_files && sentence.audio_files.length > 0 && <audio
+                                        src={BASE_URL + sentence.audio_files?.[0]}
+                                        controls
+                                        />}
+                                    <p>{sentence.text}</p>
+                                </li>
                             ))}
                         </ul>
                     </div>

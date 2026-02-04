@@ -5,6 +5,8 @@ import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import { createGrammar } from "@/api";
+import MediaLoader from "@/components/mediaLoader";
+import Grammar from "@/interface/features/Grammar";
 
 export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
   const router = useRouter();
@@ -13,6 +15,8 @@ export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
   const [explanation, setExplanation] = useState<string | undefined>(undefined);
   const [learnableSentence, setLearnableSentence] = useState<string | undefined>(undefined);
   const [learnableSentenceTranslation, setLearnableSentenceTranslation] = useState<string | undefined>(undefined);
+  const [learnableSentenceImageUrl, setLearnableSentenceImageUrl] = useState<string | undefined>(undefined);
+  const [learnableSentenceAudioUrl, setLearnableSentenceAudioUrl] = useState<string | undefined>(undefined);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,12 +26,14 @@ export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
     const pathParts = currentPath.split('/');
     const languageId = pathParts[2]; // From /languages/LANG_ID/...
     
-    const element = {
-      title: title,
-      explanation: explanation,
+    const element: Grammar = {
+      title: title!,
+      explanation: explanation!,
       learnable_sentences: learnableSentence ? [{
         text: learnableSentence,
-        translation: learnableSentenceTranslation || undefined
+        translation: learnableSentenceTranslation || "",
+        image_files: learnableSentenceImageUrl ? [learnableSentenceImageUrl] : [],
+        audio_files: learnableSentenceAudioUrl ? [learnableSentenceAudioUrl] : []
       }] : undefined,
       unit_id: unit_id
     };
@@ -78,6 +84,7 @@ export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
           onChange={(e) => setLearnableSentenceTranslation(e.target.value)}
           className="border border-gray-300"
         />
+        <MediaLoader imageUrl={learnableSentenceImageUrl} setImageUrl={setLearnableSentenceImageUrl} audioUrl={learnableSentenceAudioUrl} setAudioUrl={setLearnableSentenceAudioUrl} />
       </span>
       <NewElementButton>Add Grammar</NewElementButton>
     </form>

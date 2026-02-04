@@ -24,12 +24,12 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
       const pathParts = currentPath.split('/');
       const languageId = pathParts[2]; // From /languages/LANG_ID/...
       
-      const element = {
-        title: updatedTitle,
-        explanation: updatedExplanation,
+      const element: Grammar = {
+        title: updatedTitle!,
+        explanation: updatedExplanation!,
         learnable_sentences: updatedLearnableSentence ? [{
           text: updatedLearnableSentence,
-          translation: updatedLearnableSentenceTranslation || undefined
+          translation: updatedLearnableSentenceTranslation || ""
         }] : undefined,
         unit_id: grammar.unit_id
       };
@@ -43,8 +43,8 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
         router.refresh();
         
       } catch (error) {
-        console.error("Failed to create grammar:", error);
-        alert("Failed to create grammar. Check console for details.");
+        console.error("Failed to update grammar:", error);
+        alert("Failed to update grammar. Check console for details.");
       }
     };
 

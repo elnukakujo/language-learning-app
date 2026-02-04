@@ -350,6 +350,26 @@ export async function uploadImage(file: File) {
     throw error;
   }
 }
+export async function uploadAudio(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch(`${BASE_URL}/media/upload/audio`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || "Failed to upload audio");
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("Upload error:", error);
+    throw error;
+  }
+}
 
 // ============= Legacy/Compatibility Functions =============
 // These functions provide backward compatibility with existing code

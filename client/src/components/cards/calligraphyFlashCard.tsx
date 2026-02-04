@@ -1,6 +1,6 @@
 "use client";
 
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import { useEffect, useState } from "react";
 import Calligraphy from "@/interface/features/Calligraphy";
 import BackButton from "../buttons/backButton";
@@ -30,6 +30,16 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
     return (
         <div className="flashcard">
             <h2>{calligraphy.character.character}</h2>
+            {calligraphy.character.image_files && calligraphy.character.image_files.length > 0 && <img
+                src={BASE_URL + calligraphy.character.image_files?.[0]}
+                alt={calligraphy.character.character}
+                width={200}
+                height={200}
+            />}
+            {calligraphy.character.audio_files && calligraphy.character.audio_files.length > 0 && <audio
+                src={BASE_URL + calligraphy.character.audio_files?.[0]}
+                controls
+            />}
             {!showAnswer && <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                 Show Answer
             </button>}

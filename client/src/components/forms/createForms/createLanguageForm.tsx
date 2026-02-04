@@ -6,6 +6,7 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import { createLanguage } from "@/api";
+import Language from "@/interface/containers/Language";
 
 export default function CreateLanguageForm() {
   const router = useRouter();
@@ -19,9 +20,9 @@ export default function CreateLanguageForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const element = {
-      name: name,
-      native_name: nativeName,
+    const element: Language = {
+      name: name!,
+      native_name: nativeName!,
       description: description || undefined,
       level: level,
       flag: flag || undefined

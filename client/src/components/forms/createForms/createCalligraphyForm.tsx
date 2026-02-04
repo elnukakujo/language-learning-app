@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import { createCalligraphy } from "@/api";
+import MediaLoader from "@/components/mediaLoader";
+import Calligraphy from "@/interface/features/Calligraphy";
+import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 
 export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
   const router = useRouter();
@@ -12,8 +15,16 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
   const [components, setComponents] = useState<string|undefined>(undefined);
   const [meaning, setMeaning] = useState<string|undefined>(undefined);
   const [phonetic, setPhonetic] = useState<string|undefined>(undefined);
+  const [imageUrl, setImageUrl] = useState<string|undefined>(undefined);
+  const [audioUrl, setAudioUrl] = useState<string|undefined>(undefined);
+
   const [exampleWord, setExampleWord] = useState<string|undefined>(undefined);
   const [exampleWordTranslation, setExampleWordTranslation] = useState<string|undefined>(undefined);
+  const [exampleWordType, setExampleWordType] = useState<"noun" | "verb" | "adjective" | "adverb" | "pronoun"
+  | "article" | "preposition" | "conjunction" | "particle" | "interjection" | "numeral" | "classifier" 
+  | "auxiliary" | "modal" | "">("");
+  const [exampleImageUrl, setExampleImageUrl] = useState<string|undefined>(undefined);
+  const [exampleAudioUrl, setExampleAudioUrl] = useState<string|undefined>(undefined);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,16 +34,21 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
     const pathParts = currentPath.split('/');
     const languageId = pathParts[2]; // From /languages/LANG_ID/...
     
-    const element = {
+    const element: Calligraphy = {
       character: {
-        character: calligraphyName,
-        phonetic: phonetic,
+        character: calligraphyName!,
+        phonetic: phonetic!,
         meaning: meaning || undefined,
-        radical: components || undefined
+        radical: components || undefined,
+        image_files: imageUrl ? [imageUrl] : [],
+        audio_files: audioUrl ? [audioUrl] : []
       },
       example_word: exampleWord ? {
         word: exampleWord,
-        translation: exampleWordTranslation || undefined
+        type: exampleWordType as Exclude<typeof exampleWordType, ''>,
+        translation: exampleWordTranslation || "",
+        image_files: exampleImageUrl ? [exampleImageUrl] : [],
+        audio_files: exampleAudioUrl ? [exampleAudioUrl] : []
       } : undefined,
       unit_id: unit_id
     };
@@ -81,6 +97,7 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
           label="Radical"
           className="border border-gray-300"
         />
+        <MediaLoader imageUrl={imageUrl} setImageUrl={setImageUrl} audioUrl={audioUrl} setAudioUrl={setAudioUrl} />
       </span>
       <span className="flex flex-col space-y-2 items-center">
         <h3>Example Word Informations</h3>
@@ -90,12 +107,23 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
           label="Example Word"
           className="border border-gray-300"
         />
-          <AutoWidthInput
+        <AutoWidthInput
           value={exampleWordTranslation || ""}
           onChange={(e) => setExampleWordTranslation(e.target.value)}
           label="Example Word Translation"
           className="border border-gray-300"
         />
+        <ClassicSelectMenu
+          label="Type of Word"
+          options={[
+            'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'article', 
+            'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
+            'classifier', 'auxiliary', 'modal'
+          ]}
+          selectedOption={exampleWordType}
+          onChange={(value) => setExampleWordType(value as typeof exampleWordType)}
+        />
+        <MediaLoader imageUrl={exampleImageUrl} setImageUrl={setExampleImageUrl} audioUrl={exampleAudioUrl} setAudioUrl={setExampleAudioUrl} />
       </span>
       <NewElementButton>Add Calligraphy</NewElementButton>
     </form>

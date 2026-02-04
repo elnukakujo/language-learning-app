@@ -7,6 +7,7 @@ import type Vocabulary from "@/interface/features/Vocabulary";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import { updateVocabulary } from "@/api";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import MediaLoader from "@/components/mediaLoader";
 
 export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocabulary }) {
     const router = useRouter();
@@ -17,8 +18,13 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
     const [updatedType, setUpdatedType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
     'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
     'classifier' | 'auxiliary' | 'modal' | ''>(vocabulary.word.type || "");
+    const [updatedWordImageUrl, setUpdatedWordImageUrl] = useState<string | undefined>(vocabulary.word.image_files?.[0] || undefined);
+    const [updatedWordAudioUrl, setUpdatedWordAudioUrl] = useState<string | undefined>(vocabulary.word.audio_files?.[0] || undefined);
+
     const [updatedExampleSentence, setUpdatedExampleSentence] = useState<string | undefined>(vocabulary.example_sentences?.[0]?.text || undefined);
     const [updatedExampleSentenceTranslation, setUpdatedExampleSentenceTranslation] = useState<string | undefined>(vocabulary.example_sentences?.[0]?.translation || undefined);
+    const [updatedExampleImageUrl, setUpdatedExampleImageUrl] = useState<string | undefined>(vocabulary.example_sentences?.[0]?.image_files?.[0] || undefined);
+    const [updatedExampleAudioUrl, setUpdatedExampleAudioUrl] = useState<string | undefined>(vocabulary.example_sentences?.[0]?.audio_files?.[0] || undefined);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -28,16 +34,20 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
       const pathParts = currentPath.split('/');
       const languageId = pathParts[2]; // From /languages/LANG_ID/...
       
-      const element = {
+      const element: Vocabulary = {
         word: {
-          word: updatedWord,
-          translation: updatedTranslation,
+          word: updatedWord!,
+          translation: updatedTranslation!,
           type: updatedType as Exclude<typeof updatedType, ''>,
-          phonetic: updatedPhonetic || undefined
+          phonetic: updatedPhonetic || undefined,
+          image_files: updatedWordImageUrl ? [updatedWordImageUrl] : [],
+          audio_files: updatedWordAudioUrl ? [updatedWordAudioUrl] : []
         },
         example_sentences: updatedExampleSentence ? [{
           text: updatedExampleSentence,
-          translation: updatedExampleSentenceTranslation || ""
+          translation: updatedExampleSentenceTranslation || "",
+          image_files: updatedExampleImageUrl ? [updatedExampleImageUrl] : [],
+          audio_files: updatedExampleAudioUrl ? [updatedExampleAudioUrl] : []
         }] : undefined,          
         unit_id: vocabulary.unit_id
       };
@@ -97,6 +107,7 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
             placeholder="Enter phonetic"
             className="border border-gray-300"
           />
+          <MediaLoader imageUrl={updatedWordImageUrl} setImageUrl={setUpdatedWordImageUrl} audioUrl={updatedWordAudioUrl} setAudioUrl={setUpdatedWordAudioUrl} />
         </span>
         
         <span className="flex flex-col space-y-4 items-center">
@@ -115,6 +126,7 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
             placeholder="Enter example sentence translation"
             className="border border-gray-300"
           />
+          <MediaLoader imageUrl={updatedExampleImageUrl} setImageUrl={setUpdatedExampleImageUrl} audioUrl={updatedExampleAudioUrl} setAudioUrl={setUpdatedExampleAudioUrl} />
         </span>
         <UpdateButton> Update Vocabulary</UpdateButton>
       </form>

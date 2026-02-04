@@ -12,6 +12,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
     const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const normalize = (str: string) => str.toLowerCase().trim();
   
@@ -75,6 +76,14 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
             />
           )
         )}
+        {audio_support && audio_support.map((audioSrc, index) => (
+              <audio 
+                  key={index}
+                  src={`${BASE_URL}${audioSrc}`}
+                  controls
+                  className="mt-2"
+              />
+          ))}
         <p className="flex flex-row space-x-2 flex-wrap">
           {parts.map((part, index) => (
             <span key={index} className="flex flex-row space-x-2">

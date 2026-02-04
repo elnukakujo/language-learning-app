@@ -13,10 +13,10 @@ type Item = {
 };
 
 export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
-    const question = exercise.question || "";
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
     const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const pairs: Item[][] = answer.split("\n")
         .map(pair => pair.split("__"))
@@ -103,6 +103,14 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
                     className="mt-2" 
                     width={300}
                     height={300}
+                />
+            ))}
+            {audio_support && audio_support.map((audioSrc, index) => (
+                <audio 
+                    key={index}
+                    src={`${BASE_URL}${audioSrc}`}
+                    controls
+                    className="mt-2"
                 />
             ))}
 

@@ -1,4 +1,4 @@
-import { getElementbyId } from "@/api";
+import { BASE_URL, getElementbyId } from "@/api";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import type Vocabulary from "@/interface/features/Vocabulary";
@@ -15,6 +15,16 @@ export default async function VocabularyPage({ params }: { params: { language_id
                     <p>Example sentence: {vocabulary.example_sentences[0].text}</p>
                 )}
                 <p>Type: {vocabulary.word.type || "N/A"}</p>
+                {vocabulary.word.image_files && <img
+                    src={BASE_URL + (vocabulary.word.image_files?.[0] || "")}
+                    alt={vocabulary.word.word}
+                    width={200}
+                    height={200}
+                />}
+                {vocabulary.word.audio_files && <audio
+                    src={BASE_URL + (vocabulary.word.audio_files?.[0] || "")}
+                    controls
+                />}
                 <p>Score: {vocabulary.score?.toFixed(1)}/100</p>
                 <p>Last seen: {new Date(vocabulary.last_seen || 0).toLocaleDateString('en-US')}</p>
             </article>

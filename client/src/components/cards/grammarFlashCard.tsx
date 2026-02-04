@@ -4,7 +4,7 @@ import Markdown from "react-markdown";
 
 import type Grammar from "@/interface/features/Grammar";
 import { useEffect, useState } from "react";
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import BackButton from "../buttons/backButton";
 
 export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) {
@@ -31,6 +31,20 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
     return (
         <section className="flex flex-col">
             <h3>{grammar.title}</h3>
+            {grammar.learnable_sentences && grammar.learnable_sentences[0] && (
+                <>
+                    {grammar.learnable_sentences[0].image_files && grammar.learnable_sentences[0].image_files.length > 0 && <img
+                        src={BASE_URL + grammar.learnable_sentences[0].image_files?.[0]}
+                        alt={grammar.learnable_sentences[0].text}
+                        width={200}
+                        height={200}
+                    />}
+                    {grammar.learnable_sentences[0].audio_files && grammar.learnable_sentences[0].audio_files.length > 0 && <audio
+                        src={BASE_URL + grammar.learnable_sentences[0].audio_files?.[0]}
+                        controls
+                    />}
+                </>
+            )}
             {!showAnswer && 
                 <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                     Show Answer

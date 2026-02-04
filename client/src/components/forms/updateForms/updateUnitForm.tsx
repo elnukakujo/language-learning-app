@@ -19,8 +19,8 @@ export default function UpdateUnitForm({ unit }: { unit: Unit }) {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        const element = {
-          title: updatedTitle,
+        const element: Unit = {
+          title: updatedTitle!,
           level: updatedLevel,
           description: updatedDescription || undefined,
           language_id: unit.language_id,

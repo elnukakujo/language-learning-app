@@ -13,6 +13,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
     const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
     
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [showCorrection, setShowCorrection] = useState<boolean>(false);
@@ -29,6 +30,14 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
                     className="mt-2" 
                     width={300}
                     height={300}
+                />
+            ))}
+            {audio_support && audio_support.map((audioSrc, index) => (
+                <audio 
+                    key={index}
+                    src={`${BASE_URL}${audioSrc}`}
+                    controls
+                    className="mt-2"
                 />
             ))}
             <AutoSizeTextArea

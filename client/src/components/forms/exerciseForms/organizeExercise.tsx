@@ -11,10 +11,10 @@ import { BASE_URL, updateScoreById } from "@/api";
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const normalize = (str: string) => str.toLowerCase();
 
-    const question = exercise.question || "";
     const answer = exercise.answer.split('__').map(word => normalize(word));
     const text_support = exercise.text_support || "";
     const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -72,6 +72,14 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             ))}
                         </> 
                     )}
+                    {audio_support && audio_support.map((audioSrc, index) => (
+                        <audio 
+                            key={index}
+                            src={`${BASE_URL}${audioSrc}`}
+                            controls
+                            className="mt-2"
+                        />
+                    ))}
                     <label htmlFor="userAnswer">Your Answer:</label>
                     <div className="flex flex-wrap space-x-2">
                         {userAnswer.map((word, index) => (
