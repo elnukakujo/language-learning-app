@@ -5,8 +5,7 @@ from flask_cors import CORS
 from flasgger import Swagger
 
 from ..core.database import init_db
-from ..core.backup import init_backup_manager
-from config import config, INSTANCE_DIR, BACKUP_DIR
+from config import config
 
 logger = logging.getLogger(__name__)
 
@@ -69,31 +68,13 @@ def configure_logging(app: Flask) -> None:
 
 def initialize_extensions(app: Flask) -> None:
     """Initialize Flask extensions and database."""
+    # Initialize database
+    init_db(app)
 
-    # Detect the real process (not the reloader)
-    is_main_process = (
-        not app.debug
-        or os.environ.get("WERKZEUG_RUN_MAIN") == "true"
-    )
-
-    # Initialize database (safe to do twice, usually)
-    db = init_db(app)
-    logger.info("✅ Database initialized")
-
-    # Initialize backup manager
-    db_path = INSTANCE_DIR / 'languages.db'
-    backup_mgr = init_backup_manager(
-        db_path=db_path,
-        backup_dir=BACKUP_DIR,
-        config=app.config
-    )
-
-    # Start automatic backups ONLY once
-    if is_main_process and not app.config.get('TESTING'):
-        backup_mgr.start_scheduler()
-        logger.info("✅ Backup scheduler started")
-
-    app.backup_manager = backup_mgr
+    # Initialize centralized scheduler (handles ALL background tasks including backups)
+    from ..core.scheduler import init_scheduler
+    scheduler = init_scheduler(app)
+    app.scheduler = scheduler
 
 
 def register_blueprints(app: Flask) -> None:

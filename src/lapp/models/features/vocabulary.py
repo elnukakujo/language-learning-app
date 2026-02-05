@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from ..base import BaseFeatureModel
@@ -7,7 +7,7 @@ class Vocabulary(BaseFeatureModel):
     __tablename__ = 'vocabulary'
     
     # Foreign key
-    word_id = Column(Integer, ForeignKey('word.id'), nullable=False)
+    word_id = Column(String, ForeignKey('word.id'), nullable=False)
     
     # Relationships
     word = relationship('Word', back_populates='vocabulary')    # Many to One

@@ -1,8 +1,11 @@
 *.db
 *.sqlite
 *.sqlite3
+
+# Media files
 media/images/*
 media/audio/*
+dev/
 
 # Instance folder (except .gitkeep)
 instance/*

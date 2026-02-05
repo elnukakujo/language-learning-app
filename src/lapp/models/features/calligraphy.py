@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from ..base import BaseFeatureModel
@@ -7,8 +7,8 @@ class Calligraphy(BaseFeatureModel):
     __tablename__ = 'calligraphy'
 
     # Foreign keys
-    character_id = Column(Integer, ForeignKey('character.id'), nullable=False, unique=True)
-    example_word_id = Column(Integer, ForeignKey('word.id'), nullable=True, unique=False)
+    character_id = Column(String, ForeignKey('character.id'), nullable=False, unique=True)
+    example_word_id = Column(String, ForeignKey('word.id'), nullable=True, unique=False)
 
     # Relations
     character = relationship(                       # One to One

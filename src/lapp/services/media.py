@@ -7,7 +7,6 @@ from ..utils import MediaFileHandler
 
 logger = logging.getLogger(__name__)
 
-
 class MediaService:
     """Service class for handling media file operations."""
     

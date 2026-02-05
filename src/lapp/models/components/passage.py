@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, Text
+from sqlalchemy import Column, ForeignKey, Text, String
 from sqlalchemy.orm import relationship
 
 from ..base import BaseComponentModel
@@ -10,8 +10,8 @@ class Passage(BaseComponentModel):
     translation = Column(Text, nullable=False)
     
     # Foreign key
-    vocabulary_id = Column(Integer, ForeignKey('vocabulary.id'), nullable=True)
-    grammar_id = Column(Integer, ForeignKey('grammar.id'), nullable=True)
+    vocabulary_id = Column(String, ForeignKey('vocabulary.id'), nullable=True)
+    grammar_id = Column(String, ForeignKey('grammar.id'), nullable=True)
 
     # Relationship
     vocabulary = relationship('Vocabulary', back_populates='example_sentences')      # Many to One

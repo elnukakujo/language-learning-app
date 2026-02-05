@@ -15,13 +15,13 @@ export default async function VocabularyPage({ params }: { params: { language_id
                     <p>Example sentence: {vocabulary.example_sentences[0].text}</p>
                 )}
                 <p>Type: {vocabulary.word.type || "N/A"}</p>
-                {vocabulary.word.image_files && <img
+                {vocabulary.word.image_files && vocabulary.word.image_files.length > 0 && <img
                     src={BASE_URL + (vocabulary.word.image_files?.[0] || "")}
                     alt={vocabulary.word.word}
                     width={200}
                     height={200}
                 />}
-                {vocabulary.word.audio_files && <audio
+                {vocabulary.word.audio_files && vocabulary.word.audio_files.length > 0 && <audio
                     src={BASE_URL + (vocabulary.word.audio_files?.[0] || "")}
                     controls
                 />}
@@ -32,7 +32,7 @@ export default async function VocabularyPage({ params }: { params: { language_id
                 <NavButton path={`/languages/${language_id}/unit/${unit_id}/voc/${voc_id}/update`}>
                     Update the informations
                 </NavButton>
-                <DeleteButton element_id={vocabulary.id} />
+                <DeleteButton element_id={vocabulary.id!} />
             </nav>
         </main>
     );

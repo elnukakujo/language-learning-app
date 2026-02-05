@@ -15,8 +15,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Paths
-    MEDIA_ROOT = str(MEDIA_DIR)
-    BACKUP_ROOT = str(BACKUP_DIR)
+    MEDIA_ROOT = str(BASE_DIR / 'media')
+    BACKUP_ROOT = str(BASE_DIR / 'backups')
     
     # Media settings
     MAX_AUDIO_SIZE = 10 * 1024 * 1024  # 10MB
@@ -28,17 +28,24 @@ class Config:
     BACKUP_INTERVAL_MINUTES = 20  # Every 20 minutes
     MAX_BACKUPS = 10  # Keep last 10 backups
 
+    # TTS settings
+    TTS_INTERVAL_MINUTES = 20  # Generate TTS every 20 minuters while app is running
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/dev_languages.db'
     ENV = 'development'
+    MEDIA_ROOT = str(BASE_DIR / 'dev' / 'media')
+    BACKUP_ROOT = str(BASE_DIR / 'dev' / 'backups')
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/test_languages.db'
     ENV = 'testing'
+    MEDIA_ROOT = str(BASE_DIR / 'test' / 'media')
+    BACKUP_ROOT = str(BASE_DIR / 'test' / 'backups')
 
 class ProductionConfig(Config):
     """Production configuration"""
