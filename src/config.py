@@ -31,6 +31,9 @@ class Config:
     # TTS settings
     TTS_INTERVAL_MINUTES = 20  # Generate TTS every 20 minuters while app is running
 
+    # Text Generation settings
+    TEXT_GEN_INTERVAL_MINUTES = 20 # Generate text examples every 20 minutes while app is running
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

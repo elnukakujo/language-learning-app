@@ -84,26 +84,30 @@ class BaseFeatureModel(BaseContainerModel):
             if not isinstance(file_path, str):
                 logger.warning(f"Invalid media file path (not a string): {file_path}")
                 continue
-
-            if value == "image_files" and not file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                logger.warning(f"Invalid image file extension: {file_path}")
+            
+            # Normalize path to use forward slashes for comparison
+            normalized_path = file_path.replace('\\', '/')
+            
+            if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                logger.warning(f"Invalid image file extension: {normalized_path}")
                 continue
-            elif value == "image_files" and not file_path.lower().startswith('/media/images/'):
-                logger.warning(f"Image file path must start with '/media/images/': {file_path}")
+            elif value == "image_files" and not normalized_path.lower().startswith('/media/images/'):
+                logger.warning(f"Image file path must start with '/media/images/': {normalized_path}")
                 continue
-
-            if value == "audio_files" and not file_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
-                logger.warning(f"Invalid audio file extension: {file_path}")
+            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
+                logger.warning(f"Invalid audio file extension: {normalized_path}")
                 continue
-            elif value == "audio_files" and not file_path.lower().startswith('/media/audio/'):
-                logger.warning(f"Audio file path must start with '/media/audio/': {file_path}")
+            elif value == "audio_files" and not normalized_path.lower().startswith('/media/audio/'):
+                logger.warning(f"Audio file path must start with '/media/audio/': {normalized_path}")
                 continue
             
-            # Check if file exists in media root
-            full_path = Path(os.path.join(media_root, file_path.lstrip('/')))
-            logger.info(full_path)
+            # Check if file exists (convert to Path for cross-platform)
+            # Remove leading slash and use Path for proper joining
+            relative_path = normalized_path.lstrip('/')
+            full_path = media_root / relative_path
             if full_path.exists() and full_path.is_file():
-                valid_files.append(file_path)
+                # Store normalized path (with forward slashes) in database
+                valid_files.append(normalized_path)
         
         logger.info(valid_files)
         return valid_files
@@ -144,26 +148,30 @@ class BaseComponentModel(Base):
             if not isinstance(file_path, str):
                 logger.warning(f"Invalid media file path (not a string): {file_path}")
                 continue
-
-            if value == "image_files" and not file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                logger.warning(f"Invalid image file extension: {file_path}")
+            
+            # Normalize path to use forward slashes for comparison
+            normalized_path = file_path.replace('\\', '/')
+            
+            if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                logger.warning(f"Invalid image file extension: {normalized_path}")
                 continue
-            elif value == "image_files" and not file_path.lower().startswith('/media/images/'):
-                logger.warning(f"Image file path must start with '/media/images/': {file_path}")
+            elif value == "image_files" and not normalized_path.lower().startswith('/media/images/'):
+                logger.warning(f"Image file path must start with '/media/images/': {normalized_path}")
                 continue
-
-            if value == "audio_files" and not file_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
-                logger.warning(f"Invalid audio file extension: {file_path}")
+            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
+                logger.warning(f"Invalid audio file extension: {normalized_path}")
                 continue
-            elif value == "audio_files" and not file_path.lower().startswith('/media/audio/'):
-                logger.warning(f"Audio file path must start with '/media/audio/': {file_path}")
+            elif value == "audio_files" and not normalized_path.lower().startswith('/media/audio/'):
+                logger.warning(f"Audio file path must start with '/media/audio/': {normalized_path}")
                 continue
             
-            # Check if file exists in media root
-            full_path = Path(os.path.join(media_root, file_path.lstrip('/')))
-            logger.info(full_path)
+            # Check if file exists (convert to Path for cross-platform)
+            # Remove leading slash and use Path for proper joining
+            relative_path = normalized_path.lstrip('/')
+            full_path = media_root / relative_path
             if full_path.exists() and full_path.is_file():
-                valid_files.append(file_path)
-
+                # Store normalized path (with forward slashes) in database
+                valid_files.append(normalized_path)
+        
         logger.info(valid_files)
         return valid_files

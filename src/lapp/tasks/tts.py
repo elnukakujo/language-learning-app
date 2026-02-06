@@ -7,7 +7,7 @@ from lapp.models.components.passage import Passage
 
 from ..core.database import db_manager
 from ..models.components.word import Word
-from ..services.tts import TTSService
+from ..services import TTSService
 
 logger = logging.getLogger(__name__)
 

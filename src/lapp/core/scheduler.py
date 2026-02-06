@@ -34,11 +34,11 @@ class AppScheduler:
     def _register_tasks(self):
         """Register all scheduled tasks from different modules."""
         # Import task registration functions
-        from ..tasks.backup import register_backup_tasks
-        from ..tasks.tts import register_tts_tasks
+        from ..tasks import register_backup_tasks, register_text_gen_tasks, register_tts_tasks
         
         # Register tasks from each module
         register_backup_tasks(self.scheduler, self.app)
+        register_text_gen_tasks(self.scheduler, self.app)
         register_tts_tasks(self.scheduler, self.app)
         
         logger.info("✅ All scheduled tasks registered")
