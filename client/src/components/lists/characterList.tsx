@@ -2,59 +2,48 @@
 
 import { useParams, useRouter } from "next/navigation";
 import NavButton from "../buttons/navButton";
+import type Calligraphy from "@/interface/features/Calligraphy";
 
-type CharactersProps = {
-    items: Array<{
-        id: string;
-        character: string;
-        meaning: string;
-        score: number;
-    }>;
-    count: number;
-};
-
-export default function CharacterList({ charProps}: { charProps: CharactersProps}) {
+export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]}) {
     const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
 
     const router = useRouter();
     const handleClick = (id: string) => {
-        router.push(`/languages/${language_id}/unit/${unit_id}/char/${id}`);
+        router.push(`/languages/${language_id}/unit/${unit_id}/call/${id}`);
     };
 
-    const averageScore = charProps.items.reduce((acc, item) => acc + item.score, 0) / charProps.count;
+    const averageScore = callProps.reduce((acc, item) => acc + item.score!, 0) / callProps.length;
 
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>
-                <h2>Characters</h2>
-                {charProps.count > 0 && (
+                <h2>Calligraphy</h2>
+                {callProps.length > 0 && (
                     <>
-                        <p>Total: {charProps.count}</p>
+                        <p>Total: {callProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
                     </>
                 )}
             </header>
-            {charProps.count === 0 ? <p>Empty</p> :
+            {callProps.length === 0 ? <p>Empty</p> :
                 <ul className="list-item pl-5 space-y-1">
-                    {charProps.items.map((item, index) => (
+                    {callProps.map((item, index) => (
                         <li key={index}>
-                            <button onClick={() => handleClick(item.id)}>
-                                {(item as CharactersProps["items"][0]).character} –{" "}{(item as CharactersProps["items"][0]).meaning}
+                            <button onClick={() => handleClick(item.id!)}>
+                                {item.character.character} –{" "}{item.character.phonetic}
                             </button>
                         </li>
                     ))}
                 </ul>
             }
             <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/char/new`}
+                path = {`/languages/${language_id}/unit/${unit_id}/call/new`}
             >
-                <span>Add New Character</span>
+                <span>Add New Calligraphy</span>
             </NavButton>
-            {charProps.items.length > 0 && (
+            {callProps.length > 0 && (
             <NavButton
-                path={`/languages/${language_id}/unit/${unit_id}/char/${
-                        charProps.items[Math.floor(Math.random() * charProps.items.length)].id
-                    }/flashcard`}
+                path={`/languages/${language_id}/unit/${unit_id}/call/flashcard`}
             >
                 <p>Flashcard Practice</p>
             </NavButton>)}

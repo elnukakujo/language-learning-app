@@ -7,21 +7,16 @@ import { useState } from "react";
 export default function DeleteButton({ element_id, children }: { element_id: string, children?: React.ReactNode }) {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-    const elementId = element_id || "";
-    const languageId = elementId.split('_')[0].toUpperCase() || "";
-    const unitId = elementId.split('_').length > 1 ? languageId + '_' + elementId.split('_')[1]:null;
-
     const router = useRouter();
     const handleDelete = async () => {
         try {
-            await deleteElement(elementId);
-            if (elementId.split('_').length>2){
-                router.push('/languages/' + languageId + '/unit/' + unitId);
-            } else if (elementId.split('_').length===2) {
-                router.push('/languages/' + languageId)
-            } else {
-                router.push('/')
+            await deleteElement(element_id);
+            const pathname = window.location.pathname;
+            let parentPath = pathname.substring(0, pathname.lastIndexOf('/')) || '/';
+            while (/(voc|gram|call|unit|languages)$/.test(parentPath)) {
+                parentPath = parentPath.substring(0, parentPath.lastIndexOf('/')) || '/';
             }
+            router.push(parentPath);
             // Optionally, you can add some success feedback here
         } catch (error) {
         console.error("Failed to delete element:", error);

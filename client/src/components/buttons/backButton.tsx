@@ -7,7 +7,7 @@ export default function BackButton({ children }: { children?: React.ReactNode })
     const handleClick = () => {
         const pathname = window.location.pathname;
         let parentPath = pathname.substring(0, pathname.lastIndexOf('/')) || '/';
-        while (/(voc|gram|char|unit|languages)$/.test(parentPath)) {
+        while (/(voc|gram|call|unit|languages|new|ex)$/.test(parentPath)) {
             parentPath = parentPath.substring(0, parentPath.lastIndexOf('/')) || '/';
         }
         router.push(parentPath);

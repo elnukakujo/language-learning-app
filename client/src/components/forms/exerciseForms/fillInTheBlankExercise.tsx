@@ -1,80 +1,91 @@
 "use client";
 
-import { updateScoreById } from "@/api";
-import type Exercise from "@/interface/Exercise";
+import { BASE_URL, updateScoreById } from "@/api";
+import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
-    const { question, support = '', answer } = exercise;
-    const normalize = (str: string) => str.toLowerCase().trim();
+  const question = exercise.question || "";
+  const answer = exercise.answer || "";
+  const text_support = exercise.text_support || "";
+  const image_support = exercise.image_files || "";
+  const audio_support = exercise.audio_files || "";
 
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+  const normalize = (str: string) => str.toLowerCase().trim();
+
+  // Parse answer with double underscore separator
+  const correctAnswers = answer.split('__').map(a => a.trim()).filter(Boolean);
   
-    // Parse answer with double underscore separator
-    const correctAnswers = answer.split('__').map(a => a.trim()).filter(Boolean);
-    
-    // Initialize state
-    const [userAnswers, setUserAnswers] = useState<string[]>(
-        Array(correctAnswers.length).fill('')
-    );
-    
-    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-    const [attempts, setAttempts] = useState<number>(0);
+  // Initialize state
+  const [userAnswers, setUserAnswers] = useState<string[]>(
+      Array(correctAnswers.length).fill('')
+  );
+  
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [attempts, setAttempts] = useState<number>(0);
 
-    const parts = question.split('__');
-    const [isCorrect, setIsCorrect] = useState<boolean[]>(Array(parts.length-1).fill(false));
+  const parts = question.split('__');
+  const [isCorrect, setIsCorrect] = useState<boolean[]>(Array(parts.length-1).fill(false));
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitted(true);
-        userAnswers.forEach((answer, index) => {
-            if (normalize(correctAnswers[index]) === normalize(answer)) {
-                setIsCorrect(prev => {
-                    const newIsCorrect = [...prev];
-                    newIsCorrect[index] = true;
-                    return newIsCorrect;
-                });
-            }
-        });
-    };
-    useEffect(() => {
-      if (isCorrect.every(val => val)) {
-          updateScoreById(exercise.id, true).catch(console.error);
-      } else {
-          setAttempts(prev => prev + 1);
-          if (attempts >= 2) {
-              updateScoreById(exercise.id, false).catch(console.error);
+  const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSubmitted(true);
+      userAnswers.forEach((answer, index) => {
+          if (normalize(correctAnswers[index]) === normalize(answer)) {
+              setIsCorrect(prev => {
+                  const newIsCorrect = [...prev];
+                  newIsCorrect[index] = true;
+                  return newIsCorrect;
+              });
           }
-      };
-    }, [isCorrect]);
-
-    const handleAnswerChange = (index: number, value: string) => {
-        const newAnswers = [...userAnswers];
-        newAnswers[index] = value;
-        setUserAnswers(newAnswers);
+      });
+  };
+  useEffect(() => {
+    if (isCorrect.every(val => val)) {
+        updateScoreById(exercise.id!, true).catch(console.error);
+    } else {
+        setAttempts(prev => prev + 1);
+        if (attempts >= 2) {
+            updateScoreById(exercise.id!, false).catch(console.error);
+        }
     };
+  }, [isCorrect]);
+
+  const handleAnswerChange = (index: number, value: string) => {
+      const newAnswers = [...userAnswers];
+      newAnswers[index] = value;
+      setUserAnswers(newAnswers);
+  };
+
+  
 
   return (
     <form className="flex flex-col space-y-4">
-        <Markdown>Fill in the blanks</Markdown>
+        <h1>Fill in the blanks</h1>
 
-        {support && (
-            <>
-                {supportText && <Markdown>{supportText}</Markdown>}
-                {imageUrl && 
-                    <Image 
-                        src={imageUrl} 
-                        alt="Support" 
-                        className="mt-2" 
-                        width={300}
-                        height={300}
-                    />}
-            </> 
+        {text_support && <Markdown>{text_support}</Markdown>}
+        {image_support && image_support.map((imgSrc, index) => (
+            <Image 
+                key={index}
+                src={`${BASE_URL}${imgSrc}`} 
+                alt="Support" 
+                className="mt-2" 
+                width={300}
+                height={300}
+            />
+          )
         )}
+        {audio_support && audio_support.map((audioSrc, index) => (
+              <audio 
+                  key={index}
+                  src={`${BASE_URL}${audioSrc}`}
+                  controls
+                  className="mt-2"
+              />
+          ))}
         <p className="flex flex-row space-x-2 flex-wrap">
           {parts.map((part, index) => (
             <span key={index} className="flex flex-row space-x-2">

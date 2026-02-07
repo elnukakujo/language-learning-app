@@ -1,10 +1,10 @@
 "use client";
 
-import type Exercise from "@/interface/Exercise";
+import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import shuffle from 'lodash/shuffle';
 
 type Item = {
@@ -13,7 +13,10 @@ type Item = {
 };
 
 export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
-    const { support = '', answer } = exercise;
+    const answer = exercise.answer || "";
+    const text_support = exercise.text_support || "";
+    const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const pairs: Item[][] = answer.split("\n")
         .map(pair => pair.split("__"))
@@ -41,9 +44,6 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
 
         setShuffledPairs(newPairs);
     }, []);
-
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
 
     const [attempts, setAttempts] = useState<number>(3);
     const [selection, setSelection] = useState<Array<Item>>([]);
@@ -86,7 +86,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
 
     useEffect(() => {
         if (isSuccess) {
-            updateScoreById(exercise.id, true).catch(console.error);
+            updateScoreById(exercise.id!, true).catch(console.error);
         };
     }, [isSuccess]);
 
@@ -94,19 +94,25 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         <form className="flex flex-col space-y-4">
             <h1>Match the pairs</h1>
 
-            {support && (
-                <>
-                    {supportText && <Markdown>{supportText}</Markdown>}
-                    {imageUrl && 
-                        <Image 
-                            src={imageUrl} 
-                            alt="Support" 
-                            className="mt-2" 
-                            width={300}
-                            height={300}
-                        />}
-                </> 
-            )}
+            {text_support && <Markdown>{text_support}</Markdown>}
+            {image_support && image_support.map((imgSrc, index) => (
+                <Image 
+                    key={index}
+                    src={`${BASE_URL}${imgSrc}`} 
+                    alt="Support" 
+                    className="mt-2" 
+                    width={300}
+                    height={300}
+                />
+            ))}
+            {audio_support && audio_support.map((audioSrc, index) => (
+                <audio 
+                    key={index}
+                    src={`${BASE_URL}${audioSrc}`}
+                    controls
+                    className="mt-2"
+                />
+            ))}
 
             {(!isSuccess && attempts > 0) && 
                 <section className="w-[32rem] mx-auto flex flex-row space-x-5">

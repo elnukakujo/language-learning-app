@@ -1,5 +1,5 @@
 import { getLanguageData } from "@/api";
-import Language from "@/interface/Language";
+import Language from "@/interface/containers/Language";
 import UpdateLanguageForm from "@/components/forms/updateForms/updateLanguageForm";
 
 export default async function UpdateLanguagePage({params }: {params: {language_id: string}}) {

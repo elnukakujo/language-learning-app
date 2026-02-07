@@ -12,6 +12,7 @@ export default function AutoWidthInput({
   height = 2.5,
   placeholder = "",
   disabled = false,
+  required = false,
   ...props
 
 }: {
@@ -24,6 +25,7 @@ export default function AutoWidthInput({
   maxWidth?: number;
   placeholder?: string;
   disabled?: boolean;
+  required?: boolean;
 }) {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [resizeWidth, setResizeWidth] = useState<number>(minWidth);
@@ -51,7 +53,7 @@ export default function AutoWidthInput({
           htmlFor={label.toLowerCase().replace(/\s+/g, '-')} 
           className="text-sm font-medium text-gray-700"
         >
-          {label}
+          {label} {required && "*"}
         </label>
       }
       <span
@@ -69,6 +71,7 @@ export default function AutoWidthInput({
         className={`outline-none rounded-md p-2 ${className}`}
         placeholder={placeholder}
         disabled={disabled}
+        required={required}
       />
     </span>
   );

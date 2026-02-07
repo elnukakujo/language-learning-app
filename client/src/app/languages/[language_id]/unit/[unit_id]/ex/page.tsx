@@ -1,7 +1,7 @@
 import { getExercisesOverview } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
-import Exercise from "@/interface/Exercise";
+import Exercise from "@/interface/features/Exercise";
 import Markdown from "react-markdown";
 
 export default async function ExercisesPage({ params }: { params: { language_id: string, unit_id: string } }){

@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import Markdown from "react-markdown";
-import type Unit from "@/interface/Unit";
+import type Unit from "@/interface/containers/Unit";
 
 export default function UnitOverviewCard({ unit }: { unit: Unit }) {
     const { language_id } = useParams();

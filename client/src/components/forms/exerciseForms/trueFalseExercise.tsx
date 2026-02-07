@@ -3,18 +3,20 @@
 import { useState } from "react";
 import Image from 'next/image';
 
-import Exercise from "@/interface/Exercise";
+import Exercise from "@/interface/features/Exercise";
 import TrueFalseInput from "@/components/input/trueFalseInput";
 
-import { updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById } from "@/api";
 import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
-    const { question, support = '', answer } = exercise;
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const question = exercise.question || "";
+    const answer = exercise.answer || "";
+    const text_support = exercise.text_support || "";
+    const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
     
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -25,10 +27,10 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         setIsSubmitted(true);
         if (String(userAnswer) === normalize(answer.toLowerCase())) {
             setIsCorrect(true);
-            updateScoreById(exercise.id, true).catch(console.error);
+            updateScoreById(exercise.id!, true).catch(console.error);
         } else {
             setIsCorrect(false);
-            updateScoreById(exercise.id, false).catch(console.error);
+            updateScoreById(exercise.id!, false).catch(console.error);
         };
     };
 
@@ -38,19 +40,25 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             {question && (
                 <Markdown>{question}</Markdown>
             )}
-            {support && (
-                <>
-                    {supportText && <Markdown>{supportText}</Markdown>}
-                    {imageUrl && 
-                        <Image 
-                            src={imageUrl} 
-                            alt="Support" 
-                            className="mt-2" 
-                            width={300}
-                            height={300}
-                        />}
-                </> 
-            )}
+            {text_support && <Markdown>{text_support}</Markdown>}
+            {image_support && image_support.map((imgSrc, index) => (
+                <Image 
+                    key={index}
+                    src={`${BASE_URL}${imgSrc}`} 
+                    alt="Support" 
+                    className="mt-2" 
+                    width={300}
+                    height={300}
+                />
+            ))}
+            {audio_support && audio_support.map((audioSrc, index) => (
+                <audio 
+                    key={index}
+                    src={`${BASE_URL}${audioSrc}`}
+                    controls
+                    className="mt-2"
+                />
+            ))}
             {!isSubmitted && (
                 <>
                     <TrueFalseInput

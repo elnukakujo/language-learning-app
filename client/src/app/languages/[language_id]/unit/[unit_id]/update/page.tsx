@@ -1,4 +1,4 @@
-import Unit from "@/interface/Unit";
+import Unit from "@/interface/containers/Unit";
 import { getUnitData } from "@/api";
 import UpdateUnitForm from "@/components/forms/updateForms/updateUnitForm";
 

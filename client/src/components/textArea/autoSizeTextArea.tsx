@@ -12,6 +12,7 @@ export default function AutoSizeTextArea({
   maxHeight,
   placeholder = "",
   disabled = false,
+  required = false,
   ...props
 }: {
   value: string;
@@ -24,6 +25,7 @@ export default function AutoSizeTextArea({
   maxHeight?: number;
   placeholder?: string;
   disabled?: boolean;
+  required?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dimensions, setDimensions] = useState({ width: minWidth, height: minHeight });
@@ -111,7 +113,7 @@ export default function AutoSizeTextArea({
           htmlFor={label.toLowerCase().replace(/\s+/g, '-')}
           className="text-sm font-medium text-gray-700"
         >
-          {label}
+          {label} {required ? "*" : ""}
         </label>
       )}
       <textarea
@@ -128,6 +130,7 @@ export default function AutoSizeTextArea({
           height: `${dimensions.height}rem`,
         }}
         disabled={disabled}
+        required={required}
       />
     </span>
   );

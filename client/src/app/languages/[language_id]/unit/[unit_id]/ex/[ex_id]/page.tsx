@@ -1,7 +1,7 @@
 import { getElementbyId, getNext } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
-import Exercise from "@/interface/Exercise";
+import Exercise from "@/interface/features/Exercise";
 
 import FillInTheBlankExercise from "@/components/forms/exerciseForms/fillInTheBlankExercise";
 import TranslateExercise from "@/components/forms/exerciseForms/translateExercise";
@@ -10,20 +10,16 @@ import TrueFalseExercise from "@/components/forms/exerciseForms/trueFalseExercis
 import OrganizeExercise from "@/components/forms/exerciseForms/organizeExercise";
 import AnsweringExercise from "@/components/forms/exerciseForms/answeringExercise";
 import MatchingExercise from "@/components/forms/exerciseForms/matchingExercise";
+import BackButton from "@/components/buttons/backButton";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; unit_id: string; ex_id: string }}) {
     const { language_id, unit_id, ex_id } = await params;
 
     const exercise: Exercise = await getElementbyId(ex_id);
-    const next_ex_id: string = await getNext(ex_id);
-
-    const voc_associated = await Promise.all(exercise.associated_to?.vocabulary.map(id => getElementbyId(id)) || []);
-    const char_associated = await Promise.all(exercise.associated_to?.characters.map(id => getElementbyId(id)) || []);
-    const gram_associated = await Promise.all(exercise.associated_to?.grammar.map(id => getElementbyId(id)) || []);
 
     return(
         <main className="flex flex-col space-y-4">
-            {exercise.exercise_type === 'fill-in-the-blank' && (
+            {exercise.exercise_type === 'fill_in_the_blank' && (
                 <FillInTheBlankExercise exercise={exercise} />
             )}
             {exercise.exercise_type === 'translate' && (
@@ -32,7 +28,7 @@ export default async function ExercisePage( { params } : { params: { language_id
             {exercise.exercise_type === 'essay' && (
                 <EssayExercise exercise={ exercise } />
             )}
-            {exercise.exercise_type === 'true-false' && (
+            {exercise.exercise_type === 'true_false' && (
                 <TrueFalseExercise exercise={ exercise } />
             )}
             {exercise.exercise_type === 'organize' && (
@@ -44,52 +40,19 @@ export default async function ExercisePage( { params } : { params: { language_id
             {exercise.exercise_type === 'matching' && (
                 <MatchingExercise exercise={ exercise } />
             )}
-            {exercise.associated_to && (
-                <div>
-                    {voc_associated && voc_associated.length > 0 && (
-                        <div>
-                            <p className="font-medium">Associated to the following vocabulary:</p>
-                            <ul className="flex flex-row flex-wrap gap-2">
-                                {voc_associated.map((item, index) => (
-                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.word} — {item.translation}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {gram_associated && gram_associated.length > 0 && (
-                        <div>
-                            <p className="font-medium">Associated to the following grammar:</p>
-                            <ul className="flex flex-row flex-wrap gap-2">
-                                {gram_associated.map((item, index) => (
-                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.title}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {char_associated && char_associated.length > 0 && (
-                        <div>
-                            <p className="font-medium">Associated to the following characters:</p>
-                            <ul className="flex flex-row flex-wrap gap-2">
-                                {char_associated.map((item, index) => (
-                                    <li key={index} className="w-fit px-2 py-1 border-2 border-gray-300 rounded-md cursor-pointer hover:opacity-80">{item.character} - {item.meaning}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            )}
+
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
                     <p>Update the Exercise</p>
                 </NavButton>
                 <DeleteButton
-                    element_id={exercise.id}
+                    element_id={exercise.id!}
                 >
                     <p>Delete Exercise</p>
                 </DeleteButton>
-                <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${next_ex_id}`}>
-                    <p>Next Exercise</p>
-                </NavButton>
+                <BackButton>
+                    <p>Back to Unit</p>
+                </BackButton>
             </nav>
         </main>
     )

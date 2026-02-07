@@ -5,23 +5,21 @@ import Image from 'next/image';
 import Markdown from "react-markdown";
 import shuffle from 'lodash/shuffle';
 
-import Exercise from "@/interface/Exercise";
-import { updateScoreById } from "@/api";
+import Exercise from "@/interface/features/Exercise";
+import { BASE_URL, updateScoreById } from "@/api";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const { support = '' } = exercise;
+    const normalize = (str: string) => str.toLowerCase();
 
-    const imageUrl = support.match(/<image_url>(.*?)<\/image_url>/)?.[1] || null;
-    const supportText = support.replace(/<image_url>.*?<\/image_url>/, '').trim();
+    const answer = exercise.answer.split('__').map(word => normalize(word));
+    const text_support = exercise.text_support || "";
+    const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
-    const normalize = (str: string) => str.toLowerCase();
-
     const [wordsToOrganize, setWordsToOrganize] = useState<string[]>([]);
-
-    const answer = exercise.answer.split('__').map(word => normalize(word));
 
     useEffect(() => {
         setWordsToOrganize(shuffle(answer));
@@ -33,18 +31,18 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         e.preventDefault();
         if (userAnswer.join('') === answer.join('')) {
             setIsCorrect(true);
-            updateScoreById(exercise.id, true).catch(console.error);
+            updateScoreById(exercise.id!, true).catch(console.error);
         } else {
             setAttempts(prev => prev + 1);
             if (attempts >= 2) {
-                updateScoreById(exercise.id, false).catch(console.error);
+                updateScoreById(exercise.id!, false).catch(console.error);
             }
         }
     };
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <Markdown>Organize the following word/characters sequence</Markdown>
+            <Markdown>Organize the following words/characters sequence</Markdown>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">
@@ -59,19 +57,29 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             </button>
                         ))}
                     </div>
-                    {support && (
+                    {text_support && (
                         <>
-                            {supportText && <Markdown>{supportText}</Markdown>}
-                            {imageUrl && 
+                            {text_support && <Markdown>{text_support}</Markdown>}
+                            {image_support && image_support.map((imgSrc, index) => (
                                 <Image 
-                                    src={imageUrl} 
+                                    key={index}
+                                    src={`${BASE_URL}${imgSrc}`} 
                                     alt="Support" 
                                     className="mt-2" 
                                     width={300}
                                     height={300}
-                                />}
+                                />
+                            ))}
                         </> 
                     )}
+                    {audio_support && audio_support.map((audioSrc, index) => (
+                        <audio 
+                            key={index}
+                            src={`${BASE_URL}${audioSrc}`}
+                            controls
+                            className="mt-2"
+                        />
+                    ))}
                     <label htmlFor="userAnswer">Your Answer:</label>
                     <div className="flex flex-wrap space-x-2">
                         {userAnswer.map((word, index) => (
