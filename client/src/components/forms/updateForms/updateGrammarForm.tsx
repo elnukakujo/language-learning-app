@@ -8,13 +8,17 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import { useRouter } from "next/navigation";
 import { updateGrammar } from "@/api";
+import MediaLoader from "@/components/mediaLoader";
 
 export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
   const router = useRouter();
   const [updatedTitle, setUpdatedTitle] = useState<string | undefined>(grammar.title || undefined);
   const [updatedExplanation, setUpdatedExplanation] = useState<string | undefined>(grammar.explanation || undefined);
+
   const [updatedLearnableSentence, setUpdatedLearnableSentence] = useState<string | undefined>(grammar.learnable_sentences?.[0]?.text || undefined);
   const [updatedLearnableSentenceTranslation, setUpdatedLearnableSentenceTranslation] = useState<string | undefined>(grammar.learnable_sentences?.[0]?.translation || "");
+  const [updatedLearnableSentenceImageUrl, setUpdatedLearnableSentenceImageUrl] = useState<string | undefined>(grammar.learnable_sentences?.[0]?.image_files?.[0] || undefined);
+  const [updatedLearnableSentenceAudioUrl, setUpdatedLearnableSentenceAudioUrl] = useState<string | undefined>(grammar.learnable_sentences?.[0]?.audio_files?.[0] || undefined);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -29,7 +33,9 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
         explanation: updatedExplanation!,
         learnable_sentences: updatedLearnableSentence ? [{
           text: updatedLearnableSentence,
-          translation: updatedLearnableSentenceTranslation || ""
+          translation: updatedLearnableSentenceTranslation || "",
+          image_files: updatedLearnableSentenceImageUrl ? [updatedLearnableSentenceImageUrl] : undefined,
+          audio_files: updatedLearnableSentenceAudioUrl ? [updatedLearnableSentenceAudioUrl] : undefined
         }] : undefined,
         unit_id: grammar.unit_id
       };
@@ -80,6 +86,7 @@ export default function updateGrammarForm({ grammar }: { grammar: Grammar }) {
           onChange={(e) => setUpdatedLearnableSentenceTranslation(e.target.value)}
           className="border border-gray-300"
         />
+        <MediaLoader imageUrl={updatedLearnableSentenceImageUrl} setImageUrl={setUpdatedLearnableSentenceImageUrl} audioUrl={updatedLearnableSentenceAudioUrl} setAudioUrl={setUpdatedLearnableSentenceAudioUrl} />
       </span>
       <UpdateButton>Update Grammar</UpdateButton>
     </form>

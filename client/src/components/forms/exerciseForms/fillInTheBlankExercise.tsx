@@ -54,6 +54,13 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     };
   }, [isCorrect]);
 
+  useEffect(() => {
+    setIsSubmitted(false);
+    setUserAnswers(Array(correctAnswers.length).fill(''));
+    setIsCorrect(Array(parts.length-1).fill(false));
+    setAttempts(0);
+  }, [exercise]);
+
   const handleAnswerChange = (index: number, value: string) => {
       const newAnswers = [...userAnswers];
       newAnswers[index] = value;

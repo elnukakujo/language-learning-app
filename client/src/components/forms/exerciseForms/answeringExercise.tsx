@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 
@@ -17,6 +17,11 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
     
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [showCorrection, setShowCorrection] = useState<boolean>(false);
+
+    useEffect(() => {
+        setUserAnswer('');
+        setShowCorrection(false);
+    }, [exercise]);
 
     return (
         <form className="flex flex-col space-y-2">
