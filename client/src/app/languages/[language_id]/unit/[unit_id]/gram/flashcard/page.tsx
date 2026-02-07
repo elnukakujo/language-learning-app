@@ -11,6 +11,7 @@ export default async function GrammarFlashCardPage({ params }: { params: paramsT
     const { language_id, unit_id } = await params;
     
     const grammars: Grammar[] = await getGrammarByUnit(unit_id);
+    grammars.filter(grammar => grammar.learnable_sentences && grammar.learnable_sentences.length > 0)
     grammars.sort(() => Math.random() - 0.5); // Shuffle the array randomly
     
     return (

@@ -30,21 +30,15 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
 
     return (
         <section className="flex flex-col">
+            <h3>{currentIndex + 1} / {grammars.length}</h3>
+
             <h3>{grammar.title}</h3>
-            {grammar.learnable_sentences && grammar.learnable_sentences[0] && (
-                <>
-                    {grammar.learnable_sentences[0].image_files && grammar.learnable_sentences[0].image_files.length > 0 && <img
-                        src={BASE_URL + grammar.learnable_sentences[0].image_files?.[0]}
-                        alt={grammar.learnable_sentences[0].text}
-                        width={200}
-                        height={200}
-                    />}
-                    {grammar.learnable_sentences[0].audio_files && grammar.learnable_sentences[0].audio_files.length > 0 && <audio
-                        src={BASE_URL + grammar.learnable_sentences[0].audio_files?.[0]}
-                        controls
-                    />}
-                </>
-            )}
+            {grammar.learnable_sentences![0].image_files && grammar.learnable_sentences![0].image_files.length > 0 && <img
+                src={BASE_URL + grammar.learnable_sentences![0].image_files?.[0]}
+                alt={grammar.learnable_sentences![0].text}
+                width={200}
+                height={200}
+            />}
             {!showAnswer && 
                 <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => setShowAnswer(!showAnswer)}>
                     Show Answer
@@ -52,11 +46,15 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
             }
             {showAnswer && grammar.learnable_sentences && grammar.learnable_sentences[0] && (
                 <article>
-                    <p className="text-sm text-gray-500">Learnable Sentence:</p>
+                    <h4 className="text-sm text-gray-500">Learnable Sentence:</h4>
+                    {grammar.learnable_sentences![0].audio_files && grammar.learnable_sentences![0].audio_files.length > 0 && <audio
+                        src={BASE_URL + grammar.learnable_sentences![0].audio_files?.[0]}
+                        controls
+                        autoPlay
+                    />}
                     <p className="text-lg font-semibold">{grammar.learnable_sentences[0].text}</p>
                 </article>
             )}
-            {showAnswer && !grammar.learnable_sentences && <Markdown>{grammar.explanation}</Markdown>}
             {showAnswer && !graded && (
                 <div className="flex flex-row space-x-4">
                     <button className="bg-green-500 text-white rounded-md p-2" onClick={() => handleGrade(true)}>

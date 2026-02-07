@@ -43,7 +43,11 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         );
 
         setShuffledPairs(newPairs);
-    }, []);
+        setRemainingPairs(pairs);
+        setAttempts(3);
+        setSelection([]);
+        setIsSuccess(false);
+    }, [exercise]);
 
     const [attempts, setAttempts] = useState<number>(3);
     const [selection, setSelection] = useState<Array<Item>>([]);
