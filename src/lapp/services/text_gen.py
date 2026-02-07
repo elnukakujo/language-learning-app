@@ -1,9 +1,16 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import logging
+logger = logging.getLogger(__name__)
 
 class TextGeneratorService:
     model_name = "Qwen/Qwen2.5-1.5B-Instruct"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
+    except:
+        logger.warning("Failed to load the Text Generator Service models...")
+        model = None
+        tokenizer = None
     
     grammar_instruct = "You are a helpful assistant which helps to generate single short example sentences using a grammar provided in a grammar sheet."
     grammar_shots = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image';
 
 import Exercise from "@/interface/features/Exercise";
@@ -21,6 +21,12 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [userAnswer, setUserAnswer] = useState<boolean>(true);
+
+    useEffect(() => {
+            setIsSubmitted(false);
+            setIsCorrect(false);
+            setUserAnswer(true);
+    }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

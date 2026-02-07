@@ -21,11 +21,14 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     const [wordsToOrganize, setWordsToOrganize] = useState<string[]>([]);
 
-    useEffect(() => {
-        setWordsToOrganize(shuffle(answer));
-    }, []);
-
     const [userAnswer, setUserAnswer] = useState<string[]>([]);
+
+    useEffect(() => {
+        setWordsToOrganize(shuffle(answer))
+        setAttempts(0);
+        setIsCorrect(false);
+        setUserAnswer([]);
+    }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
