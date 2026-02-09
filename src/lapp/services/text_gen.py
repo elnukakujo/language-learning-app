@@ -47,26 +47,22 @@ class TextGeneratorService:
 
         * 三楼 sān lóu : « Troisième étage »
         * 四层 sì céng : « Quatrième étage »""", "这是我第二次来中国。"],
-        ["""# Exprimer une distance avec 离 lí
+        ["""# Le Sie de Politesse (Formalité)
 
-        离 lí est utilisé lorsqu'on souhaite exprimer une distance entre deux points. Il peut se traduire par « par rapport à ». La structure à employer, très différente du français, est la suivante :
+        Pour marquer le respect ou s'adresser à un inconnu/adulte, on utilise la forme Sie.
+        - Le pronom **Sie** (vous formel, singulier et pluriel) s'écrit toujours avec une **majuscule**.
+        - Le verbe est toujours conjugué comme à l'infinitif (**-en**).
 
-        Lieu A + 离 + Lieu B + Adverbe + Adjectif
-
-        * 这个地方离那个地方不远 zhè gè dìfāng lí nà gè dìfāng bù yuǎn : « Cet endroit-ci n’est pas loin de cet endroit-là »
-        * 我的家离你的家不远 wǒ de jiā lí nǐ de jiā bù yuǎn : « Ma maison n’est pas loin de la tienne »
-        * 你的家离市中心远吗？nǐ de jiā lí shìzhōngxīn yuǎn ma ? : « Ta maison est-elle loin du centre-ville ? »
-        * 这里离公交车站远不远？zhè lǐ lí gōngjiāochē zhàn yuǎn bù yuǎn ? : « L’arrêt de bus est-il loin d’ici ? »
-        * 火车站离我的家比较近 huǒchē zhàn lí wǒ de jiā bǐjiào jìn : « La gare est plutôt proche de chez moi »
-        * 火车站离这儿太远了 huǒchē zhàn lí zhèr tài yuǎn le : « La gare est trop éloignée d’ici »
-        * 酒吧离我的家比较远 jiǔbā lí wǒ de jiā bǐjiào yuǎn : « Le bar est plutôt loin de chez moi »""", "这栋房子离公园不远。"]
+        | Forme | Pronom | Verbe |
+        |:-----:|:------:|:-----:|
+        | **Formelle** | **Sie** (majuscule) | ...en (Infinitif) |
+        | **Informelle** | **du** (minuscule) | ...st (2e pers. singulier) |""", "Kommen Sie bitte hierher."]
     ]
 
     vocabulary_instruct = "You are a helpful assistant which helps to generate single short example sentences using a vocabulary word provided."
     vocabulary_shots = [
         ["吃饭", "我喜欢吃中国饭。"],
-        ["学习", "我每天学习中文。"],
-        ["朋友", "我的朋友很友好。"]
+        ["Computerspiele", "Ich spiele gern Computerspiele."]
     ]
 
     calligraphy_instruct = "You are a helpful assistant which helps to generate a single example word using a character provided."
