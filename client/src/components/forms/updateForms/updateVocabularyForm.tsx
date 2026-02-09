@@ -14,10 +14,11 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
 
     const [updatedWord, setUpdatedWord] = useState<string | undefined>(vocabulary.word.word || undefined);
     const [updatedTranslation, setUpdatedTranslation] = useState<string | undefined>(vocabulary.word.translation || undefined);
-    const [updatedPhonetic, setUpdatedPhonetic] = useState<string | undefined>(vocabulary.word.phonetic || undefined);
+    const [updatedPhonetic, setUpdatedPhonetic] = useState<string | undefined>(vocabulary.word.phonetic);
     const [updatedType, setUpdatedType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
     'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
     'classifier' | 'auxiliary' | 'modal' | ''>(vocabulary.word.type || "");
+    const [updatedGender, setUpdatedGender] = useState<'m' | 'f' | 'n' | undefined>(vocabulary.word.gender);
     const [updatedWordImageUrl, setUpdatedWordImageUrl] = useState<string | undefined>(vocabulary.word.image_files?.[0] || undefined);
     const [updatedWordAudioUrl, setUpdatedWordAudioUrl] = useState<string | undefined>(vocabulary.word.audio_files?.[0] || undefined);
 
@@ -39,6 +40,7 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
           word: updatedWord!,
           translation: updatedTranslation!,
           type: updatedType as Exclude<typeof updatedType, ''>,
+          gender: updatedGender,
           phonetic: updatedPhonetic || undefined,
           image_files: updatedWordImageUrl ? [updatedWordImageUrl] : [],
           audio_files: updatedWordAudioUrl ? [updatedWordAudioUrl] : []
@@ -106,6 +108,14 @@ export default function updateVocabularyForm({ vocabulary }: { vocabulary: Vocab
             onChange={(e) => setUpdatedPhonetic(e.target.value)}
             placeholder="Enter phonetic"
             className="border border-gray-300"
+          />
+          <ClassicSelectMenu
+            label="Gender of Word"
+            options={[
+              'm', 'f', 'n'
+            ]}
+            selectedOption={updatedGender || ""}
+            onChange={(value) => setUpdatedGender(value as typeof updatedGender)}
           />
           <MediaLoader imageUrl={updatedWordImageUrl} setImageUrl={setUpdatedWordImageUrl} audioUrl={updatedWordAudioUrl} setAudioUrl={setUpdatedWordAudioUrl} />
         </span>

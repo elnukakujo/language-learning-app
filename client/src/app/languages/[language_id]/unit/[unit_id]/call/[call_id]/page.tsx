@@ -1,6 +1,5 @@
 import { BASE_URL, getElementbyId } from "@/api";
 import type Character from "@/interface/features/Calligraphy";
-import Markdown from "react-markdown";
 
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
@@ -14,7 +13,6 @@ type paramsType = {
 export default async function CalligraphyPage({ params }: { params: paramsType }) {
     const { call_id, language_id, unit_id } = await params;
     const calligraphy: Character = await getElementbyId(call_id);
-    const updatePath = `/languages/${language_id}/unit/${unit_id}/call/${call_id}/update`;
 
     return (
         <main>
@@ -32,8 +30,7 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                 <p>{calligraphy.character.character} {calligraphy.character.phonetic && <span>({calligraphy.character.phonetic})</span>} {calligraphy.character.meaning}</p>
                 {calligraphy.character.radical && <p>Radical: {calligraphy.character.radical}</p>}
                 {calligraphy.example_word && (
-                    <>
-                        <p>Example word: {calligraphy.example_word.word}</p>
+                    <span>
                         {calligraphy.example_word.image_files && calligraphy.example_word.image_files.length > 0 && <img
                             src={BASE_URL + calligraphy.example_word.image_files?.[0]}
                             alt={calligraphy.example_word.word}
@@ -44,7 +41,8 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                             src={BASE_URL + calligraphy.example_word.audio_files?.[0]}
                             controls
                         />}
-                    </>
+                        <p>Example word: {calligraphy.example_word.word}{calligraphy.example_word.translation && ` (${calligraphy.example_word.translation})`}</p>
+                    </span>
                 )}
                 <p>Score: {calligraphy.score?.toFixed(1)}/100</p>
                 <p>Last seen: {new Date(calligraphy.last_seen || 0).toLocaleDateString('en-US')}</p>

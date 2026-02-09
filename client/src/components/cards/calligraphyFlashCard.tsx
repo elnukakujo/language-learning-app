@@ -66,7 +66,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                         controls
                         autoPlay
                     />}
-                    <p>{calligraphy.example_word!.word}</p>
+                    <p>{calligraphy.example_word!.word}{calligraphy.example_word!.translation && ` (${calligraphy.example_word!.translation})`}</p>
                 </section>
             }
             {showAnswer && (

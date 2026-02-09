@@ -7,4 +7,5 @@ export default interface Word extends BaseComponent {
     'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
     'classifier' | 'auxiliary' | 'modal';
     phonetic?: string;
+    gender?: 'm' | 'f' | 'n';
 }

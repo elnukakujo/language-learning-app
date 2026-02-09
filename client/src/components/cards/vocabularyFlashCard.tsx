@@ -43,7 +43,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                 controls
                 autoPlay
             />}
-            <h2>{vocabulary.word.word}{revealPhonetic && vocabulary.word.phonetic && ` (${vocabulary.word.phonetic})`}</h2>
+            <h2>{vocabulary.word.word}{(revealPhonetic && vocabulary.word.phonetic || vocabulary.word.gender) && ` (${[revealPhonetic && vocabulary.word.phonetic, vocabulary.word.gender].filter(Boolean).join(', ')})`}</h2>
             {showAnswer && <p>{vocabulary.word.translation}</p>}
             {vocabulary.example_sentences && revealExample && (
                 <section>
@@ -58,7 +58,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                         controls
                         autoPlay
                     />}
-                    <p>{vocabulary.example_sentences[0].text}</p>
+                    <p>{vocabulary.example_sentences[0].text}{vocabulary.example_sentences[0].translation && ` (${vocabulary.example_sentences[0].translation})`}</p>
                 </section>
             )}
             {!showAnswer && <div className="flex flex-row space-x-4">

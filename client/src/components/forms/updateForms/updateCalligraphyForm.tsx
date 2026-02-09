@@ -24,6 +24,7 @@ export default function updateCalligraphyForm({ calligraphy }: { calligraphy: Ca
     const [updatedExampleWordType, setUpdatedExampleWordType] = useState<"noun" | "verb" | "adjective" | "adverb" | "pronoun"
     | "article" | "preposition" | "conjunction" | "particle" | "interjection" | "numeral" | "classifier" 
     | "auxiliary" | "modal" | "">(calligraphy.example_word?.type || "");
+    const [updatedExampleWordGender, setUpdatedExampleWordGender] = useState<"m" | "f" | "n" | undefined>(calligraphy.example_word?.gender || undefined);
     const [updatedExampleImageUrl, setUpdatedExampleImageUrl] = useState<string | undefined>(calligraphy.example_word?.image_files?.[0] || undefined);
     const [updatedExampleAudioUrl, setUpdatedExampleAudioUrl] = useState<string | undefined>(calligraphy.example_word?.audio_files?.[0] || undefined);
 
@@ -48,6 +49,7 @@ export default function updateCalligraphyForm({ calligraphy }: { calligraphy: Ca
             word: updatedExampleWord,
             translation: updatedExampleWordTranslation || "",
             type: updatedExampleWordType as Exclude<typeof updatedExampleWordType, ''>,
+            gender: updatedExampleWordGender,
             image_files: updatedExampleImageUrl ? [updatedExampleImageUrl] : [],
             audio_files: updatedExampleAudioUrl ? [updatedExampleAudioUrl] : []
           } : undefined,
@@ -124,6 +126,14 @@ export default function updateCalligraphyForm({ calligraphy }: { calligraphy: Ca
           ]}
           selectedOption={updatedExampleWordType}
           onChange={(value) => setUpdatedExampleWordType(value as typeof updatedExampleWordType)}
+        />
+        <ClassicSelectMenu
+          label="Gender of Word"
+          options={[
+            'm', 'f', 'n'
+          ]}
+          selectedOption={updatedExampleWordGender || ""}
+          onChange={(value) => setUpdatedExampleWordGender(value as typeof updatedExampleWordGender)}
         />
         <MediaLoader imageUrl={updatedExampleImageUrl} setImageUrl={setUpdatedExampleImageUrl} audioUrl={updatedExampleAudioUrl} setAudioUrl={setUpdatedExampleAudioUrl} />
       </span>

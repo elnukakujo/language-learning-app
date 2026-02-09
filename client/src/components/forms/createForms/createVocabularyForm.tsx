@@ -17,6 +17,7 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
   const [type, setType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
     'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
     'classifier' | 'auxiliary' | 'modal' | ''>("");
+  const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(undefined);
   const [wordImageUrl, setWordImageUrl] = useState<string | undefined>(undefined);
   const [wordAudioUrl, setWordAudioUrl] = useState<string | undefined>(undefined);
 
@@ -38,6 +39,7 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
         word: word,
         translation: translation,
         type: type as Exclude<typeof type, ''>,
+        gender: gender,
         phonetic: phonetic || undefined,
         image_files: wordImageUrl ? [wordImageUrl] : [],
         audio_files: wordAudioUrl ? [wordAudioUrl] : []
@@ -98,6 +100,14 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
           selectedOption={type}
           onChange={(value) => setType(value as typeof type)}
           required={true}
+        />
+        <ClassicSelectMenu
+          label="Gender of Word"
+          options={[
+            'm', 'f', 'n'
+          ]}
+          selectedOption={gender || ""}
+          onChange={(value) => setGender(value as typeof gender)}
         />
         <AutoWidthInput
           value={phonetic}

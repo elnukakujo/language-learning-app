@@ -23,6 +23,7 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
   const [exampleWordType, setExampleWordType] = useState<"noun" | "verb" | "adjective" | "adverb" | "pronoun"
   | "article" | "preposition" | "conjunction" | "particle" | "interjection" | "numeral" | "classifier" 
   | "auxiliary" | "modal" | "">("");
+  const [exampleWordGender, setExampleWordGender] = useState<"m" | "f" | "n" | undefined>(undefined);
   const [exampleImageUrl, setExampleImageUrl] = useState<string|undefined>(undefined);
   const [exampleAudioUrl, setExampleAudioUrl] = useState<string|undefined>(undefined);
 
@@ -45,8 +46,9 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
       },
       example_word: exampleWord ? {
         word: exampleWord,
-        type: exampleWordType as Exclude<typeof exampleWordType, ''>,
         translation: exampleWordTranslation || "",
+        type: exampleWordType as Exclude<typeof exampleWordType, ''>,
+        gender: exampleWordGender,
         image_files: exampleImageUrl ? [exampleImageUrl] : [],
         audio_files: exampleAudioUrl ? [exampleAudioUrl] : []
       } : undefined,
@@ -122,6 +124,14 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
           ]}
           selectedOption={exampleWordType}
           onChange={(value) => setExampleWordType(value as typeof exampleWordType)}
+        />
+        <ClassicSelectMenu
+          label="Gender of Word"
+          options={[
+            'm', 'f', 'n'
+          ]}
+          selectedOption={exampleWordGender || ""}
+          onChange={(value) => setExampleWordGender(value as typeof exampleWordGender)}
         />
         <MediaLoader imageUrl={exampleImageUrl} setImageUrl={setExampleImageUrl} audioUrl={exampleAudioUrl} setAudioUrl={setExampleAudioUrl} />
       </span>

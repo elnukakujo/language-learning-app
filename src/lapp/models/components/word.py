@@ -10,6 +10,7 @@ class Word(BaseComponentModel):
     translation = Column(String(500), nullable=False)
     phonetic = Column(String(255), nullable=True)
     type = Column(String(100), nullable=True)  # e.g., noun, verb, adjective
+    gender = Column(String(50), nullable=True)  # e.g., masculine, feminine, neuter
     
     # Relationship
     vocabulary = relationship('Vocabulary', back_populates='word')      # One to Many
@@ -21,7 +22,8 @@ class Word(BaseComponentModel):
             "word": self.word,
             "translation": self.translation,
             "phonetic": self.phonetic,
-            "type": self.type
+            "type": self.type,
+            "gender": self.gender
         }
         if include_relations:
             base_dict.update({

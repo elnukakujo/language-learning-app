@@ -52,7 +52,7 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
                         controls
                         autoPlay
                     />}
-                    <p className="text-lg font-semibold">{grammar.learnable_sentences[0].text}</p>
+                    <p className="text-lg font-semibold">{grammar.learnable_sentences[0].text}{grammar.learnable_sentences[0].translation && ` (${grammar.learnable_sentences[0].translation})`}</p>
                 </article>
             )}
             {showAnswer && !graded && (

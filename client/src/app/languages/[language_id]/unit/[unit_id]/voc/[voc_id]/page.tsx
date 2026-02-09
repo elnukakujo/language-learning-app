@@ -10,11 +10,6 @@ export default async function VocabularyPage({ params }: { params: { language_id
     return (
         <main>
             <article>    
-                <h1>{vocabulary.word.word} {vocabulary.word.phonetic && <span>({vocabulary.word.phonetic})</span>} {vocabulary.word.translation}</h1>
-                {vocabulary.example_sentences && vocabulary.example_sentences[0] && (
-                    <p>Example sentence: {vocabulary.example_sentences[0].text}</p>
-                )}
-                <p>Type: {vocabulary.word.type || "N/A"}</p>
                 {vocabulary.word.image_files && vocabulary.word.image_files.length > 0 && <img
                     src={BASE_URL + (vocabulary.word.image_files?.[0] || "")}
                     alt={vocabulary.word.word}
@@ -25,6 +20,23 @@ export default async function VocabularyPage({ params }: { params: { language_id
                     src={BASE_URL + (vocabulary.word.audio_files?.[0] || "")}
                     controls
                 />}
+                <h1>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.gender) && `(${[vocabulary.word.phonetic, vocabulary.word.gender].filter(v => v).join(', ')})`} {vocabulary.word.translation}</h1>
+                {vocabulary.example_sentences && vocabulary.example_sentences[0] && (
+                    <span>
+                        {vocabulary.example_sentences[0].image_files && vocabulary.example_sentences[0].image_files.length > 0 && <img
+                            src={BASE_URL + (vocabulary.example_sentences[0].image_files?.[0] || "")}
+                            alt={vocabulary.example_sentences[0].text}
+                            width={200}
+                            height={200}
+                        />}
+                        {vocabulary.example_sentences[0].audio_files && vocabulary.example_sentences[0].audio_files.length > 0 && <audio
+                            src={BASE_URL + (vocabulary.example_sentences[0].audio_files?.[0] || "")}
+                            controls
+                        />}
+                        <p>Example sentence: {vocabulary.example_sentences[0].text}{vocabulary.example_sentences[0].translation && `(${vocabulary.example_sentences[0].translation})`}</p>
+                    </span>
+                )}
+                <p>Type: {vocabulary.word.type || "N/A"}</p>
                 <p>Score: {vocabulary.score?.toFixed(1)}/100</p>
                 <p>Last seen: {new Date(vocabulary.last_seen || 0).toLocaleDateString('en-US')}</p>
             </article>

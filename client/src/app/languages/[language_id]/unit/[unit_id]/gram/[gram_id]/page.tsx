@@ -38,7 +38,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                                         src={BASE_URL + sentence.audio_files?.[0]}
                                         controls
                                         />}
-                                    <p>{sentence.text}</p>
+                                    <p>{sentence.text}{sentence.translation && ` (${sentence.translation})`}</p>
                                 </li>
                             ))}
                         </ul>
@@ -51,7 +51,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                 <NavButton path={`/languages/${language_id}/unit/${unit_id}/gram/${gram_id}/update`}>
                     Update the Grammar
                 </NavButton>
-                <DeleteButton element_id={grammar.id}>
+                <DeleteButton element_id={grammar.id!}>
                     Delete Grammar
                 </DeleteButton>
             </nav>
