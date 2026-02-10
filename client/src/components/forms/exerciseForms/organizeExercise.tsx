@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import shuffle from 'lodash/shuffle';
 
 import Exercise from "@/interface/features/Exercise";
@@ -45,7 +46,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <Markdown>Organize the following words/characters sequence</Markdown>
+            <h1>Organize the following words/characters sequence</h1>
             {(!isCorrect && attempts < 3) && (
                 <>
                     <div className="flex flex-wrap space-x-2">
@@ -62,7 +63,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                     </div>
                     {text_support && (
                         <>
-                            {text_support && <Markdown>{text_support}</Markdown>}
+                            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
                             {image_support && image_support.map((imgSrc, index) => (
                                 <Image 
                                     key={index}

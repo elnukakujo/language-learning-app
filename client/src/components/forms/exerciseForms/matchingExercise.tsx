@@ -4,6 +4,7 @@ import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BASE_URL, updateScoreById } from "@/api";
 import shuffle from 'lodash/shuffle';
 
@@ -98,7 +99,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         <form className="flex flex-col space-y-4">
             <h1>Match the pairs</h1>
 
-            {text_support && <Markdown>{text_support}</Markdown>}
+            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
             {image_support && image_support.map((imgSrc, index) => (
                 <Image 
                     key={index}

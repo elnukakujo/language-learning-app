@@ -290,6 +290,8 @@ class GrammarService:
                         new_sentences.append(passage)
                 
                 existing.learnable_sentences = new_sentences
+            else:
+                existing.learnable_sentences = []
             
             # Only update fields that were provided (partial updates)
             update_data = data.model_dump(exclude_unset=True, exclude_none=True)

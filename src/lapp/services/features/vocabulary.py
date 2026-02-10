@@ -337,6 +337,8 @@ class VocabularyService:
                         new_sentences.append(passage)
                 
                 existing.example_sentences = new_sentences
+            else:
+                existing.example_sentences = []
             
             # Update other fields that were provided (excluding word and example_sentences as they're handled above)
             update_data = data.model_dump(exclude_unset=True, exclude_none=True)

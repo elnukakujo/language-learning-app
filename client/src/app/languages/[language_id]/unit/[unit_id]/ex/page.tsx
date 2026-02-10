@@ -3,6 +3,7 @@ import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default async function ExercisesPage({ params }: { params: { language_id: string, unit_id: string } }){
     const { language_id, unit_id } = await params;
@@ -27,7 +28,7 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                         <ul>
                             {exercises.map((exercise, index) => (
                                 <li key={index}>
-                                    <Markdown>{exercise.question}</Markdown>
+                                    <Markdown remarkPlugins={[remarkGfm]}>{exercise.question}</Markdown>
                                     <p>Score: {exercise.score?.toFixed(2)}/100</p>
                                     <nav className="flex flex-row space-x-2">
                                         <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>
@@ -36,7 +37,7 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                                         <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}/update`}>
                                             <p>Update the Exercise</p>
                                         </NavButton>
-                                        <DeleteButton element_id={exercise.id}>
+                                        <DeleteButton element_id={exercise.id!}>
                                             <p>Delete Exercise</p>
                                         </DeleteButton>
                                     </nav>

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Image from 'next/image';
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import Exercise from "@/interface/features/Exercise";
 import TrueFalseInput from "@/components/input/trueFalseInput";
-
 import { BASE_URL, updateScoreById } from "@/api";
-import Markdown from "react-markdown";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -44,9 +44,9 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         <form className="flex flex-col space-y-4">
             <h3>Answer with true or false to the following statement:</h3>
             {question && (
-                <Markdown>{question}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
             )}
-            {text_support && <Markdown>{text_support}</Markdown>}
+            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
             {image_support && image_support.map((imgSrc, index) => (
                 <Image 
                     key={index}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import type Exercise from "@/interface/features/Exercise";
 import { BASE_URL, updateScoreById } from "@/api";
@@ -25,8 +26,8 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4">
-            {question && <Markdown>{question}</Markdown>}
-            {text_support && <Markdown>{text_support}</Markdown>}
+            {question && <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>}
+            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
             {image_support && image_support.map((imgSrc, index) => (
                 <Image 
                     key={index}

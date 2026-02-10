@@ -308,6 +308,8 @@ class CalligraphyService:
                     if new_word:
                         existing.example_word_id = new_word.id
                         existing.example_word = new_word
+            else:
+                existing.example_word = []
             
             # Only update fields that were provided (partial updates)
             update_data = data.model_dump(exclude_unset=True, exclude_none=True)

@@ -1,7 +1,5 @@
 "use client";
 
-import Markdown from "react-markdown";
-
 import type Grammar from "@/interface/features/Grammar";
 import { useEffect, useState } from "react";
 import { BASE_URL, updateScoreById } from "@/api";

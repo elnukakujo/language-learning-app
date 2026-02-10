@@ -31,49 +31,10 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
     const [updatedSupportText, setUpdatedSupportText] = useState<string | undefined>(exercise.text_support || undefined);
     const [updatedImageUrl, setUpdatedImageUrl] = useState<string | undefined>(exercise.image_files ? exercise.image_files[0] : undefined);
     const [updatedAudioUrl, setUpdatedAudioUrl] = useState<string | undefined>(exercise.audio_files ? exercise.audio_files[0] : undefined);
-  
-    useEffect(() => {
-      console.log(updatedImageUrl)
-    }, [updatedImageUrl]);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.vocabulary_ids || []);
     const [callAssociated, setCallAssociated] = useState<string[]>(exercise.calligraphy_ids || []);
     const [gramAssociated, setGramAssociated] = useState<string[]>(exercise.grammar_ids || []);
-    
-    useEffect(() => {
-      switch (updatedExerciseType) {
-        case "translate":
-          setUpdatedQuestion("A sentence to translate");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("The translation");
-          break;
-        case "fill_in_the_blank":
-          setUpdatedQuestion("The house is __ and __.");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("big__small");
-          break;
-        case "essay":
-          setUpdatedQuestion("Write here some requirements about the essay, and details");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("Some helps and tips to write the essay");
-          break;
-        case "true_false":
-          setUpdatedQuestion("A statement to evaluate");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("true");
-          break;
-        case "answering":
-          setUpdatedQuestion("A question to answer");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("The answer to the question");
-          break;
-        default:
-          setUpdatedQuestion("");
-          setUpdatedSupportText("");
-          setUpdatedAnswer("");
-          break;
-      }
-    }, [updatedExerciseType]); 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -85,11 +46,11 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
       
       const element: Exercise = {
         exercise_type: updatedExerciseType as Exclude<typeof updatedExerciseType, "">,
-        question: updatedQuestion!,
+        question: updatedQuestion || "",
         text_support: updatedSupportText || undefined,
         image_files: updatedImageUrl ? [updatedImageUrl] : [],
         audio_files: updatedAudioUrl ? [updatedAudioUrl] : [],
-        answer: updatedAnswer!,
+        answer: updatedAnswer || "",
         unit_id: exercise.unit_id,
         vocabulary_ids: vocAssociated,
         grammar_ids: gramAssociated,

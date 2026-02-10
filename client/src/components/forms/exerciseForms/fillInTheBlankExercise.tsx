@@ -5,6 +5,7 @@ import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({exercise}: { exercise: Exercise }) {
@@ -73,7 +74,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
     <form className="flex flex-col space-y-4">
         <h1>Fill in the blanks</h1>
 
-        {text_support && <Markdown>{text_support}</Markdown>}
+        {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
         {image_support && image_support.map((imgSrc, index) => (
             <Image 
                 key={index}
@@ -93,10 +94,10 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
                   className="mt-2"
               />
           ))}
-        <p className="flex flex-row space-x-2 flex-wrap">
+        <div className="flex flex-row space-x-2 flex-wrap">
           {parts.map((part, index) => (
             <span key={index} className="flex flex-row space-x-2">
-              {part}
+              <Markdown remarkPlugins={[remarkGfm]}>{part}</Markdown>
               {index < parts.length - 1 && (
                 <AutoWidthInput
                   value={userAnswers[index]}
@@ -113,7 +114,7 @@ export default function FillInTheBlankExercise({exercise}: { exercise: Exercise 
               )}
             </span>
           ))}
-        </p>
+        </div>
 
         {!isSubmitted || !isCorrect.every(val => val) ? (
           <button 

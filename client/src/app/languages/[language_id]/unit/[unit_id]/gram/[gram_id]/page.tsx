@@ -1,6 +1,7 @@
 import { BASE_URL, getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
@@ -20,7 +21,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
         <main>
             <section>
                 <h1>{grammar.title}</h1>
-                <Markdown>{grammar.explanation}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{grammar.explanation}</Markdown>
 
                 {grammar.learnable_sentences && grammar.learnable_sentences.length > 0 && (
                     <div>
