@@ -29,7 +29,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     
     # Create app with specified environment
@@ -48,3 +48,6 @@ if __name__ == '__main__':
         port=args.port,
         debug=app.config.get('DEBUG', False)
     )
+
+if __name__ == '__main__':
+    main()
