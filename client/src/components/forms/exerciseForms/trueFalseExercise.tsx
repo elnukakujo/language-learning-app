@@ -42,29 +42,45 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     return (
         <form className="flex flex-col space-y-4">
-            <h3>Answer with true or false to the following statement:</h3>
-            {question && (
+            <h3>True or False</h3>
+            <span>
+                <h3>Question:</h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
+            </span>
+            {text_support.trim() !== "" && (
+                <span>
+                    <h3>Text Support: </h3> 
+                    <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
+                </span>
             )}
-            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
-            {image_support && image_support.map((imgSrc, index) => (
-                <Image 
-                    key={index}
-                    src={`${BASE_URL}${imgSrc}`} 
-                    alt="Support" 
-                    className="mt-2" 
-                    width={300}
-                    height={300}
-                />
-            ))}
-            {audio_support && audio_support.map((audioSrc, index) => (
-                <audio 
-                    key={index}
-                    src={`${BASE_URL}${audioSrc}`}
-                    controls
-                    className="mt-2"
-                />
-            ))}
+            {image_support && image_support.length > 0 && (
+                <span>
+                    <h3>Image Support: </h3>
+                    {image_support.map((imgSrc, index) => (
+                    <Image 
+                        key={index}
+                        src={`${BASE_URL}${imgSrc}`} 
+                        alt="Support" 
+                        className="mt-2" 
+                        width={300}
+                        height={300}
+                    />
+                    ))}
+                </span>
+            )}
+            {audio_support && audio_support.length > 0 && (
+                <span>
+                    <h3>Audio Support: </h3>
+                    {audio_support.map((audioSrc, index) => (
+                        <audio 
+                            key={index}
+                            src={`${BASE_URL}${audioSrc}`}
+                            controls
+                            className="mt-2"
+                        />
+                    ))}
+                </span>
+            )}
             {!isSubmitted && (
                 <>
                     <TrueFalseInput

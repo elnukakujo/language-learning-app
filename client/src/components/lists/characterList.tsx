@@ -14,6 +14,8 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
 
     const averageScore = callProps.reduce((acc, item) => acc + item.score!, 0) / callProps.length;
 
+    callProps.sort((a, b) => (a.score || 0) - (b.score || 0));
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>
@@ -26,7 +28,7 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
                 )}
             </header>
             {callProps.length === 0 ? <p>Empty</p> :
-                <ul className="list-item pl-5 space-y-1">
+                <ul className="list-item pl-5 space-y-1 list-none">
                     {callProps.map((item, index) => (
                         <li key={index}>
                             <button onClick={() => handleClick(item.id!)}>

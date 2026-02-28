@@ -31,10 +31,6 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
-    useEffect(() => {
-      console.log(imageUrl)
-    }, [imageUrl]);
-
     const [vocAssociated, setVocAssociated] = useState<string[]>([]);
     const [callAssociated, setCallAssociated] = useState<string[]>([]);
     const [gramAssociated, setGramAssociated] = useState<string[]>([]);

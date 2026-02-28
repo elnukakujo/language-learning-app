@@ -46,57 +46,73 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h1>Organize the following words/characters sequence</h1>
+            <h1>Organizing Exercise</h1>
             {(!isCorrect && attempts < 3) && (
                 <>
-                    <div className="flex flex-wrap space-x-2">
-                        {wordsToOrganize.map((word, index) => (
-                            <button 
-                                type="button"
-                                key={index} 
-                                onClick={() => setUserAnswer(prev => [...prev, word])} 
-                                className="border p-2 rounded"
-                            >
-                                {word.trim()}
-                            </button>
-                        ))}
-                    </div>
-                    {text_support && (
-                        <>
-                            {text_support && <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>}
-                            {image_support && image_support.map((imgSrc, index) => (
-                                <Image 
+                    {text_support.trim() !== "" && (
+                        <span>
+                            <h3>Text Support: </h3> 
+                            <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
+                        </span>
+                    )}
+                    {image_support && image_support.length > 0 && (
+                        <span>
+                            <h3>Image Support: </h3>
+                            {image_support.map((imgSrc, index) => (
+                            <Image 
+                                key={index}
+                                src={`${BASE_URL}${imgSrc}`} 
+                                alt="Support" 
+                                className="mt-2" 
+                                width={300}
+                                height={300}
+                            />
+                            ))}
+                        </span>
+                    )}
+                    {audio_support && audio_support.length > 0 && (
+                        <span>
+                            <h3>Audio Support: </h3>
+                            {audio_support.map((audioSrc, index) => (
+                                <audio 
                                     key={index}
-                                    src={`${BASE_URL}${imgSrc}`} 
-                                    alt="Support" 
-                                    className="mt-2" 
-                                    width={300}
-                                    height={300}
+                                    src={`${BASE_URL}${audioSrc}`}
+                                    controls
+                                    className="mt-2"
                                 />
                             ))}
-                        </> 
+                        </span>
                     )}
-                    {audio_support && audio_support.map((audioSrc, index) => (
-                        <audio 
-                            key={index}
-                            src={`${BASE_URL}${audioSrc}`}
-                            controls
-                            className="mt-2"
-                        />
-                    ))}
-                    <label htmlFor="userAnswer">Your Answer:</label>
-                    <div className="flex flex-wrap space-x-2">
-                        {userAnswer.map((word, index) => (
-                            <button 
-                                type="button" 
-                                key={index} 
-                                className="border p-2 rounded cursor-pointer"
-                                onClick={() => setUserAnswer(prev => prev.filter((_, i) => i !== index))}
-                            >
-                                {word}
-                            </button>
-                        ))}
-                    </div>
+                    <span>
+                        <h3>Words to Organize:</h3>
+                        <div className="flex flex-wrap space-x-2">
+                            {wordsToOrganize.map((word, index) => (
+                                <button 
+                                    type="button"
+                                    key={index} 
+                                    onClick={() => setUserAnswer(prev => [...prev, word])} 
+                                    className="border p-2 rounded"
+                                >
+                                    {word.trim()}
+                                </button>
+                            ))}
+                        </div>
+                    </span>
+                    <span>
+                        <h3>Your answer: </h3>
+                        <div className="flex flex-wrap space-x-2">
+                            {userAnswer.map((word, index) => (
+                                <button 
+                                    type="button" 
+                                    key={index} 
+                                    className="border p-2 rounded cursor-pointer"
+                                    onClick={() => setUserAnswer(prev => prev.filter((_, i) => i !== index))}
+                                >
+                                    {word}
+                                </button>
+                            ))}
+                        </div>
+                    </span>
                     <button 
                         type="submit" 
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"

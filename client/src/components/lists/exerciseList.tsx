@@ -34,7 +34,7 @@ export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
                 )}
             </header>
             {exProps.length === 0 ? <p>Empty</p> :
-                <ul className="list-item pl-5 space-y-1">
+                <ul className="list-item pl-5 space-y-1 list-none">
                     {Object.entries(groupedExercises).map(([type, exercises], index) => (
                         <li key={index}>
                             <button onClick={handleClick}>

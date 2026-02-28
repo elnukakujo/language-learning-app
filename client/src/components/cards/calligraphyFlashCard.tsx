@@ -11,7 +11,6 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
 
     useEffect(() => {
         calligraphy = calligraphies[currentIndex];
-        console.log("Current Calligraphy:", calligraphy);
     }, [currentIndex]);
         
     const [showAnswer, setShowAnswer] = useState<boolean>(false);

@@ -15,6 +15,8 @@ export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
 
     const averageScore = vocProps.reduce((acc, item) => acc + item.score!, 0) / vocProps.length;
 
+    vocProps.sort((a, b) => (a.score || 0) - (b.score || 0));
+
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
             <header>
@@ -27,7 +29,7 @@ export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
                 )}
             </header>
             {vocProps.length === 0 ? <p>Empty</p> :
-                <ul className="list-item pl-5 space-y-1">
+                <ul className="list-item pl-5 space-y-1 list-none">
                     {vocProps.map((item, index) => (
                         <li key={index}>
                             <button onClick={() => handleClick(item.id!)}>

@@ -13,6 +13,7 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
     };
 
     const averageScore = gramProps.reduce((acc, item) => acc + item.score!, 0) / gramProps.length;
+    gramProps.sort((a, b) => (a.score || 0) - (b.score || 0));
 
     return (
         <section className="flex flex-col gap-4 w-[14rem]">
@@ -26,7 +27,7 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
                 )}
             </header>
             {gramProps.length === 0 ? <p>Empty</p> :
-                <ul className="list-item pl-5 space-y-1">
+                <ul className="list-item pl-5 space-y-1 list-none">
                     {gramProps.map((item, index) => (
                         <li key={index}>
                             <button onClick={() => handleClick(item.id!)}>
