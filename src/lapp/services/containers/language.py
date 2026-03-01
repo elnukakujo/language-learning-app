@@ -79,7 +79,7 @@ class LanguageService:
                 session=session
             )
             for unit in units:
-                if unit.score < score_threshold:
+                if unit.score < score_threshold*100:
                     return unit.id
             return units[-1].id if units else None
         except Exception as e:
@@ -418,9 +418,9 @@ class LanguageService:
             
             # Update last_seen
             language.last_seen = date.today()
-            language.current_unit = self._check_current_unit(
-                language=language,
-                current_unit_id=language.current_unit,
+            language.current_unit = self._find_current_unit(
+                language_id=language.id,
+                score_threshold=0.75,
                 session=session
             )
             
