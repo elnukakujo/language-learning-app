@@ -1,5 +1,8 @@
 from datetime import date
 from typing import Optional
+from lapp.utils import load_spacy_model
+from sentence_transformers import SentenceTransformer
+from scipy.spatial.distance import cosine
 
 from sqlalchemy.orm import Session
 
@@ -9,7 +12,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.features import ExerciseDict
 from ...models.features import Exercise
 from ...core.database import db_manager
-from ...utils import update_score
+from ...utils import update_score, get_language_name
 from ..containers import UnitService
 from .calligraphy import CalligraphyService
 from .vocabulary import VocabularyService
@@ -503,6 +506,121 @@ class ExerciseService:
             if owns_session:
                 session.rollback()
             logger.error(f"Failed to update Exercise score for {ex_id}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
+    
+    def evaluate_translation(
+        self,
+        ex_id: str,
+        user_translation: str,
+        threshold: float = 0.8,
+        session: Optional[Session] = None
+    ) -> bool:
+        """
+        Evaluate user's translation answer for an Exercise item.
+        
+        Args:
+            ex_id: The ID of the Exercise item to evaluate
+            user_translation: The user's translation answer to evaluate
+        Returns:
+            True if the translation is correct, False otherwise
+        """
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+        
+        try:
+            exercise = self.get_by_id(ex_id, session=session)
+            
+            if not exercise:
+                logger.warning(f"Exercise item not found: {ex_id}")
+                return False
+            
+            if not exercise.exercise_type == 'translate':
+                logger.warning(f"Exercise item {ex_id} is not a translation exercise")
+                return False
+            
+            correct_translation = exercise.answer
+            logger.info(f"Evaluating translation for Exercise {ex_id}. User answer: '{user_translation}', Correct answer: '{correct_translation}'")
+
+            # Use sentence transformer to evaluate similarity
+            model = SentenceTransformer('all-MiniLM-L6-v2')
+            embeddings = model.encode([user_translation, correct_translation])
+
+            similarity = float(1-cosine(u = embeddings[0], v = embeddings[1]))
+            logger.info(f"Calculated similarity for Exercise {ex_id}: {similarity}")
+
+            language_code = get_language_name(correct_translation)
+            logger.info(f"Detected language: {language_code}")
+
+            tokens = []
+            try:
+                nlp = load_spacy_model(language_code)
+
+                user_doc = nlp(user_translation)
+                correct_doc = nlp(correct_translation)
+
+                user_tokens = [t for t in user_doc if not t.is_punct and not t.is_space]
+                correct_tokens = [t for t in correct_doc if not t.is_punct and not t.is_space]
+
+                for u_tok in user_tokens:
+                    best_sim = -1.0
+                    best_idx: int | None = None
+
+                    for i, c_tok in enumerate(correct_tokens):
+                        if u_tok.text.lower() == c_tok.text.lower():
+                            best_sim = 1.0
+                            best_idx = i
+                            break
+
+                        if u_tok.has_vector and c_tok.has_vector:
+                            sim = u_tok.similarity(c_tok)
+                            if sim > best_sim:
+                                best_sim = sim
+                                best_idx = i
+
+                    if best_sim >= 0.95:
+                        tokens.append(
+                            {
+                                "word": u_tok.text,
+                                "status": "correct"
+                            }
+                        )
+                    elif best_sim >= 0.5:
+                        tokens.append(
+                            {
+                                "word": u_tok.text,
+                                "status": "close",
+                                "expected": correct_tokens[best_idx].text if best_idx is not None else None
+                            }
+                        )
+                    else:
+                        tokens.append(
+                            {
+                                "word": u_tok.text,
+                                "status": "wrong"
+                            }
+                        )
+
+            except Exception as e:
+                logger.warning(f"Failed to tokenize translation for Exercise {ex_id}: {e}")
+
+            if similarity > threshold:
+                correct = True
+            else:
+                correct = False
+
+            return {
+                "score": similarity,
+                "correct": correct,
+                "tokens": tokens,
+            }
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to evaluate translation for Exercise {ex_id}: {e}")
             raise
         finally:
             if owns_session:

@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Ring } from 'ldrs/react'
+import 'ldrs/react/Ring.css'
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import Exercise from "@/interface/features/Exercise";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
-import { BASE_URL, updateScoreById } from "@/api";
+import { BASE_URL, updateScoreById, evaluateTranslation } from "@/api";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const question = exercise.question || "";
@@ -16,12 +18,12 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const image_support = exercise.image_files || "";
     const audio_support = exercise.audio_files || "";
     
-    const normalize = (str: string) => str.toLowerCase();
-    
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [userAnswer, setUserAnswer] = useState<string>('');
+
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
         setIsSubmitted(false);
@@ -32,17 +34,25 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitted(true);
-        if (normalize(userAnswer) === normalize(answer)) {
-            setIsCorrect(true);
-            updateScoreById(exercise.id!, true).catch(console.error);
-        } else {
-            setAttempts(prev => prev + 1);
-            if (attempts >= 2) {
+        setIsLoading(true);
 
-                updateScoreById(exercise.id!, false).catch(console.error);
+        evaluateTranslation(exercise.id!, userAnswer).then((result) => {
+            console.log("Evaluation result:", result);
+            if (result.exercise.correct === true) {
+                setIsCorrect(true);
+                updateScoreById(exercise.id!, true).catch(console.error);
+            } else {
+                setAttempts(prev => prev + 1);
+                if (attempts >= 2) {
+                    updateScoreById(exercise.id!, false).catch(console.error);
+                }
             }
-        };
+            setIsLoading(false);
+            setIsSubmitted(true);
+        }).catch((error) => {
+            setIsLoading(false);
+            console.error("Error evaluating translation:", error);
+        });
     };
 
     return (
@@ -98,9 +108,20 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
                     type="button" 
                     onClick={handleSubmit}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    disabled={isSubmitted && isCorrect}
+                    disabled={isSubmitted && isCorrect || isLoading}
                 >
-                    {isSubmitted ? 'Try Again' : 'Check Answers'}
+                    {isLoading ? (
+                        <Ring
+                            size="24"
+                            stroke="2"
+                            bgOpacity="0"
+                            speed="3"
+                            color="white" 
+                        />
+                    )
+                    : (
+                        <p>Check Answers</p>
+                    )}
                 </button>
             ) : null}
 

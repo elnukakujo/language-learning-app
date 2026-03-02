@@ -300,6 +300,16 @@ export async function deleteExercise(exerciseId: string) {
   if (!res.ok) throw new Error("Failed to delete exercise");
 }
 
+export async function evaluateTranslation(exerciseId: string, userTranslation: string) {
+  const res = await fetch(`${BASE_URL}/api/exercise/evaluate/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ exercise_id: exerciseId, user_translation: userTranslation }),
+  });
+  if (!res.ok) throw new Error("Failed to evaluate translation");
+  return res.json();
+}
+
 export async function updateScoreById(elementId: string, success: boolean) {
   let endpoint = "";
   let payload: Record<string, string> = {};
@@ -328,6 +338,7 @@ export async function updateScoreById(elementId: string, success: boolean) {
   if (!res.ok) throw new Error("Failed to update score");
   return res.json();
 }
+
 
 // ============= Media API =============
 export async function uploadImage(file: File) {
