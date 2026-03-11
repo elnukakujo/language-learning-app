@@ -120,8 +120,8 @@ I wanted a lightweight system for managing my language-learning material without
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/vocabulary-dbms.git
-cd vocabulary-dbms
+git clone https://github.com/elnukakujo/language-learning-app.git
+cd language-learning-app
 ```
 
 ### 2. Install backend dependencies
@@ -145,7 +145,7 @@ cd ..
 ### 4. Start the backend
 
 ```bash
-uv run server --env dev --host 127.0.0.1 --port 5000
+uv run server --env prod --host 127.0.0.1 --port 5000
 ```
 
 The API will be available at `http://127.0.0.1:5000`.
@@ -194,16 +194,4 @@ Common operations include listing by language or unit, fetching a single item, c
 - Personal language-course organization
 - Interactive study flows from stored content
 - Local-first media and backup handling
-- AI-assisted sentence and audio generation
-
-## Future improvements
-
-- Stronger onboarding and seed data
-- Containerized local setup
-- Better automated tests for API and UI flows
-- More robust production deployment story
-- Smarter review scheduling and analytics
-
-## License
-
-No license has been added yet.
+- AI-assisted sentence and audio generation, as well as translation evaluation
