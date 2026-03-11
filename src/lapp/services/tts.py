@@ -7,7 +7,7 @@ import torch
 import soundfile as sf
 from qwen_tts import Qwen3TTSModel
 
-from ..utils import detect_language
+from ..utils import get_language_name
 
 logger = logging.getLogger(__name__)
 
@@ -88,11 +88,14 @@ class TTSService:
         
         try:
             logger.info(f"Generating TTS for: {text_list}")
+
+            language_code, language_name = get_language_name(text_list[0])
+            logger.info(f"Detected language: {language_name} ({language_code}) for text: '{text_list[0]}'")
             
             wavs, sr = self.model.generate_custom_voice(
                 text=text_list,
                 speaker="Vivian",
-                language=detect_language(text_list[0])
+                language=language_name.lower() if language_name.lower() != "unknown" else None,
             )
             
             generated_paths = []

@@ -1,3 +1,6 @@
+import Markdown from "react-markdown";
+import { remarkGfm } from "remark-gfm";
+
 import { getUnitData, getVocabularyByUnit, getGrammarByUnit, getCalligraphyByUnit, getExercisesByUnit } from "@/api";
 import VocabularyList from "@/components/lists/vocabularyList";
 import GrammarList from "@/components/lists/grammarList";
@@ -13,6 +16,7 @@ import type Exercise from "@/interface/features/Exercise";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 
+
 export default async function Unit({ params }: { params: { language_id: string, unit_id: string } }) {
     const { language_id, unit_id } = await params;
     const unit: Unit = await getUnitData(unit_id);
@@ -26,7 +30,7 @@ export default async function Unit({ params }: { params: { language_id: string, 
         <main className="flex flex-col gap-8">
             <header>
                 <h1>{unit.title}</h1>
-                <p>{unit.description}</p>
+                <Markdown remarkPlugins={remarkGfm}>{unit.description}</Markdown>
                 <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
                 <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
                 <nav className="flex flex-row space-x-4">

@@ -24,6 +24,8 @@ vocabulary_service = VocabularyService()
 grammar_service = GrammarService()
 
 class ExerciseService:
+    evaluator_model = SentenceTransformer('all-MiniLM-L6-v2')
+
     def _serialize(self, exercise: Exercise | None, as_dict: bool, include_relations: bool) -> Exercise | dict | None:
         if not as_dict or exercise is None:
             return exercise
@@ -546,13 +548,12 @@ class ExerciseService:
             logger.info(f"Evaluating translation for Exercise {ex_id}. User answer: '{user_translation}', Correct answer: '{correct_translation}'")
 
             # Use sentence transformer to evaluate similarity
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            embeddings = model.encode([user_translation, correct_translation])
+            embeddings = self.evaluator_model.encode([user_translation, correct_translation])
 
             similarity = float(1-cosine(u = embeddings[0], v = embeddings[1]))
             logger.info(f"Calculated similarity for Exercise {ex_id}: {similarity}")
 
-            language_code = get_language_name(correct_translation)
+            language_code, _ = get_language_name(correct_translation)
             logger.info(f"Detected language: {language_code}")
 
             tokens = []

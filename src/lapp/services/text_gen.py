@@ -6,9 +6,9 @@ class TextGeneratorService:
     model_name = "Qwen/Qwen2.5-1.5B-Instruct"
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
-    except:
-        logger.warning("Failed to load the Text Generator Service models...")
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", dtype="auto")
+    except Exception as e:
+        logger.warning(f"Failed to load the Text Generator Service models: {e}...")
         model = None
         tokenizer = None
     
@@ -82,6 +82,9 @@ class TextGeneratorService:
         Returns:
             A single short example sentence that illustrates the grammar point.
         """
+        if not self.model or not self.tokenizer:
+            logger.warning("Text Generator Service is not available. Returning empty string.")
+            return ""
 
         messages = [
             {"role": "system", "content": self.grammar_instruct}

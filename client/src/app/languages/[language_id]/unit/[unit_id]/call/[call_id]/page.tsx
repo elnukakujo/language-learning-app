@@ -24,7 +24,7 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                     height={200}
                     />}
                 {calligraphy.character.audio_files && calligraphy.character.audio_files.length > 0 && <audio
-                    src={BASE_URL + calligraphy.character.audio_files?.[0]}
+                    src={BASE_URL + calligraphy.character.audio_files[0]}
                     controls
                     />}
                 <p>{calligraphy.character.character} {calligraphy.character.phonetic && <span>({calligraphy.character.phonetic})</span>} {calligraphy.character.meaning}</p>
@@ -32,13 +32,13 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                 {calligraphy.example_word && (
                     <span>
                         {calligraphy.example_word.image_files && calligraphy.example_word.image_files.length > 0 && <img
-                            src={BASE_URL + calligraphy.example_word.image_files?.[0]}
+                            src={BASE_URL + calligraphy.example_word.image_files[0]}
                             alt={calligraphy.example_word.word}
                             width={200}
                             height={200}
-                            />}
+                        />}
                         {calligraphy.example_word.audio_files && calligraphy.example_word.audio_files.length > 0 && <audio
-                            src={BASE_URL + calligraphy.example_word.audio_files?.[0]}
+                            src={BASE_URL + calligraphy.example_word.audio_files[0]}
                             controls
                         />}
                         <p>Example word: {calligraphy.example_word.word}{calligraphy.example_word.translation && ` (${calligraphy.example_word.translation})`}</p>

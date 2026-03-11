@@ -109,7 +109,6 @@ class BaseFeatureModel(BaseContainerModel):
                 # Store normalized path (with forward slashes) in database
                 valid_files.append(normalized_path)
         
-        logger.info(valid_files)
         return valid_files
     
 class BaseComponentModel(Base):
@@ -173,5 +172,4 @@ class BaseComponentModel(Base):
                 # Store normalized path (with forward slashes) in database
                 valid_files.append(normalized_path)
         
-        logger.info(valid_files)
         return valid_files
