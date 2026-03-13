@@ -86,7 +86,7 @@ export default function AudioRecorder({ onUploadSuccess, onUploadError }: AudioR
                 const file = new File([wavBlob], "recording.wav", { type: "audio/wav" });
                 setStatus("uploading");
 
-                uploadAudio(file)
+                uploadAudio(file, true)
                     .then((res) => { setStatus("done");  onUploadSuccess?.(res); })
                     .catch((err) => { setStatus("error"); onUploadError?.(err);  });
 

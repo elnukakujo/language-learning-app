@@ -4,20 +4,21 @@ from scipy.spatial.distance import cosine
 from sqlalchemy.orm import Session
 from typing import Optional
 import torchaudio
+from ..utils import is_offline
 
 import logging
 logger = logging.getLogger(__name__)
 
 from ..core.database import db_manager
-from ..utils import detect_text_language, load_spacy_model, detect_audio_language
-from .features.exercise import ExerciseService
+from ..utils import detect_text_language, load_spacy_model
+from .features import ExerciseService
 
 exercise_service = ExerciseService()
 
 class EvaluatorService:
-    text_embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    audio_embedding_model = AutoModelForCTC.from_pretrained("facebook/mms-1b-all")
-    audio_embedding_processor = AutoProcessor.from_pretrained("facebook/mms-1b-all")
+    text_embedding_model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=is_offline())
+    audio_embedding_model = AutoModelForCTC.from_pretrained("facebook/mms-1b-all", local_files_only=is_offline())
+    audio_embedding_processor = AutoProcessor.from_pretrained("facebook/mms-1b-all", local_files_only=is_offline())
 
     def evaluate_translation(
         self,
@@ -170,13 +171,12 @@ class EvaluatorService:
             if not exercise.audio_files:
                 logger.warning(f"Exercise item {ex_id} has no audio files")
                 return {"score": 0.0, "correct": False, "feedback": "Exercise has no audio files"}
+            
+            from .media import MediaService
+            media_service = MediaService()
 
-            correct_speaking_path = exercise.audio_files[0]
-            user_speaking_path = user_audio_url
-
-            language_code = detect_audio_language(correct_speaking_path)
-            self.audio_embedding_model.load_adapter(language_code)
-            self.audio_embedding_processor.tokenizer.set_target_lang(language_code)
+            _, correct_speaking_path = media_service.get_file_path(exercise.audio_files[0].split("/media/")[-1])
+            _, user_speaking_path = media_service.get_file_path(user_audio_url.split("/media/")[-1])
 
             # Load and preprocess audio files
             correct_waveform, correct_sr = torchaudio.load(correct_speaking_path)
@@ -197,8 +197,11 @@ class EvaluatorService:
             correct_inputs = self.audio_embedding_processor(correct_waveform, sampling_rate=16000, return_tensors="pt", padding=True)
             user_inputs = self.audio_embedding_processor(user_waveform, sampling_rate=16000, return_tensors="pt", padding=True)
 
-            correct_embeddings = self.audio_embedding_model(**correct_inputs).last_hidden_state.squeeze().numpy()
-            user_embeddings = self.audio_embedding_model(**user_inputs).last_hidden_state.squeeze().numpy()
+            correct_outputs = self.audio_embedding_model(**correct_inputs, output_hidden_states=True)
+            user_outputs = self.audio_embedding_model(**user_inputs, output_hidden_states=True)
+
+            correct_embeddings = correct_outputs.hidden_states[-1].squeeze(0).mean(dim=0).detach().numpy()
+            user_embeddings = user_outputs.hidden_states[-1].squeeze(0).mean(dim=0).detach().numpy()
 
             similarity = float(1-cosine(u = user_embeddings, v = correct_embeddings))
             logger.info(f"Calculated audio similarity for Exercise {ex_id}: {similarity}")

@@ -11,20 +11,20 @@ import Exercise from "@/interface/features/Exercise";
 import { BASE_URL, updateScoreById, evaluateSpeaking } from "@/api";
 
 export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
-    const question      = exercise.question     || "";
-    const answer        = exercise.answer       || "";
-    const text_support  = exercise.text_support || "";
+    const question = exercise.question     || "";
+    const answer = exercise.answer       || "";
+    const text_support = exercise.text_support || "";
     const image_support = exercise.image_files  || "";
     const audio_support = exercise.audio_files  || "";
 
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-    const [attempts,    setAttempts]    = useState<number>(0);
-    const [isCorrect,   setIsCorrect]   = useState<boolean>(false);
-    const [isLoading,   setIsLoading]   = useState<boolean>(false);
+    const [attempts, setAttempts] = useState<number>(0);
+    const [isCorrect, setIsCorrect] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // Lifted state from AudioRecorder via onStatusChange
-    const [audioUrl,    setAudioUrl]    = useState<string | null>(null);
-    const [resetKey,    setResetKey]    = useState<number>(0); // remounts AudioRecorder on exercise change
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [resetKey, setResetKey] = useState<number>(0); // remounts AudioRecorder on exercise change
 
     const hasRecording = !!audioUrl;
 
@@ -43,18 +43,15 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
         setAudioUrl(res.url ?? res.file_url ?? null);
     }, []);
 
-    useEffect(() => {
-        console.log("Audio URL updated:", audioUrl);
-    }, [audioUrl]);
-
     const handleSubmit = async () => {
         if (!audioUrl) return;
         setIsLoading(true);
 
         try {
             const result = await evaluateSpeaking(String(exercise.id), audioUrl);
+            console.log("Evaluation result:", result);
 
-            if (result.success) {
+            if (result.correct) {
                 setIsCorrect(true);
                 updateScoreById(exercise.id!, true).catch(console.error);
             } else {
@@ -139,14 +136,9 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 >
                     {isCorrect
                         ? "✓ Correct! Well done!"
-                        : `✗ Pronunciation needs work (Attempt ${attempts}/3)`}
+                        : `✗ Pronunciation needs work (Attempt ${attempts}/3)`
+                    }
 
-                    {attempts >= 3 && !isCorrect && (
-                        <div className="mt-2">
-                            <p className="font-medium">Correct pronunciation:</p>
-                            <p>{answer}</p>
-                        </div>
-                    )}
                 </div>
             )}
         </div>

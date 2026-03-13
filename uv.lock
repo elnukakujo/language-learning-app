@@ -254,9 +254,9 @@ wheels = [
 [[package]]
 name = "ca-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/ca_core_news_md-3.8.0/ca_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/ca_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/ca_core_news_md-3.8.0/ca_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:c5fb452714d51312aa7052e94148b0a0fd0efa6ffdadf24b64484a745df9bdfc" },
+    { filename = "ca_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:c5fb452714d51312aa7052e94148b0a0fd0efa6ffdadf24b64484a745df9bdfc" },
 ]
 
 [[package]]
@@ -508,9 +508,9 @@ wheels = [
 [[package]]
 name = "da-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/da_core_news_md-3.8.0/da_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/da_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/da_core_news_md-3.8.0/da_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:884380bf67bc587a8ddb829781a275f8dae488093cb457d346cc0808ea2eb355" },
+    { filename = "da_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:884380bf67bc587a8ddb829781a275f8dae488093cb457d346cc0808ea2eb355" },
 ]
 
 [[package]]
@@ -525,9 +525,9 @@ wheels = [
 [[package]]
 name = "de-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/de_core_news_md-3.8.0/de_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/de_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/de_core_news_md-3.8.0/de_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:b903f59220f1e76dd672acdaa7fa454d6703fe056c5ccd6457820e70874116d0" },
+    { filename = "de_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:b903f59220f1e76dd672acdaa7fa454d6703fe056c5ccd6457820e70874116d0" },
 ]
 
 [[package]]
@@ -557,17 +557,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dotenv"
-version = "0.9.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "python-dotenv" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/b7/545d2c10c1fc15e48653c91efde329a790f2eecfbbf2bd16003b5db2bab0/dotenv-0.9.9-py2.py3-none-any.whl", hash = "sha256:29cf74a087b31dafdb5a446b6d7e11cbce8ed2741540e2339c69fbef92c94ce9", size = 1892, upload-time = "2025-02-19T22:15:01.647Z" },
-]
-
-[[package]]
 name = "einops"
 version = "0.8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -579,25 +568,25 @@ wheels = [
 [[package]]
 name = "el-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/el_core_news_md-3.8.0/el_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/el_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/el_core_news_md-3.8.0/el_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:a18bdd6d2b81de37eeac2d05f7feada51c54bcda76f910a3feeef1bd34a7b296" },
+    { filename = "el_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:a18bdd6d2b81de37eeac2d05f7feada51c54bcda76f910a3feeef1bd34a7b296" },
 ]
 
 [[package]]
 name = "en-core-web-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/en_core_web_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl", hash = "sha256:5e6329fe3fecedb1d1a02c3ea2172ee0fede6cea6e4aefb6a02d832dba78a310" },
+    { filename = "en_core_web_md-3.8.0-py3-none-any.whl", hash = "sha256:5e6329fe3fecedb1d1a02c3ea2172ee0fede6cea6e4aefb6a02d832dba78a310" },
 ]
 
 [[package]]
 name = "es-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/es_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:478b8bb3f3e8eb149192f7d80e7cd64f990b7e9bccbc5329df41a57e86326be2" },
+    { filename = "es_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:478b8bb3f3e8eb149192f7d80e7cd64f990b7e9bccbc5329df41a57e86326be2" },
 ]
 
 [[package]]
@@ -636,9 +625,9 @@ wheels = [
 [[package]]
 name = "fi-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/fi_core_news_md-3.8.0/fi_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/fi_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/fi_core_news_md-3.8.0/fi_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:4037fca013fb9d0e5ffca0fdc77cc6a8965bf2c566e763c63a73e4765772bc9f" },
+    { filename = "fi_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:4037fca013fb9d0e5ffca0fdc77cc6a8965bf2c566e763c63a73e4765772bc9f" },
 ]
 
 [[package]]
@@ -705,9 +694,9 @@ wheels = [
 [[package]]
 name = "fr-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.8.0/fr_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/fr_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.8.0/fr_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:8a70d090a54ef77525c3ffa6a6195b9d365f2cf369ae1cd84ede93f3d709079e" },
+    { filename = "fr_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:8a70d090a54ef77525c3ffa6a6195b9d365f2cf369ae1cd84ede93f3d709079e" },
 ]
 
 [[package]]
@@ -784,6 +773,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/94/ad0d435f7c48debe960c53b8f60fb41c2026b1d0fa4a99a1cb17c3461e09/greenlet-3.2.3-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:25ad29caed5783d4bd7a85c9251c651696164622494c00802a139c00d639242d", size = 271992, upload-time = "2025-06-05T16:11:23.467Z" },
     { url = "https://files.pythonhosted.org/packages/93/5d/7c27cf4d003d6e77749d299c7c8f5fd50b4f251647b5c2e97e1f20da0ab5/greenlet-3.2.3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:88cd97bf37fe24a6710ec6a3a7799f3f81d9cd33317dcf565ff9950c83f55e0b", size = 638820, upload-time = "2025-06-05T16:38:52.882Z" },
     { url = "https://files.pythonhosted.org/packages/c6/7e/807e1e9be07a125bb4c169144937910bf59b9d2f6d931578e57f0bce0ae2/greenlet-3.2.3-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:baeedccca94880d2f5666b4fa16fc20ef50ba1ee353ee2d7092b383a243b0b0d", size = 653046, upload-time = "2025-06-05T16:41:36.343Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/ab/158c1a4ea1068bdbc78dba5a3de57e4c7aeb4e7fa034320ea94c688bfb61/greenlet-3.2.3-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:be52af4b6292baecfa0f397f3edb3c6092ce071b499dd6fe292c9ac9f2c8f264", size = 647701, upload-time = "2025-06-05T16:48:19.604Z" },
     { url = "https://files.pythonhosted.org/packages/cc/0d/93729068259b550d6a0288da4ff72b86ed05626eaf1eb7c0d3466a2571de/greenlet-3.2.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:0cc73378150b8b78b0c9fe2ce56e166695e67478550769536a6742dca3651688", size = 649747, upload-time = "2025-06-05T16:13:04.628Z" },
     { url = "https://files.pythonhosted.org/packages/f6/f6/c82ac1851c60851302d8581680573245c8fc300253fc1ff741ae74a6c24d/greenlet-3.2.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:706d016a03e78df129f68c4c9b4c4f963f7d73534e48a24f5f5a7101ed13dbbb", size = 605461, upload-time = "2025-06-05T16:12:50.792Z" },
     { url = "https://files.pythonhosted.org/packages/98/82/d022cf25ca39cf1200650fc58c52af32c90f80479c25d1cbf57980ec3065/greenlet-3.2.3-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:419e60f80709510c343c57b4bb5a339d8767bf9aef9b8ce43f4f143240f88b7c", size = 1121190, upload-time = "2025-06-05T16:36:48.59Z" },
@@ -792,6 +782,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b1/cf/f5c0b23309070ae93de75c90d29300751a5aacefc0a3ed1b1d8edb28f08b/greenlet-3.2.3-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:500b8689aa9dd1ab26872a34084503aeddefcb438e2e7317b89b11eaea1901ad", size = 270732, upload-time = "2025-06-05T16:10:08.26Z" },
     { url = "https://files.pythonhosted.org/packages/48/ae/91a957ba60482d3fecf9be49bc3948f341d706b52ddb9d83a70d42abd498/greenlet-3.2.3-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:a07d3472c2a93117af3b0136f246b2833fdc0b542d4a9799ae5f41c28323faef", size = 639033, upload-time = "2025-06-05T16:38:53.983Z" },
     { url = "https://files.pythonhosted.org/packages/6f/df/20ffa66dd5a7a7beffa6451bdb7400d66251374ab40b99981478c69a67a8/greenlet-3.2.3-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:8704b3768d2f51150626962f4b9a9e4a17d2e37c8a8d9867bbd9fa4eb938d3b3", size = 652999, upload-time = "2025-06-05T16:41:37.89Z" },
+    { url = "https://files.pythonhosted.org/packages/51/b4/ebb2c8cb41e521f1d72bf0465f2f9a2fd803f674a88db228887e6847077e/greenlet-3.2.3-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:5035d77a27b7c62db6cf41cf786cfe2242644a7a337a0e155c80960598baab95", size = 647368, upload-time = "2025-06-05T16:48:21.467Z" },
     { url = "https://files.pythonhosted.org/packages/8e/6a/1e1b5aa10dced4ae876a322155705257748108b7fd2e4fae3f2a091fe81a/greenlet-3.2.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2d8aa5423cd4a396792f6d4580f88bdc6efcb9205891c9d40d20f6e670992efb", size = 650037, upload-time = "2025-06-05T16:13:06.402Z" },
     { url = "https://files.pythonhosted.org/packages/26/f2/ad51331a157c7015c675702e2d5230c243695c788f8f75feba1af32b3617/greenlet-3.2.3-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2c724620a101f8170065d7dded3f962a2aea7a7dae133a009cada42847e04a7b", size = 608402, upload-time = "2025-06-05T16:12:51.91Z" },
     { url = "https://files.pythonhosted.org/packages/26/bc/862bd2083e6b3aff23300900a956f4ea9a4059de337f5c8734346b9b34fc/greenlet-3.2.3-cp313-cp313-musllinux_1_1_aarch64.whl", hash = "sha256:873abe55f134c48e1f2a6f53f7d1419192a3d1a4e873bace00499a4e45ea6af0", size = 1119577, upload-time = "2025-06-05T16:36:49.787Z" },
@@ -800,6 +791,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d8/ca/accd7aa5280eb92b70ed9e8f7fd79dc50a2c21d8c73b9a0856f5b564e222/greenlet-3.2.3-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:3d04332dddb10b4a211b68111dabaee2e1a073663d117dc10247b5b1642bac86", size = 271479, upload-time = "2025-06-05T16:10:47.525Z" },
     { url = "https://files.pythonhosted.org/packages/55/71/01ed9895d9eb49223280ecc98a557585edfa56b3d0e965b9fa9f7f06b6d9/greenlet-3.2.3-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:8186162dffde068a465deab08fc72c767196895c39db26ab1c17c0b77a6d8b97", size = 683952, upload-time = "2025-06-05T16:38:55.125Z" },
     { url = "https://files.pythonhosted.org/packages/ea/61/638c4bdf460c3c678a0a1ef4c200f347dff80719597e53b5edb2fb27ab54/greenlet-3.2.3-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:f4bfbaa6096b1b7a200024784217defedf46a07c2eee1a498e94a1b5f8ec5728", size = 696917, upload-time = "2025-06-05T16:41:38.959Z" },
+    { url = "https://files.pythonhosted.org/packages/22/cc/0bd1a7eb759d1f3e3cc2d1bc0f0b487ad3cc9f34d74da4b80f226fde4ec3/greenlet-3.2.3-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:ed6cfa9200484d234d8394c70f5492f144b20d4533f69262d530a1a082f6ee9a", size = 692443, upload-time = "2025-06-05T16:48:23.113Z" },
     { url = "https://files.pythonhosted.org/packages/67/10/b2a4b63d3f08362662e89c103f7fe28894a51ae0bc890fabf37d1d780e52/greenlet-3.2.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:02b0df6f63cd15012bed5401b47829cfd2e97052dc89da3cfaf2c779124eb892", size = 692995, upload-time = "2025-06-05T16:13:07.972Z" },
     { url = "https://files.pythonhosted.org/packages/5a/c6/ad82f148a4e3ce9564056453a71529732baf5448ad53fc323e37efe34f66/greenlet-3.2.3-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:86c2d68e87107c1792e2e8d5399acec2487a4e993ab76c792408e59394d52141", size = 655320, upload-time = "2025-06-05T16:12:53.453Z" },
     { url = "https://files.pythonhosted.org/packages/5c/4f/aab73ecaa6b3086a4c89863d94cf26fa84cbff63f52ce9bc4342b3087a06/greenlet-3.2.3-cp314-cp314-win_amd64.whl", hash = "sha256:8c47aae8fbbfcf82cc13327ae802ba13c9c36753b67e760023fd116bc124a62a", size = 301236, upload-time = "2025-06-05T16:15:20.111Z" },
@@ -870,9 +862,9 @@ wheels = [
 [[package]]
 name = "hr-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/hr_core_news_md-3.8.0/hr_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/hr_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/hr_core_news_md-3.8.0/hr_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:241a53f12c5f489c95f5ca4b2e7b3015464950d2feeac4a8be588815c9251f3e" },
+    { filename = "hr_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:241a53f12c5f489c95f5ca4b2e7b3015464950d2feeac4a8be588815c9251f3e" },
 ]
 
 [[package]]
@@ -1003,9 +995,9 @@ wheels = [
 [[package]]
 name = "it-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/it_core_news_md-3.8.0/it_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/it_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/it_core_news_md-3.8.0/it_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:a731d2d8e7c5a7093ac42f88774ea2a2ad3d5809959eedee65632b3533f804ec" },
+    { filename = "it_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:a731d2d8e7c5a7093ac42f88774ea2a2ad3d5809959eedee65632b3533f804ec" },
 ]
 
 [[package]]
@@ -1020,13 +1012,13 @@ wheels = [
 [[package]]
 name = "ja-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/ja_core_news_md-3.8.0/ja_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/ja_core_news_md-3.8.0-py3-none-any.whl" }
 dependencies = [
     { name = "sudachidict-core" },
     { name = "sudachipy" },
 ]
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/ja_core_news_md-3.8.0/ja_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:17c3497539bd970546b75e36c274b3fa183511b6ef59a178017aa02dde3a090a" },
+    { filename = "ja_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:17c3497539bd970546b75e36c274b3fa183511b6ef59a178017aa02dde3a090a" },
 ]
 
 [package.metadata]
@@ -1128,9 +1120,18 @@ wheels = [
 [[package]]
 name = "ko-core-news-sm"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/ko_core_news_sm-3.8.0/ko_core_news_sm-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/ko_core_news_sm-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/ko_core_news_sm-3.8.0/ko_core_news_sm-3.8.0-py3-none-any.whl", hash = "sha256:15486b93a22ec8ee43f787390afdb4e2086851573eb12b69dd2c4f2a95b3e0a4" },
+    { filename = "ko_core_news_sm-3.8.0-py3-none-any.whl", hash = "sha256:15486b93a22ec8ee43f787390afdb4e2086851573eb12b69dd2c4f2a95b3e0a4" },
+]
+
+[[package]]
+name = "langcodes"
+version = "3.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/75/f9edc5d72945019312f359e69ded9f82392a81d49c5051ed3209b100c0d2/langcodes-3.5.1.tar.gz", hash = "sha256:40bff315e01b01d11c2ae3928dd4f5cbd74dd38f9bd912c12b9a3606c143f731", size = 191084, upload-time = "2025-12-02T16:22:01.627Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/c1/d10b371bcba7abce05e2b33910e39c33cfa496a53f13640b7b8e10bb4d2b/langcodes-3.5.1-py3-none-any.whl", hash = "sha256:b6a9c25c603804e2d169165091d0cdb23934610524a21d226e4f463e8e958a72", size = 183050, upload-time = "2025-12-02T16:21:59.954Z" },
 ]
 
 [[package]]
@@ -1152,7 +1153,6 @@ dependencies = [
     { name = "ca-core-news-md" },
     { name = "da-core-news-md" },
     { name = "de-core-news-md" },
-    { name = "dotenv" },
     { name = "el-core-news-md" },
     { name = "en-core-web-md" },
     { name = "es-core-news-md" },
@@ -1167,6 +1167,7 @@ dependencies = [
     { name = "it-core-news-md" },
     { name = "ja-core-news-md" },
     { name = "ko-core-news-sm" },
+    { name = "langcodes" },
     { name = "langdetect" },
     { name = "lt-core-news-md" },
     { name = "mk-core-news-md" },
@@ -1177,6 +1178,7 @@ dependencies = [
     { name = "pl-core-news-md" },
     { name = "pt-core-news-md" },
     { name = "pydantic" },
+    { name = "python-dotenv" },
     { name = "python-multipart" },
     { name = "qwen-tts" },
     { name = "ro-core-news-md" },
@@ -1186,6 +1188,7 @@ dependencies = [
     { name = "spacy" },
     { name = "sqlalchemy" },
     { name = "sv-core-news-md" },
+    { name = "torchcodec" },
     { name = "uk-core-news-md" },
     { name = "uvicorn" },
     { name = "zh-core-web-md" },
@@ -1195,46 +1198,48 @@ dependencies = [
 requires-dist = [
     { name = "accelerate", specifier = ">=1.12.0" },
     { name = "apscheduler", specifier = ">=3.11.0" },
-    { name = "ca-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/ca_core_news_md-3.8.0/ca_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "da-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/da_core_news_md-3.8.0/da_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "de-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/de_core_news_md-3.8.0/de_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "dotenv", specifier = ">=0.9.9" },
-    { name = "el-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/el_core_news_md-3.8.0/el_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "en-core-web-md", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl" },
-    { name = "es-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "fi-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/fi_core_news_md-3.8.0/fi_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "ca-core-news-md", path = "wheels/ca_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "da-core-news-md", path = "wheels/da_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "de-core-news-md", path = "wheels/de_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "el-core-news-md", path = "wheels/el_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "en-core-web-md", path = "wheels/en_core_web_md-3.8.0-py3-none-any.whl" },
+    { name = "es-core-news-md", path = "wheels/es_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "fi-core-news-md", path = "wheels/fi_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "flasgger", specifier = ">=0.9.7.1" },
     { name = "flask", specifier = ">=3.1.2" },
     { name = "flask-cors", specifier = ">=6.0.2" },
-    { name = "fr-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.8.0/fr_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "fr-core-news-md", path = "wheels/fr_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "hatchling", specifier = ">=1.27.0" },
-    { name = "hr-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/hr_core_news_md-3.8.0/hr_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "hr-core-news-md", path = "wheels/hr_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "ipykernel", specifier = ">=6.29.5" },
-    { name = "it-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/it_core_news_md-3.8.0/it_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "ja-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/ja_core_news_md-3.8.0/ja_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "ko-core-news-sm", url = "https://github.com/explosion/spacy-models/releases/download/ko_core_news_sm-3.8.0/ko_core_news_sm-3.8.0-py3-none-any.whl" },
+    { name = "it-core-news-md", path = "wheels/it_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "ja-core-news-md", path = "wheels/ja_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "ko-core-news-sm", path = "wheels/ko_core_news_sm-3.8.0-py3-none-any.whl" },
+    { name = "langcodes", specifier = ">=3.5.1" },
     { name = "langdetect", specifier = ">=1.0.9" },
-    { name = "lt-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/lt_core_news_md-3.8.0/lt_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "mk-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/mk_core_news_md-3.8.0/mk_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "nb-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/nb_core_news_md-3.8.0/nb_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "nl-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/nl_core_news_md-3.8.0/nl_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "lt-core-news-md", path = "wheels/lt_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "mk-core-news-md", path = "wheels/mk_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "nb-core-news-md", path = "wheels/nb_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "nl-core-news-md", path = "wheels/nl_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "openai-whisper", specifier = ">=20250625" },
     { name = "pandas", specifier = ">=2.3.0" },
-    { name = "pl-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/pl_core_news_md-3.8.0/pl_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "pt-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/pt_core_news_md-3.8.0/pt_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "pl-core-news-md", path = "wheels/pl_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "pt-core-news-md", path = "wheels/pt_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "qwen-tts", specifier = ">=0.1.0" },
-    { name = "ro-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/ro_core_news_md-3.8.0/ro_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "ru-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/ru_core_news_md-3.8.0/ru_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "ro-core-news-md", path = "wheels/ro_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "ru-core-news-md", path = "wheels/ru_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "sentence-transformers", specifier = ">=5.2.3" },
-    { name = "sl-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/sl_core_news_md-3.8.0/sl_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "sl-core-news-md", path = "wheels/sl_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "spacy", specifier = ">=3.8.11" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
-    { name = "sv-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/sv_core_news_md-3.8.0/sv_core_news_md-3.8.0-py3-none-any.whl" },
-    { name = "uk-core-news-md", url = "https://github.com/explosion/spacy-models/releases/download/uk_core_news_md-3.8.0/uk_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "sv-core-news-md", path = "wheels/sv_core_news_md-3.8.0-py3-none-any.whl" },
+    { name = "torchcodec", specifier = ">=0.10.0" },
+    { name = "uk-core-news-md", path = "wheels/uk_core_news_md-3.8.0-py3-none-any.whl" },
     { name = "uvicorn", specifier = ">=0.35.0" },
-    { name = "zh-core-web-md", url = "https://github.com/explosion/spacy-models/releases/download/zh_core_web_md-3.8.0/zh_core_web_md-3.8.0-py3-none-any.whl" },
+    { name = "zh-core-web-md", path = "wheels/zh_core_web_md-3.8.0-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -1298,9 +1303,9 @@ wheels = [
 [[package]]
 name = "lt-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/lt_core_news_md-3.8.0/lt_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/lt_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/lt_core_news_md-3.8.0/lt_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:d03f5334c3bdc252aa10841a7dd2cb83ebb23ab8e8866869320165f4e523fbc2" },
+    { filename = "lt_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:d03f5334c3bdc252aa10841a7dd2cb83ebb23ab8e8866869320165f4e523fbc2" },
 ]
 
 [[package]]
@@ -1411,9 +1416,9 @@ wheels = [
 [[package]]
 name = "mk-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/mk_core_news_md-3.8.0/mk_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/mk_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/mk_core_news_md-3.8.0/mk_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:23300360bc56902b8b2d9ac92af028744a80e1112d029dcc9a2fa730c6bb74c7" },
+    { filename = "mk_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:23300360bc56902b8b2d9ac92af028744a80e1112d029dcc9a2fa730c6bb74c7" },
 ]
 
 [[package]]
@@ -1529,9 +1534,9 @@ wheels = [
 [[package]]
 name = "nb-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/nb_core_news_md-3.8.0/nb_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/nb_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/nb_core_news_md-3.8.0/nb_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:c38bf491c9fa3f94fa8cf50ce6aa7068a47e81be465e27fbab6330077db5995e" },
+    { filename = "nb_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:c38bf491c9fa3f94fa8cf50ce6aa7068a47e81be465e27fbab6330077db5995e" },
 ]
 
 [[package]]
@@ -1555,9 +1560,9 @@ wheels = [
 [[package]]
 name = "nl-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/nl_core_news_md-3.8.0/nl_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/nl_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/nl_core_news_md-3.8.0/nl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:8969da865bb746189783c40197a7e2c082adda73b7fc0d9a364a5e644ff54e68" },
+    { filename = "nl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:8969da865bb746189783c40197a7e2c082adda73b7fc0d9a364a5e644ff54e68" },
 ]
 
 [[package]]
@@ -1999,9 +2004,9 @@ wheels = [
 [[package]]
 name = "pl-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/pl_core_news_md-3.8.0/pl_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/pl_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/pl_core_news_md-3.8.0/pl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:4f433a556880c0b7ef01970e7c612c0e30103b893e6d26ed54672d8e056ad9b1" },
+    { filename = "pl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:4f433a556880c0b7ef01970e7c612c0e30103b893e6d26ed54672d8e056ad9b1" },
 ]
 
 [[package]]
@@ -2125,9 +2130,9 @@ wheels = [
 [[package]]
 name = "pt-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/pt_core_news_md-3.8.0/pt_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/pt_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/pt_core_news_md-3.8.0/pt_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:54382cda034e41f3ec605ceeb924cd6cfdbced00a65f7afa12218520ba7008c5" },
+    { filename = "pt_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:54382cda034e41f3ec605ceeb924cd6cfdbced00a65f7afa12218520ba7008c5" },
 ]
 
 [[package]]
@@ -2583,9 +2588,9 @@ wheels = [
 [[package]]
 name = "ro-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/ro_core_news_md-3.8.0/ro_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/ro_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/ro_core_news_md-3.8.0/ro_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:e8606efe3732c84a629c7a586d9d6ec2fb197d787513b3033903d56496dc9db1" },
+    { filename = "ro_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:e8606efe3732c84a629c7a586d9d6ec2fb197d787513b3033903d56496dc9db1" },
 ]
 
 [[package]]
@@ -2672,12 +2677,12 @@ wheels = [
 [[package]]
 name = "ru-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/ru_core_news_md-3.8.0/ru_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/ru_core_news_md-3.8.0-py3-none-any.whl" }
 dependencies = [
     { name = "pymorphy3" },
 ]
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/ru_core_news_md-3.8.0/ru_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:43f456d40e4b70726874e01ce01fce32f50089ba98a2660292e9a6c63a06ebe9" },
+    { filename = "ru_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:43f456d40e4b70726874e01ce01fce32f50089ba98a2660292e9a6c63a06ebe9" },
 ]
 
 [package.metadata]
@@ -2880,9 +2885,9 @@ wheels = [
 [[package]]
 name = "sl-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/sl_core_news_md-3.8.0/sl_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/sl_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/sl_core_news_md-3.8.0/sl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:5f1000c8bdc00044f69c25f6be0747778e6377ee13c236821caeb5ed8f9c932e" },
+    { filename = "sl_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:5f1000c8bdc00044f69c25f6be0747778e6377ee13c236821caeb5ed8f9c932e" },
 ]
 
 [[package]]
@@ -3203,9 +3208,9 @@ wheels = [
 [[package]]
 name = "sv-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/sv_core_news_md-3.8.0/sv_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/sv_core_news_md-3.8.0-py3-none-any.whl" }
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/sv_core_news_md-3.8.0/sv_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:f5e719fcf728bd5552daf70f278aba08113ce939714a070dd97f02a2aa2903bc" },
+    { filename = "sv_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:f5e719fcf728bd5552daf70f278aba08113ce939714a070dd97f02a2aa2903bc" },
 ]
 
 [[package]]
@@ -3448,6 +3453,22 @@ wheels = [
 ]
 
 [[package]]
+name = "torchcodec"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/ff/2b27797e039673156710e5a0febe87cafc203722acafa3d34db283b40cf9/torchcodec-0.10.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b35fa4061c5757f8d714187c040a90a11669de6470a644bb04e3cd335ff1c110", size = 4073213, upload-time = "2026-01-22T15:41:45.485Z" },
+    { url = "https://files.pythonhosted.org/packages/29/34/ccc711b6dc581e43b8d8d227e4173a8826994ee7b68d6b3d82291f307325/torchcodec-0.10.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:6e43184d83ccced965b31cad5bb6200c779646fee2ec153a6d784b4def40c91b", size = 2083121, upload-time = "2026-01-22T15:41:37.947Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/6c/9af3bd945a610d6c757d898aa4624e0f5135cc8a6992d0a1d846f1084576/torchcodec-0.10.0-cp312-cp312-win_amd64.whl", hash = "sha256:e4f022fa53d91b414b4177fe87b0afc40a806092da4595d24de4b245d6fb0fba", size = 2225338, upload-time = "2026-01-22T15:41:52.094Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/b6/b1041c8ccb175b08779b3e2d3e60f838bbcbfe2398d49e3673b6a66f0649/torchcodec-0.10.0-cp313-cp313-macosx_12_0_arm64.whl", hash = "sha256:be3ce7cc667effecd06da9d0d6c5e9e347c5f376b705934e7b82378a65cf6eef", size = 4043681, upload-time = "2026-01-22T15:41:47.236Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/85/fc44f6d702dfd344e6859a9a4d713aaaa991578eb74677a80297d9ae8a07/torchcodec-0.10.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:71f25caf9ab89a434ae2008b1374fd98557a6864b8313b103bae53af3e6fd17f", size = 2088572, upload-time = "2026-01-22T15:41:39.203Z" },
+    { url = "https://files.pythonhosted.org/packages/df/9d/b73a0f47e11b66a1d23c7d867f12f8bb41b1b5e707d7e23d8f54793e3267/torchcodec-0.10.0-cp313-cp313-win_amd64.whl", hash = "sha256:9e077146e894f373b805972da96aee42ff8bb87b1a3f3fb64d26925cd9e64184", size = 2225208, upload-time = "2026-01-22T15:41:53.233Z" },
+    { url = "https://files.pythonhosted.org/packages/90/c9/4b6242e3456bae148f4086337d3e43d98c4e79c04091de3462db9f5eb67a/torchcodec-0.10.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:bb882c12ca07dcf6d82833db67e6b565693a4bccfeab6696697620e43e465556", size = 3821202, upload-time = "2026-01-22T15:41:48.627Z" },
+    { url = "https://files.pythonhosted.org/packages/96/a2/5fe0e62b208a367f741361881321c1b25de487318a44f870f326747585a1/torchcodec-0.10.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:bec2b938ad4b294bd71d0b0ab4976037c740be0c80be79e67803ebed4eff270e", size = 2089647, upload-time = "2026-01-22T15:41:40.711Z" },
+    { url = "https://files.pythonhosted.org/packages/93/71/0fc10230965e319552e064d66f1c8675b471d1b98c4a94c529e771b3c165/torchcodec-0.10.0-cp314-cp314-win_amd64.whl", hash = "sha256:4734eb82146516049e1070152eb3013d7b9689159ef35db7c0894d130d4e335d", size = 2226749, upload-time = "2026-01-22T15:41:54.393Z" },
+]
+
+[[package]]
 name = "tornado"
 version = "6.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3601,13 +3622,13 @@ wheels = [
 [[package]]
 name = "uk-core-news-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/uk_core_news_md-3.8.0/uk_core_news_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/uk_core_news_md-3.8.0-py3-none-any.whl" }
 dependencies = [
     { name = "pymorphy3" },
     { name = "pymorphy3-dicts-uk" },
 ]
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/uk_core_news_md-3.8.0/uk_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:583c65ab55d6bdbe3b3ebe86978bf4f6a8aab0b6778ea8c4c5ab529722abaafd" },
+    { filename = "uk_core_news_md-3.8.0-py3-none-any.whl", hash = "sha256:583c65ab55d6bdbe3b3ebe86978bf4f6a8aab0b6778ea8c4c5ab529722abaafd" },
 ]
 
 [package.metadata]
@@ -3748,12 +3769,12 @@ wheels = [
 [[package]]
 name = "zh-core-web-md"
 version = "3.8.0"
-source = { url = "https://github.com/explosion/spacy-models/releases/download/zh_core_web_md-3.8.0/zh_core_web_md-3.8.0-py3-none-any.whl" }
+source = { path = "wheels/zh_core_web_md-3.8.0-py3-none-any.whl" }
 dependencies = [
     { name = "spacy-pkuseg" },
 ]
 wheels = [
-    { url = "https://github.com/explosion/spacy-models/releases/download/zh_core_web_md-3.8.0/zh_core_web_md-3.8.0-py3-none-any.whl", hash = "sha256:bcf300540fbd15b1b0aac358f327f2a31de8992b346162d5600f843514da0e98" },
+    { filename = "zh_core_web_md-3.8.0-py3-none-any.whl", hash = "sha256:bcf300540fbd15b1b0aac358f327f2a31de8992b346162d5600f843514da0e98" },
 ]
 
 [package.metadata]

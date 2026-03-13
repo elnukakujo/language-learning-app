@@ -1,12 +1,14 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from ..utils import is_offline
+
 import logging
 logger = logging.getLogger(__name__)
 
 class TextGeneratorService:
     model_name = "Qwen/Qwen2.5-1.5B-Instruct"
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", dtype="auto")
+        tokenizer = AutoTokenizer.from_pretrained(model_name, local_files_only=is_offline())
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", dtype="auto", local_files_only=is_offline())
     except Exception as e:
         logger.warning(f"Failed to load the Text Generator Service models: {e}...")
         model = None

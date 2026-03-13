@@ -312,7 +312,6 @@ export async function evaluateTranslation(exerciseId: string, userTranslation: s
 }
 
 export async function evaluateSpeaking(exerciseId: string, user_audio_url: string) {
-  console.log("Evaluating speaking with audio URL:", user_audio_url);
   const res = await fetch(`${BASE_URL}/api/evaluate/speech`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

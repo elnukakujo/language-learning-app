@@ -7,7 +7,7 @@ import torch
 import soundfile as sf
 from qwen_tts import Qwen3TTSModel
 
-from ..utils import detect_text_language
+from ..utils import detect_text_language, is_offline
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ class TTSService:
             "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
             device_map="cpu",
             dtype=torch.bfloat16,
+            local_files_only=is_offline()
         )
     
     def _get_filename(self) -> str:
