@@ -6,6 +6,8 @@ from .grammar import bp as grammar_bp
 from .exercise import bp as exercise_bp
 from .media import bp as media_bp
 from .backup import bp as backup_bp
+from .evaluate import bp as evaluate_bp
+
 
 __all__ = [
     language_bp,
@@ -16,4 +18,5 @@ __all__ = [
     exercise_bp,
     media_bp,
     backup_bp,
+    evaluate_bp,
 ]

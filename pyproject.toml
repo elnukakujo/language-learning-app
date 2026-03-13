@@ -8,6 +8,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "accelerate>=1.12.0",
     "apscheduler>=3.11.0",
     "ca-core-news-md",
     "da-core-news-md",
@@ -32,6 +33,7 @@ dependencies = [
     "mk-core-news-md",
     "nb-core-news-md",
     "nl-core-news-md",
+    "openai-whisper>=20250625",
     "pandas>=2.3.0",
     "pl-core-news-md",
     "pt-core-news-md",

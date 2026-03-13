@@ -22,7 +22,8 @@ class ExerciseDict(BaseFeatureDict):
             "organize",
             "fill_in_the_blank",
             "matching",
-            "true_false"
+            "true_false",
+            "speaking"
         ]
         if self.exercise_type not in valid_exercise_types:
             raise ValueError(f"Invalid exercise_type: {self.exercise_type}. Must be one of {valid_exercise_types}.")

@@ -39,16 +39,12 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/dev_languages.db'
     ENV = 'development'
-    MEDIA_ROOT = str(BASE_DIR / 'dev' / 'media')
-    BACKUP_ROOT = str(BASE_DIR / 'dev' / 'backups')
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/test_languages.db'
     ENV = 'testing'
-    MEDIA_ROOT = str(BASE_DIR / 'test' / 'media')
-    BACKUP_ROOT = str(BASE_DIR / 'test' / 'backups')
 
 class ProductionConfig(Config):
     """Production configuration"""

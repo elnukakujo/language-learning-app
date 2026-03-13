@@ -89,6 +89,7 @@ def register_blueprints(app: Flask) -> None:
         exercise_bp,
         media_bp,
         backup_bp,
+        evaluate_bp,
     )
     
     # Register blueprints
@@ -101,6 +102,7 @@ def register_blueprints(app: Flask) -> None:
         exercise_bp,
         media_bp,
         backup_bp,
+        evaluate_bp,
     ]
     
     for blueprint in blueprints:

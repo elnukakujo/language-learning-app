@@ -24,7 +24,7 @@ interface UnitElements {
 export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id: string, unitElements: UnitElements }) {
     const router = useRouter();
     
-    const [exerciseType, setExerciseType] = useState<'essay' | 'answering' | 'translate' | 'organize' | 'fill_in_the_blank' | 'matching' | 'true_false' | undefined>(undefined)
+    const [exerciseType, setExerciseType] = useState<'essay' | 'answering' | 'translate' | 'organize' | 'fill_in_the_blank' | 'matching' | 'true_false' | 'speaking' | undefined>(undefined)
     const [question, setQuestion] = useState<string | undefined>(undefined)
     const [answer, setAnswer] = useState<string | undefined>(undefined)
     const [supportText, setSupportText] = useState<string | undefined>(undefined); 
@@ -62,6 +62,11 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
           setSupportText("");
           setAnswer("The answer to the question");
           break;
+        case "speaking":
+          setQuestion("A sentence to speak");
+          setSupportText("");
+          setAnswer("");
+          break;
         default:
           setQuestion("");
           setSupportText("");
@@ -90,6 +95,11 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
         grammar_ids: gramAssociated,
         calligraphy_ids: callAssociated
       };
+
+      if (exerciseType === "speaking" && !audioUrl) {
+        alert("Speaking exercises require an audio file. Please upload one.");
+        return;
+      }
       
       try {
         await createExercise(element);
@@ -116,7 +126,8 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
             "true_false",
             "organize",
             "answering",
-            "matching"
+            "matching",
+            "speaking"
           ]}
           selectedOption={exerciseType || ""}
           onChange={(value) => setExerciseType(value as typeof exerciseType)}
@@ -157,7 +168,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               />
             }
 
-            { !["true_false", "matching", "organize"].includes(exerciseType) && 
+            { !["true_false", "matching", "organize", "speaking"].includes(exerciseType) && 
               <AutoSizeTextArea
                 value={answer || ""}
                 onChange={(e) => setAnswer(e.target.value)}

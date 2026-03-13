@@ -10,6 +10,7 @@ import TrueFalseExercise from "@/components/forms/exerciseForms/trueFalseExercis
 import OrganizeExercise from "@/components/forms/exerciseForms/organizeExercise";
 import AnsweringExercise from "@/components/forms/exerciseForms/answeringExercise";
 import MatchingExercise from "@/components/forms/exerciseForms/matchingExercise";
+import SpeakingExercise from "@/components/forms/exerciseForms/speakingExercise";
 import BackButton from "@/components/buttons/backButton";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; unit_id: string; ex_id: string }}) {
@@ -39,6 +40,9 @@ export default async function ExercisePage( { params } : { params: { language_id
             )}
             {exercise.exercise_type === 'matching' && (
                 <MatchingExercise exercise={ exercise } />
+            )}
+            {exercise.exercise_type === 'speaking' && (
+                <SpeakingExercise exercise={ exercise } />
             )}
 
             <nav className="flex flex-row space-x-4">

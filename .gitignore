@@ -5,6 +5,7 @@
 # Media files
 media/images/*
 media/audio/*
+media/temp/*
 dev/
 
 # Instance folder

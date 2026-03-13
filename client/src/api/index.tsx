@@ -300,8 +300,9 @@ export async function deleteExercise(exerciseId: string) {
   if (!res.ok) throw new Error("Failed to delete exercise");
 }
 
+// ============= Evaluation API =============
 export async function evaluateTranslation(exerciseId: string, userTranslation: string) {
-  const res = await fetch(`${BASE_URL}/api/exercise/evaluate/translate`, {
+  const res = await fetch(`${BASE_URL}/api/evaluate/translate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exercise_id: exerciseId, user_translation: userTranslation }),
@@ -310,6 +311,18 @@ export async function evaluateTranslation(exerciseId: string, userTranslation: s
   return res.json();
 }
 
+export async function evaluateSpeaking(exerciseId: string, user_audio_url: string) {
+  console.log("Evaluating speaking with audio URL:", user_audio_url);
+  const res = await fetch(`${BASE_URL}/api/evaluate/speech`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ exercise_id: exerciseId, user_audio_url: user_audio_url }),
+  });
+  if (!res.ok) throw new Error("Failed to evaluate speaking");
+  return res.json();
+}
+
+// ============= Scoring API =============
 export async function updateScoreById(elementId: string, success: boolean) {
   let endpoint = "";
   let payload: Record<string, string> = {};
@@ -341,9 +354,12 @@ export async function updateScoreById(elementId: string, success: boolean) {
 
 
 // ============= Media API =============
-export async function uploadImage(file: File) {
+export async function uploadImage(file: File, temporary = false) {
   const formData = new FormData();
   formData.append("file", file);
+  if (temporary) {
+    formData.append("temporary", "true");
+  }
 
   try {
     const res = await fetch(`${BASE_URL}/media/upload/image`, {
@@ -361,9 +377,12 @@ export async function uploadImage(file: File) {
     throw error;
   }
 }
-export async function uploadAudio(file: File) {
+export async function uploadAudio(file: File, temporary = false) {
   const formData = new FormData();
   formData.append("file", file);
+  if (temporary) {
+    formData.append("temporary", "true");
+  }
 
   try {
     const res = await fetch(`${BASE_URL}/media/upload/audio`, {

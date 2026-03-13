@@ -75,6 +75,10 @@ def upload_image():
                             type: string
                             format: binary
                             description: The image file to upload
+                        temporary:
+                            type: boolean
+                            description: Whether the file is temporary (optional)
+                            example: false
     responses:
         201:
             description: Image uploaded successfully
@@ -104,11 +108,12 @@ def upload_image():
             return jsonify({'success': False, 'error': 'No file provided'}), 400
         
         file = request.files['file']
+        is_temporary = request.form.get('temporary', 'false').lower() == 'true'
         
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        result = get_media_service().upload_image(file)
+        result = get_media_service().upload_image(file, is_temporary)
         
         if 'error' in result:
             return jsonify({'success': False, 'error': result['error']}), 400
@@ -138,6 +143,10 @@ def upload_audio():
                             type: string
                             format: binary
                             description: The audio file to upload
+                        temporary:
+                            type: boolean
+                            description: Whether the file is temporary (optional)
+                            example: false
     responses:
         201:
             description: Audio uploaded successfully
@@ -167,11 +176,12 @@ def upload_audio():
             return jsonify({'success': False, 'error': 'No file provided'}), 400
         
         file = request.files['file']
+        is_temporary = request.form.get('temporary', 'false').lower() == 'true'
         
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        result = get_media_service().upload_audio(file)
+        result = get_media_service().upload_audio(file, is_temporary)
         
         if 'error' in result:
             return jsonify({'success': False, 'error': result['error']}), 400

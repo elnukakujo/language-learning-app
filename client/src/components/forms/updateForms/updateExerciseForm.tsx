@@ -25,7 +25,7 @@ interface UnitElements {
 export default function UpdateExerciseForm({ exercise, unitElements }: { exercise: Exercise, unitElements: UnitElements }) {
     const router = useRouter();
 
-    const [updatedExerciseType, setUpdatedExerciseType] = useState<'essay' | 'answering' | 'translate' | 'organize' | 'fill_in_the_blank' | 'matching' | 'true_false' | undefined>(exercise.exercise_type || undefined);
+    const [updatedExerciseType, setUpdatedExerciseType] = useState<'essay' | 'answering' | 'translate' | 'organize' | 'fill_in_the_blank' | 'matching' | 'true_false' | 'speaking' | undefined>(exercise.exercise_type || undefined);
     const [updatedQuestion, setUpdatedQuestion] = useState<string | undefined>(exercise.question || undefined);
     const [updatedAnswer, setUpdatedAnswer] = useState<string | undefined>(exercise.answer || undefined);
     const [updatedSupportText, setUpdatedSupportText] = useState<string | undefined>(exercise.text_support || undefined);

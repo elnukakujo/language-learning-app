@@ -54,12 +54,13 @@ class MediaService:
         file_path = self._validate_path(filename)
         return self.media_root, file_path
     
-    def upload_image(self, file: FileStorage) -> dict:
+    def upload_image(self, file: FileStorage, is_temporary: bool = False) -> dict:
         """
         Upload and save an image file.
         
         Args:
             file: Uploaded file object
+            is_temporary: Whether the file is temporary
             
         Returns:
             Dict with file info or error
@@ -80,7 +81,7 @@ class MediaService:
             return {'error': f'File too large. Maximum size: {max_mb}MB'}
         
         # Save using handler's save_image method
-        relative_path = self.file_handler.save_image(file, subfolder="images")
+        relative_path = self.file_handler.save_image(file, subfolder="images", is_temporary=is_temporary)
         
         if not relative_path:
             return {'error': 'Failed to save file'}
@@ -93,12 +94,13 @@ class MediaService:
             'size_bytes': file_size
         }
     
-    def upload_audio(self, file: FileStorage) -> dict:
+    def upload_audio(self, file: FileStorage, is_temporary: bool = False) -> dict:
         """
         Upload and save an audio file.
         
         Args:
             file: Uploaded file object
+            is_temporary: Whether the file is temporary
             
         Returns:
             Dict with file info or error
@@ -119,7 +121,7 @@ class MediaService:
             return {'error': f'File too large. Maximum size: {max_mb}MB'}
         
         # Save using handler's save_audio method
-        relative_path = self.file_handler.save_audio(file)
+        relative_path = self.file_handler.save_audio(file, is_temporary=is_temporary)
         
         if not relative_path:
             return {'error': 'Failed to save file'}
