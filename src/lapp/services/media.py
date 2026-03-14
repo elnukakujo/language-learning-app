@@ -85,7 +85,10 @@ class MediaService:
             return {'error': f'File too large. Maximum size: {max_mb}MB'}
         
         # Save using handler's save_image method
-        relative_path = self.file_handler.save_image(file, subfolder="images", is_temporary=is_temporary)
+        if is_temporary:
+            relative_path = self.file_handler.save_temporary_file(file)
+        else:
+            relative_path = self.file_handler.save_image(file)
         
         if not relative_path:
             return {'error': 'Failed to save file'}
@@ -125,7 +128,10 @@ class MediaService:
             return {'error': f'File too large. Maximum size: {max_mb}MB'}
         
         # Save using handler's save_audio method
-        relative_path = self.file_handler.save_audio(file, is_temporary=is_temporary)
+        if is_temporary:
+            relative_path = self.file_handler.save_temporary_file(file)
+        else:
+            relative_path = self.file_handler.save_audio(file)
         
         if not relative_path:
             return {'error': 'Failed to save file'}

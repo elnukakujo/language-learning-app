@@ -28,6 +28,9 @@ class Config:
     BACKUP_INTERVAL_MINUTES = 20  # Every 20 minutes
     MAX_BACKUPS = 10  # Keep last 10 backups
 
+    # Media cleanup settings
+    MEDIA_CLEANUP_INTERVAL_MINUTES = 60  # Run every 60 minutes while
+
     # TTS settings
     TTS_INTERVAL_MINUTES = 20  # Generate TTS every 20 minuters while app is running
 
@@ -37,12 +40,16 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
+    MEDIA_ROOT = str(BASE_DIR / 'media_dev')
+    BACKUP_ROOT = str(BASE_DIR / 'backups_dev')
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/dev_languages.db'
     ENV = 'development'
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
+    MEDIA_ROOT = str(BASE_DIR / 'media_test')
+    BACKUP_ROOT = str(BASE_DIR / 'backups_test')
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/test_languages.db'
     ENV = 'testing'
 

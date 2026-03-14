@@ -15,7 +15,7 @@ class MediaFileHandler:
         (self.temp_root).mkdir(parents=True, exist_ok=True)
         (self.media_root / 'images').mkdir(parents=True, exist_ok=True)
     
-    def save_image(self, file, is_temporary=False):
+    def save_image(self, file):
         """Save image and return relative path"""
         if not file:
             return None
@@ -23,12 +23,8 @@ class MediaFileHandler:
         ext = Path(file.filename).suffix.lower()
         filename = f"{uuid.uuid4().hex}{ext}"
         
-        if is_temporary:
-            relative_path = Path('temp') / filename
-            full_path = self.temp_root / filename
-        else:
-            relative_path = Path('images') / filename
-            full_path = self.media_root / relative_path
+        relative_path = Path('images') / filename
+        full_path = self.media_root / relative_path
         
         # Ensure subfolder exists
         full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -36,22 +32,34 @@ class MediaFileHandler:
         file.save(str(full_path))
         return str(relative_path)
     
-    def save_audio(self, file, is_temporary=False):
+    def save_audio(self, file):
         """Save audio and return relative path"""
         if not file:
             return None
         
         ext = Path(file.filename).suffix.lower()
         filename = f"{uuid.uuid4().hex}{ext}"
-        
-        if is_temporary:
-            relative_path = Path('temp') / filename
-            full_path = self.temp_root / filename
-        else:
-            relative_path = Path('audio') / filename
-            full_path = self.media_root / relative_path
+
+        relative_path = Path('audio') / filename
+        full_path = self.media_root / relative_path
         
         file.save(str(full_path))
+        return str(relative_path)
+    
+    def save_temporary_file(self, file):
+        """Save a file to the temporary directory and return its relative path"""
+        if not file:
+            return None
+        
+        ext = Path(file.filename).suffix.lower()
+        filename = f"{uuid.uuid4().hex}{ext}"
+        
+        relative_path = Path('temp') / filename
+        full_path = self.temp_root / filename
+        
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        file.save(str(full_path))
+        
         return str(relative_path)
     
     def delete_file(self, relative_path):
