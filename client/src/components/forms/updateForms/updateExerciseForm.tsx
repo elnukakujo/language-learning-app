@@ -114,7 +114,7 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
               />
             }
 
-            {["matching", "organize"].includes(updatedExerciseType) && 
+            {["matching", "organize", "fill_in_the_blank"].includes(updatedExerciseType) && 
               <DiscreteInput
                 value={updatedAnswer || ""}
                 setValue={setUpdatedAnswer}
@@ -123,7 +123,7 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
               />
             }
 
-            { !["true_false", "matching", "organize"].includes(updatedExerciseType) && 
+            { !["true_false", "matching", "organize", "fill_in_the_blank"].includes(updatedExerciseType) && 
               <AutoSizeTextArea
                 value={updatedAnswer || ""}
                 onChange={(e) => setUpdatedAnswer(e.target.value)}

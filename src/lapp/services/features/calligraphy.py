@@ -309,22 +309,21 @@ class CalligraphyService:
                         existing.example_word_id = new_word.id
                         existing.example_word = new_word
             else:
-                existing.example_word = []
+                existing.example_word = None
             
-            # Only update fields that were provided (partial updates)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
             
             # Remove nested objects from update_data
+            update_data = data.model_dump()
+            update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('character', None)
             update_data.pop('example_word', None)
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
             
             # Update the existing object's attributes
             for key, value in update_data.items():
                 if key not in ('character_id', 'example_word_id'):  # Don't overwrite if already set
                     setattr(existing, key, value)
-            
-            # Update last_seen
-            existing.last_seen = date.today()
             
             # Save to database
             result = db_manager.modify(existing, session=session)

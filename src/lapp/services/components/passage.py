@@ -221,10 +221,16 @@ class PassageService:
                 logger.warning(f"Passage not found: {passage_id}")
                 return None
 
-            # Only update fields that were provided (partial updates)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
-
             # Update the existing object's attributes
+            update_data = data.model_dump()
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+
+            if (existing_passage := self.get_by_text(update_data['text'], session=session)) and existing_passage.id != passage_id:
+                logger.warning(f"Passage with value '{update_data['text']}' already exists.")
+                raise ValueError(f"Passage with value '{update_data['text']}' already exists.")
+
             for key, value in update_data.items():
                 setattr(existing, key, value)
 

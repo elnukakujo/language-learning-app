@@ -114,7 +114,6 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 </span>
             )}
 
-            {/* ── Recording controls ── */}
             {!isCorrect && attempts < 3 && (
                 <div className="flex flex-col space-y-2">
                     <AudioRecorder
@@ -145,7 +144,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                     : "bg-red-100 text-red-800"}`}
                 >
                     <h3>{currentLevel.label}</h3>
-                    <p className="italic">{currentLevel.description}</p>
+                    <p className="italic">"{currentLevel.description}"</p>
                 </div>
             )}
         </div>

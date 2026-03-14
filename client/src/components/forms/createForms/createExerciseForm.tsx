@@ -159,7 +159,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               />
             }
 
-            {["matching", "organize"].includes(exerciseType) && 
+            {["matching", "organize", "fill_in_the_blank"].includes(exerciseType) && 
               <DiscreteInput
                 value={answer || ""}
                 setValue={setAnswer}
@@ -168,7 +168,7 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
               />
             }
 
-            { !["true_false", "matching", "organize", "speaking"].includes(exerciseType) && 
+            { !["true_false", "matching", "organize", "speaking", "fill_in_the_blank"].includes(exerciseType) && 
               <AutoSizeTextArea
                 value={answer || ""}
                 onChange={(e) => setAnswer(e.target.value)}

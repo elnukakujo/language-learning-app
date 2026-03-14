@@ -163,9 +163,16 @@ class CharacterService:
             if not existing:
                 logger.warning(f"Character not found: {character_id}")
                 return None
+            
+            update_data = data.model_dump()
+            logger.info(f"Update data for character {character_id}: {update_data}")
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
 
-            # Only update fields that were provided (partial updates)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+            if (existing_character := self.get_by_character(update_data['character'], session=session)) and existing_character.id != character_id:
+                logger.warning(f"Character with value '{update_data['character']}' already exists.")
+                raise ValueError(f"Character with value '{update_data['character']}' already exists.")
 
             # Update the existing object's attributes
             for key, value in update_data.items():

@@ -6,7 +6,7 @@ from ..base import BaseComponentModel
 class Character(BaseComponentModel):
     __tablename__ = 'character'
     
-    character = Column(String, nullable=False, index=True)
+    character = Column(String, nullable=False, index=True, unique=True)
     phonetic = Column(String, nullable=False)
     meaning = Column(String, nullable=True)
     radical = Column(String, nullable=True)

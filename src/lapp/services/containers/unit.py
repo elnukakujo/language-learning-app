@@ -204,7 +204,7 @@ class UnitService:
 
         Args:
             unit_id: The ID of the unit to update.
-            data: UnitDict containing updated language details.
+            data: UnitDict containing updated unit details.
 
         Returns:
             Updated UnitContainer object if successful, else None
@@ -220,15 +220,14 @@ class UnitService:
                 logger.warning(f"UnitContainer not found: {unit_id}")
                 return None
             
-            # Only update fields that were provided (partial updates)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
-            
             # Update the existing object's attributes
+            update_data = data.model_dump()
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+
             for key, value in update_data.items():
                 setattr(existing, key, value)
-            
-            # Update last_seen
-            existing.last_seen = date.today()
             
             # Save to database
             result = db_manager.modify(existing, session=session)

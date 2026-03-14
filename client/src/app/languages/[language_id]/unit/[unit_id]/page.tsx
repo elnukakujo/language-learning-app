@@ -1,5 +1,5 @@
 import Markdown from "react-markdown";
-import { remarkGfm } from "remark-gfm";
+import remarkGfm from "remark-gfm";
 
 import { getUnitData, getVocabularyByUnit, getGrammarByUnit, getCalligraphyByUnit, getExercisesByUnit } from "@/api";
 import VocabularyList from "@/components/lists/vocabularyList";
@@ -30,7 +30,7 @@ export default async function Unit({ params }: { params: { language_id: string, 
         <main className="flex flex-col gap-8">
             <header>
                 <h1>{unit.title}</h1>
-                <Markdown remarkPlugins={remarkGfm}>{unit.description}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{unit.description}</Markdown>
                 <p>Score: {unit.score?.toFixed(1) || "N/A"}/100</p>
                 <p>Last Seen: {new Date(unit.last_seen || 0).toLocaleDateString('en-US')}</p>
                 <nav className="flex flex-row space-x-4">

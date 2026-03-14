@@ -340,20 +340,18 @@ class VocabularyService:
             else:
                 existing.example_sentences = []
             
-            # Update other fields that were provided (excluding word and example_sentences as they're handled above)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
-            
             # Remove nested objects from update_data to avoid overwriting our service-managed updates
+            update_data = data.model_dump()
+            update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('word', None)
             update_data.pop('example_sentences', None)
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
             
             # Update remaining fields
             for key, value in update_data.items():
                 if key != 'word_id':  # Don't overwrite word_id if we already set it
                     setattr(existing, key, value)
-            
-            # Update last_seen
-            existing.last_seen = date.today()
             
             # Save to database
             result = db_manager.modify(existing, session=session)

@@ -300,15 +300,16 @@ class LanguageService:
                 logger.warning(f"Language not found: {language_id}")
                 return None
             
-            # Only update fields that were provided (partial updates)
-            update_data = data.model_dump(exclude_unset=True, exclude_none=True)
-            
             # Update the existing object's attributes
+            update_data = data.model_dump()
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+
             for key, value in update_data.items():
                 setattr(existing, key, value)
             
             # Update last_seen
-            existing.last_seen = date.today()
             existing.current_unit = self._check_current_unit(
                 language=existing,
                 current_unit_id=existing.current_unit,
