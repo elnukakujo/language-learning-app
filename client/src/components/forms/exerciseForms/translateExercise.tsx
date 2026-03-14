@@ -57,7 +57,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     return (
         <form className="flex flex-col space-y-4">
-            <h3>Translate Exercise</h3>
+            <h2>Translate Exercise</h2>
             <span>
                 <h3>Text to translate: </h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>

@@ -112,7 +112,6 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
   return (
     <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
       <h2>Fill the Blanks Exercise</h2>
-
       {text_support.trim() !== "" && (
         <span>
           <h3>Text Support:</h3>

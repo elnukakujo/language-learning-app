@@ -97,7 +97,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4">
-            <h2>Matching Exerciswe</h2>
+            <h2>Matching Exercise</h2>
             {text_support.trim() !== "" && (
                 <span>
                     <h3>Text Support: </h3> 

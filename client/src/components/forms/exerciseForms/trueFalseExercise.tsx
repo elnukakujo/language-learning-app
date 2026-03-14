@@ -42,7 +42,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     return (
         <form className="flex flex-col space-y-4">
-            <h3>True or False</h3>
+            <h2>True or False</h2>
             <span>
                 <h3>Question:</h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>

@@ -46,7 +46,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h1>Organizing Exercise</h1>
+            <h2>Organizing Exercise</h2>
             {(!isCorrect && attempts < 3) && (
                 <>
                     {text_support.trim() !== "" && (

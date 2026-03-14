@@ -27,6 +27,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     // Lifted state from AudioRecorder via onStatusChange
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [resetKey, setResetKey] = useState<number>(0); // remounts AudioRecorder on exercise change
+    const [showExample, setShowExample] = useState<boolean>(false);
 
     const hasRecording = !!audioUrl;
 
@@ -81,12 +82,8 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
     return (
         <div className="flex flex-col space-y-4">
-            <h3>Speaking Exercise</h3>
-
-            <span>
-                <h3>Text to pronounce: </h3>
-                <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
-            </span>
+            <h2>Speaking Exercise</h2>
+            <h3>{question}</h3>
 
             {text_support.trim() !== "" && (
                 <span>
@@ -95,19 +92,13 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 </span>
             )}
 
-            {image_support && image_support.length > 0 && (
-                <span>
-                    <h3>Image Support: </h3>
-                    {image_support.map((imgSrc, index) => (
-                        <Image key={index} src={`${BASE_URL}${imgSrc}`} alt="Support"
-                            className="mt-2" width={300} height={300} />
-                    ))}
-                </span>
-            )}
+            {image_support && image_support.length > 0 && image_support.map((imgSrc, index) => (
+                <Image key={index} src={`${BASE_URL}${imgSrc}`} alt="Support"
+                className="mt-2" width={300} height={300} />
+            ))}
 
-            {audio_support && audio_support.length > 0 && (
+            {audio_support && audio_support.length > 0 && showExample && (
                 <span>
-                    <h3>Audio Support: </h3>
                     {audio_support.map((audioSrc, index) => (
                         <audio key={index} src={`${BASE_URL}${audioSrc}`} controls className="mt-2" />
                     ))}
@@ -115,27 +106,34 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
             )}
 
             {!isCorrect && attempts < 3 && (
-                <div className="flex flex-col space-y-2">
-                    <AudioRecorder
-                        key={resetKey}
-                        onUploadSuccess={handleUploadSuccess}
-                        onUploadError={console.error}
-                    />
-
-                    {/* Submit — enabled once AudioRecorder has uploaded and returned a URL */}
+                <span className="flex flex-col space-y-4">
+                    <div className="flex flex-row space-x-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowExample((prev) => !prev)}
+                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                            {showExample ? "Hide Example" : "Show Example"}
+                        </button>
+                        <AudioRecorder
+                            key={resetKey}
+                            onUploadSuccess={handleUploadSuccess}
+                            onUploadError={console.error}
+                        />
+                    </div>
                     <button
                         type="button"
                         onClick={handleSubmit}
                         disabled={!hasRecording || isLoading}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700
-                                   transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {isLoading
                             ? <Ring size="24" stroke="2" bgOpacity="0" speed="3" color="white" />
                             : <p>Check Answer</p>
                         }
                     </button>
-                </div>
+                </span>
             )}
 
             {isSubmitted && currentLevel && (
