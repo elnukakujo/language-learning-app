@@ -6,27 +6,37 @@ import 'ldrs/react/Ring.css';
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import AudioRecorder from "@/components/audioRecorder";
 import Exercise from "@/interface/features/Exercise";
 import { BASE_URL, updateScoreById, evaluateSpeaking } from "@/api";
 
+import dynamic from 'next/dynamic';
+const AudioRecorder = dynamic(() => import('@/components/audioRecorder'), { ssr: false });
+
 export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
-    const question = exercise.question     || "";
-    const answer = exercise.answer       || "";
+    const question = exercise.question || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files  || "";
-    const audio_support = exercise.audio_files  || "";
+    const image_support = exercise.image_files || "";
+    const audio_support = exercise.audio_files || "";
 
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string } | null>(null);
 
     // Lifted state from AudioRecorder via onStatusChange
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [resetKey, setResetKey] = useState<number>(0); // remounts AudioRecorder on exercise change
 
     const hasRecording = !!audioUrl;
+
+    const speechLevels = [
+        { label: "Lost in Translation", threshold: 0, description: "Your pronunciation is still finding its way—keep practicing!" },
+        { label: "Tourist Mode", threshold: 0.50, description: "You're getting there, but locals might need to guess a bit." },
+        { label: "Confident Speaker", threshold: 0.70, description: "You're understood, and that's a big win!" },
+        { label: "Almost Native", threshold: 0.85, description: "Impressive! Just a few tweaks and you'll fool everyone." },
+        { label: "Native-like", threshold: 0.95, description: "Flawless! Even locals would think you grew up here." },
+    ];
 
     // Reset everything when the exercise changes
     useEffect(() => {
@@ -49,7 +59,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
         try {
             const result = await evaluateSpeaking(String(exercise.id), audioUrl);
-            console.log("Evaluation result:", result);
+            setCurrentLevel(speechLevels.sort((a, b) => b.threshold - a.threshold).find((level) => result.score >= level.threshold) || { label: "Unknown", description: "No feedback available." });
 
             if (result.correct) {
                 setIsCorrect(true);
@@ -129,16 +139,13 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 </div>
             )}
 
-            {isSubmitted && (
+            {isSubmitted && currentLevel && (
                 <div className={`mt-4 p-3 rounded-lg ${isCorrect
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"}`}
                 >
-                    {isCorrect
-                        ? "✓ Correct! Well done!"
-                        : `✗ Pronunciation needs work (Attempt ${attempts}/3)`
-                    }
-
+                    <h3>{currentLevel.label}</h3>
+                    <p className="italic">{currentLevel.description}</p>
                 </div>
             )}
         </div>

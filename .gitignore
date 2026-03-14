@@ -6,7 +6,8 @@
 media/images/*
 media/audio/*
 media/temp/*
-dev/
+media_dev/
+media_test/
 
 # Instance folder
 instance/*
