@@ -59,6 +59,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                                 key={index}
                                 src={BASE_URL + url}
                                 controls
+                                autoPlay={index === 0}
                         />
                         ))}
                     </section>

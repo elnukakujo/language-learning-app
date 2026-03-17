@@ -38,7 +38,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
         evaluateTranslation(exercise.id!, userAnswer).then((result) => {
             console.log("Evaluation result:", result);
-            if (result.exercise.correct === true) {
+            if (result.correct === true) {
                 setIsCorrect(true);
                 updateScoreById(exercise.id!, true).catch(console.error);
             } else {
