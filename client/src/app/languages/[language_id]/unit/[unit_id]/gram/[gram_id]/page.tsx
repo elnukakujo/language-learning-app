@@ -15,39 +15,84 @@ type paramsType = {
 export default async function GrammarPage({ params }: { params: paramsType }) {
     const { gram_id, language_id, unit_id } = await params;
     const grammar: Grammar = await getElementbyId(gram_id);
-    const updatePath = `/languages/${language_id}/unit/${unit_id}/gram/${gram_id}/update`;
 
     return (
         <main>
-            <section>
+            <article className="flex flex-col space-y-4">
                 <h1>{grammar.title}</h1>
                 <Markdown remarkPlugins={[remarkGfm]}>{grammar.explanation}</Markdown>
 
-                {grammar.learnable_sentences && grammar.learnable_sentences.length > 0 && (
-                    <div>
-                        <h3>Learnable Sentences:</h3>
-                        <ul>
-                            {grammar.learnable_sentences.map((sentence, index) => (
-                                <li key={index}>
-                                    {sentence.image_files && sentence.image_files.length > 0 && <img
-                                        src={BASE_URL + sentence.image_files?.[0]}
-                                        alt={sentence.text}
-                                        width={200}
-                                        height={200}
-                                        />}
-                                    {sentence.audio_files && sentence.audio_files.length > 0 && <audio
-                                        src={BASE_URL + sentence.audio_files?.[0]}
-                                        controls
-                                        />}
-                                    <p>{sentence.text}{sentence.translation && ` (${sentence.translation})`}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                {grammar.image_files!.length > 0 && (
+                    <section className="flex flex-row space-x-4 items-center">
+                        {grammar.image_files!.map((url, index) => (
+                            <img
+                                key={index}
+                                src={BASE_URL + url}
+                                alt={grammar.title}
+                                width={200}
+                                height={200}
+                            />
+                        ))}
+                    </section>
                 )}
-                <p>Score: {grammar.score?.toFixed(1) || 0}/100</p>
-                <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>
-            </section>
+                {grammar.audio_files!.length > 0 && (
+                    <section className="flex flex-col space-y-4 items-baseline" >
+                        {grammar.audio_files!.map((url, index) => (
+                            <audio
+                                key={index}
+                                src={BASE_URL + url}
+                                controls
+                        />
+                        ))}
+                    </section>
+                )}
+
+                {grammar.learnable_sentences!.length > 0 && (
+                    <section className="flex flex-col space-y-4 items-baseline">
+                        <h3>Learnable Sentences</h3>
+                        {grammar.learnable_sentences!.map((sentence, index) => (
+                            <article
+                                key={index}
+                                className="flex flex-col space-y-2 items-baseline"
+                            >
+                                <section>
+                                    <p>{sentence.text}</p>
+                                    {sentence.translation && <p>Sentence Translation: {sentence.translation}</p>}
+                                </section>
+                                {sentence.image_files!.length > 0 && (
+                                    <section className="flex flex-row space-x-4 items-center">
+                                        {sentence.image_files!.map((url, index) => (
+                                            <img
+                                                key={index}
+                                                src={BASE_URL + url}
+                                                alt={sentence.text}
+                                                width={200}
+                                                height={200}
+                                            />
+                                        ))}
+                                    </section>
+                                )}
+                                {sentence.audio_files!.length > 0 && (
+                                    <section className="flex flex-col space-y-4 items-baseline">
+                                        {sentence.audio_files!.map((url, index) => (
+                                            <audio
+                                                key={index}
+                                                src={BASE_URL + url}
+                                                controls
+                                            />
+                                        ))}
+                                    </section>
+                                )}
+                            </article>
+                        ))}
+                    </section>
+                )}
+                <section>
+                    <h3>Performance Information</h3>
+                    <p>Score: {grammar.score!.toFixed(1)}/100</p>
+                    <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>
+                </section>
+            </article>
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/unit/${unit_id}/gram/${gram_id}/update`}>
                     Update the Grammar

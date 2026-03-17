@@ -20,7 +20,6 @@ class MediaService:
         if media_root is None:
             media_root = current_app.config['MEDIA_ROOT']
         self.media_root = Path(media_root)
-        logger.debug(f"Media root set to: {self.media_root}")
         self.file_handler = MediaFileHandler(media_root)
     
     def _validate_path(self, filename: str) -> Path:
@@ -36,11 +35,9 @@ class MediaService:
         Raises:
             ValueError: If path is outside media root
         """
-        logger.debug(f"Validating filename: {filename}")
         # Prevent absolute paths and normalize the filename
         filename = filename.lstrip("/\\")
         file_path = self.media_root / Path(filename)
-        logger.debug(f"Validating file path: {file_path}")
         try:
             file_path = file_path.resolve()
             file_path.relative_to(self.media_root.resolve())
@@ -97,7 +94,7 @@ class MediaService:
         
         return {
             'file_path': relative_path,
-            'url': f'/media/{relative_path}',
+            'url': f'/{self.media_root.name}/{relative_path}',
             'size_bytes': file_size
         }
     
@@ -140,7 +137,7 @@ class MediaService:
         
         return {
             'file_path': relative_path,
-            'url': f'/media/{relative_path}',
+            'url': f'/{self.media_root.name}/{relative_path}',
             'size_bytes': file_size
         }
     
@@ -214,5 +211,5 @@ class MediaService:
             'type': file_type,
             'extension': extension,
             'exists': True,
-            'url': f'/media/{filename}'
+            'url': f'/{self.media_root.name}/{filename}'
         }

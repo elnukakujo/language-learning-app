@@ -121,6 +121,14 @@ class CharacterService:
                     
                 return existing
             
+            if data.id is not None:
+                if existing := self.get_by_id(data.id, session=session):
+                    logger.info(f"Character with provided ID already exists: {data.id} with character: {existing.character}")
+                    return self.update(character_id=data.id, data=data, session=session)
+                else:
+                    logger.warning(f"ID provided for new character will be ignored: {data.id}")
+                    data.id = None
+            
             character = Character(
                 id=db_manager.generate_new_id(model_class=Character, session=session),
                 **data.model_dump(exclude_none=True)

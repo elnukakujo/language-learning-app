@@ -71,44 +71,48 @@ class BaseFeatureModel(BaseContainerModel):
     @validates('image_files', 'audio_files')
     def validate_media_files(cls, value: Any, info) -> list[str]:
         """Validate and filter media file paths."""
-        # Ensure it's a list
         if info is None or not isinstance(info, list):
             return []
-        
-        # Get media root from Flask config
-        media_root = Path(current_app.config['MEDIA_ROOT']).parent
-        
-        # Filter valid files
+
+        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
         valid_files = []
+
         for file_path in info:
             if not isinstance(file_path, str):
                 logger.warning(f"Invalid media file path (not a string): {file_path}")
                 continue
-            
-            # Normalize path to use forward slashes for comparison
+
             normalized_path = file_path.replace('\\', '/')
-            
+
             if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 logger.warning(f"Invalid image file extension: {normalized_path}")
                 continue
-            elif value == "image_files" and not normalized_path.lower().startswith('/media/images/'):
-                logger.warning(f"Image file path must start with '/media/images/': {normalized_path}")
-                continue
-            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
+            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
                 logger.warning(f"Invalid audio file extension: {normalized_path}")
                 continue
-            elif value == "audio_files" and not normalized_path.lower().startswith('/media/audio/'):
-                logger.warning(f"Audio file path must start with '/media/audio/': {normalized_path}")
+
+            if normalized_path.lower().startswith('/media/images/') or normalized_path.lower().startswith('/media/audio/'):
+                relative_path = normalized_path[len('/media/'):]
+            elif normalized_path.lower().startswith('/media_dev/images/') or normalized_path.lower().startswith('/media_dev/audio/'):
+                relative_path = normalized_path[len('/media_dev/'):]
+            elif normalized_path.lower().startswith('/media_test/images/') or normalized_path.lower().startswith('/media_test/audio/'):
+                relative_path = normalized_path[len('/media_test/'):]
+            elif normalized_path.lower().startswith('images/') or normalized_path.lower().startswith('audio/'):
+                relative_path = normalized_path
+            else:
+                logger.warning(f"Invalid media URL prefix: {normalized_path}")
                 continue
-            
-            # Check if file exists (convert to Path for cross-platform)
-            # Remove leading slash and use Path for proper joining
-            relative_path = normalized_path.lstrip('/')
-            full_path = media_root / relative_path
+
+            try:
+                full_path = (media_root / relative_path).resolve()
+                full_path.relative_to(media_root)
+            except Exception:
+                logger.warning(f"Media path escapes MEDIA_ROOT: {normalized_path}")
+                continue
+
             if full_path.exists() and full_path.is_file():
-                # Store normalized path (with forward slashes) in database
                 valid_files.append(normalized_path)
-        
+
         return valid_files
     
 class BaseComponentModel(Base):
@@ -134,42 +138,46 @@ class BaseComponentModel(Base):
     @validates('image_files', 'audio_files')
     def validate_media_files(cls, value: Any, info) -> list[str]:
         """Validate and filter media file paths."""
-        # Ensure it's a list
         if info is None or not isinstance(info, list):
             return []
-        
-        # Get media root from Flask config
-        media_root = Path(current_app.config['MEDIA_ROOT']).parent
-        
-        # Filter valid files
+
+        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
         valid_files = []
+
         for file_path in info:
             if not isinstance(file_path, str):
                 logger.warning(f"Invalid media file path (not a string): {file_path}")
                 continue
-            
-            # Normalize path to use forward slashes for comparison
+
             normalized_path = file_path.replace('\\', '/')
-            
+
             if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 logger.warning(f"Invalid image file extension: {normalized_path}")
                 continue
-            elif value == "image_files" and not normalized_path.lower().startswith('/media/images/'):
-                logger.warning(f"Image file path must start with '/media/images/': {normalized_path}")
-                continue
-            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac')):
+            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
                 logger.warning(f"Invalid audio file extension: {normalized_path}")
                 continue
-            elif value == "audio_files" and not normalized_path.lower().startswith('/media/audio/'):
-                logger.warning(f"Audio file path must start with '/media/audio/': {normalized_path}")
+
+            if normalized_path.lower().startswith('/media/images/') or normalized_path.lower().startswith('/media/audio/'):
+                relative_path = normalized_path[len('/media/'):]
+            elif normalized_path.lower().startswith('/media_dev/images/') or normalized_path.lower().startswith('/media_dev/audio/'):
+                relative_path = normalized_path[len('/media_dev/'):]
+            elif normalized_path.lower().startswith('/media_test/images/') or normalized_path.lower().startswith('/media_test/audio/'):
+                relative_path = normalized_path[len('/media_test/'):]
+            elif normalized_path.lower().startswith('images/') or normalized_path.lower().startswith('audio/'):
+                relative_path = normalized_path
+            else:
+                logger.warning(f"Invalid media URL prefix: {normalized_path}")
                 continue
-            
-            # Check if file exists (convert to Path for cross-platform)
-            # Remove leading slash and use Path for proper joining
-            relative_path = normalized_path.lstrip('/')
-            full_path = media_root / relative_path
+
+            try:
+                full_path = (media_root / relative_path).resolve()
+                full_path.relative_to(media_root)
+            except Exception:
+                logger.warning(f"Media path escapes MEDIA_ROOT: {normalized_path}")
+                continue
+
             if full_path.exists() and full_path.is_file():
-                # Store normalized path (with forward slashes) in database
                 valid_files.append(normalized_path)
-        
+
         return valid_files

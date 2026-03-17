@@ -2,15 +2,16 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
-from lapp.models.components.character import Character
-from lapp.models.components.passage import Passage
-
-from ..core.database import db_manager
-from ..models.components.word import Word
-from ..services import TTSService
-
 logger = logging.getLogger(__name__)
 
+from ..core.database import db_manager
+from ..services import TTSService, PassageService, WordService, CharacterService
+from ..schemas.components import CharacterDict, PassageDict, WordDict
+from ..models.components import Passage, Character, Word
+
+passage_service = PassageService()
+word_service = WordService()
+character_service = CharacterService()
 
 def register_tts_tasks(scheduler: BackgroundScheduler, app: Flask):
     """
@@ -105,12 +106,28 @@ def generate_missing_component_audio(app: Flask):
                         continue
 
                     relative_path = tts_service.generate_audio(text=text)
-                        
+                    component_id = component.id
+
+                    updated_component = component.to_dict(include_relations=False)
+                    updated_component.pop('id', None)  # Remove ID from dict since it's not updatable
+                    updated_component["audio_files"] = [relative_path]  # Ensure audio_files is included in the update data
+
                     # Update component with audio path
-                    component.audio_files = [relative_path]
-                    db_manager.modify(component, session=session)
-                    session.commit()
+                    if isinstance(component, Character):
+                        result = character_service.update(character_id=component_id, data=CharacterDict(**updated_component), session=session)
+                    elif isinstance(component, Word):
+                        result = word_service.update(word_id=component_id, data=WordDict(**updated_component), session=session)
+                    elif isinstance(component, Passage):
+                        result = passage_service.update(passage_id=component_id, data=PassageDict(**updated_component), session=session)
                     
+                    if not result:
+                        logger.warning(f"⚠️  Failed to update component '{text}' (ID: {component.id})")
+                        continue
+
+                    if result.audio_files != [relative_path]:
+                        logger.warning(f"⚠️  Audio path mismatch for component '{text}' (ID: {component.id}) - expected: {relative_path}, got: {result.audio_files}")
+                        continue
+
                     success_count += 1
                     logger.info(f"✅ Generated audio for component '{text}' (ID: {component.id})")
                     
@@ -128,129 +145,3 @@ def generate_missing_component_audio(app: Flask):
         finally:
             if session:
                 session.close()
-
-
-def generate_audio_for_character_id(character_id: str) -> bool:
-    """
-    Generate audio for a specific character by ID.
-    
-    Args:
-        character_id: The ID of the character
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    tts_service = TTSService()
-    session = None
-    
-    try:
-        session = db_manager.get_session()
-        
-        character = db_manager.get_by_id(Character, character_id, session=session)
-        
-        if not character:
-            logger.error(f"Character with ID {character_id} not found")
-            return False
-        
-        # Generate audio
-        relative_path = tts_service.generate_audio(text=character.character)
-        
-        # Update character
-        character.audio_files = [relative_path]
-        session.commit()
-        
-        logger.info(f"✅ Generated audio for character '{character.character}' (ID: {character_id})")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to generate audio for character ID {character_id}: {e}")
-        if session:
-            session.rollback()
-        return False
-    finally:
-        if session:
-            session.close()
-
-
-def generate_audio_for_word_id(word_id: str) -> bool:
-    """
-    Generate audio for a specific word by ID.
-    
-    Args:
-        word_id: The ID of the word
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    tts_service = TTSService()
-    session = None
-    
-    try:
-        session = db_manager.get_session()
-        
-        word = db_manager.get_by_id(Word, word_id, session=session)
-        
-        if not word:
-            logger.error(f"Word with ID {word_id} not found")
-            return False
-        
-        # Generate audio
-        relative_path = tts_service.generate_audio(text=word.word)
-        
-        # Update word
-        word.audio_files = [relative_path]
-        session.commit()
-        
-        logger.info(f"✅ Generated audio for word '{word.word}' (ID: {word_id})")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to generate audio for word ID {word_id}: {e}")
-        if session:
-            session.rollback()
-        return False
-    finally:
-        if session:
-            session.close()
-
-
-def generate_audio_for_passage_id(passage_id: str) -> bool:
-    """
-    Generate audio for a specific passage by ID.
-    
-    Args:
-        passage_id: The ID of the passage
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    tts_service = TTSService()
-    session = None
-    
-    try:
-        session = db_manager.get_session()
-        
-        passage = db_manager.get_by_id(Passage, passage_id, session=session)
-        
-        if not passage:
-            logger.error(f"Passage with ID {passage_id} not found")
-            return False
-        
-        # Generate audio
-        relative_path = tts_service.generate_audio(text=passage.passage)
-        
-        # Update passage
-        passage.audio_files = [relative_path]
-        session.commit()
-        
-        logger.info(f"✅ Generated audio for passage '{passage.passage}' (ID: {passage_id})")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to generate audio for passage ID {passage_id}: {e}")
-        if session:
-            session.rollback()
-        return False
-    finally:
-        if session:
-            session.close()

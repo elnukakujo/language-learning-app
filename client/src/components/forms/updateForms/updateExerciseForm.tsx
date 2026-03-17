@@ -29,8 +29,9 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
     const [updatedQuestion, setUpdatedQuestion] = useState<string | undefined>(exercise.question || undefined);
     const [updatedAnswer, setUpdatedAnswer] = useState<string | undefined>(exercise.answer || undefined);
     const [updatedSupportText, setUpdatedSupportText] = useState<string | undefined>(exercise.text_support || undefined);
-    const [updatedImageUrl, setUpdatedImageUrl] = useState<string | undefined>(exercise.image_files ? exercise.image_files[0] : undefined);
-    const [updatedAudioUrl, setUpdatedAudioUrl] = useState<string | undefined>(exercise.audio_files ? exercise.audio_files[0] : undefined);
+
+    const [updatedImageUrl, setUpdatedImageUrl] = useState<string[]>(exercise.image_files ? exercise.image_files : []);
+    const [updatedAudioUrl, setUpdatedAudioUrl] = useState<string[]>(exercise.audio_files ? exercise.audio_files : []);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>(exercise.vocabulary_ids || []);
     const [callAssociated, setCallAssociated] = useState<string[]>(exercise.calligraphy_ids || []);
@@ -48,8 +49,8 @@ export default function UpdateExerciseForm({ exercise, unitElements }: { exercis
         exercise_type: updatedExerciseType as Exclude<typeof updatedExerciseType, "">,
         question: updatedQuestion || "",
         text_support: updatedSupportText || undefined,
-        image_files: updatedImageUrl ? [updatedImageUrl] : [],
-        audio_files: updatedAudioUrl ? [updatedAudioUrl] : [],
+        image_files: updatedImageUrl,
+        audio_files: updatedAudioUrl,
         answer: updatedAnswer || "",
         unit_id: exercise.unit_id,
         vocabulary_ids: vocAssociated,

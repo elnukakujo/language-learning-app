@@ -5,14 +5,16 @@ logger = logging.getLogger(__name__)
 
 from ...services import MediaService
 
-bp = Blueprint('media', __name__, url_prefix='/media')
+bp = Blueprint('media', __name__)
 
 # Required because MediaService depends on current_app context which may not be available at import time
 def get_media_service() -> MediaService:
     """Get MediaService instance with current app config."""
     return MediaService(current_app.config['MEDIA_ROOT'])
 
-@bp.route('/<path:filename>', methods=['GET'])
+@bp.route('/media/<path:filename>', methods=['GET'])
+@bp.route('/media_dev/<path:filename>', methods=['GET'])
+@bp.route('/media_test/<path:filename>', methods=['GET'])
 def serve_media(filename: str):
     """
     Serve media files (images, audio).
@@ -57,7 +59,7 @@ def serve_media(filename: str):
         abort(500)
 
 
-@bp.route('/upload/image', methods=['POST'])
+@bp.route('/media/upload/image', methods=['POST'])
 def upload_image():
     """
     Upload an image file.
@@ -125,7 +127,7 @@ def upload_image():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@bp.route('/upload/audio', methods=['POST'])
+@bp.route('/media/upload/audio', methods=['POST'])
 def upload_audio():
     """
     Upload an audio file.
@@ -193,7 +195,7 @@ def upload_audio():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@bp.route('/delete/', methods=['DELETE'])
+@bp.route('/media/delete/', methods=['DELETE'])
 def delete_media():
     """
     Delete a media file.
@@ -254,7 +256,7 @@ def delete_media():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@bp.route('/info/<path:filename>', methods=['GET'])
+@bp.route('/media/info/<path:filename>', methods=['GET'])
 def media_info(filename: str):
     """
     Get information about a media file.

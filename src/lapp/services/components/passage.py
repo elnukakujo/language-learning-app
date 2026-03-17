@@ -177,6 +177,15 @@ class PassageService:
                     existing = session.merge(existing)
                     
                 return existing
+
+            if data.id is not None:
+                if existing := self.get_by_id(data.id, session=session):
+                    logger.info(f"Passage with provided ID already exists: {data.id} with text: {existing.text}")
+                    return self.update(passage_id=data.id, data=data, session=session)
+                else:
+                    logger.warning(f"ID provided for new passage will be ignored: {data.id}")
+                    data.id = None
+
             
             passage = Passage(
                 id=db_manager.generate_new_id(model_class=Passage, session=session),

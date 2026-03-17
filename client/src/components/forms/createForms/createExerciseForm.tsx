@@ -28,8 +28,9 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
     const [question, setQuestion] = useState<string | undefined>(undefined)
     const [answer, setAnswer] = useState<string | undefined>(undefined)
     const [supportText, setSupportText] = useState<string | undefined>(undefined); 
-    const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-    const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
+
+    const [imageUrl, setImageUrl] = useState<string[]>([]);
+    const [audioUrl, setAudioUrl] = useState<string[]>([]);
 
     const [vocAssociated, setVocAssociated] = useState<string[]>([]);
     const [callAssociated, setCallAssociated] = useState<string[]>([]);
@@ -87,8 +88,8 @@ export default function CreateExerciseForm({ unit_id, unitElements }: { unit_id:
         exercise_type: exerciseType as Exclude<typeof exerciseType, "">,
         question: question!,
         text_support: supportText || undefined,
-        image_files: imageUrl ? [imageUrl] : [],
-        audio_files: audioUrl ? [audioUrl] : [],
+        image_files: imageUrl,
+        audio_files: audioUrl,
         answer: answer!,
         unit_id: unit_id,
         vocabulary_ids: vocAssociated,

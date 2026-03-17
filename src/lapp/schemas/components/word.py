@@ -26,7 +26,8 @@ class WordDict(BaseComponentDict):
             "numeral",
             "classifier",
             "auxiliary",
-            "modal"
+            "modal",
+            ""
         ]
         if self.type is not None and self.type.lower() not in valid_types:
             raise ValueError(f"Invalid type: {self.type}. Must be one of {valid_types}.")

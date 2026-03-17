@@ -50,12 +50,12 @@ class TTSService:
             full_path: Full file path
             
         Returns:
-            Relative path with forward slashes (e.g., '/media/audio/file.wav')
+            Relative path with forward slashes (e.g., '/media/audio/file.wav' or '/media_dev/audio/file.wav' or '/media_test/audio/file.wav')
         """
         # Get relative path and convert to POSIX format (forward slashes)
         relative = full_path.relative_to(self.media_root)
-        # Always return with /media/ prefix and forward slashes
-        return f"/media/{relative.as_posix()}"
+        # Always return with correct prefix and forward slashes
+        return f"/{self.media_root.name}/{relative.as_posix()}"
     
     def generate_audio(
         self,

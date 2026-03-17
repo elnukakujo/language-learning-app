@@ -70,7 +70,7 @@ def cleanup_orphaned_media(app: Flask):
                     for col in ["image_files", "audio_files"]:
                         for path_str in (getattr(record, col, None) or []):
                             if isinstance(path_str, str):
-                                referenced.add(str((media_root / path_str.lstrip("/").removeprefix("media/")).resolve()))
+                                referenced.add(str((media_root / path_str.lstrip("/").removeprefix("media/").removeprefix("media_dev/").removeprefix("media_test/")).resolve()))
 
             scanned = orphaned = errors = 0
 

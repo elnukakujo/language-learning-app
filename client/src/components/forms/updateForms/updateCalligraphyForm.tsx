@@ -8,25 +8,22 @@ import { updateCalligraphy } from "@/api";
 import { useRouter } from "next/dist/client/components/navigation";
 import MediaLoader from "@/components/mediaLoader";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import Word from "@/interface/components/Word";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 
 export default function updateCalligraphyForm({ calligraphy }: { calligraphy: Calligraphy }) {
     const router = useRouter();
   
-    const [updatedCalligraphyName, setUpdatedCalligraphyName] = useState<string | undefined>(calligraphy.character.character || undefined);
-    const [updatedPhonetic, setUpdatedPhonetic] = useState<string | undefined>(calligraphy.character.phonetic || undefined);
-    const [updatedMeaning, setUpdatedMeaning] = useState<string | undefined>(calligraphy.character.meaning || undefined);
-    const [updatedRadical, setUpdatedRadical] = useState<string | undefined>(calligraphy.character.radical || undefined);
-    const [updatedImageUrl, setUpdatedImageUrl] = useState<string | undefined>(calligraphy.character.image_files?.[0] || undefined);
-    const [updatedAudioUrl, setUpdatedAudioUrl] = useState<string | undefined>(calligraphy.character.audio_files?.[0] || undefined);
+    const [character, setCharacter] = useState<string>(calligraphy.character.character);
+    const [phonetic, setPhonetic] = useState<string>(calligraphy.character.phonetic);
+    const [meaning, setMeaning] = useState<string | undefined>(calligraphy.character.meaning || undefined);
+    const [radical, setRadical] = useState<string | undefined>(calligraphy.character.radical || undefined);
+    const [strokes, setStrokes] = useState<number | undefined>(calligraphy.character.strokes || undefined);
+    const [imageUrl, setImageUrl] = useState<string[]>(calligraphy.character.image_files || []);
+    const [audioUrl, setAudioUrl] = useState<string[]>(calligraphy.character.audio_files || []);
 
-    const [updatedExampleWord, setUpdatedExampleWord] = useState<string | undefined>(calligraphy.example_word?.word || undefined);
-    const [updatedExampleWordTranslation, setUpdatedExampleWordTranslation] = useState<string|undefined>(calligraphy.example_word?.translation || undefined);
-    const [updatedExampleWordType, setUpdatedExampleWordType] = useState<"noun" | "verb" | "adjective" | "adverb" | "pronoun"
-    | "article" | "preposition" | "conjunction" | "particle" | "interjection" | "numeral" | "classifier" 
-    | "auxiliary" | "modal" | "">(calligraphy.example_word?.type || "");
-    const [updatedExampleWordGender, setUpdatedExampleWordGender] = useState<"m" | "f" | "n" | undefined>(calligraphy.example_word?.gender || undefined);
-    const [updatedExampleImageUrl, setUpdatedExampleImageUrl] = useState<string | undefined>(calligraphy.example_word?.image_files?.[0] || undefined);
-    const [updatedExampleAudioUrl, setUpdatedExampleAudioUrl] = useState<string | undefined>(calligraphy.example_word?.audio_files?.[0] || undefined);
+    const [exampleWord, setExampleWord] = useState<Word | undefined>(calligraphy.example_word);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -37,108 +34,148 @@ export default function updateCalligraphyForm({ calligraphy }: { calligraphy: Ca
         const languageId = pathParts[2]; // From /languages/LANG_ID/...
         
         const element: Calligraphy = {
-          character: {
-            character: updatedCalligraphyName!,
-            phonetic: updatedPhonetic!,
-            meaning: updatedMeaning || undefined,
-            radical: updatedRadical || undefined,
-            image_files: updatedImageUrl ? [updatedImageUrl] : [],
-            audio_files: updatedAudioUrl ? [updatedAudioUrl] : []
-          },
-          example_word: updatedExampleWord ? {
-            word: updatedExampleWord,
-            translation: updatedExampleWordTranslation || "",
-            type: updatedExampleWordType as Exclude<typeof updatedExampleWordType, ''>,
-            gender: updatedExampleWordGender,
-            image_files: updatedExampleImageUrl ? [updatedExampleImageUrl] : [],
-            audio_files: updatedExampleAudioUrl ? [updatedExampleAudioUrl] : []
-          } : undefined,
-          unit_id: calligraphy.unit_id
+            character: {
+                character: character,
+                phonetic: phonetic,
+                meaning: meaning,
+                radical: radical,
+                strokes: strokes,
+                image_files: imageUrl,
+                audio_files: audioUrl
+            },
+            example_word: exampleWord,
+            unit_id: calligraphy.unit_id
         };
         
         try {
-          await updateCalligraphy(calligraphy.id!, element);
-          
-          const router_path = `/languages/${languageId}/unit/${calligraphy.unit_id}/call/${calligraphy.id}/`;
-          
-          router.push(router_path);
-          router.refresh();
-          
+            await updateCalligraphy(calligraphy.id!, element);
+            
+            const router_path = `/languages/${languageId}/unit/${calligraphy.unit_id}/call/${calligraphy.id}/`;
+            
+            router.push(router_path);
+            router.refresh();
+        
         } catch (error) {
-          console.error("Failed to update calligraphy:", error);
-          alert("Failed to update calligraphy. Check console for details.");
+            console.error("Failed to update calligraphy:", error);
+            alert("Failed to update calligraphy. Check console for details.");
         }
-      };
+    };
+    
+    const handleExampleWordChange = (field: "word" | "translation" | "type" | "gender" | "image_files" | "audio_files", value: string | string[]) => {
+        setExampleWord(prevWord => {
+            if (!prevWord) return prevWord;
+                const updatedWord = { ...prevWord };
+            if (["word", "translation", "type", "gender"].includes(field)) {
+                (updatedWord as any)[field] = value as string;
+            } else if (["image_files", "audio_files"].includes(field)) {
+                (updatedWord as any)[field] = value as string[];
+            }
+            return updatedWord;
+        });
+    };
 
-  return (
-    <form className="flex flex-col space-y-12" onSubmit={handleSubmit}>
-      <span className="flex flex-col space-y-2 items-center">
-        <h3>Character Informations</h3>
-        <AutoWidthInput
-          value={updatedCalligraphyName || ""}
-          onChange={(e) => setUpdatedCalligraphyName(e.target.value)}
-          label="Calligraphy Character"
-          className="border border-gray-300"
-          required={true}
-        />
-        <AutoWidthInput
-          value={updatedPhonetic || ""}
-          onChange={(e) => setUpdatedPhonetic(e.target.value)}
-          label="Phonetic"
-          className="border border-gray-300"
-          required={true}
-        />
-        <AutoWidthInput
-          value={updatedRadical || ""}
-          onChange={(e) => setUpdatedRadical(e.target.value)}
-          label="Radical"
-          className="border border-gray-300"
-
-        />
-        <AutoWidthInput
-          value={updatedMeaning || ""}
-          onChange={(e) => setUpdatedMeaning(e.target.value)}
-          label="Meaning"
-          className="border border-gray-300"
-        />
-        <MediaLoader imageUrl={updatedImageUrl} setImageUrl={setUpdatedImageUrl} audioUrl={updatedAudioUrl} setAudioUrl={setUpdatedAudioUrl} />
-      </span>
-      <span className="flex flex-col space-y-2 items-center">
-        <h3>Example Word Informations</h3>
-        <AutoWidthInput
-          value={updatedExampleWord || ""}
-          onChange={(e) => setUpdatedExampleWord(e.target.value)}
-          label="Example Word"
-          className="border border-gray-300"
-        />
-          <AutoWidthInput
-          value={updatedExampleWordTranslation || ""}
-          onChange={(e) => setUpdatedExampleWordTranslation(e.target.value)}
-          label="Example Word Translation"
-          className="border border-gray-300"
-        />
-        <ClassicSelectMenu
-          label="Type of Word"
-          options={[
-            'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'article', 
-            'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
-            'classifier', 'auxiliary', 'modal'
-          ]}
-          selectedOption={updatedExampleWordType}
-          onChange={(value) => setUpdatedExampleWordType(value as typeof updatedExampleWordType)}
-        />
-        <ClassicSelectMenu
-          label="Gender of Word"
-          options={[
-            'm', 'f', 'n'
-          ]}
-          selectedOption={updatedExampleWordGender || ""}
-          onChange={(value) => setUpdatedExampleWordGender(value as typeof updatedExampleWordGender)}
-        />
-        <MediaLoader imageUrl={updatedExampleImageUrl} setImageUrl={setUpdatedExampleImageUrl} audioUrl={updatedExampleAudioUrl} setAudioUrl={setUpdatedExampleAudioUrl} />
-      </span>
-
-      <UpdateButton>Update Calligraphy</UpdateButton>
-    </form>
-  );
+    return (
+        <form className="flex flex-col space-y-12" onSubmit={handleSubmit}>
+            <article className="flex flex-col space-y-2 items-center">
+                <h3>Character Informations</h3>
+                <AutoWidthInput
+                    value={character}
+                    onChange={(e) => setCharacter(e.target.value)}
+                    label="Calligraphy Character"
+                    className="border border-gray-300"
+                    required={true}
+                />
+                <AutoWidthInput
+                    value={phonetic}
+                    onChange={(e) => setPhonetic(e.target.value)}
+                    label="Phonetic"
+                    className="border border-gray-300"
+                    required={true}
+                />
+                <AutoWidthInput
+                    value={radical || ""}
+                    onChange={(e) => setRadical(e.target.value)}
+                    label="Radical"
+                    className="border border-gray-300"
+                />
+                <AutoWidthInput
+                    value={strokes !== undefined ? strokes.toString() : ""}
+                    onChange={(e) => setStrokes(parseInt(e.target.value) || undefined)}
+                    label="Strokes"
+                    className="border border-gray-300"
+                />
+                <AutoWidthInput
+                    value={meaning || ""}
+                    onChange={(e) => setMeaning(e.target.value)}
+                    label="Meaning"
+                    className="border border-gray-300"
+                />
+                <MediaLoader imageUrl={imageUrl} setImageUrl={setImageUrl} audioUrl={audioUrl} setAudioUrl={setAudioUrl} />
+            </article>
+            <article className="flex flex-col space-y-2 items-center">
+                <h3>Example Word Informations</h3>
+                {exampleWord && (<section className="flex flex-col space-y-2 items-center">
+                    <button
+                        className="h-fit px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        onClick={() => {
+                            setExampleWord(undefined);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faTrash}/>
+                    </button>
+                    <AutoWidthInput
+                        value={exampleWord.word}
+                        onChange={(e) => handleExampleWordChange("word", e.target.value)}
+                        label="Example Word"
+                        className="border border-gray-300"
+                        required
+                    />
+                    <AutoWidthInput
+                        value={exampleWord.translation}
+                        onChange={(e) => handleExampleWordChange("translation", e.target.value)}
+                        label="Example Word Translation"
+                        className="border border-gray-300"
+                        required
+                    />
+                    <ClassicSelectMenu
+                        label="Type of Word"
+                        options={[
+                            'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'article', 
+                            'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
+                            'classifier', 'auxiliary', 'modal'
+                        ]}
+                        selectedOption={exampleWord.type}
+                        onChange={(value) => handleExampleWordChange("type", value)}
+                        required
+                    />
+                    <ClassicSelectMenu
+                        label="Gender of Word"
+                        options={[
+                            'm', 'f', 'n'
+                        ]}
+                        selectedOption={exampleWord.gender || ""}
+                        onChange={(value) => handleExampleWordChange("gender", value)}
+                    />
+                    <MediaLoader 
+                        imageUrl={exampleWord.image_files} 
+                        setImageUrl={handleExampleWordChange.bind(null, "image_files")} 
+                        audioUrl={exampleWord.audio_files} 
+                        setAudioUrl={handleExampleWordChange.bind(null, "audio_files")}
+                    />
+                </section>)}
+                {!exampleWord && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setExampleWord({ word: "", translation: "", type: "" as Word["type"], image_files: [], audio_files: [] } as Word);
+                        }}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                    >
+                        <FontAwesomeIcon icon={faAdd}/>
+                    </button>
+                )}
+            </article>
+            <UpdateButton>Update Calligraphy</UpdateButton>
+        </form>
+    );
 }

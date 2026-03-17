@@ -1,28 +1,32 @@
 "use client";
-import { useRef, ChangeEvent, useState } from 'react';
+
+import { useRef, ChangeEvent, useState, useEffect } from 'react';
 import Image from 'next/image';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDeleteLeft } from '@fortawesome/free-solid-svg-icons'
+
 import { BASE_URL, uploadImage, uploadAudio } from "@/api";
 
 export default function MediaLoader({ 
-  imageUrl = undefined, 
+  imageUrl = [],
   setImageUrl,
-  audioUrl = undefined,
+  audioUrl = [],
   setAudioUrl
 }: {
-  imageUrl?: string | undefined;
-  setImageUrl: (imageUrl: string | undefined) => void;
-  audioUrl?: string | undefined;
-  setAudioUrl: (audioUrl: string | undefined) => void;
+  imageUrl?: string[];
+  setImageUrl: (imageUrl: string[]) => void;
+  audioUrl?: string[];
+  setAudioUrl: (audioUrl: string[]) => void;
 }) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | undefined>(
-    imageUrl ? `${BASE_URL}${imageUrl}` : undefined
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string[]>(
+    imageUrl.length > 0 ? imageUrl.map((url) => `${BASE_URL}${url}`) : []
   );
-  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | undefined>(
-    audioUrl ? `${BASE_URL}${audioUrl}` : undefined
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string[]>(
+    audioUrl.length ? audioUrl.map((url) => `${BASE_URL}${url}`) : []
   );
 
   const getFileExtension = (filename: string): string => {
@@ -46,8 +50,8 @@ export default function MediaLoader({
     try {
       const { url } = await uploadImage(file);
       const fullUrl = `${BASE_URL}${url}`;
-      setImagePreviewUrl(fullUrl);
-      setImageUrl(url);
+      setImagePreviewUrl([...imagePreviewUrl, fullUrl]);
+      setImageUrl([...imageUrl, url]);
     } catch (error) {
       console.error("Error uploading image:", error);
       throw error;
@@ -71,8 +75,8 @@ export default function MediaLoader({
     try {
       const { url } = await uploadAudio(file);
       const fullUrl = `${BASE_URL}${url}`;
-      setAudioPreviewUrl(fullUrl);
-      setAudioUrl(url);
+      setAudioPreviewUrl([...audioPreviewUrl, fullUrl]);
+      setAudioUrl([...audioUrl, url]);
     } catch (error) {
       console.error("Error uploading audio:", error);
       throw error;
@@ -80,8 +84,8 @@ export default function MediaLoader({
   };
 
   const clearImage = () => {
-    setImagePreviewUrl(undefined);
-    setImageUrl(undefined);
+    setImagePreviewUrl([]);
+    setImageUrl([]);
     if (imageInputRef.current) {
       imageInputRef.current.value = '';
     }
@@ -92,8 +96,8 @@ export default function MediaLoader({
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-    setAudioPreviewUrl(undefined);
-    setAudioUrl(undefined);
+    setAudioPreviewUrl([]);
+    setAudioUrl([]);
     if (audioInputRef.current) {
       audioInputRef.current.value = '';
     }
@@ -116,7 +120,7 @@ export default function MediaLoader({
             onClick={() => imageInputRef.current?.click()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
-            {imagePreviewUrl ? 'Change Image' : 'Upload Image'}
+            Upload Image
           </button>
           {imagePreviewUrl && (
             <button
@@ -124,20 +128,40 @@ export default function MediaLoader({
               onClick={clearImage}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
-              Clear Image
+              Clear Image(s)
             </button>
           )}
         </div>
-        {imagePreviewUrl && (
-          <div className="mt-4 relative h-48 w-full">
-            <Image
-              src={imagePreviewUrl}
-              alt="Preview"
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          </div>
+        {imagePreviewUrl.length > 0 && (
+          <span className="my-10 flex flex-col space-y-4 items-center">
+            {
+              imagePreviewUrl.map((url, index) => (
+                <figure key={index} className="flex flex-row items-center space-x-4 mb-4">
+                  <Image
+                    src={url}
+                    alt="Preview"
+                    className="object-contain"
+                    width={150}
+                    height={150}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPreviewUrls = [...imagePreviewUrl];
+                      const newUrls = [...imageUrl];
+                      newPreviewUrls.splice(index, 1);
+                      newUrls.splice(index, 1);
+                      setImagePreviewUrl(newPreviewUrls);
+                      setImageUrl(newUrls);
+                    }}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faDeleteLeft} />
+                  </button>
+                </figure>
+              ))
+            }
+          </span>
         )}
       </div>
 
@@ -157,7 +181,7 @@ export default function MediaLoader({
             onClick={() => audioInputRef.current?.click()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
-            {audioPreviewUrl ? 'Change Audio' : 'Upload Audio'}
+            Upload Audio
           </button>
           {audioPreviewUrl && (
             <button
@@ -165,19 +189,39 @@ export default function MediaLoader({
               onClick={clearAudio}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
-              Clear Audio
+              Clear Audio(s)
             </button>
           )}
         </div>
-        {audioPreviewUrl && (
-          <div className="mt-4 space-y-3">
-            <audio 
-              ref={audioRef}
-              src={audioPreviewUrl}
-              className="w-full"
-              controls
-            />
-          </div>
+        {audioPreviewUrl.length > 0 && (
+          <span className="my-10 flex flex-col space-y-4 items-center">
+            {
+              audioPreviewUrl.map((url, index) => (
+                <figure key={index} className="flex flex-row items-center space-x-4 mb-4">
+                  <audio
+                    ref={audioRef}
+                    src={url}
+                    className="w-full"
+                    controls
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPreviewUrls = [...audioPreviewUrl];
+                      const newUrls = [...audioUrl];
+                      newPreviewUrls.splice(index, 1);
+                      newUrls.splice(index, 1);
+                      setAudioPreviewUrl(newPreviewUrls);
+                      setAudioUrl(newUrls);
+                    }}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faDeleteLeft} />
+                  </button>
+                </figure>
+              ))
+            }
+          </span>
         )}
       </div>
     </div>

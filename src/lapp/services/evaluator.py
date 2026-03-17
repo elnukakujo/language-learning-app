@@ -175,8 +175,8 @@ class EvaluatorService:
             from .media import MediaService
             media_service = MediaService()
 
-            _, correct_speaking_path = media_service.get_file_path(exercise.audio_files[0].split("/media/")[-1])
-            _, user_speaking_path = media_service.get_file_path(user_audio_url.split("/media/")[-1])
+            _, correct_speaking_path = media_service.get_file_path("/".join(exercise.audio_files[0].split("/")[2:]))
+            _, user_speaking_path = media_service.get_file_path("/".join(user_audio_url.split("/")[2:]))
 
             # Load and preprocess audio files
             correct_waveform, correct_sr = torchaudio.load(correct_speaking_path)
