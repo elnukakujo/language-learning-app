@@ -29,7 +29,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         setAttempts(0);
         setIsCorrect(false);
         setUserAnswer([]);
-    }, [exercise]);
+    }, [exercise, answer]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

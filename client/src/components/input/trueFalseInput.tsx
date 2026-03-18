@@ -5,14 +5,12 @@ export default function TrueFalseInput({
   onChange,
   label,
   className = "",
-  placeholder = "",
   ...props
 }: {
   value: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   label?: string;
   className?: string;
-  placeholder?: string;
 }) {
   return (
     <div className={`flex flex-col space-y-2 ${className}`}>

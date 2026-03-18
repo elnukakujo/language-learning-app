@@ -1,6 +1,7 @@
+import Image from "next/image";
+
 import { BASE_URL, getElementbyId } from "@/api";
 import type Character from "@/interface/features/Calligraphy";
-
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 
@@ -27,7 +28,7 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                 {calligraphy.character.image_files && calligraphy.character.image_files.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
                         {calligraphy.character.image_files.map((url, index) => (
-                            <img
+                            <Image
                                 key={index}
                                 src={BASE_URL + url}
                                 alt={calligraphy.character.character}
@@ -62,7 +63,7 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                             {calligraphy.example_word.image_files!.length > 0 && (
                                 <section className="flex flex-row space-x-4 items-center">
                                     {calligraphy.example_word.image_files!.map((url, index) => (
-                                        <img
+                                        <Image
                                             key={index}
                                             src={BASE_URL + url}
                                             alt={calligraphy.example_word!.word}

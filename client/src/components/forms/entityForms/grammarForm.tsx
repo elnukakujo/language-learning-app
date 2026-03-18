@@ -1,23 +1,38 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
-import { createGrammar } from "@/api";
+import { createGrammar, updateGrammar } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Grammar from "@/interface/features/Grammar";
 import Passage from "@/interface/components/Passage";
 import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import UpdateButton from "@/components/buttons/updateButton";
 
-export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
+export default function GrammarForm({grammar, unit_id}: {grammar?: Grammar; unit_id: string}) {
     const router = useRouter();
-    
-    const [title, setTitle] = useState<string>("");
-    const [explanation, setExplanation] = useState<string>("");
+    const isUpdate = Boolean(grammar);
 
-    const [learnableSentence, setLearnableSentence] = useState<Passage[]>([]);
+    let grammarData: Grammar;
+    if (!grammar) {
+        grammarData = {
+            title: "",
+            explanation: "",
+            learnable_sentences: [],
+            unit_id: unit_id
+        };
+    } else {
+        grammarData = grammar;
+    }
+    
+    const [title, setTitle] = useState<string>(grammarData.title);
+    const [explanation, setExplanation] = useState<string>(grammarData.explanation);
+
+    const [learnableSentence, setLearnableSentence] = useState<Passage[]>(grammarData.learnable_sentences!);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -35,16 +50,17 @@ export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
         };
         
         try {
-            await createGrammar(element);
-            
-            const router_path = `/languages/${languageId}/unit/${unit_id}`;
-            
-            router.push(router_path);
+            if (isUpdate) {
+                await updateGrammar(grammarData.id!, element);
+            } else {
+                await createGrammar(element);
+            }
+
+            router.push(`/languages/${languageId}/unit/${unit_id}`);
             router.refresh();
-        
         } catch (error) {
-            console.error("Failed to create grammar:", error);
-            alert("Failed to create grammar. Check console for details.");
+            console.error(`Failed to ${isUpdate ? "update" : "create"} grammar:`, error);
+            alert(`Failed to ${isUpdate ? "update" : "create"} grammar. Check console for details.`);
         }
     };
 
@@ -121,7 +137,7 @@ export default function CreateGrammarForm({unit_id}: {unit_id: string}) {
                     <FontAwesomeIcon icon={faAdd}/>
                 </button>
             </article>
-            <NewElementButton>Add Grammar</NewElementButton>
+            {isUpdate ? <UpdateButton>Update Grammar</UpdateButton> : <NewElementButton>Add Grammar</NewElementButton>}
         </form>
     );
 }

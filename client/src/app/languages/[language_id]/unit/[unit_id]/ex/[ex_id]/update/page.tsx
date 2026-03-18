@@ -1,6 +1,6 @@
-import { getCalligraphyByUnit, getElementbyId, getGrammarByUnit, getLanguageData, getUnitData, getVocabularyByUnit } from "@/api";
+import { getCalligraphyByUnit, getElementbyId, getGrammarByUnit, getVocabularyByUnit } from "@/api";
 import type Exercise from "@/interface/features/Exercise";
-import UpdateExerciseForm from "@/components/forms/updateForms/updateExerciseForm";
+import ExerciseForm from "@/components/forms/entityForms/exerciseForm";
 import Calligraphy from "@/interface/features/Calligraphy";
 import Grammar from "@/interface/features/Grammar";
 import Vocabulary from "@/interface/features/Vocabulary";
@@ -18,7 +18,7 @@ interface UnitElements {
 }
 
 export default async function UpdateExercisePage({ params }: { params: paramsType }) {
-    const { language_id, unit_id, ex_id } = await params;
+    const { unit_id, ex_id } = await params;
     const exercise: Exercise = await getElementbyId(ex_id);
 
     const calligraphies: Calligraphy[] = await getCalligraphyByUnit(unit_id);
@@ -34,7 +34,7 @@ export default async function UpdateExercisePage({ params }: { params: paramsTyp
     return (
         <main className="p-4">
             <h1 className="text-2xl font-semibold mb-4">Update Exercise Informations</h1>
-            <UpdateExerciseForm exercise={exercise} unitElements={unitElements} />
+            <ExerciseForm exercise={exercise} unit_id={unit_id} unitElements={unitElements} />
         </main>
     );
 }

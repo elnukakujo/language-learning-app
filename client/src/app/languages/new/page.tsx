@@ -1,10 +1,10 @@
-import CreateLanguageForm from "@/components/forms/createForms/createLanguageForm";
+import LanguageForm from "@/components/forms/entityForms/languageForm";
 
 export default function NewLanguagePage() {
     return (
         <main>
             <h1>Create New Language</h1>
-            <CreateLanguageForm />
+            <LanguageForm />
         </main>
     );
 }

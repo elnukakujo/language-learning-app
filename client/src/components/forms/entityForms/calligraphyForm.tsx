@@ -3,24 +3,44 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
-import { createCalligraphy } from "@/api";
+import { createCalligraphy, updateCalligraphy } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Calligraphy from "@/interface/features/Calligraphy";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import Word from "@/interface/components/Word";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
+import UpdateButton from "@/components/buttons/updateButton";
 
-export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
+export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: Calligraphy; unit_id: string}) {
     const router = useRouter();
+    const isUpdate = Boolean(calligraphy);
+    let calligraphyData: Calligraphy;
+    if (!calligraphy) {
+        calligraphyData = {
+            character: {
+                character: "",
+                phonetic: "",
+                meaning: "",
+                radical: "",
+                strokes: undefined,
+                image_files: [],
+                audio_files: []
+            },
+            example_word: undefined,
+            unit_id: unit_id
+        };
+    } else {
+        calligraphyData = calligraphy;
+    }
     
-    const [character, setCharacter] = useState<string>("");
-    const [phonetic, setPhonetic] = useState<string>("");
-    const [meaning, setMeaning] = useState<string|undefined>(undefined);
-    const [radical, setRadical] = useState<string|undefined>(undefined);
-    const [strokes, setStrokes] = useState<number|undefined>(undefined);
-    const [imageUrl, setImageUrl] = useState<string[]>([]);
-    const [audioUrl, setAudioUrl] = useState<string[]>([]);
+    const [character, setCharacter] = useState<string>(calligraphyData.character.character);
+    const [phonetic, setPhonetic] = useState<string>(calligraphyData.character.phonetic);
+    const [meaning, setMeaning] = useState<string|undefined>(calligraphyData.character.meaning);
+    const [radical, setRadical] = useState<string|undefined>(calligraphyData.character.radical);
+    const [strokes, setStrokes] = useState<number|undefined>(calligraphyData.character.strokes);
+    const [imageUrl, setImageUrl] = useState<string[]>(calligraphyData.character.image_files!);
+    const [audioUrl, setAudioUrl] = useState<string[]>(calligraphyData.character.audio_files!);
 
     const [exampleWord, setExampleWord] = useState<Word | undefined>(undefined);
 
@@ -47,16 +67,17 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
         };
         
         try {
-            await createCalligraphy(element);
-            
-            const router_path = `/languages/${languageId}/unit/${unit_id}`;
-            
-            router.push(router_path);
+            if (isUpdate) {
+                await updateCalligraphy(calligraphyData.id!, element);
+            } else {
+                await createCalligraphy(element);
+            }
+
+            router.push(`/languages/${languageId}/unit/${unit_id}`);
             router.refresh();
-        
         } catch (error) {
-            console.error("Failed to create calligraphy:", error);
-            alert("Failed to create calligraphy. Check console for details.");
+            console.error(`Failed to ${isUpdate ? "update" : "create"} calligraphy:`, error);
+            alert(`Failed to ${isUpdate ? "update" : "create"} calligraphy. Check console for details.`);
         }
     };
     const handleExampleWordChange = (field: "word" | "translation" | "type" | "gender" | "image_files" | "audio_files", value: string | string[]) => {
@@ -64,9 +85,9 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
             if (!prevWord) return prevWord;
                 const updatedWord = { ...prevWord };
             if (["word", "translation", "type", "gender"].includes(field)) {
-                (updatedWord as any)[field] = value as string;
+                (updatedWord as { [key: string]: string | string[] })[field] = value as string;
             } else if (["image_files", "audio_files"].includes(field)) {
-                (updatedWord as any)[field] = value as string[];
+                (updatedWord as { [key: string]: string | string[] })[field] = value as string[];
             }
             return updatedWord;
         });
@@ -173,7 +194,7 @@ export default function CreateCalligraphyForm({unit_id}: {unit_id: string}) {
                     </button>
                 )}
             </article>
-            <NewElementButton>Add Calligraphy</NewElementButton>
+            {isUpdate ? <UpdateButton>Update Calligraphy</UpdateButton> : <NewElementButton>Add Calligraphy</NewElementButton>}
         </form>
     );
 }

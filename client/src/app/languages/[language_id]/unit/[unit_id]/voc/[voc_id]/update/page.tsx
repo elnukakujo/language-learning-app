@@ -1,6 +1,6 @@
-import { getElementbyId, getLanguageData } from "@/api";
+import { getElementbyId } from "@/api";
 import type Vocabulary from "@/interface/features/Vocabulary";
-import UpdateVocabularyForm from "@/components/forms/updateForms/updateVocabularyForm";
+import VocabularyForm from "@/components/forms/entityForms/vocabularyForm";
 
 type paramsType = {
     language_id: string;
@@ -9,13 +9,13 @@ type paramsType = {
 };
 
 export default async function UpdateVocabularyPage({ params }: { params: paramsType }) {
-    const { voc_id, language_id } = await params;
+    const { unit_id, voc_id } = await params;
     const vocabulary: Vocabulary = await getElementbyId(voc_id);
 
     return (
         <main className="p-4">
             <h1 className="text-2xl font-semibold mb-4">Update Vocabulary</h1>
-            <UpdateVocabularyForm vocabulary={vocabulary} />
+            <VocabularyForm vocabulary={vocabulary} unit_id={unit_id} />
         </main>
     );
 }

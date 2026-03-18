@@ -1,4 +1,4 @@
-import CreateUnitForm from "@/components/forms/createForms/createUnitForm";
+import UnitForm from "@/components/forms/entityForms/unitForm";
 
 export default async function NewUnitPage({ params }: {params: { language_id: string } }) {
     const { language_id } = await params;
@@ -6,7 +6,7 @@ export default async function NewUnitPage({ params }: {params: { language_id: st
     return (
         <main>
             <h1>Create New Unit for Language ID: {language_id}</h1>
-            <CreateUnitForm language_id={language_id}/>
+            <UnitForm language_id={language_id} />
         </main>
     );
 }

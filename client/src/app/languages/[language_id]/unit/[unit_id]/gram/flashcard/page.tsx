@@ -8,7 +8,7 @@ type paramsType = {
 };
 
 export default async function GrammarFlashCardPage({ params }: { params: paramsType }) {
-    const { language_id, unit_id } = await params;
+    const { unit_id } = await params;
     
     const grammars: Grammar[] = await getGrammarByUnit(unit_id);
     grammars.filter(grammar => grammar.learnable_sentences && grammar.learnable_sentences.length > 0)

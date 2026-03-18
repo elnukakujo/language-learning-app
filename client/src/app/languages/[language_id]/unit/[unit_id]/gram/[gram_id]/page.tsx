@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { BASE_URL, getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
 import Markdown from "react-markdown";
@@ -25,7 +27,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                 {grammar.image_files!.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
                         {grammar.image_files!.map((url, index) => (
-                            <img
+                            <Image
                                 key={index}
                                 src={BASE_URL + url}
                                 alt={grammar.title}
@@ -62,7 +64,7 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                                 {sentence.image_files!.length > 0 && (
                                     <section className="flex flex-row space-x-4 items-center">
                                         {sentence.image_files!.map((url, index) => (
-                                            <img
+                                            <Image
                                                 key={index}
                                                 src={BASE_URL + url}
                                                 alt={sentence.text}

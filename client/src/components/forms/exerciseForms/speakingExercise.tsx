@@ -142,7 +142,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                     : "bg-red-100 text-red-800"}`}
                 >
                     <h3>{currentLevel.label}</h3>
-                    <p className="italic">"{currentLevel.description}"</p>
+                    <p className="italic">`&quot;`{currentLevel.description}`&quot;`</p>
                 </div>
             )}
         </div>

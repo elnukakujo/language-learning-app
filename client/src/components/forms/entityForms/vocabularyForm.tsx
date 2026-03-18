@@ -1,30 +1,51 @@
 "use client";
-import { use, useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
-import { createVocabulary } from "@/api";
+import { createVocabulary, updateVocabulary } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Vocabulary from "@/interface/features/Vocabulary";
 import Passage from "@/interface/components/Passage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAdd, faTrash } from "@fortawesome/free-solid-svg-icons";
+import UpdateButton from "@/components/buttons/updateButton";
 
-export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
+export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Vocabulary; unit_id: string}) {
     const router = useRouter();
-    
-    const [word, setWord] = useState<string>("");
-    const [translation, setTranslation] = useState<string>("");
-    const [phonetic, setPhonetic] = useState<string | undefined>(undefined);
+    const isUpdate = Boolean(vocabulary);
+
+    let vocabularyData: Vocabulary;
+    if (!vocabulary) {
+        vocabularyData = {
+            word: {
+                word: "",
+                translation: "",
+                type: "" as Exclude<typeof type, ''>,
+                gender: "" as Exclude<typeof gender, ''>,
+                phonetic: "",
+                image_files: [],
+                audio_files: []
+            },
+            example_sentences: [],
+            unit_id: unit_id
+        };
+    } else {
+        vocabularyData = vocabulary;
+    }
+
+    const [word, setWord] = useState<string>(vocabularyData.word.word);
+    const [translation, setTranslation] = useState<string>(vocabularyData.word.translation);
+    const [phonetic, setPhonetic] = useState<string | undefined>(vocabularyData.word.phonetic);
     const [type, setType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
         'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
-        'classifier' | 'auxiliary' | 'modal' | ''>("");
-    const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(undefined);
-    const [wordImageUrl, setWordImageUrl] = useState<string[]>([]);
-    const [wordAudioUrl, setWordAudioUrl] = useState<string[]>([]);
+        'classifier' | 'auxiliary' | 'modal'>(vocabularyData.word.type);
+    const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(vocabularyData.word.gender);
+    const [wordImageUrl, setWordImageUrl] = useState<string[]>(vocabularyData.word.image_files!);
+    const [wordAudioUrl, setWordAudioUrl] = useState<string[]>(vocabularyData.word.audio_files!);
 
-    const [exampleSentences, setExampleSentences] = useState<Passage[]>([]);
+    const [exampleSentences, setExampleSentences] = useState<Passage[]>(vocabularyData.example_sentences!);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -39,7 +60,7 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
                 word: word,
                 translation: translation,
                 type: type as Exclude<typeof type, ''>,
-                gender: gender,
+                gender: gender as Exclude<typeof gender, ''>,
                 phonetic: phonetic,
                 image_files: wordImageUrl,
                 audio_files: wordAudioUrl
@@ -50,15 +71,17 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
         console.log("Creating vocabulary with data:", element);
         
         try {
-            await createVocabulary(element);
-            
-            const router_path = `/languages/${languageId}/unit/${unit_id}`;
-            
-            router.push(router_path);
+            if (isUpdate) {
+                await updateVocabulary(vocabularyData.id!, element);
+            } else {
+                await createVocabulary(element);
+            }
+
+            router.push(`/languages/${languageId}/unit/${unit_id}`);
             router.refresh();
         } catch (error) {
-            console.error("Failed to create vocabulary:", error);
-            alert("Failed to create vocabulary. Check console for details.");
+            console.error(`Failed to ${isUpdate ? "update" : "create"} vocabulary:`, error);
+            alert(`Failed to ${isUpdate ? "update" : "create"} vocabulary. Check console for details.`);
         }
     };
 
@@ -168,7 +191,7 @@ export default function CreateVocabularyForm({ unit_id }: { unit_id: string }) {
                     <FontAwesomeIcon icon={faAdd}/>
                 </button>
             </article>
-            <NewElementButton>Add Vocabulary</NewElementButton>
+            {isUpdate ? <UpdateButton>Update Vocabulary</UpdateButton> : <NewElementButton>Add Vocabulary</NewElementButton>}
         </form>
     );
 }

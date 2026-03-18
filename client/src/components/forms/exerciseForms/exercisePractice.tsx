@@ -19,7 +19,7 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
 
     useEffect(() => {
         setCurrentExercise(exercise_lists[currentIndex]);
-    }, [currentIndex]);
+    }, [currentIndex, exercise_lists]);
 
     return (
         <div>

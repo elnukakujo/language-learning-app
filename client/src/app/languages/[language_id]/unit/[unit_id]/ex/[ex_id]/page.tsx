@@ -1,4 +1,4 @@
-import { getElementbyId, getNext } from "@/api";
+import { getElementbyId } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";

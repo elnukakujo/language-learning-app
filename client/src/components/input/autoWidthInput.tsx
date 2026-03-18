@@ -44,7 +44,7 @@ export default function AutoWidthInput({
         setResizeWidth(newWidth);
       }
     }
-  }, [value]);
+  }, [value, minWidth, maxWidth]);
 
   return (
     <span className="flex flex-col space-y-2">

@@ -4,6 +4,7 @@ import type Grammar from "@/interface/features/Grammar";
 import { useEffect, useState } from "react";
 import { BASE_URL, updateScoreById } from "@/api";
 import BackButton from "../buttons/backButton";
+import Image from "next/image";
 
 export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -31,7 +32,7 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
             <h3>{currentIndex + 1} / {grammars.length}</h3>
 
             <h3>{grammar.title}</h3>
-            {grammar.learnable_sentences![0].image_files && grammar.learnable_sentences![0].image_files.length > 0 && <img
+            {grammar.learnable_sentences![0].image_files && grammar.learnable_sentences![0].image_files.length > 0 && <Image
                 src={BASE_URL + grammar.learnable_sentences![0].image_files?.[0]}
                 alt={grammar.learnable_sentences![0].text}
                 width={200}

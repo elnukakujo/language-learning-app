@@ -4,6 +4,7 @@ import { BASE_URL, updateScoreById } from "@/api";
 import { useEffect, useState } from "react";
 import Calligraphy from "@/interface/features/Calligraphy";
 import BackButton from "../buttons/backButton";
+import Image from "next/image";
 
 export default function CalligraphyFlashCard({ calligraphies }: { calligraphies: Calligraphy[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -45,7 +46,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                 {calligraphy.character.image_files!.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
                         {calligraphy.character.image_files!.map((url, index) => (
-                            <img
+                            <Image
                                 key={index}
                                 src={BASE_URL + url}
                                 alt={calligraphy.character.character}
@@ -80,7 +81,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                             {calligraphy.example_word.image_files!.length > 0 && (
                                 <section className="flex flex-row space-x-4 items-center">
                                     {calligraphy.example_word.image_files!.map((url, index) => (
-                                        <img
+                                        <Image
                                             key={index}
                                             src={BASE_URL + url}
                                             alt={calligraphy.example_word!.word}

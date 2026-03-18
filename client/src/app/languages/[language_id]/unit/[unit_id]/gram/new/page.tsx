@@ -1,4 +1,4 @@
-import CreateGrammarForm from "@/components/forms/createForms/createGrammarForm";
+import GrammarForm from "@/components/forms/entityForms/grammarForm";
 
 export default async function createGrammarPage({ params }: { params: { unit_id: string } }) {
     const { unit_id } = await params;
@@ -6,7 +6,7 @@ export default async function createGrammarPage({ params }: { params: { unit_id:
     return (
         <div className="flex flex-col items-center">
             <h1 className="text-2xl font-bold mb-4">Create New Grammar</h1>
-            <CreateGrammarForm unit_id={unit_id} />
+            <GrammarForm unit_id={unit_id} />
         </div>
     );
 }

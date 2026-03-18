@@ -48,7 +48,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         setAttempts(3);
         setSelection([]);
         setIsSuccess(false);
-    }, [exercise]);
+    }, [exercise, numColumns, pairs]);
 
     const [attempts, setAttempts] = useState<number>(3);
     const [selection, setSelection] = useState<Array<Item>>([]);
@@ -93,7 +93,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         if (isSuccess) {
             updateScoreById(exercise.id!, true).catch(console.error);
         };
-    }, [isSuccess]);
+    }, [isSuccess, exercise]);
 
     return (
         <form className="flex flex-col space-y-4">

@@ -1,6 +1,6 @@
 import Unit from "@/interface/containers/Unit";
 import { getUnitData } from "@/api";
-import UpdateUnitForm from "@/components/forms/updateForms/updateUnitForm";
+import UnitForm from "@/components/forms/entityForms/unitForm";
 
 export default async function UpdateUnitPage({ params }: { params: { language_id: string, unit_id: string } }) {
     const { language_id, unit_id } = await params;
@@ -10,7 +10,7 @@ export default async function UpdateUnitPage({ params }: { params: { language_id
     return (
         <main>
             <h1>Update Unit</h1>
-            <UpdateUnitForm unit={unit} />
+            <UnitForm language_id={language_id} unit={unit} />
         </main>
     );
 }

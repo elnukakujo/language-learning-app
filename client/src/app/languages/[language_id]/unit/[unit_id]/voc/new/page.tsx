@@ -1,4 +1,4 @@
-import CreateVocabularyForm from "@/components/forms/createForms/createVocabularyForm";
+import VocabularyForm from "@/components/forms/entityForms/vocabularyForm";
 
 export default async function createVocabularyPage({ params }: { params: { unit_id: string } }) {
     const { unit_id } = await params;
@@ -6,7 +6,7 @@ export default async function createVocabularyPage({ params }: { params: { unit_
     return (
         <div className="flex flex-col items-center justify-center h-full">
             <h1 className="text-2xl font-bold mb-4">Create New Vocabulary</h1>
-            <CreateVocabularyForm unit_id={unit_id} />
+            <VocabularyForm unit_id={unit_id} />
         </div>
     );
 }

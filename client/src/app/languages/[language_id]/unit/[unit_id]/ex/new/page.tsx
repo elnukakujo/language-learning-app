@@ -1,4 +1,4 @@
-import CreateExerciseForm from "@/components/forms/createForms/createExerciseForm";
+import ExerciseForm from "@/components/forms/entityForms/exerciseForm";
 import { getCalligraphyByUnit, getGrammarByUnit, getVocabularyByUnit } from "@/api";
 import Calligraphy from "@/interface/features/Calligraphy";
 import Grammar from "@/interface/features/Grammar";
@@ -26,7 +26,7 @@ export default async function createExercisePage({ params }: { params: { unit_id
     return (
         <div className="flex flex-col items-center justify-center h-full">
             <h1 className="text-2xl font-bold mb-4">Create New Exercise</h1>
-            <CreateExerciseForm unit_id={unit_id} unitElements={unitElements} />
+            <ExerciseForm unit_id={unit_id} unitElements={unitElements} />
         </div>
     );
 }

@@ -4,6 +4,7 @@ import BackButton from "@/components/buttons/backButton";
 import { BASE_URL, updateScoreById } from "@/api";
 import { useEffect, useState } from "react";
 import type Vocabulary from "@/interface/features/Vocabulary";
+import Image from "next/image";
 
 export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vocabulary[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -42,7 +43,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                 {vocabulary.word.image_files!.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
                         {vocabulary.word.image_files!.map((url, index) => (
-                            <img
+                            <Image
                                 key={index}
                                 src={BASE_URL + url}
                                 alt={vocabulary.word.word}
@@ -79,7 +80,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                                 {sentence.image_files!.length > 0 && (
                                     <section className="flex flex-row space-x-4 items-center">
                                         {sentence.image_files!.map((url, index) => (
-                                            <img
+                                            <Image
                                                 key={index}
                                                 src={BASE_URL + url}
                                                 alt={sentence.text}

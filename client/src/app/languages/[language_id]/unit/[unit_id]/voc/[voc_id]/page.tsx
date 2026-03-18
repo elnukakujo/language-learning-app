@@ -2,6 +2,7 @@ import { BASE_URL, getElementbyId } from "@/api";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import type Vocabulary from "@/interface/features/Vocabulary";
+import Image from "next/image";
 
 export default async function VocabularyPage({ params }: { params: { language_id: string, unit_id: string, voc_id: string } }) {
     const { voc_id, unit_id, language_id } = await params;
@@ -19,7 +20,7 @@ export default async function VocabularyPage({ params }: { params: { language_id
                 {vocabulary.word.image_files!.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
                         {vocabulary.word.image_files!.map((url, index) => (
-                            <img
+                            <Image
                                 key={index}
                                 src={BASE_URL + url}
                                 alt={vocabulary.word.word}
@@ -55,7 +56,7 @@ export default async function VocabularyPage({ params }: { params: { language_id
                                 {sentence.image_files!.length > 0 && (
                                     <section className="flex flex-row space-x-4 items-center">
                                         {sentence.image_files!.map((url, index) => (
-                                            <img
+                                            <Image
                                                 key={index}
                                                 src={BASE_URL + url}
                                                 alt={sentence.text}

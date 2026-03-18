@@ -1,4 +1,4 @@
-import { getExercisesOverview } from "@/api";
+import { getExercisesByUnit } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm";
 export default async function ExercisesPage({ params }: { params: { language_id: string, unit_id: string } }){
     const { language_id, unit_id } = await params;
 
-    const exercises: Exercise[] = await getExercisesOverview(unit_id)
+    const exercises: Exercise[] = await getExercisesByUnit(unit_id)
     const exercisesByType = exercises.reduce((group, exercise) => {
         const key = exercise.exercise_type || "unknown";
         if (!group[key]) {

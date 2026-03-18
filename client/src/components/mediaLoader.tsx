@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, ChangeEvent, useState, useEffect } from 'react';
+import { useRef, ChangeEvent, useState } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDeleteLeft } from '@fortawesome/free-solid-svg-icons'

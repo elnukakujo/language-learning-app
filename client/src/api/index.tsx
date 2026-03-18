@@ -485,14 +485,3 @@ export async function deleteElement(element_id: string) {
   }
   throw new Error(`Unknown element type for ID: ${element_id}`);
 }
-
-// Alias for backward compatibility
-export async function getExercisesOverview(unit_id: string) {
-  return getExercisesByUnit(unit_id);
-}
-
-// Note: getNext() function was removed as it doesn't exist in the new API
-// If this functionality is needed, it should be implemented on the server side
-export async function getNext(element_id: string) {
-  throw new Error("getNext() is not implemented in the new API. Please implement this on the server side if needed.");
-}

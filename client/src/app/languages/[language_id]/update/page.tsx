@@ -1,6 +1,6 @@
 import { getLanguageData } from "@/api";
 import Language from "@/interface/containers/Language";
-import UpdateLanguageForm from "@/components/forms/updateForms/updateLanguageForm";
+import LanguageForm from "@/components/forms/entityForms/languageForm";
 
 export default async function UpdateLanguagePage({params }: {params: {language_id: string}}) {
     const { language_id } = await params;
@@ -11,7 +11,7 @@ export default async function UpdateLanguagePage({params }: {params: {language_i
     return (
         <main>
             <h1>Update Language</h1>
-            <UpdateLanguageForm language={language} />
+            <LanguageForm language={language} />
         </main>
     );
 
