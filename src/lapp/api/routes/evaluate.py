@@ -63,6 +63,10 @@ def evaluate_speech():
                     type: string
                     example: "ex_E1"
                     description: "ID of the exercise to evaluate"
+                correct_audio_index:
+                    type: integer
+                    example: 0
+                    description: "Index of the correct audio file to compare against (default is 0)"
                 user_audio_url:
                     type: string
                     example: "/path/to/audio1.mp3"
@@ -80,5 +84,6 @@ def evaluate_speech():
 
     return evaluator_service.evaluate_speech(
         ex_id=data['exercise_id'],
-        user_audio_url=data['user_audio_url']
+        user_audio_url=data['user_audio_url'],
+        correct_audio_index=data.get('correct_audio_index', 0)
     )

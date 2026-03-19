@@ -56,7 +56,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     };
 
     return (
-        <form className="flex flex-col space-y-4">
+        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
             <h2>Translate Exercise</h2>
             <span>
                 <h3>Text to translate: </h3>
@@ -105,8 +105,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             />
             { !isCorrect && attempts < 3 ? (
                 <button 
-                    type="button" 
-                    onClick={handleSubmit}
+                    type="submit" 
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     disabled={isSubmitted && isCorrect || isLoading}
                 >

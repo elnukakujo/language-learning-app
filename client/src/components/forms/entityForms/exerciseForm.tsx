@@ -11,6 +11,7 @@ import TrueFalseInput from "@/components/input/trueFalseInput";
 import DiscreteInput from "@/components/input/discreteInput";
 import MediaLoader from "@/components/mediaLoader";
 import { createExercise, updateExercise } from "@/api";
+import ConversationInput from "@/components/input/conversationInput";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
@@ -31,6 +32,7 @@ const EXERCISE_TYPE_OPTIONS: NonNullable<Exercise["exercise_type"]>[] = [
     "answering",
     "matching",
     "speaking",
+    "conversation",
 ];
 
 export default function ExerciseForm({
@@ -48,7 +50,7 @@ export default function ExerciseForm({
     let exerciseData: Exercise;
     if (!exercise) {
         exerciseData = {
-            exercise_type: "" as Exercise["exercise_type"],
+            exercise_type: undefined,
             question: "",
             answer: "",
             text_support: "",
@@ -169,7 +171,7 @@ export default function ExerciseForm({
 
             {exerciseType !== undefined && (
                 <>
-                    {! ["matching", "organize"].includes(exerciseType) && (
+                    {!["matching", "organize", "conversation"].includes(exerciseType) && (
                         <AutoSizeTextArea
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
@@ -188,6 +190,17 @@ export default function ExerciseForm({
 
                     <MediaLoader imageUrl={imageUrl} setImageUrl={setImageUrl} audioUrl={audioUrl} setAudioUrl={setAudioUrl} />
 
+                    {exerciseType === "conversation" && (
+                        <ConversationInput
+                            value={question || undefined}   // question stores the full JSON
+                            totalAudioSlots={audioUrl.length}
+                            onChange={({ question: q, answer: a }) => {
+                                setQuestion(q);
+                                setAnswer(a);
+                            }}
+                        />
+                    )}
+
                     {exerciseType === "true_false" && (
                         <TrueFalseInput
                             value={answer === "true"}
@@ -205,7 +218,7 @@ export default function ExerciseForm({
                         />
                     )}
 
-                    {!["true_false", "matching", "organize", "speaking", "fill_in_the_blank"].includes(exerciseType) && (
+                    {!["true_false", "matching", "organize", "speaking", "fill_in_the_blank", "conversation"].includes(exerciseType) && (
                         <AutoSizeTextArea
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}

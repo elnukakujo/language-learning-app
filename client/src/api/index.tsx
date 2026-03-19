@@ -311,11 +311,11 @@ export async function evaluateTranslation(exerciseId: string, userTranslation: s
   return res.json();
 }
 
-export async function evaluateSpeaking(exerciseId: string, user_audio_url: string) {
+export async function evaluateSpeech(exerciseId: string, user_audio_url: string, correct_audio_index: number = 0) {
   const res = await fetch(`${BASE_URL}/api/evaluate/speech`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ exercise_id: exerciseId, user_audio_url: user_audio_url }),
+    body: JSON.stringify({ exercise_id: exerciseId, user_audio_url: user_audio_url, correct_audio_index: correct_audio_index }),
   });
   if (!res.ok) throw new Error("Failed to evaluate speaking");
   return res.json();

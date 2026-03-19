@@ -3,6 +3,7 @@
 import { deleteElement } from "@/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function DeleteButton({ element_id, children }: { element_id: string, children?: React.ReactNode }) {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -29,16 +30,19 @@ export default function DeleteButton({ element_id, children }: { element_id: str
             <button type="button" onClick={() => setIsDeleting(true)} className="border-2 rounded px-4 py-2">
                 {children || "Delete Element"}
             </button>
-            {isDeleting && (
-                <span>
+            {isDeleting && createPortal(
+                <div className="fixed inset-0 z-50 flex flex-col gap-2 items-center justify-center bg-black/80 backdrop-blur-sm">
                     <p>Are you sure you want to delete this element?</p>
-                    <button type="button" onClick={handleDelete} className="border-2 rounded px-4 py-2">
-                        Confirm Delete
-                    </button>
-                    <button type="button" onClick={() => setIsDeleting(false)} className="border-2 rounded px-4 py-2">
-                        Cancel
-                    </button>
-                </span>
+                    <div className="flex flex-row gap-2">
+                        <button type="button" onClick={handleDelete} className="border-2 rounded px-4 py-2">
+                            Confirm Delete
+                        </button>
+                        <button type="button" onClick={() => setIsDeleting(false)} className="border-2 rounded px-4 py-2">
+                            Cancel
+                        </button>
+                    </div>
+                </div>,
+                document.body
             )}
         </div>
     );

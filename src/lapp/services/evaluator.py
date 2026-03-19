@@ -138,6 +138,7 @@ class EvaluatorService:
             self, 
             ex_id: str, 
             user_audio_url: str,
+            correct_audio_index: Optional[int] = 0,
             threshold: float = 0.8,
             session: Optional[Session] = None
         ) -> dict[str, any]:
@@ -147,6 +148,7 @@ class EvaluatorService:
         Args:
             ex_id: The ID of the Exercise item to evaluate
             user_audio_url: The URL of the user's audio answer to evaluate
+            correct_audio_index: The index of the correct audio file to compare against (default is 0)
             threshold: The similarity threshold for determining correct pronunciations
         
         Returns:
@@ -164,7 +166,7 @@ class EvaluatorService:
                 logger.warning(f"Exercise item not found: {ex_id}")
                 return {"score": 0.0, "correct": False, "feedback": "Exercise not found"}
             
-            if not exercise.exercise_type == 'speaking':
+            if not exercise.exercise_type in ['speaking', 'conversation']:
                 logger.warning(f"Exercise item {ex_id} is not a speaking exercise")
                 return {"score": 0.0, "correct": False, "feedback": "Exercise is not a speaking exercise"}
             
@@ -175,8 +177,8 @@ class EvaluatorService:
             from .media import MediaService
             media_service = MediaService()
 
-            _, correct_speaking_path = media_service.get_file_path("/".join(exercise.audio_files[0].split("/")[2:]))
-            _, user_speaking_path = media_service.get_file_path("/".join(user_audio_url.split("/")[2:]))
+            _, correct_speaking_path = media_service.get_file_path("/".join(exercise.audio_files[correct_audio_index].split("/")[2:]))
+            _, user_speaking_path = media_service.get_file_path(user_audio_url)
 
             # Load and preprocess audio files
             correct_waveform, correct_sr = torchaudio.load(correct_speaking_path)

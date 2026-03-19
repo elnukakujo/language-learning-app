@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Exercise from "@/interface/features/Exercise";
-import { BASE_URL, updateScoreById, evaluateSpeaking } from "@/api";
+import { BASE_URL, updateScoreById, evaluateSpeech } from "@/api";
 
 import dynamic from 'next/dynamic';
 const AudioRecorder = dynamic(() => import('@/components/audioRecorder'), { ssr: false });
@@ -59,7 +59,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
         setIsLoading(true);
 
         try {
-            const result = await evaluateSpeaking(String(exercise.id), audioUrl);
+            const result = await evaluateSpeech(String(exercise.id), audioUrl, 0);
             setCurrentLevel(speechLevels.sort((a, b) => b.threshold - a.threshold).find((level) => result.score >= level.threshold) || { label: "Unknown", description: "No feedback available." });
 
             if (result.correct) {

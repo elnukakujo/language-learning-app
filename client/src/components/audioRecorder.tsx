@@ -28,15 +28,15 @@ interface AudioRecorderProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AudioRecorder({ onUploadSuccess, onUploadError }: AudioRecorderProps) {
-    const [status,     setStatus]     = useState<Status>("idle");
+    const [status, setStatus] = useState<Status>("idle");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [errorMsg,   setErrorMsg]   = useState<string>("");
+    const [errorMsg, setErrorMsg] = useState<string>("");
 
-    const previewUrlRef    = useRef<string | null>(null);
+    const previewUrlRef = useRef<string | null>(null);
     const mediaRecorderRef = useRef<InstanceType<typeof MediaRecorder> | null>(null);
-    const chunksRef        = useRef<Blob[]>([]);
+    const chunksRef = useRef<Blob[]>([]);
 
-    const isRecording  = status === "recording";
+    const isRecording = status === "recording";
     const isProcessing = status === "processing" || status === "uploading";
     const hasRecording = !!previewUrl && (status === "uploading" || status === "done" || status === "error");
 

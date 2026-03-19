@@ -12,6 +12,7 @@ import OrganizeExercise from "./organizeExercise";
 import TranslateExercise from "./translateExercise";
 import TrueFalseExercise from "./trueFalseExercise";
 import SpeakingExercise from "./speakingExercise";
+import ConversationExercise from "./conversationExercise";
 
 export default function ExercisePractice( { exercise_lists } : { exercise_lists: Exercise[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -32,6 +33,7 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
             {currentExercise.exercise_type === 'translate' && <TranslateExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'true_false' && <TrueFalseExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'speaking' && <SpeakingExercise exercise={currentExercise} />}
+            {currentExercise.exercise_type === 'conversation' && <ConversationExercise exercise={currentExercise} />}
             {currentIndex < exercise_lists.length - 1 ? (<button 
                 className="bg-blue-500 text-white rounded-md p-2"
                 onClick={() => setCurrentIndex(currentIndex+1)}>

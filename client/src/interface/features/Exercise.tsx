@@ -1,7 +1,7 @@
 import { BaseFeature } from "../base";
 
 export default interface Exercise extends BaseFeature {
-    exercise_type?: 'essay' | 'answering' | 'translate' | 'organize' | 
+    exercise_type?: 'essay' | 'answering' | 'translate' | 'organize' | 'conversation' |
                     'fill_in_the_blank' | 'matching' | 'true_false' | 'speaking';
     question: string;
     answer: string;
