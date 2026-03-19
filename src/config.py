@@ -21,7 +21,7 @@ class Config:
     # Media settings
     MAX_AUDIO_SIZE = 10 * 1024 * 1024  # 10MB
     MAX_IMAGE_SIZE = 5 * 1024 * 1024   # 5MB
-    ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav'}
+    ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'm4a'}
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
     
     # Backup settings

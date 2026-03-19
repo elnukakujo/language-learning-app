@@ -68,15 +68,17 @@ function makeInitialLineState(): UserLineState {
     return { audioUrl: null, resetKey: 0, isCorrect: false, isSubmitted: false, attempts: 0, level: null };
 }
 
-function SpeechLine({ line, audioFiles }: { line: ConversationLine; audioFiles: string[] }) {
+function SpeechLine({ line, audioFiles, isUser, userName }: { line: ConversationLine; audioFiles: string[]; isUser: boolean; userName: string }) {
     if (line.audioIndex === null) {throw new Error("User lines must have an audio index for reference playback"); }
     const audioSrc = `${BASE_URL}${audioFiles[line.audioIndex]}`;
     return (
-        <fieldset className="flex flex-col space-x-2 border border-gray-200 rounded-lg p-3 w-fit">
-            <h4 className=" text-gray-500 font-medium">You</h4>
-            <p className="text-sm italic text-gray-600">{line.text}</p>
+        <fieldset className={`flex flex-col space-x-2 border rounded-lg p-3 w-fit ${isUser ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-gray-200'}`}>
+            <h4 className="font-medium">{userName}</h4>
+            <p className='text-sm italic'>{line.text}</p>
             <span>
-                <p className="text-xs text-gray-400">Reference:</p>
+                {isUser && (
+                    <p className="text-xs text-gray-400">Reference:</p>
+                )}
                 <audio src={audioSrc} controls className="h-8 w-48"/>
             </span>
         </fieldset>
@@ -220,12 +222,14 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                             <SpeechLine
                                 line={line}
                                 audioFiles={audioFiles}
+                                isUser={speaker.isUser}
+                                userName={speaker.name}
                             />
                             {speaker.isUser && idx === currentLineIndex && (
                                 <span className="flex flex-row space-x-2 items-center">
                                     <AudioRecorder
                                         key={lineStates[idx].resetKey}
-                                        onUploadSuccess={(response: { file_path: string }) => updateLine(idx, { audioUrl: response["file_path"] as string })}
+                                        onUploadSuccess={(response) => updateLine(idx, { audioUrl: (response as { file_path: string })["file_path"] })}
                                         onUploadError={(err: unknown) => { console.error("Audio upload error:", err); alert("Failed to upload audio. Please try again."); }}
                                     />
                                     <button
