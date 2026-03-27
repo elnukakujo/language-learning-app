@@ -33,7 +33,7 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
         setIsSubmitted(false);
         setIsCorrect(Array(totalBlanks).fill(false));
         setAttempts(0);
-    }, [exercise, correctAnswers, totalBlanks]);
+    }, [exercise]);
 
     // Next unfilled blank index
     const nextBlank = filledAnswers.findIndex(a => a === null);

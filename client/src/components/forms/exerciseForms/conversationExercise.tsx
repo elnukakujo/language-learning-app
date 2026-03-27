@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ring } from 'ldrs/react';
 import 'ldrs/react/Ring.css';
 import Markdown from "react-markdown";
@@ -61,25 +61,45 @@ type UserLineState = {
     isCorrect: boolean;
     isSubmitted: boolean;
     attempts: number;
+    similarityScore: number | null;
     level: { label: string; description: string } | null;
 };
 
 function makeInitialLineState(): UserLineState {
-    return { audioUrl: null, resetKey: 0, isCorrect: false, isSubmitted: false, attempts: 0, level: null };
+    return { audioUrl: null, resetKey: 0, isCorrect: false, isSubmitted: false, attempts: 0, similarityScore: null, level: null };
 }
 
-function SpeechLine({ line, audioFiles, isUser, userName }: { line: ConversationLine; audioFiles: string[]; isUser: boolean; userName: string }) {
+function SpeechLine({
+    line,
+    audioFiles,
+    isUser,
+    userName,
+    isPlaying,
+    registerAudioRef,
+}: {
+    line: ConversationLine;
+    audioFiles: string[];
+    isUser: boolean;
+    userName: string;
+    isPlaying: boolean;
+    registerAudioRef?: (element: HTMLAudioElement | null) => void;
+}) {
     if (line.audioIndex === null) {throw new Error("User lines must have an audio index for reference playback"); }
     const audioSrc = `${BASE_URL}${audioFiles[line.audioIndex]}`;
+    const baseStyle = isUser ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-gray-200';
+    const highlightStyle = isUser
+        ? 'text-blue-500 border-blue-500'
+        : 'text-amber-700 border-amber-500 bg-amber-50';
+
     return (
-        <fieldset className={`flex flex-col space-x-2 border rounded-lg p-3 w-fit ${isUser ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-gray-200'}`}>
+        <fieldset className={`flex flex-col space-x-2 border rounded-lg p-3 w-fit transition-colors ${isPlaying ? highlightStyle : baseStyle}`}>
             <h4 className="font-medium">{userName}</h4>
             <p className='text-sm italic'>{line.text}</p>
             <span>
                 {isUser && (
                     <p className="text-xs text-gray-400">Reference:</p>
                 )}
-                <audio src={audioSrc} controls className="h-8 w-48"/>
+                <audio ref={registerAudioRef} src={audioSrc} controls className="h-8 w-48"/>
             </span>
         </fieldset>
     );
@@ -109,24 +129,127 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
             conversation.speakers.find((s) => s.id === line.speakerId)?.isUser
         )
     );
+    const [visibleLineIndex, setVisibleLineIndex] = useState<number>(() =>
+        conversation.lines.findIndex((line) =>
+            conversation.speakers.find((s) => s.id === line.speakerId)?.isUser
+        )
+    );
     const [isLoading, setIsLoading] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
+    const [playQueue, setPlayQueue] = useState<number[]>([]);
+    const [playingLineIndex, setPlayingLineIndex] = useState<number | null>(null);
+
+    const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
+    const previousLineIndexRef = useRef<number>(currentLineIndex);
+    const skipRevealEffectRef = useRef(true);
+    const isSequencePlayingRef = useRef(false);
 
     // Reset when exercise changes
     useEffect(() => {
         if (!conversation) return;
         const initial: Record<number, UserLineState> = {};
+        Object.values(audioRefs.current).forEach((audio) => {
+            if (!audio) return;
+            audio.pause();
+            audio.currentTime = 0;
+        });
+
         conversation.lines.forEach((line, idx) => {
             const speaker = conversation.speakers.find((s) => s.id === line.speakerId);
             if (speaker?.isUser) initial[idx] = makeInitialLineState();
         });
-        setLineStates(initial);
-        setCurrentLineIndex(
-            conversation.lines.findIndex((line) =>
-                conversation.speakers.find((s) => s.id === line.speakerId)?.isUser
-            )
+        const firstUserLineIndex = conversation.lines.findIndex((line) =>
+            conversation.speakers.find((s) => s.id === line.speakerId)?.isUser
         );
+
+        setLineStates(initial);
+        setCurrentLineIndex(firstUserLineIndex);
+        setVisibleLineIndex(firstUserLineIndex);
+        const initialNonUserLines = conversation.lines
+            .map((line, idx) => ({ line, idx }))
+            .filter(({ idx, line }) => {
+                if (idx >= firstUserLineIndex) return false;
+                const speaker = conversation.speakers.find((s) => s.id === line.speakerId);
+                return Boolean(speaker && !speaker.isUser);
+            })
+            .map(({ idx }) => idx);
+
+        setPlayQueue(initialNonUserLines);
+        setPlayingLineIndex(null);
+        isSequencePlayingRef.current = false;
+        previousLineIndexRef.current = firstUserLineIndex;
+        skipRevealEffectRef.current = true;
     }, [exercise.id]);
+
+    useEffect(() => {
+        if (skipRevealEffectRef.current) {
+            skipRevealEffectRef.current = false;
+            previousLineIndexRef.current = currentLineIndex;
+            return;
+        }
+
+        const previousLineIndex = previousLineIndexRef.current;
+        previousLineIndexRef.current = currentLineIndex;
+
+        if (currentLineIndex <= previousLineIndex) return;
+
+        const newlyRevealedNonUserLines: number[] = [];
+        for (let idx = previousLineIndex + 1; idx <= currentLineIndex; idx += 1) {
+            const speaker = conversation.speakers.find((candidate) => candidate.id === conversation.lines[idx]?.speakerId);
+            if (speaker && !speaker.isUser) {
+                newlyRevealedNonUserLines.push(idx);
+            }
+        }
+
+        if (newlyRevealedNonUserLines.length === 0) return;
+
+        setPlayQueue((previousQueue) => {
+            const existing = new Set(previousQueue);
+            const toAppend = newlyRevealedNonUserLines.filter((lineIndex) => !existing.has(lineIndex));
+            return [...previousQueue, ...toAppend];
+        });
+    }, [conversation.lines, conversation.speakers, currentLineIndex]);
+
+    useEffect(() => {
+        if (isSequencePlayingRef.current || playQueue.length === 0) return;
+
+        const nextLineIndex = playQueue[0];
+        const audio = audioRefs.current[nextLineIndex];
+
+        if (!audio) {
+            setPlayQueue((previousQueue) => previousQueue.slice(1));
+            return;
+        }
+
+        isSequencePlayingRef.current = true;
+        setPlayingLineIndex(nextLineIndex);
+
+        const finishPlayback = () => {
+            audio.removeEventListener("ended", handleEnded);
+            audio.removeEventListener("error", handleError);
+            isSequencePlayingRef.current = false;
+            setPlayingLineIndex((current) => (current === nextLineIndex ? null : current));
+            setPlayQueue((previousQueue) => {
+                if (previousQueue[0] === nextLineIndex) return previousQueue.slice(1);
+                return previousQueue.filter((lineIndex) => lineIndex !== nextLineIndex);
+            });
+        };
+
+        const handleEnded = () => finishPlayback();
+        const handleError = () => finishPlayback();
+
+        audio.addEventListener("ended", handleEnded);
+        audio.addEventListener("error", handleError);
+        audio.currentTime = 0;
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+                console.warn("Could not autoplay revealed conversation line", error);
+                finishPlayback();
+            });
+        }
+    }, [playQueue]);
 
     const userLineIndices = conversation.lines.reduce<number[]>((acc, line, idx) => {
         if (conversation.speakers.find((s) => s.id === line.speakerId)?.isUser) acc.push(idx);
@@ -149,9 +272,32 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
             const isLastUserLine = currentLineIndex === userLineIndices[userLineIndices.length - 1];
  
             if (result.correct) {
-                updateLine(currentLineIndex, { isSubmitted: true, isCorrect: true, level });
+                updateLine(currentLineIndex, {
+                    isSubmitted: true,
+                    isCorrect: true,
+                    level,
+                    similarityScore: result.score,
+                });
  
                 if (isLastUserLine) {
+                    const trailingNonUserLines = conversation.lines
+                        .map((line, idx) => ({ line, idx }))
+                        .filter(({ idx, line }) => {
+                            if (idx <= currentLineIndex) return false;
+                            const speaker = conversation.speakers.find((s) => s.id === line.speakerId);
+                            return Boolean(speaker && !speaker.isUser);
+                        })
+                        .map(({ idx }) => idx);
+
+                    if (trailingNonUserLines.length > 0) {
+                        setPlayQueue((previousQueue) => {
+                            const existing = new Set(previousQueue);
+                            const toAppend = trailingNonUserLines.filter((lineIndex) => !existing.has(lineIndex));
+                            return [...previousQueue, ...toAppend];
+                        });
+                    }
+
+                    setVisibleLineIndex(conversation.lines.length - 1);
                     // All lines done — compute allCorrect from previous lines + this one
                     const allCorrect = userLineIndices.every((i) =>
                         i === currentLineIndex ? true : lineStates[i]?.isCorrect
@@ -161,9 +307,16 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                 } else {
                     const nextUserLine = userLineIndices.find((i) => i > currentLineIndex)!;
                     setCurrentLineIndex(nextUserLine);
+                    setVisibleLineIndex(nextUserLine);
                 }
             } else {
-                updateLine(currentLineIndex, { isSubmitted: true, isCorrect: false, level, attempts: newAttempts });
+                updateLine(currentLineIndex, {
+                    isSubmitted: true,
+                    isCorrect: false,
+                    level,
+                    similarityScore: result.score,
+                    attempts: newAttempts,
+                });
  
                 if (newAttempts >= 3) {
                     updateScoreById(exercise.id!, false).catch(console.error);
@@ -199,7 +352,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
 
             <section className="flex flex-col gap-3">
                 {conversation.lines.map((line, idx) => {
-                    if (idx > currentLineIndex) return;
+                    if (idx > visibleLineIndex) return;
                     const speaker = conversation.speakers.find((s) => s.id === line.speakerId);
                     if (!speaker) throw new Error(`Speaker with ID ${line.speakerId} not found in conversation data`);
                     if (!lineStates[idx] && speaker.isUser) { throw new Error(`Missing state for line ${idx} - speaker ${line.speakerId}`); }
@@ -224,6 +377,10 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                                 audioFiles={audioFiles}
                                 isUser={speaker.isUser}
                                 userName={speaker.name}
+                                isPlaying={playingLineIndex === idx}
+                                registerAudioRef={(element) => {
+                                    audioRefs.current[idx] = element;
+                                }}
                             />
                             {speaker.isUser && idx === currentLineIndex && (
                                 <span className="flex flex-row space-x-2 items-center">
@@ -241,6 +398,20 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                                         {isLoading ? <Ring size={20} color="#fff" /> : "Submit"}
                                     </button>
                                 </span>
+                            )}
+                            {speaker.isUser && lineStates[idx]?.isSubmitted && lineStates[idx]?.level && lineStates[idx]?.similarityScore !== null && (
+                                <section className={`max-w-sm rounded-lg border p-3 text-sm ${lineStates[idx].isCorrect ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>
+                                    <p className="font-semibold">
+                                        {lineStates[idx].isCorrect ? "Good pronunciation" : "Needs improvement"}
+                                    </p>
+                                    <p>
+                                        Similarity: {(lineStates[idx].similarityScore * 100).toFixed(1)}%
+                                    </p>
+                                    <p>
+                                        Level: {lineStates[idx].level.label}
+                                    </p>
+                                    <p className="opacity-90">{lineStates[idx].level.description}</p>
+                                </section>
                             )}
                         </section>
                     );

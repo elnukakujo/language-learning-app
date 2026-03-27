@@ -21,14 +21,29 @@ export default async function ExercisesPage({ params }: { params: { language_id:
     return(
         <main className="flex flex-col space-y-5">
             <h1>Exercises</h1>
-            <article className="flex flex-col space-y-5">
+            <article className="flex flex-col space-y-4">
                 {Object.entries(exercisesByType).map(([type, exercises]) => (
                     <section key={type}>
                         <h3>{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
                         <ul>
                             {exercises.map((exercise, index) => (
-                                <li key={index}>
-                                    <Markdown remarkPlugins={[remarkGfm]}>{exercise.question}</Markdown>
+                                <li key={index} className="flex flex-col gap-2">
+                                    {!['fill_in_the_blank', 'conversation'].includes(exercise.exercise_type!) && (
+                                        <Markdown remarkPlugins={[remarkGfm]}>{exercise.question}</Markdown>
+                                    )}
+                                    {exercise.exercise_type === 'fill_in_the_blank' && (
+                                        <span className="flex flex-row gap-2">
+                                            {
+                                                exercise.answer.split("__").map((part, idx) => (
+                                                    <button key={idx} className="px-2 py-1 rounded-md bg-blue-600">
+                                                        <p>
+                                                            {part}
+                                                        </p>
+                                                    </button>
+                                                ))
+                                            }
+                                        </span>
+                                    )}
                                     <p>Score: {exercise.score?.toFixed(2)}/100</p>
                                     <nav className="flex flex-row space-x-2">
                                         <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>
