@@ -285,11 +285,8 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                     }
 
                     setVisibleLineIndex(conversation.lines.length - 1);
-                    // All lines done — compute allCorrect from previous lines + this one
-                    const allCorrect = userLineIndices.every((i) =>
-                        i === currentLineIndex ? true : lineStates[i]?.isCorrect
-                    );
-                    updateScoreById(exercise.id!, allCorrect).catch(console.error);
+                    const averageScore = userLineIndices.reduce((acc, idx) => acc + (lineStates[idx]?.similarityScore ?? 0), 0) / userLineIndices.length;
+                    updateScoreById(exercise.id!, averageScore).catch(console.error);
                     setIsFinished(true);
                 } else {
                     const nextUserLine = userLineIndices.find((i) => i > currentLineIndex)!;
@@ -306,7 +303,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                 });
  
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, false).catch(console.error);
+                    updateScoreById(exercise.id!, 0).catch(console.error);
                     setIsFinished(true);
                 }
             }

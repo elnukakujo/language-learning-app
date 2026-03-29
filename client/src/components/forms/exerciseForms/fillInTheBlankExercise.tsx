@@ -77,12 +77,12 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
         setIsCorrect(newIsCorrect);
 
         if (newIsCorrect.every(Boolean)) {
-            updateScoreById(exercise.id!, true).catch(console.error);
+            updateScoreById(exercise.id!, 1).catch(console.error);
         } else {
             const newAttempts = attempts + 1;
             setAttempts(newAttempts);
             if (newAttempts >= 3) {
-                updateScoreById(exercise.id!, false).catch(console.error);
+                updateScoreById(exercise.id!, 0).catch(console.error);
             }
         }
     };

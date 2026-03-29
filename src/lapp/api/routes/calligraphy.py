@@ -404,10 +404,10 @@ def score_calligraphy():
                       example: "call_C1"
                       description: The ID of the calligraphy to score
                       required: true
-                  success:
-                      type: string
-                      example: "true"
-                      description: Whether the scoring was successful
+                  score:
+                      type: number
+                      example: 0.8
+                      description: The score for the calligraphy
                       required: true
     responses:
         200:
@@ -420,9 +420,9 @@ def score_calligraphy():
     """
     data = request.json
     calligraphy_id = data['calligraphy_id']
-    success = data['success'].lower() == "true"
+    score = float(data['score'])
 
-    calligraphy = calligraphy_service.update_score(calligraphy_id, success, as_dict=True, include_relations=False)
+    calligraphy = calligraphy_service.update_score(calligraphy_id, score, as_dict=True, include_relations=False)
     
     if calligraphy:
         return jsonify({

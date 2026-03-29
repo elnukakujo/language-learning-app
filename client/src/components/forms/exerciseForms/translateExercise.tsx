@@ -40,15 +40,14 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         setIsLoading(true);
 
         evaluateTranslation(exercise.id!, userAnswer).then((result) => {
-            console.log("Evaluation result:", result);
             setCurrentLevel(getLevelForScore(result.score));
             if (result.correct === true) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, true).catch(console.error);
+                updateScoreById(exercise.id!, result.score).catch(console.error);
             } else {
                 setAttempts(prev => prev + 1);
                 if (attempts >= 2) {
-                    updateScoreById(exercise.id!, false).catch(console.error);
+                    updateScoreById(exercise.id!, result.score).catch(console.error);
                 }
             }
             setIsLoading(false);

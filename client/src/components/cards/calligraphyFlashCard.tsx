@@ -21,7 +21,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
 
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(calligraphy.id!, isCorrect);
+        updateScoreById(calligraphy.id!, isCorrect ? 1 : 0);
     };
 
     const handleGoNext = () => {

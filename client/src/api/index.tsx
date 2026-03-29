@@ -322,22 +322,22 @@ export async function evaluateSpeech(exerciseId: string, user_audio_url: string,
 }
 
 // ============= Scoring API =============
-export async function updateScoreById(elementId: string, success: boolean) {
+export async function updateScoreById(elementId: string, score: number) {
   let endpoint = "";
-  let payload: Record<string, string> = {};
+  let payload: Record<string, string|number> = {};
 
   if (elementId.startsWith("voc_")) {
     endpoint = `${BASE_URL}/api/vocabulary/score/`;
-    payload = { vocabulary_id: elementId, success: success.toString() };
+    payload = { vocabulary_id: elementId, score: score };
   } else if (elementId.startsWith("gram_")) {
     endpoint = `${BASE_URL}/api/grammar/score`;
-    payload = { grammar_id: elementId, success: success.toString() };
+    payload = { grammar_id: elementId, score: score };
   } else if (elementId.startsWith("call_")) {
     endpoint = `${BASE_URL}/api/calligraphy/score`;
-    payload = { calligraphy_id: elementId, success: success.toString() };
+    payload = { calligraphy_id: elementId, score: score };
   } else if (elementId.startsWith("ex_")) {
     endpoint = `${BASE_URL}/api/exercise/score`;
-    payload = { exercise_id: elementId, success: success.toString() };
+    payload = { exercise_id: elementId, score: score };
   } else {
     throw new Error(`Unsupported element ID for scoring: ${elementId}`);
   }

@@ -91,7 +91,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
 
     useEffect(() => {
         if (isSuccess) {
-            updateScoreById(exercise.id!, true).catch(console.error);
+            updateScoreById(exercise.id!, 1).catch(console.error);
         };
     }, [isSuccess, exercise]);
 

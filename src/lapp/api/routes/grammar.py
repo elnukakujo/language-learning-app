@@ -337,20 +337,20 @@ def score_grammar():
                     example: "gram_G1"
                     required: true
                     description: "The ID of the grammar to score"
-                success:
-                    type: boolean
-                    example: "true"
+                score:
+                    type: number
+                    example: 0.8
                     required: true
-                    description: "Whether the user answered correctly"
+                    description: "The score for the grammar"
     responses:
         200:
             description: Grammar scored successfully
     """
     data = request.json
     grammar_id = data['grammar_id']
-    success = data['success'].lower() == "true"
+    score = float(data['score'])
 
-    grammar = grammar_service.update_score(grammar_id, success, as_dict=True, include_relations=False)
+    grammar = grammar_service.update_score(grammar_id, score, as_dict=True, include_relations=False)
     
     if grammar:
         return jsonify({

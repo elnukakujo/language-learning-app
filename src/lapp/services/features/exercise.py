@@ -415,7 +415,7 @@ class ExerciseService:
     def update_score(
         self,
         ex_id: str,
-        success: bool,
+        score: float,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -427,7 +427,7 @@ class ExerciseService:
         
         Args:
             ex_id: The ID of the Exercise item to update
-            success: Whether the latest attempt was successful
+            score: The new score for the Exercise item
         
         Returns:
             Updated Exercise object if successful, None otherwise
@@ -448,7 +448,7 @@ class ExerciseService:
             exercise.score = update_score(
                 score=exercise.score,
                 last_seen=exercise.last_seen,
-                success=success
+                similarity=score
             )
             
             # Update last_seen
@@ -482,7 +482,7 @@ class ExerciseService:
                 feature.score = update_score(
                     score=feature.score,
                     last_seen=feature.last_seen,
-                    success=success
+                    similarity=score
                 )
                 feature.last_seen = date.today()
 

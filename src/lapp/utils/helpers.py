@@ -1,4 +1,3 @@
-import math
 from datetime import date
 
 def update_score(
@@ -12,7 +11,7 @@ def update_score(
 
     # Language-specific time decay: slower for hard words, faster for easy ones
     # Adjust log curve based on difficulty
-    time_weight = math.log(days + 2) * (1 + difficulty) * recency_bonus
+    time_weight = min(days+1, 7) * (1 + difficulty) * recency_bonus
 
     # Score update: similarity modulates the time weight
     # Partial success (e.g., 0.7) gives partial benefit

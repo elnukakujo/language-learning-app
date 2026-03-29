@@ -385,7 +385,7 @@ class CalligraphyService:
     def update_score(
         self,
         calligraphy_id: str,
-        success: bool,
+        score: float,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -397,7 +397,7 @@ class CalligraphyService:
         
         Args:
             calligraphy_id: The ID of the Calligraphy item to update
-            success: Whether the latest attempt was successful
+            score: The new score for the Calligraphy item
         
         Returns:
             Updated Calligraphy object if successful, None otherwise
@@ -418,7 +418,7 @@ class CalligraphyService:
             calligraphy.score = update_score(
                 score=calligraphy.score,
                 last_seen=calligraphy.last_seen,
-                success=success
+                similarity=score,
             )
             
             # Update last_seen

@@ -57,11 +57,11 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
             if (result.correct) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, true).catch(console.error);
+                updateScoreById(exercise.id!, 1).catch(console.error);
             } else {
                 setAttempts((prev) => prev + 1);
                 if (attempts >= 2) {
-                    updateScoreById(exercise.id!, false).catch(console.error);
+                    updateScoreById(exercise.id!, 0).catch(console.error);
                 }
             }
             setIsSubmitted(true);

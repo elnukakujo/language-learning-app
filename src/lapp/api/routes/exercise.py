@@ -342,10 +342,10 @@ def score_exercise():
                     example: "ex_E1"
                     description: "ID of the exercise to score"
                     required: true
-                success:
-                    type: string
-                    example: "true"
-                    description: "Whether the exercise was answered correctly ('true' or 'false')"
+                score:
+                    type: number
+                    example: 0.8
+                    description: "The score for the exercise"
                     required: true
     responses:
         200:
@@ -358,9 +358,9 @@ def score_exercise():
     """
     data = request.json
     exercise_id = data['exercise_id']
-    success = data['success'].lower() == "true"
+    score = float(data['score'])
 
-    exercise = exercise_service.update_score(exercise_id, success, as_dict=True, include_relations=False)
+    exercise = exercise_service.update_score(exercise_id, score, as_dict=True, include_relations=False)
     
     if exercise:
         return jsonify({

@@ -371,11 +371,11 @@ def score_vocabulary():
                       example: "voc_V1"
                       required: true
                       description: The ID of the vocabulary to score
-                  success:
-                      type: string
-                      example: "true"
+                  score:
+                      type: number
+                      example: 0.8
                       required: true
-                      description: Whether the user answered correctly
+                      description: The score for the vocabulary
     responses:
         200:
             description: Vocabulary scored successfully
@@ -386,9 +386,9 @@ def score_vocabulary():
     """
     data = request.json
     vocabulary_id = data['vocabulary_id']
-    success = data['success'].lower() == "true"
+    score = float(data['score'])
 
-    vocabulary = vocabulary_service.update_score(vocabulary_id, success, as_dict=True, include_relations=False)
+    vocabulary = vocabulary_service.update_score(vocabulary_id, score, as_dict=True, include_relations=False)
     
     if vocabulary:
         return jsonify({

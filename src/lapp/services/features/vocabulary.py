@@ -414,7 +414,7 @@ class VocabularyService:
     def update_score(
         self,
         voc_id: str,
-        success: bool,
+        score: float,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -426,7 +426,7 @@ class VocabularyService:
         
         Args:
             voc_id: The ID of the VocabularyFeature item to update
-            success: Whether the latest attempt was successful
+            score: The new score for the VocabularyFeature item
         
         Returns:
             Updated VocabularyFeature object if successful, None otherwise
@@ -447,7 +447,7 @@ class VocabularyService:
             vocabulary.score = update_score(
                 score=vocabulary.score,
                 last_seen=vocabulary.last_seen,
-                success=success
+                similarity=score
             )
 
             # Update last_seen

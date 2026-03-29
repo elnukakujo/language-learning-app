@@ -35,11 +35,11 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         e.preventDefault();
         if (userAnswer.map(item => item.word).join('') === answer.join('')) {
             setIsCorrect(true);
-            updateScoreById(exercise.id!, true).catch(console.error);
+            updateScoreById(exercise.id!, 1).catch(console.error);
         } else {
             setAttempts(prev => prev + 1);
             if (attempts >= 2) {
-                updateScoreById(exercise.id!, false).catch(console.error);
+                updateScoreById(exercise.id!, 0).catch(console.error);
             }
         }
     };

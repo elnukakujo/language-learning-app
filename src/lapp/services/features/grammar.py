@@ -364,7 +364,7 @@ class GrammarService:
     def update_score(
         self,
         grammar_id: str,
-        success: bool,
+        score: float,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -376,7 +376,7 @@ class GrammarService:
         
         Args:
             grammar_id: The ID of the Grammar item to update
-            success: Whether the latest attempt was successful
+            score: The new score for the Grammar item
         
         Returns:
             Updated Grammar object if successful, None otherwise
@@ -397,7 +397,7 @@ class GrammarService:
             grammar.score = update_score(
                 score=grammar.score,
                 last_seen=grammar.last_seen,
-                success=success
+                similarity=score
             )
             
             # Update last_seen

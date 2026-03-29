@@ -18,7 +18,7 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
     const [graded, setGraded] = useState<boolean>(false);
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(grammar.id!, isCorrect);
+        updateScoreById(grammar.id!, isCorrect ? 1 : 0);
     };
 
     const handleGoNext = () => {

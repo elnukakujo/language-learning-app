@@ -9,7 +9,7 @@ import Exercise from "@/interface/features/Exercise";
 import TrueFalseInput from "@/components/input/trueFalseInput";
 import { BASE_URL, updateScoreById } from "@/api";
 
-export default function TranslateExercise({ exercise }: {exercise: Exercise}){
+export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     const question = exercise.question || "";
@@ -33,10 +33,10 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         setIsSubmitted(true);
         if (String(userAnswer) === normalize(answer.toLowerCase())) {
             setIsCorrect(true);
-            updateScoreById(exercise.id!, true).catch(console.error);
+            updateScoreById(exercise.id!, 1).catch(console.error);
         } else {
             setIsCorrect(false);
-            updateScoreById(exercise.id!, false).catch(console.error);
+            updateScoreById(exercise.id!, 0).catch(console.error);
         };
     };
 

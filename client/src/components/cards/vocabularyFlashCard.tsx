@@ -20,7 +20,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
     const [revealExample, setRevealExample] = useState<boolean>(false);
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(vocabulary.id!, isCorrect);
+        updateScoreById(vocabulary.id!, isCorrect ? 1 : 0);
     };
 
     const handleGoNext = () => {

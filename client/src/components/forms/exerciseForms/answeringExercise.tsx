@@ -76,7 +76,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
                     type="button"
                     onClick={() => {
                         setShowCorrection(true);
-                        updateScoreById(exercise.id!, true).catch(console.error);
+                        updateScoreById(exercise.id!, 1).catch(console.error);
                     }}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     disabled={showCorrection}
