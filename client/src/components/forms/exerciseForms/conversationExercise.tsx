@@ -9,6 +9,8 @@ import Image from 'next/image';
 import Exercise from "@/interface/features/Exercise";
 import { BASE_URL, updateScoreById, evaluateSpeech } from "@/api";
 
+import { getLevelForScore } from "@/utils/speech_levels";
+
 import dynamic from 'next/dynamic';
 const AudioRecorder = dynamic(() => import('@/components/audioRecorder'), { ssr: false });
 
@@ -32,21 +34,6 @@ type ConversationData = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const SPEECH_LEVELS = [
-    { label: "Lost in Translation", threshold: 0,    description: "Your pronunciation is still finding its way—keep practicing!" },
-    { label: "Tourist Mode",         threshold: 0.50, description: "You're getting there, but locals might need to guess a bit." },
-    { label: "Confident Speaker",    threshold: 0.70, description: "You're understood, and that's a big win!" },
-    { label: "Almost Native",        threshold: 0.85, description: "Impressive! Just a few tweaks and you'll fool everyone." },
-    { label: "Native-like",          threshold: 0.95, description: "Flawless! Even locals would think you grew up here." },
-];
-
-function getLevelForScore(score: number) {
-    return (
-        [...SPEECH_LEVELS].sort((a, b) => b.threshold - a.threshold).find((l) => score >= l.threshold)
-        ?? { label: "Unknown", description: "No feedback available." }
-    );
-}
 
 function parseConversation(raw: string): ConversationData {
     try { return JSON.parse(raw) as ConversationData; }

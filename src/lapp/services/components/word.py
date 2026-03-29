@@ -173,10 +173,6 @@ class WordService:
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
 
-            if (existing_word := self.get_by_word(update_data['word'], session=session)) and existing_word.id != word_id:
-                logger.warning(f"Word with value '{update_data['word']}' already exists.")
-                raise ValueError(f"Word with value '{update_data['word']}' already exists.")
-
             for key, value in update_data.items():
                 setattr(existing, key, value)
 

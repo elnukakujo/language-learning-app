@@ -63,6 +63,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                                 key={index}
                                 src={BASE_URL + url}
                                 controls
+                                autoPlay
                         />
                         ))}
                     </section>
@@ -98,6 +99,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                                             key={index}
                                             src={BASE_URL + url}
                                             controls
+                                            autoPlay
                                         />
                                     ))}
                                 </section>

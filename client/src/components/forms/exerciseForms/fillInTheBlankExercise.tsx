@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import shuffle from 'lodash/shuffle';
+import AutoWidthInput from "@/components/input/autoWidthInput";
 
 export default function FillInTheBlankExercise({ exercise }: { exercise: Exercise }) {
     const question = exercise.question || "";
@@ -21,6 +22,8 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
     const lines = question.split('\n').filter(line => line.trim());
     const totalBlanks = (question.match(/__/g) || []).length;
 
+    const [isAssisted, setIsAssisted] = useState<boolean>(totalBlanks > 3); // Auto-enable word bank for 4+ blanks
+
     const [wordBank, setWordBank] = useState<string[]>([]);
     const [filledAnswers, setFilledAnswers] = useState<(string | null)[]>(Array(totalBlanks).fill(null));
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -28,7 +31,10 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
     const [attempts, setAttempts] = useState(0);
 
     useEffect(() => {
-        setWordBank(shuffle(correctAnswers));
+        setIsAssisted(totalBlanks > 3);
+        if (isAssisted) {
+            setWordBank(shuffle(correctAnswers));
+        }
         setFilledAnswers(Array(totalBlanks).fill(null));
         setIsSubmitted(false);
         setIsCorrect(Array(totalBlanks).fill(false));
@@ -91,20 +97,45 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
         const filled = filledAnswers[idx];
         return [
             <span key={`t-${i}`}>{part}</span>,
-            <button
-                type="button"
-                key={`blank-${idx}`}
-                onClick={() => handleBlankClick(idx)}
-                className={`inline-block min-w-12 mx-1 px-2 border-b-2 text-center ${
-                    isSubmitted
-                    ? isCorrect[idx]
-                        ? 'border-green-500 text-green-700'
-                        : 'border-red-500 text-red-700'
-                    : 'border-gray-400'
-                } ${filled ? 'cursor-pointer' : 'cursor-default'}`}
-            >
-                {filled ?? '\u00A0\u00A0\u00A0\u00A0'}
-            </button>,
+
+            (isAssisted ? (
+                <button
+                    type="button"
+                    key={`blank-${idx}`}
+                    onClick={() => handleBlankClick(idx)}
+                    className={`inline-block min-w-12 mx-1 px-2 border-b-2 text-center ${
+                        isSubmitted
+                        ? isCorrect[idx]
+                            ? 'border-green-500 text-green-700'
+                            : 'border-red-500 text-red-700'
+                        : 'border-gray-400'
+                    } ${filled ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                    {filled ?? '\u00A0\u00A0\u00A0\u00A0'}
+                </button>
+            ) : (
+                <AutoWidthInput
+                    key={`blank-${idx}`}
+                    value={filledAnswers[idx] ?? ''}
+                    onChange={(e) => {
+                        if (attempts >= 3) return;
+                        const val = e.target.value;
+                        setFilledAnswers(prev => {
+                            const next = [...prev];
+                            next[idx] = val;
+                            return next;
+                        });
+                    }}
+                    disabled={isSubmitted}
+                    className={`inline-block mx-1 border-b-2 text-center ${
+                        isSubmitted
+                        ? isCorrect[idx]
+                            ? 'border-green-500 text-green-700'
+                            : 'border-red-500 text-red-700'
+                        : 'border-gray-400'
+                    }`}
+                />
+            )),
         ];
         });
     };
@@ -135,21 +166,23 @@ export default function FillInTheBlankExercise({ exercise }: { exercise: Exercis
                 </span>
             )}
 
-            <span>
-                <h3>Word Bank:</h3>
-                <div className="flex flex-wrap gap-2">
-                    {wordBank.map((word, i) => (
-                        <button
-                            type="button"
-                            key={i}
-                            onClick={() => handleWordClick(word, i)}
-                            className="border px-3 py-1 rounded transition-colors"
-                        >
-                            {word}
-                        </button>
-                    ))}
-                </div>
-            </span>
+            {isAssisted && wordBank && (
+                <span>
+                    <h3>Word Bank:</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {wordBank.map((word, i) => (
+                            <button
+                                type="button"
+                                key={i}
+                                onClick={() => handleWordClick(word, i)}
+                                className="border px-3 py-1 rounded transition-colors"
+                            >
+                                {word}
+                            </button>
+                        ))}
+                    </div>
+                </span>
+            )}
 
             <div className="flex flex-col space-y-2">
                 {lines.map((line, lineIdx) => (

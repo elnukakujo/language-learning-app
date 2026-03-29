@@ -22,7 +22,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     const [wordsToOrganize, setWordsToOrganize] = useState<string[]>([]);
 
-    const [userAnswer, setUserAnswer] = useState<string[]>([]);
+    const [userAnswer, setUserAnswer] = useState<Array<{ word: string; sourceIndex: number }>>([]);
 
     useEffect(() => {
         setWordsToOrganize(shuffle(answer))
@@ -33,7 +33,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (userAnswer.join('') === answer.join('')) {
+        if (userAnswer.map(item => item.word).join('') === answer.join('')) {
             setIsCorrect(true);
             updateScoreById(exercise.id!, true).catch(console.error);
         } else {
@@ -87,28 +87,40 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                         <h3>Words to Organize:</h3>
                         <div className="flex flex-wrap space-x-2">
                             {wordsToOrganize.map((word, index) => (
-                                <button 
-                                    type="button"
-                                    key={index} 
-                                    onClick={() => setUserAnswer(prev => [...prev, word])} 
-                                    className="border p-2 rounded"
-                                >
-                                    {word.trim()}
-                                </button>
+                                (() => {
+                                    const isSelected = userAnswer.some(item => item.sourceIndex === index);
+                                    return (
+                                        <button 
+                                            type="button"
+                                            key={index} 
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setUserAnswer(prev => prev.filter(item => item.sourceIndex !== index));
+                                                } else {
+                                                    setUserAnswer(prev => [...prev, { word, sourceIndex: index }]);
+                                                }
+                                            }} 
+                                            className={`border p-2 rounded transition-colors ${isSelected ? 'bg-gray-200 text-gray-500 border-gray-300' : ''}`}
+                                            aria-pressed={isSelected}
+                                        >
+                                            {word.trim()}
+                                        </button>
+                                    );
+                                })()
                             ))}
                         </div>
                     </span>
                     <span>
                         <h3>Your answer: </h3>
                         <div className="flex flex-wrap space-x-2">
-                            {userAnswer.map((word, index) => (
+                            {userAnswer.map((item, index) => (
                                 <button 
                                     type="button" 
                                     key={index} 
                                     className="border p-2 rounded cursor-pointer"
                                     onClick={() => setUserAnswer(prev => prev.filter((_, i) => i !== index))}
                                 >
-                                    {word}
+                                    {item.word}
                                 </button>
                             ))}
                         </div>

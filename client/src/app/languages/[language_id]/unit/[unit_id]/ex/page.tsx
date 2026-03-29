@@ -4,6 +4,7 @@ import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { cleanString } from "@/utils/clean_string";
 
 export default async function ExercisesPage({ params }: { params: { language_id: string, unit_id: string } }){
     const { language_id, unit_id } = await params;
@@ -34,16 +35,30 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                                     {exercise.exercise_type === 'fill_in_the_blank' && (
                                         <span className="flex flex-row gap-2">
                                             {
-                                                exercise.answer.split("__").map((part, idx) => (
-                                                    <button key={idx} className="px-2 py-1 rounded-md bg-blue-600">
-                                                        <p>
-                                                            {part}
-                                                        </p>
-                                                    </button>
+                                                exercise.question.split('\n\n').map((part, idx) => (
+                                                    <p
+                                                        key={idx}
+                                                    >
+                                                        {part === '__' ? <span className="underline">[Blank]</span> : part}
+                                                    </p>
                                                 ))
                                             }
                                         </span>
                                     )}
+                                    {exercise.exercise_type === 'conversation' && (() => {
+                                        const lines: {speakerId: string}[] = JSON.parse(exercise.question).lines;
+                                        const speakers: {id: string, name: string, isUser: boolean}[] = JSON.parse(exercise.question).speakers;
+
+                                        const userId = speakers.filter((speaker) => speaker.isUser)[0]?.id;
+                                        const userLines = lines.filter((line) => line.speakerId === userId);
+                                        return (
+                                            <span className="flex flex-col">
+                                                <p>Total Exchanges: {lines.length}</p>
+                                                <p>User Lines: {userLines.length}</p>
+                                                <p>Unique Speakers: {speakers.length}</p>
+                                            </span>
+                                        );
+                                    })()}
                                     <p>Score: {exercise.score?.toFixed(2)}/100</p>
                                     <nav className="flex flex-row space-x-2">
                                         <NavButton path={`/languages/${language_id}/unit/${unit_id}/ex/${exercise.id}`}>

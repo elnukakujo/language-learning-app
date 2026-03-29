@@ -1,13 +1,22 @@
-from datetime import date
 import math
+from datetime import date
 
-def update_score(score: float, last_seen: date, success: bool) -> float:
+def update_score(
+    score: float,
+    last_seen: date,
+    similarity: float,  # 0.0 to 1.0 or 0 to 100
+    difficulty: float = 0.5,  # 0.0 (easy) to 1.0 (hard)
+    recency_bonus: float = 1.0
+) -> float:
     days = (date.today() - last_seen).days
-    
-    # Time-weighted score using log curve to model memory decay, calibrated for a 2x increase in weight per day
-    time_weight = math.log(days + 2) * 10
 
-    # Final score: correctness modulated by time since last seen
-    score += success * time_weight - (1-success) * time_weight
+    # Language-specific time decay: slower for hard words, faster for easy ones
+    # Adjust log curve based on difficulty
+    time_weight = math.log(days + 2) * (1 + difficulty) * recency_bonus
 
+    # Score update: similarity modulates the time weight
+    # Partial success (e.g., 0.7) gives partial benefit
+    score += similarity * time_weight - (1 - similarity) * time_weight * 0.5  # Penalty for mistakes
+
+    # Ensure score stays within bounds
     return min(max(0, score), 100)

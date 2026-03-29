@@ -1,0 +1,1 @@
+export const cleanString = (str: string) => str.trim().toLowerCase().replace(/[\p{P}]/gu, '');

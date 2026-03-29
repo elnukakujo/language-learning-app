@@ -10,6 +10,7 @@ import remarkGfm from "remark-gfm";
 import Exercise from "@/interface/features/Exercise";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import { BASE_URL, updateScoreById, evaluateTranslation } from "@/api";
+import { getLevelForScore } from "@/utils/speech_levels";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const question = exercise.question || "";
@@ -22,6 +23,8 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [userAnswer, setUserAnswer] = useState<string>('');
+
+    const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -38,6 +41,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
         evaluateTranslation(exercise.id!, userAnswer).then((result) => {
             console.log("Evaluation result:", result);
+            setCurrentLevel(getLevelForScore(result.score));
             if (result.correct === true) {
                 setIsCorrect(true);
                 updateScoreById(exercise.id!, true).catch(console.error);
@@ -127,11 +131,23 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             {isSubmitted && (
                 <div className={`mt-4 p-3 rounded-lg ${isCorrect ? 
                     'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {isCorrect ? '✓ Correct! Well done!' : `✗ Some answers are incorrect (Attempt ${attempts}/3)`}
-                    
+                    {isCorrect ? (
+                        <>
+                            <p>
+                                ✓ Correct!
+                            </p>
+                            <p>
+                                {`The correct answer is:${answer}`}
+                            </p>
+                        </>
+                    ) : <p>✗ Some answers are incorrect (Attempt {attempts}/3)</p>}
+                    <p>
+                        
+                        {`Level:${currentLevel!.label} (${currentLevel!.stars})`}
+                    </p>
                     {attempts >= 3 && !isCorrect && (
                         <div className="mt-2">
-                            <p className="font-medium">Correct answers:</p>
+                            <p className="font-medium">Correct answer was:</p>
                             <p>{answer}</p>
                         </div>  
                     )}

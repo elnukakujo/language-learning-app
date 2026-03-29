@@ -23,7 +23,7 @@ export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: C
                 phonetic: "",
                 meaning: "",
                 radical: "",
-                strokes: undefined,
+                strokes: 0  ,
                 image_files: [],
                 audio_files: []
             },
@@ -36,13 +36,13 @@ export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: C
     
     const [character, setCharacter] = useState<string>(calligraphyData.character.character);
     const [phonetic, setPhonetic] = useState<string>(calligraphyData.character.phonetic);
-    const [meaning, setMeaning] = useState<string|undefined>(calligraphyData.character.meaning);
-    const [radical, setRadical] = useState<string|undefined>(calligraphyData.character.radical);
-    const [strokes, setStrokes] = useState<number|undefined>(calligraphyData.character.strokes);
+    const [meaning, setMeaning] = useState<string|undefined>(calligraphyData.character.meaning !== null ? calligraphyData.character.meaning : undefined);
+    const [radical, setRadical] = useState<string|undefined>(calligraphyData.character.radical !== null ? calligraphyData.character.radical : undefined);
+    const [strokes, setStrokes] = useState<number|undefined>(calligraphyData.character.strokes !== null ? calligraphyData.character.strokes : undefined);
     const [imageUrl, setImageUrl] = useState<string[]>(calligraphyData.character.image_files!);
     const [audioUrl, setAudioUrl] = useState<string[]>(calligraphyData.character.audio_files!);
 
-    const [exampleWord, setExampleWord] = useState<Word | undefined>(undefined);
+    const [exampleWord, setExampleWord] = useState<Word | undefined>(calligraphyData.example_word !== null ? calligraphyData.example_word : undefined);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

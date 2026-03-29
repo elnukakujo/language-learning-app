@@ -10,6 +10,7 @@ import Exercise from "@/interface/features/Exercise";
 import { BASE_URL, updateScoreById, evaluateSpeech } from "@/api";
 
 import dynamic from 'next/dynamic';
+import { getLevelForScore } from "@/utils/speech_levels";
 const AudioRecorder = dynamic(() => import('@/components/audioRecorder'), { ssr: false });
 
 export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
@@ -30,14 +31,6 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     const [showExample, setShowExample] = useState<boolean>(false);
 
     const hasRecording = !!audioUrl;
-
-    const speechLevels = [
-        { label: "Lost in Translation", threshold: 0, description: "Your pronunciation is still finding its way—keep practicing!" },
-        { label: "Tourist Mode", threshold: 0.50, description: "You're getting there, but locals might need to guess a bit." },
-        { label: "Confident Speaker", threshold: 0.70, description: "You're understood, and that's a big win!" },
-        { label: "Almost Native", threshold: 0.85, description: "Impressive! Just a few tweaks and you'll fool everyone." },
-        { label: "Native-like", threshold: 0.95, description: "Flawless! Even locals would think you grew up here." },
-    ];
 
     // Reset everything when the exercise changes
     useEffect(() => {
@@ -60,7 +53,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
         try {
             const result = await evaluateSpeech(String(exercise.id), audioUrl, 0);
-            setCurrentLevel(speechLevels.sort((a, b) => b.threshold - a.threshold).find((level) => result.score >= level.threshold) || { label: "Unknown", description: "No feedback available." });
+            setCurrentLevel(getLevelForScore(result.score));
 
             if (result.correct) {
                 setIsCorrect(true);
