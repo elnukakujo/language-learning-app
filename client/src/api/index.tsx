@@ -301,13 +301,13 @@ export async function deleteExercise(exerciseId: string) {
 }
 
 // ============= Evaluation API =============
-export async function evaluateTranslation(exerciseId: string, userTranslation: string) {
-  const res = await fetch(`${BASE_URL}/api/evaluate/translate`, {
+export async function evaluateText(exerciseId: string, userText: string) {
+  const res = await fetch(`${BASE_URL}/api/evaluate/text`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ exercise_id: exerciseId, user_translation: userTranslation }),
+    body: JSON.stringify({ exercise_id: exerciseId, user_text: userText }),
   });
-  if (!res.ok) throw new Error("Failed to evaluate translation");
+  if (!res.ok) throw new Error("Failed to evaluate text");
   return res.json();
 }
 
@@ -317,7 +317,7 @@ export async function evaluateSpeech(exerciseId: string, user_audio_url: string,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exercise_id: exerciseId, user_audio_url: user_audio_url, correct_audio_index: correct_audio_index }),
   });
-  if (!res.ok) throw new Error("Failed to evaluate speaking");
+  if (!res.ok) throw new Error("Failed to evaluate speech");
   return res.json();
 }
 

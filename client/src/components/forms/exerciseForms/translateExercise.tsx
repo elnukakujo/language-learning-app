@@ -9,7 +9,7 @@ import remarkGfm from "remark-gfm";
 
 import Exercise from "@/interface/features/Exercise";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
-import { BASE_URL, updateScoreById, evaluateTranslation } from "@/api";
+import { BASE_URL, updateScoreById, evaluateText } from "@/api";
 import { getLevelForScore } from "@/utils/speech_levels";
 
 export default function TranslateExercise({ exercise }: {exercise: Exercise}){
@@ -39,7 +39,7 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
         e.preventDefault();
         setIsLoading(true);
 
-        evaluateTranslation(exercise.id!, userAnswer).then((result) => {
+        evaluateText(exercise.id!, userAnswer).then((result) => {
             setCurrentLevel(getLevelForScore(result.score));
             if (result.correct === true) {
                 setIsCorrect(true);

@@ -23,7 +23,7 @@ export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Voca
                 word: "",
                 translation: "",
                 type: "" as Exclude<typeof type, ''>,
-                gender: "" as Exclude<typeof gender, ''>,
+                gender: undefined,
                 phonetic: "",
                 image_files: [],
                 audio_files: []
@@ -59,8 +59,8 @@ export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Voca
             word: {
                 word: word,
                 translation: translation,
-                type: type as Exclude<typeof type, ''>,
-                gender: gender as Exclude<typeof gender, ''>,
+                type: type,
+                gender: gender,
                 phonetic: phonetic,
                 image_files: wordImageUrl,
                 audio_files: wordAudioUrl

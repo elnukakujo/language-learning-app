@@ -5,9 +5,9 @@ from ...services import EvaluatorService
 bp = Blueprint('evaluate', __name__, url_prefix='/api/evaluate')
 evaluator_service = EvaluatorService()
 
-@bp.route('/translate', methods=['POST'])
-def evaluate_translation():
-    """Evaluate a translation for an exercise.
+@bp.route('/text', methods=['POST'])
+def evaluate_text():
+    """Evaluate a text answer for an exercise.
     ---
     tags:
         - Evaluation
@@ -17,32 +17,33 @@ def evaluate_translation():
           required: true
           schema:
             type: object
-            description: Translation evaluation object
+            description: Text evaluation object
             properties:
                 exercise_id:
                     type: string
                     example: "ex_E1"
                     description: "ID of the exercise to evaluate"
                     required: true
-                user_translation:
+                user_text:
                     type: string
                     example: "Hello, my name is John."
-                    description: "The user's translation"
+                    description: "The user's text answer to evaluate"
                     required: true
     responses:
         200:
-            description: Translation evaluated successfully
+            description: Text evaluated successfully
             schema:
                 type: object
                 description: Evaluation result object with score and tokens information
         404:
-            description: Exercise not found or translation evaluation failed
+            description: Exercise not found or text evaluation failed
     """
     data = request.json
 
-    return evaluator_service.evaluate_translation(
+    return evaluator_service.evaluate(
         ex_id=data['exercise_id'],
-        user_translation=data['user_translation']
+        user_input=data['user_text'],
+        input_type='text'
     )
 
 @bp.route('/speech', methods=['POST'])
@@ -82,8 +83,9 @@ def evaluate_speech():
     """
     data = request.json
 
-    return evaluator_service.evaluate_speech(
+    return evaluator_service.evaluate(
         ex_id=data['exercise_id'],
-        user_audio_url=data['user_audio_url'],
+        user_input=data['user_audio_url'],
+        input_type='speech',
         correct_audio_index=data.get('correct_audio_index', 0)
     )
