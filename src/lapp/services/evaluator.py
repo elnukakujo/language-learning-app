@@ -111,8 +111,8 @@ class EvaluatorService:
         language_code, _ = detect_text_language(correct_translation)
         tool = language_tool_python.LanguageTool(language_code)
         matches = tool.check(user_translation)
-        num_errors = len(matches)
-        return max(1/2, 1/(10-num_errors))  # Simple heuristic: more errors lead to lower score, but never below 0.5
+        num_errors = min(8, len(matches))
+        return 1 - 1/(10-num_errors)  # Simple heuristic: more errors lead to lower score, but never below 0.5
     
     def _compute_token_differences_rate(self, user_translation: str, correct_translation: str) -> float:
         language_code, _ = detect_text_language(correct_translation)
@@ -209,6 +209,7 @@ class EvaluatorService:
             logger.warning(f"Invalid input type '{input_type}' for evaluation. Returning score of 0.")
             raise ValueError("Invalid input type for evaluation. Must be 'text' or 'speech'.")
         
+        logger.info(f"Evaluation results for Exercise {ex_id} with input type '{input_type}': {results}")
         return {
             "correct": results["score"] > threshold,
             "score": results["score"],
