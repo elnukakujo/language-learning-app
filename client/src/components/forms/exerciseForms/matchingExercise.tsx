@@ -48,7 +48,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         setAttempts(3);
         setSelection([]);
         setIsSuccess(false);
-    }, [exercise, numColumns, pairs]);
+    }, [exercise]);
 
     const [attempts, setAttempts] = useState<number>(3);
     const [selection, setSelection] = useState<Array<Item>>([]);
@@ -99,13 +99,13 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         <form className="flex flex-col space-y-4">
             <h2>Matching Exercise</h2>
             {text_support.trim() !== "" && (
-                <span>
+                <section>
                     <h3>Text Support: </h3> 
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
-                </span>
+                </section>
             )}
             {image_support && image_support.length > 0 && (
-                <span>
+                <section>
                     <h3>Image Support: </h3>
                     {image_support.map((imgSrc, index) => (
                     <Image 
@@ -117,10 +117,10 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
                         height={300}
                     />
                     ))}
-                </span>
+                </section>
             )}
             {audio_support && audio_support.length > 0 && (
-                <span>
+                <section>
                     <h3>Audio Support: </h3>
                     {audio_support.map((audioSrc, index) => (
                         <audio 
@@ -130,7 +130,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
                             className="mt-2"
                         />
                     ))}
-                </span>
+                </section>
             )}
 
             {(!isSuccess && attempts > 0) && 

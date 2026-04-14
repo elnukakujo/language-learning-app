@@ -25,7 +25,8 @@ export interface UnitElements {
 
 const EXERCISE_TYPE_OPTIONS: NonNullable<Exercise["exercise_type"]>[] = [
     "translate",
-    "fill_in_the_blank",
+    "type_in_the_blank",
+    "select_in_the_blank",
     "essay",
     "true_false",
     "organize",
@@ -78,39 +79,68 @@ export default function ExerciseForm({
     const [gramAssociated, setGramAssociated] = useState<string[]>(exerciseData.grammar_ids!);
 
     useEffect(() => {
-        if (isUpdate) return;
         switch (exerciseType) {
             case "translate":
+                if (isUpdate) break;
                 setQuestion("A sentence to translate");
                 setSupportText("");
                 setAnswer("The translation");
                 break;
-            case "fill_in_the_blank":
+            case "type_in_the_blank":
+                if (isUpdate) {
+                    const questionParts = question.split('__');
+                    const correctAnswers = questionParts.slice(0, -1).map((part, index) => {
+                        const nextPart = questionParts[index + 1] || "";
+                        const start = answer.indexOf(part) + part.length;
+                        const end = nextPart ? answer.indexOf(nextPart, start) : answer.length;
+
+                        if (start < part.length || end < start) {
+                            return "";
+                        }
+
+                        return answer.slice(start, end).trim();
+                    }).filter(Boolean);
+                    setAnswer(
+                        correctAnswers.join('__')
+                    )
+                    break;
+                }
+                setQuestion("The house is __ and __.");
+                setSupportText("");
+                setAnswer("big__small");
+                break;
+            case "select_in_the_blank":
+                if (isUpdate) break;
                 setQuestion("The house is __ and __.");
                 setSupportText("");
                 setAnswer("big__small");
                 break;
             case "essay":
+                if (isUpdate) break;
                 setQuestion("Write here some requirements about the essay, and details");
                 setSupportText("");
                 setAnswer("Some helps and tips to write the essay");
                 break;
             case "true_false":
+                if (isUpdate) break;
                 setQuestion("A statement to evaluate");
                 setSupportText("");
                 setAnswer("true");
                 break;
             case "answering":
+                if (isUpdate) break;
                 setQuestion("A question to answer");
                 setSupportText("");
                 setAnswer("The answer to the question");
                 break;
             case "speaking":
+                if (isUpdate) break;
                 setQuestion("A sentence to speak");
                 setSupportText("");
                 setAnswer("");
                 break;
             default:
+                if (isUpdate) break;
                 setQuestion("");
                 setSupportText("");
                 setAnswer("");
@@ -125,13 +155,26 @@ export default function ExerciseForm({
         const pathParts = currentPath.split("/");
         const languageId = pathParts[2];
 
+        let normalizedQuestion: string = question;
+        let normalizedAnswer: string = answer;
+
+        if (exerciseType === "organize") {
+            normalizedQuestion = answer;
+            normalizedAnswer = answer.replaceAll("__", "");
+        } else if (exerciseType === "type_in_the_blank") {
+            const blankAnswers = answer.split("__");
+            let answerIndex = 0;
+
+            normalizedAnswer = question.replaceAll(/__/g, () => blankAnswers[answerIndex++] ?? "");
+        }
+
         const element: Exercise = {
             exercise_type: exerciseType,
-            question,
+            question: normalizedQuestion,
             text_support: supportText || undefined,
             image_files: imageUrl,
             audio_files: audioUrl,
-            answer,
+            answer: normalizedAnswer,
             unit_id,
             vocabulary_ids: vocAssociated,
             grammar_ids: gramAssociated,
@@ -209,7 +252,7 @@ export default function ExerciseForm({
                         />
                     )}
 
-                    {["matching", "organize", "fill_in_the_blank"].includes(exerciseType) && (
+                    {["matching", "organize", "type_in_the_blank", "select_in_the_blank"].includes(exerciseType) && (
                         <DiscreteInput
                             value={answer}
                             setValue={setAnswer}
@@ -218,7 +261,7 @@ export default function ExerciseForm({
                         />
                     )}
 
-                    {!["true_false", "matching", "organize", "speaking", "fill_in_the_blank", "conversation"].includes(exerciseType) && (
+                    {!["true_false", "matching", "organize", "speaking", "type_in_the_blank", "select_in_the_blank", "conversation"].includes(exerciseType) && (
                         <AutoSizeTextArea
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}

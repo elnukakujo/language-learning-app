@@ -4,7 +4,7 @@ from pydantic import model_validator
 from ..base import BaseFeatureDict
 
 class ExerciseDict(BaseFeatureDict):
-    exercise_type: Optional[str] = None         # e.g., "fill_in_the_blank", "multiple_choice"
+    exercise_type: Optional[str] = None         # e.g., "type_in_the_blank", "multiple_choice"
     question: str
     answer: str
     text_support: Optional[str] = None          # e.g., additional text information
@@ -20,7 +20,8 @@ class ExerciseDict(BaseFeatureDict):
             "answering",
             "translate",
             "organize",
-            "fill_in_the_blank",
+            "type_in_the_blank",
+            "select_in_the_blank",
             "matching",
             "true_false",
             "speaking",

@@ -3,7 +3,8 @@ import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
 
-import FillInTheBlankExercise from "@/components/forms/exerciseForms/fillInTheBlankExercise";
+import TypeInTheBlankExercise from "@/components/forms/exerciseForms/typeInTheBlankExercise";
+import SelectInTheBlankExercise from "@/components/forms/exerciseForms/selectInTheBlankExercise";
 import TranslateExercise from "@/components/forms/exerciseForms/translateExercise";
 import EssayExercise from "@/components/forms/exerciseForms/essayExercise";
 import TrueFalseExercise from "@/components/forms/exerciseForms/trueFalseExercise";
@@ -21,8 +22,11 @@ export default async function ExercisePage( { params } : { params: { language_id
 
     return(
         <main className="flex flex-col space-y-4">
-            {exercise.exercise_type === 'fill_in_the_blank' && (
-                <FillInTheBlankExercise exercise={exercise} />
+            {exercise.exercise_type === 'type_in_the_blank' && (
+                <TypeInTheBlankExercise exercise={exercise} />
+            )}
+            {exercise.exercise_type === 'select_in_the_blank' && (
+                <SelectInTheBlankExercise exercise={exercise} />
             )}
             {exercise.exercise_type === 'translate' && (
                 <TranslateExercise exercise={ exercise } />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Ring } from 'ldrs/react';
+//@ts-ignore
 import 'ldrs/react/Ring.css';
 import Image from 'next/image';
 import Markdown from "react-markdown";
@@ -19,11 +20,11 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     const image_support = exercise.image_files || "";
     const audio_support = exercise.audio_files || "";
 
-    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string } | null>(null);
+    const hasFeedback = isCorrect || attempts > 0;
 
     // Lifted state from AudioRecorder via onStatusChange
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -34,9 +35,9 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
     // Reset everything when the exercise changes
     useEffect(() => {
-        setIsSubmitted(false);
         setAttempts(0);
         setIsCorrect(false);
+        setCurrentLevel(null);
         setAudioUrl(null);
         setResetKey((k) => k + 1); // remount AudioRecorder to clear its state
     }, [exercise]);
@@ -53,18 +54,18 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
         try {
             const result = await evaluateSpeech(String(exercise.id), audioUrl, 0);
-            setCurrentLevel(getLevelForScore(result.score));
+            setCurrentLevel(getLevelForScore(result.score, "speaking"));
 
             if (result.correct) {
                 setIsCorrect(true);
                 updateScoreById(exercise.id!, 1).catch(console.error);
             } else {
-                setAttempts((prev) => prev + 1);
-                if (attempts >= 2) {
+                const newAttempts = attempts + 1;
+                setAttempts(newAttempts);
+                if (newAttempts >= 3) {
                     updateScoreById(exercise.id!, 0).catch(console.error);
                 }
             }
-            setIsSubmitted(true);
 
         } catch (error) {
             console.error("Error evaluating speaking:", error);
@@ -79,10 +80,10 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
             <h3>{question}</h3>
 
             {text_support.trim() !== "" && (
-                <span>
+                <section>
                     <h3>Text Support: </h3>
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
-                </span>
+                </section>
             )}
 
             {image_support && image_support.length > 0 && image_support.map((imgSrc, index) => (
@@ -91,15 +92,15 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
             ))}
 
             {audio_support && audio_support.length > 0 && showExample && (
-                <span>
+                <section>
                     {audio_support.map((audioSrc, index) => (
                         <audio key={index} src={`${BASE_URL}${audioSrc}`} controls className="mt-2" />
                     ))}
-                </span>
+                </section>
             )}
 
             {!isCorrect && attempts < 3 && (
-                <span className="flex flex-col space-y-4">
+                <section className="flex flex-col space-y-4">
                     <div className="flex flex-row space-x-2">
                         <button
                             type="button"
@@ -126,10 +127,10 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                             : <p>Check Answer</p>
                         }
                     </button>
-                </span>
+                </section>
             )}
 
-            {isSubmitted && currentLevel && (
+            {hasFeedback && currentLevel && (
                 <div className={`mt-4 p-3 rounded-lg ${isCorrect
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"}`}
