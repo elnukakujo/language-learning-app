@@ -1,11 +1,14 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
+import logging
+logger = logging.getLogger(__name__)
 
 from ...services import VocabularyService
 from ...schemas.features import VocabularyDict
 
 bp = Blueprint('vocabulary', __name__, url_prefix='/api/vocabulary')
 vocabulary_service = VocabularyService()
+
 
 @bp.route('/language/<language_id>', methods=['GET'])
 def get_all_vocabulary_from_language(language_id: str):
@@ -122,6 +125,10 @@ def create_vocabulary():
                           type:
                               type: string
                               example: "interjection"
+                              required: true
+                          gender:
+                              type: string
+                              example: "m"
                               required: false
                           image_files:
                               type: array

@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 import EssayExercise from "./essayExercise";
 import BackButton from "@/components/buttons/backButton";
 import AnsweringExercise from "./answeringExercise";
-import FillInTheBlankExercise from "./fillInTheBlankExercise";
+import TypeInTheBlankExercise from "./typeInTheBlankExercise";
 import MatchingExercise from "./matchingExercise";
 import OrganizeExercise from "./organizeExercise";
 import TranslateExercise from "./translateExercise";
 import TrueFalseExercise from "./trueFalseExercise";
 import SpeakingExercise from "./speakingExercise";
 import ConversationExercise from "./conversationExercise";
+import SelectInTheBlankExercise from "./selectInTheBlankExercise";
 
 export default function ExercisePractice( { exercise_lists } : { exercise_lists: Exercise[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -27,7 +28,8 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
             <h3>{currentIndex + 1} / {exercise_lists.length}</h3>
             {currentExercise.exercise_type === 'essay' && <EssayExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'answering' && <AnsweringExercise exercise={currentExercise} />}
-            {currentExercise.exercise_type === 'fill_in_the_blank' && <FillInTheBlankExercise exercise={currentExercise} />}
+            {currentExercise.exercise_type === 'type_in_the_blank' && <TypeInTheBlankExercise exercise={currentExercise} />}
+            {currentExercise.exercise_type === 'select_in_the_blank' && <SelectInTheBlankExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'matching' && <MatchingExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'organize' && <OrganizeExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'translate' && <TranslateExercise exercise={currentExercise} />}
@@ -39,12 +41,12 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
                 onClick={() => setCurrentIndex(currentIndex+1)}>
                 Next Exercise
             </button>) : (
-                <span>
+                <section>
                     <p>You have completed all exercises!</p>
                     <BackButton>
                         <p>Back to Unit</p>
                     </BackButton>
-                </span>
+                </section>
             )}
         </div>
     );

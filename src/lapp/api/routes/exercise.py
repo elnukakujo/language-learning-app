@@ -111,7 +111,7 @@ def create_exercise():
                 exercise_type:
                     type: string
                     example: "translate"
-                    description: "Type of the exercise, can be essay, answering, translate, organize, fill_in_the_blank, matching, or true_false"
+                    description: "Type of the exercise, can be essay, answering, translate, organize, type_in_the_blank, select_in_the_blank, matching, or true_false"
                     required: true
                 question:
                     type: string
@@ -219,7 +219,7 @@ def update_exercise(exercise_id: str):
                 exercise_type:
                     type: string
                     example: "translate"
-                    description: "Type of the exercise, can be essay, answering, translate, organize, fill_in_the_blank, matching, or true_false"
+                    description: "Type of the exercise, can be essay, answering, translate, organize, type_in_the_blank, select_in_the_blank, matching, or true_false"
                     required: true
                 question:
                     type: string

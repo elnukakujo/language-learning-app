@@ -29,10 +29,10 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                         <ul>
                             {exercises.map((exercise, index) => (
                                 <li key={index} className="flex flex-col gap-2">
-                                    {!['fill_in_the_blank', 'conversation'].includes(exercise.exercise_type!) && (
+                                    {!['type_in_the_blank', 'select_in_the_blank', 'conversation'].includes(exercise.exercise_type!) && (
                                         <Markdown remarkPlugins={[remarkGfm]}>{exercise.question}</Markdown>
                                     )}
-                                    {exercise.exercise_type === 'fill_in_the_blank' && (
+                                    {['type_in_the_blank', 'select_in_the_blank'].includes(exercise.exercise_type!) && (
                                         <span className="flex flex-row gap-2">
                                             {
                                                 exercise.question.split('\n\n').map((part, idx) => (

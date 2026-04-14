@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Ring } from 'ldrs/react';
+//@ts-ignore
 import 'ldrs/react/Ring.css';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -46,14 +47,13 @@ type UserLineState = {
     audioUrl: string | null;
     resetKey: number;
     isCorrect: boolean;
-    isSubmitted: boolean;
     attempts: number;
     similarityScore: number | null;
     level: { label: string; description: string } | null;
 };
 
 function makeInitialLineState(): UserLineState {
-    return { audioUrl: null, resetKey: 0, isCorrect: false, isSubmitted: false, attempts: 0, similarityScore: null, level: null };
+    return { audioUrl: null, resetKey: 0, isCorrect: false, attempts: 0, similarityScore: null, level: null };
 }
 
 function SpeechLine({
@@ -82,12 +82,12 @@ function SpeechLine({
         <fieldset className={`flex flex-col space-x-2 border rounded-lg p-3 w-fit transition-colors ${isPlaying ? highlightStyle : baseStyle}`}>
             <h4 className="font-medium">{userName}</h4>
             <p className='text-sm italic'>{line.text}</p>
-            <span>
+            <div>
                 {isUser && (
                     <p className="text-xs text-gray-400">Reference:</p>
                 )}
                 <audio ref={registerAudioRef} src={audioSrc} controls className="h-8 w-48"/>
-            </span>
+            </div>
         </fieldset>
     );
 }
@@ -254,13 +254,12 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
  
         try {
             const result = await evaluateSpeech(String(exercise.id), state.audioUrl, conversation.lines[currentLineIndex].audioIndex!);
-            const level = getLevelForScore(result.score);
+            const level = getLevelForScore(result.score, "conversation");
             const newAttempts = state.attempts + 1;
             const isLastUserLine = currentLineIndex === userLineIndices[userLineIndices.length - 1];
  
             if (result.correct) {
                 updateLine(currentLineIndex, {
-                    isSubmitted: true,
                     isCorrect: true,
                     level,
                     similarityScore: result.score,
@@ -295,7 +294,6 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                 }
             } else {
                 updateLine(currentLineIndex, {
-                    isSubmitted: true,
                     isCorrect: false,
                     level,
                     similarityScore: result.score,
@@ -383,7 +381,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                                     </button>
                                 </span>
                             )}
-                            {speaker.isUser && lineStates[idx]?.isSubmitted && lineStates[idx]?.level && lineStates[idx]?.similarityScore !== null && (
+                            {speaker.isUser && (lineStates[idx]?.isCorrect || (lineStates[idx]?.attempts ?? 0) > 0) && lineStates[idx]?.level && lineStates[idx]?.similarityScore !== null && (
                                 <section className={`max-w-sm rounded-lg border p-3 text-sm ${lineStates[idx].isCorrect ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>
                                     <p className="font-semibold">
                                         {lineStates[idx].isCorrect ? "Good pronunciation" : "Needs improvement"}

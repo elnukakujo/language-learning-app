@@ -18,24 +18,25 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
     const image_support = exercise.image_files || "";
     const audio_support = exercise.audio_files || "";
     
-    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
+        const [attempts, setAttempts] = useState<number>(0);
     const [userAnswer, setUserAnswer] = useState<boolean>(true);
+        const hasFeedback = isCorrect || attempts > 0;
 
     useEffect(() => {
-            setIsSubmitted(false);
             setIsCorrect(false);
+            setAttempts(0);
             setUserAnswer(true);
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitted(true);
         if (String(userAnswer) === normalize(answer.toLowerCase())) {
             setIsCorrect(true);
             updateScoreById(exercise.id!, 1).catch(console.error);
         } else {
             setIsCorrect(false);
+            setAttempts((prev) => prev + 1);
             updateScoreById(exercise.id!, 0).catch(console.error);
         };
     };
@@ -43,18 +44,18 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
     return (
         <form className="flex flex-col space-y-4">
             <h2>True or False</h2>
-            <span>
+            <section>
                 <h3>Question:</h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
-            </span>
+            </section>
             {text_support.trim() !== "" && (
-                <span>
+                <section>
                     <h3>Text Support: </h3> 
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
-                </span>
+                </section>
             )}
             {image_support && image_support.length > 0 && (
-                <span>
+                <section>
                     <h3>Image Support: </h3>
                     {image_support.map((imgSrc, index) => (
                     <Image 
@@ -66,10 +67,10 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
                         height={300}
                     />
                     ))}
-                </span>
+                </section>
             )}
             {audio_support && audio_support.length > 0 && (
-                <span>
+                <section>
                     <h3>Audio Support: </h3>
                     {audio_support.map((audioSrc, index) => (
                         <audio 
@@ -79,9 +80,9 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
                             className="mt-2"
                         />
                     ))}
-                </span>
+                </section>
             )}
-            {!isSubmitted && (
+            {!hasFeedback && (
                 <>
                     <TrueFalseInput
                         value={userAnswer}
@@ -91,17 +92,17 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
                         type="button" 
                         onClick={handleSubmit}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        disabled={isSubmitted && isCorrect}
+                        disabled={isCorrect}
                     >
-                        {isSubmitted ? 'Try Again' : 'Check Answers'}
+                        Check Answers
                     </button>
                 </>
             )}
 
-            {isSubmitted && (
+            {hasFeedback && (
                 <div className={`mt-4 p-3 rounded-lg ${isCorrect ? 
                     'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {isCorrect ? '✓ Correct! Well done!' : `✗ Wrong answer. The correct answer was: ${String(!userAnswer)}.`}
+                    {isCorrect ? '✓ Correct! Well done!' : `✗ Wrong answer. The correct answer was: ${answer}.`}
                 </div>
             )}
         </form>

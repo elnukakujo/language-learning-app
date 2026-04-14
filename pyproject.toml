@@ -53,6 +53,7 @@ dependencies = [
     "uvicorn>=0.35.0",
     "zh-core-web-md",
     "tqdm>=4.67.3",
+    "language-tool-python>=3.3.0",
 ]
 [build-system]
 requires = ["hatchling"]
