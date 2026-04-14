@@ -215,7 +215,7 @@ class EvaluatorService:
         }
     
     def _evaluate_speech(self, ex_id: str, user_audio_path: str, correct_audio_index: int) -> dict[str, float]:
-        correct_audio_path = self._get_correct_audio_path(ex_id, correct_audio_index, session=None)
+        correct_audio_path, exercise_type = self._get_correct_audio_path_and_type(ex_id, correct_audio_index, session=None)
         if not correct_audio_path:
             logger.warning(f"Could not retrieve correct audio path for Exercise {ex_id}. Returning score of 0.")
             raise ValueError("Correct audio path not found for the given exercise ID.")
@@ -241,8 +241,11 @@ class EvaluatorService:
             correct_transcription
         )
 
+        # Get the weights for the specific exercise type
+        x, y, z = self.exercises_scales[exercise_type]
+
         return {
-            "score": 0.6 * embedding_similarity + 0.25 * grammar_error_rate + 0.15 * token_difference_rate,
+            "score": x * embedding_similarity + y * grammar_error_rate + z * token_difference_rate,
             "similarity": embedding_similarity,
             "grammar_error_rate": grammar_error_rate,
             "token_difference_rate": token_difference_rate
