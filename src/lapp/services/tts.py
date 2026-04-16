@@ -2,12 +2,10 @@ import logging
 import random
 import uuid
 from pathlib import Path
-import requests
 import torch
 import soundfile as sf
-from qwen_tts import Qwen3TTSModel
 
-from ..utils import detect_text_language, is_offline
+from ..utils import detect_text_language, qwen_tts_model
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +24,7 @@ class TTSService:
         self.media_root = Path(media_root if media_root else MediaService().media_root)
         self.audio_dir = self.media_root / 'audio'
         self.audio_dir.mkdir(parents=True, exist_ok=True)
-        self.model = Qwen3TTSModel.from_pretrained(
-            "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
-            device_map="cpu",
-            dtype=torch.bfloat16,
-            local_files_only=is_offline()
-        )
+        self.model = qwen_tts_model
     
     def _get_filename(self) -> str:
         """
@@ -90,13 +83,13 @@ class TTSService:
         try:
             logger.info(f"Generating TTS for: {text_list}")
 
-            language_code, language_name = detect_text_language(text_list[0])
-            logger.info(f"Detected language: {language_name} ({language_code}) for text: '{text_list[0]}'")
+            language = detect_text_language(text_list[0])
+            logger.info(f"Detected language: {language.name} ({language.iso1}) for text: '{text_list[0]}'")
             
             wavs, sr = self.model.generate_custom_voice(
                 text=text_list,
                 speaker="Vivian",
-                language=language_name.lower() if language_name.lower() != "unknown" else None,
+                language=language.name if language.name != "Unknown" else None,
             )
             
             generated_paths = []

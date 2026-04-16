@@ -1,7 +1,4 @@
 import numpy as np
-from sentence_transformers import SentenceTransformer
-import torch
-from transformers import AutoProcessor, AutoModelForCTC, Wav2Vec2FeatureExtractor, Wav2Vec2Model
 from scipy.spatial.distance import cosine
 import language_tool_python
 from sqlalchemy.orm import Session
@@ -13,19 +10,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ..core.database import db_manager
-from ..utils import detect_text_language, load_spacy_model, is_offline
+from ..utils import (
+    detect_text_language,
+    load_spacy_model,
+    text_embedding_model,
+    audio_embedding_model,
+    audio_embedding_processor,
+    stt_pipe
+)
 from .features import ExerciseService
 
 exercise_service = ExerciseService()
 
 class EvaluatorService:
-    text_embedding_model = SentenceTransformer('all-MiniLM-L6-v2', local_files_only=is_offline())
+    text_embedding_model = text_embedding_model
     
-    audio_embedding_model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-large-xlsr-53", local_files_only=is_offline())
-    audio_embedding_processor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-large-xlsr-53", local_files_only=is_offline())
-    
-    stt_model = AutoModelForCTC.from_pretrained("facebook/mms-1b-all", local_files_only=is_offline())
-    stt_processor = AutoProcessor.from_pretrained("facebook/mms-1b-all", local_files_only=is_offline())
+    audio_embedding_model = audio_embedding_model
+    audio_embedding_processor = audio_embedding_processor
+
+    stt_pipe = stt_pipe
 
     exercises_scales = {
         "translate": (0.6, 0.2, 0.2),
@@ -121,23 +124,19 @@ class EvaluatorService:
         return self.audio_embedding_model(**input_processed, output_hidden_states=True).hidden_states[-1].squeeze(0).mean(dim=0).detach().numpy()
     
     def _speech_to_text(self, waveform: np.ndarray) -> str:
-        input_processed = self.stt_processor(waveform, sampling_rate=16000, return_tensors="pt", padding=True)
-        logits = self.stt_model(**input_processed).logits
-        predicted_ids = torch.argmax(logits, dim=-1)
-        transcription = self.stt_processor.batch_decode(predicted_ids)[0]
-        return transcription
+        return self.stt_pipe(waveform, return_timestamps=False)["text"]
 
     def _compute_cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         return float(1-cosine(u = vec1, v = vec2))
 
     def _compute_grammar_error_rate(self, user_translation: str, correct_translation: str) -> float:
-        language_code, _ = detect_text_language(correct_translation)
+        language = detect_text_language(correct_translation)
         try:
-            tool = language_tool_python.LanguageTool(language_code)
+            tool = language_tool_python.LanguageTool(language.iso1)
             matches = tool.check(user_translation)
         except Exception as err:
             logger.warning(
-                f"LanguageTool check failed for language '{language_code}'. "
+                f"LanguageTool check failed for language '{language.iso1}'. "
                 f"Using fallback grammar score {self.grammar_fallback_score:.2f}. Error: {err}"
             )
             return self.grammar_fallback_score
@@ -153,8 +152,8 @@ class EvaluatorService:
         substantive_errors = [
             m for m in matches
             if m.rule_id not in WHITESPACE_RULE_IDS
-            and not m.rule_id.startswith("WHITESPACE")
-            and m.category != "TYPOGRAPHY"
+            and not "WHITESPACE" in m.rule_id
+            and m.category != "MISC"
         ]
 
         num_errors = len(substantive_errors)
@@ -162,17 +161,18 @@ class EvaluatorService:
         logger.info(
             f"Grammar check for '{user_translation}': "
             f"{len(matches)} raw → {num_errors} substantive errors → score {score:.3f} "
-            f"(filtered: {[m.ruleId for m in matches if m not in substantive_errors]})"
+            f"(filtered: {[m.rule_id for m in matches if m not in substantive_errors]})"
         )
+        logger.info(substantive_errors)
         return score
     
     def _compute_token_differences_rate(self, user_translation: str, correct_translation: str) -> float:
-        language_code, _ = detect_text_language(correct_translation)
-        nlp = load_spacy_model(language_code)
+        language = detect_text_language(correct_translation)
+        nlp = load_spacy_model(language.spacy_model)
 
         # Normalize whitespace for CJK languages where spaces are not meaningful
-        normalized_user = user_translation.replace(" ", "") if language_code in ("zh-cn", "ja", "ko") else user_translation
-        normalized_correct = correct_translation.replace(" ", "") if language_code in ("zh-cn", "ja", "ko") else correct_translation
+        normalized_user = user_translation.replace(" ", "") if language.iso1 in ("zh", "ja", "ko") else user_translation
+        normalized_correct = correct_translation.replace(" ", "") if language.iso1 in ("zh", "ja", "ko") else correct_translation
 
         user_doc = nlp(normalized_user)
         correct_doc = nlp(normalized_correct)
@@ -219,6 +219,12 @@ class EvaluatorService:
         if not correct_audio_path:
             logger.warning(f"Could not retrieve correct audio path for Exercise {ex_id}. Returning score of 0.")
             raise ValueError("Correct audio path not found for the given exercise ID.")
+        
+        from .media import MediaService
+        media_service = MediaService()
+        _, user_audio_path = media_service.get_file_path(user_audio_path)
+
+        logger.info(f"Evaluating speech for Exercise {ex_id} with user audio: '{user_audio_path}' and correct audio: '{correct_audio_path}'")
 
         correct_waveform = self._extract_waveform_from_path(correct_audio_path)
         user_waveform = self._extract_waveform_from_path(user_audio_path)
@@ -230,6 +236,8 @@ class EvaluatorService:
 
         user_transcription = self._speech_to_text(user_waveform)
         correct_transcription = self._speech_to_text(correct_waveform)
+        logger.info(f"Transcribed user audio for Exercise {ex_id}: '{user_transcription}'")
+        logger.info(f"Transcribed correct audio for Exercise {ex_id}: '{correct_transcription}'")
 
         grammar_error_rate = self._compute_grammar_error_rate(
             user_transcription,
