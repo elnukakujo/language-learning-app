@@ -24,6 +24,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string } | null>(null);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
     const hasFeedback = isCorrect || attempts > 0;
 
     // Lifted state from AudioRecorder via onStatusChange
@@ -39,6 +40,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
         setIsCorrect(false);
         setCurrentLevel(null);
         setAudioUrl(null);
+        setFeedbackMessage(null);
         setResetKey((k) => k + 1); // remount AudioRecorder to clear its state
     }, [exercise]);
 
@@ -54,6 +56,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
         try {
             const result = await evaluateSpeech(String(exercise.id), audioUrl, 0);
+            setFeedbackMessage(result.feedback);
             setCurrentLevel(getLevelForScore(result.score, "speaking"));
 
             if (result.correct) {
@@ -68,6 +71,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
             }
 
         } catch (error) {
+            setFeedbackMessage(null);
             console.error("Error evaluating speaking:", error);
         } finally {
             setIsLoading(false);
@@ -137,6 +141,12 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 >
                     <h3>{currentLevel.label}</h3>
                     <p className="italic">`&quot;`{currentLevel.description}`&quot;`</p>
+                    <p>
+                        {feedbackMessage && (
+                            <span className="font-medium">Feedback: </span>
+                        )}
+                        {feedbackMessage}
+                    </p>
                 </div>
             )}
         </div>

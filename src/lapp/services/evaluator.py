@@ -19,8 +19,10 @@ from ..utils import (
     stt_pipe
 )
 from .features import ExerciseService
+from .feedback import FeedbackService
 
 exercise_service = ExerciseService()
+feedback_service = FeedbackService()
 
 class EvaluatorService:
     text_embedding_model = text_embedding_model
@@ -44,7 +46,7 @@ class EvaluatorService:
         "speaking":0.70,
         "type_in_the_blank":0.70,
         "organize":0.65,
-        "translate":0.60,
+        "translate":0.80,
         "answering":0.55,
         "conversation":0.50,
         "essay":0.45
@@ -186,7 +188,7 @@ class EvaluatorService:
         common_tokens = correct_tokens.intersection(user_tokens)
         return min(1, len(common_tokens) / len(user_tokens))
     
-    def _evaluate_text(self, ex_id: str, user_text: str) -> dict[str, float]:
+    def _evaluate_text(self, ex_id: str, user_text: str) -> dict[str, float | str]:
         correct_text, exercise_type = self._get_correct_text_and_type(ex_id, session=None)
         if not correct_text:
             logger.warning(f"Could not retrieve correct text for Exercise {ex_id}. Returning score of 0.")
@@ -211,10 +213,12 @@ class EvaluatorService:
             "score": x * embedding_similarity + y * grammar_error_rate + z * token_difference_rate,
             "similarity": embedding_similarity,
             "grammar_error_rate": grammar_error_rate,
-            "token_difference_rate": token_difference_rate
+            "token_difference_rate": token_difference_rate,
+            "user_answer": user_text,
+            "correct_answer": correct_text,
         }
     
-    def _evaluate_speech(self, ex_id: str, user_audio_path: str, correct_audio_index: int) -> dict[str, float]:
+    def _evaluate_speech(self, ex_id: str, user_audio_path: str, correct_audio_index: int) -> dict[str, float | str]:
         correct_audio_path, exercise_type = self._get_correct_audio_path_and_type(ex_id, correct_audio_index, session=None)
         if not correct_audio_path:
             logger.warning(f"Could not retrieve correct audio path for Exercise {ex_id}. Returning score of 0.")
@@ -256,7 +260,9 @@ class EvaluatorService:
             "score": x * embedding_similarity + y * grammar_error_rate + z * token_difference_rate,
             "similarity": embedding_similarity,
             "grammar_error_rate": grammar_error_rate,
-            "token_difference_rate": token_difference_rate
+            "token_difference_rate": token_difference_rate,
+            "user_transcription": user_transcription,
+            "correct_transcription": correct_transcription,
         }
 
     def evaluate(self, ex_id: str, user_input: str, input_type: str, correct_audio_index: int = 0) -> float:
@@ -285,9 +291,24 @@ class EvaluatorService:
             raise ValueError("Invalid input type for evaluation. Must be 'text' or 'speech'.")
         
         logger.info(f"Evaluation results for Exercise {ex_id} with input type '{input_type}': {results}")
-        threshold = self.exercises_thresholds.get(exercise_service.get_by_id(ex_id, session=None).exercise_type, 0.5)
+
+        exercise = exercise_service.get_by_id(ex_id, session=None)
+        if not exercise:
+            raise ValueError(f"Exercise {ex_id} not found.")
+
+        threshold = self.exercises_thresholds.get(exercise.exercise_type, 0.5)
+        feedback = feedback_service.generate_feedback(
+            ex_id=ex_id,
+            user_input=user_input,
+            input_type=input_type,
+            results=results,
+            threshold=threshold,
+            correct_audio_index=correct_audio_index,
+            exercise=exercise,
+        )
+
         return {
             "correct": results["score"] > threshold,
             "score": results["score"],
-            "feedback": "" ## TODO
+            "feedback": feedback,
         }

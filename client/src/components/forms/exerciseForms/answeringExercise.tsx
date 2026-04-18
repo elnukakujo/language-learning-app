@@ -26,6 +26,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
     const [attempts, setAttempts] = useState<number>(0);
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
     const hasFeedback = isCorrect || attempts > 0;
 
     useEffect(() => {
@@ -34,6 +35,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
         setIsLoading(false);
         setIsCorrect(false);
         setAttempts(0);
+        setFeedbackMessage(null);
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -41,6 +43,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
         setIsLoading(true);
 
         evaluateText(exercise.id!, userAnswer).then((result) => {
+            setFeedbackMessage(result.feedback);
             setCurrentLevel(getLevelForScore(result.score, "answering"));
             if (result.correct === true) {
                 setIsCorrect(true);
@@ -54,6 +57,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
             }
             setIsLoading(false);
         }).catch((error) => {
+            setFeedbackMessage(null);
             setIsLoading(false);
             console.error("Error evaluating answer:", error);
         });
@@ -132,6 +136,12 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
                     'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     {isCorrect ? (
                         <>
+                            <p>
+                                {feedbackMessage && (
+                                    <span className="font-medium">Feedback: </span>
+                                )}
+                                {feedbackMessage}
+                            </p>
                             <p>
                                 ✓ Correct!
                             </p>

@@ -50,10 +50,11 @@ type UserLineState = {
     attempts: number;
     similarityScore: number | null;
     level: { label: string; description: string } | null;
+    feedbackMessage: string | null;
 };
 
 function makeInitialLineState(): UserLineState {
-    return { audioUrl: null, resetKey: 0, isCorrect: false, attempts: 0, similarityScore: null, level: null };
+    return { audioUrl: null, resetKey: 0, isCorrect: false, attempts: 0, similarityScore: null, level: null, feedbackMessage: null };
 }
 
 function SpeechLine({
@@ -263,6 +264,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                     isCorrect: true,
                     level,
                     similarityScore: result.score,
+                    feedbackMessage: result.feedback,
                 });
  
                 if (isLastUserLine) {
@@ -298,6 +300,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                     level,
                     similarityScore: result.score,
                     attempts: newAttempts,
+                    feedbackMessage: result.feedback,
                 });
  
                 if (newAttempts >= 3) {
@@ -393,6 +396,12 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                                         Level: {lineStates[idx].level.label}
                                     </p>
                                     <p className="opacity-90">{lineStates[idx].level.description}</p>
+                                    <p>
+                                        {lineStates[idx].feedbackMessage && (
+                                            <span className="font-medium">Feedback: </span>
+                                        )}
+                                        {lineStates[idx].feedbackMessage}
+                                    </p>
                                 </section>
                             )}
                         </section>

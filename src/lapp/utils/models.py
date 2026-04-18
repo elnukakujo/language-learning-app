@@ -55,7 +55,7 @@ audio_embedding_processor = Wav2Vec2FeatureExtractor.from_pretrained(
 # Speech-to-text model
 stt_model = AutoModelForSpeechSeq2Seq.from_pretrained(
     "openai/whisper-medium",
-    torch_dtype=torch.float16,
+    dtype=torch.float16,
     use_safetensors=True,
     local_files_only=OFFLINE,
 )
@@ -68,7 +68,7 @@ stt_pipe = pipeline(
     model=stt_model,
     tokenizer=stt_processor.tokenizer,
     feature_extractor=stt_processor.feature_extractor,
-    torch_dtype=torch.float16,
+    dtype=torch.float16,
 )
 
 # Text-to-speech model

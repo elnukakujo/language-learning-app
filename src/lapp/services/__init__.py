@@ -4,6 +4,7 @@ from .features import VocabularyService, CalligraphyService, GrammarService, Exe
 from .media import MediaService
 from .tts import TTSService
 from .text_gen import TextGeneratorService
+from .feedback import FeedbackService
 from .evaluator import EvaluatorService
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "MediaService",
     "TTSService",
     "TextGeneratorService",
+    "FeedbackService",
     "EvaluatorService",
 ]
