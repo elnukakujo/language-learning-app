@@ -25,6 +25,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [attempts, setAttempts] = useState<number>(0);
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
     useEffect(() => {
         setUserAnswer('');
@@ -32,6 +33,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
         setIsLoading(false);
         setAttempts(0);
         setCurrentLevel(null);
+        setFeedbackMessage(null);
     }, [exercise]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,6 +41,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
         setIsLoading(true);
 
         evaluateText(exercise.id!, userAnswer).then(result => {
+            setFeedbackMessage(result.feedback);
             setCurrentLevel(getLevelForScore(result.score, "essay"));
             if (result.correct === true) {
                 setIsCorrect(true);
@@ -52,6 +55,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
             }
             setIsLoading(false);
         }).catch((error) => {
+            setFeedbackMessage(null);
             setIsLoading(false);
             console.error("Error evaluating translation:", error);
         });
@@ -140,6 +144,12 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
                             </p>
                         </>
                     ) : <p>✗ Some answers are incorrect (Attempt {attempts}/3)</p>}
+                    <p>
+                        {feedbackMessage && (
+                            <span className="font-medium">Feedback: </span>
+                        )}
+                        {feedbackMessage}
+                    </p>
                     <p>
                         
                         {`Level:${currentLevel!.label} (${currentLevel!.stars})`}

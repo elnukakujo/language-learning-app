@@ -33,12 +33,14 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
 
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
     useEffect(() => {
         setWordsToOrganize(shuffle(question));
         setAttempts(0);
         setIsCorrect(false);
         setUserAnswer([]);
+        setFeedbackMessage(null);
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -46,6 +48,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         setIsLoading(true);
 
         evaluateText(exercise.id!, userAnswer.map(item => item.word).join(' ')).then((result) => {
+            setFeedbackMessage(result.feedback);
             setCurrentLevel(getLevelForScore(result.score, "organize"));
             if (result.correct === true) {
                 setIsCorrect(true);
@@ -59,6 +62,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
             }
             setIsLoading(false);
         }).catch((error) => {
+            setFeedbackMessage(null);
             setIsLoading(false);
             console.error("Error evaluating translation:", error);
         });
@@ -180,6 +184,12 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             </p>
                         </>
                     ) : <p>✗ Some answers are incorrect (Attempt {attempts}/3)</p>}
+                    <p>
+                        {feedbackMessage && (
+                            <span className="font-medium">Feedback: </span>
+                        )}
+                        {feedbackMessage}
+                    </p>
                     <p>
                         
                         {`Level:${currentLevel!.label} (${currentLevel!.stars})`}

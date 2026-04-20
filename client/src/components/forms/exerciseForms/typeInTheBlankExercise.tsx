@@ -40,6 +40,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
     const hasFeedback = isCorrect || attempts > 0;
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
     useEffect(() => {
         setFilledAnswers(Array(totalBlanks).fill(null));
@@ -47,6 +48,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
         setAttempts(0);
         setCurrentLevel(null);
         setIsLoading(false);
+        setFeedbackMessage(null);
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,6 +62,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
         });
 
         evaluateText(exercise.id!, userText).then((result) => {
+            setFeedbackMessage(result.feedback);
             setCurrentLevel(getLevelForScore(result.score, "type_in_the_blank"));
             if (result.correct === true) {
                 setIsCorrect(true);
@@ -73,6 +76,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
             }
             setIsLoading(false);
         }).catch((error) => {
+            setFeedbackMessage(null);
             setIsLoading(false);
             console.error("Error evaluating fill-in-the-blank:", error);
         });
@@ -176,6 +180,12 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
                     ) : (
                         <p>{`✗ Some answers are incorrect (Attempt ${attempts}/3)`}</p>
                     )}
+                    <p>
+                        {feedbackMessage && (
+                            <span className="font-medium">Feedback: </span>
+                        )}
+                        {feedbackMessage}
+                    </p>
                     {currentLevel && <p>{`Level:${currentLevel.label} (${currentLevel.stars})`}</p>}
                     {attempts >= 3 && !isCorrect && (
                         <div className="mt-2">
