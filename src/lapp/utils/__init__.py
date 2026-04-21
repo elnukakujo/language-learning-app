@@ -15,6 +15,11 @@ from .models import (
     text_gen_tokenizer,
     qwen_tts_model,
 )
+from .translate import translate
+from .phonetics import get_phonetic
+from .strokes import get_cjk_character_info
+from .enrich_components import enrich_character, enrich_word, enrich_passage
+from .tokenize import tokenize, get_content_words, get_characters
 
 __all__ = [
     MediaFileHandler,
@@ -33,4 +38,13 @@ __all__ = [
     text_gen_model,
     text_gen_tokenizer,
     qwen_tts_model,
+    translate,
+    get_phonetic,
+    get_cjk_character_info,
+    enrich_character,
+    enrich_word,
+    enrich_passage,
+    tokenize,
+    get_content_words,
+    get_characters,
 ]
