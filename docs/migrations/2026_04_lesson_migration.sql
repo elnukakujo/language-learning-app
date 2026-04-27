@@ -116,7 +116,8 @@ CREATE TABLE strengths_and_weaknesses (
     weaknesses TEXT DEFAULT '',
     last_updated DATE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(id),
-    FOREIGN KEY (language_id) REFERENCES language(id)
+    FOREIGN KEY (language_id) REFERENCES language(id),
+    UNIQUE (user_id, language_id, element_type)
 );
 
 -- FIX: moved after language so FK to language(id) resolves
