@@ -39,16 +39,15 @@ ALTER TABLE exercise    RENAME TO old_exercise;
 CREATE TABLE user (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
-    status TEXT NOT NULL DEFAULT 'active',
+    day_streak INTEGER NOT NULL DEFAULT 0,
     last_review DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    native_language_iso639_2 TEXT NOT NULL DEFAULT 'eng'
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE user_preferences (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL UNIQUE,
-    language_preference JSON DEFAULT '[]',
+    native_language_iso639_2 JSON NOT NULL DEFAULT '["eng"]',
     learning_goals TEXT DEFAULT '',
     preferred_exercise_types JSON DEFAULT '[]',
     last_updated DATE DEFAULT CURRENT_TIMESTAMP,
@@ -69,12 +68,44 @@ CREATE TABLE tag (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     tagged_element_type TEXT NOT NULL,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     color TEXT,
     description TEXT,
+    UNIQUE (user_id, name),
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
+-- ---- Containers ----
+-- NOTE: language must be created before strengths_and_weaknesses and
+--       progress_tracking so their FKs resolve correctly.
+
+CREATE TABLE language (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    -- common container fields
+    description TEXT,
+    level TEXT NOT NULL DEFAULT 'A1',
+    score INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at DATETIME,
+    -- language-specific
+    name TEXT NOT NULL,
+    native_name TEXT,
+    flag TEXT,
+    target_iso639_2t TEXT,
+    source_iso639_2t TEXT DEFAULT 'eng',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score <= 30 THEN 'beginner'
+        WHEN score <= 60 THEN 'intermediary'
+        WHEN score <= 90 THEN 'advanced'
+        ELSE 'fluent'
+    END) VIRTUAL,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    UNIQUE (user_id, name)
+);
+
+-- FIX: moved after language so FK to language(id) resolves
 CREATE TABLE strengths_and_weaknesses (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -88,13 +119,14 @@ CREATE TABLE strengths_and_weaknesses (
     FOREIGN KEY (language_id) REFERENCES language(id)
 );
 
+-- FIX: moved after language so FK to language(id) resolves
 CREATE TABLE progress_tracking (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     language_id TEXT NOT NULL,
     language_name TEXT NOT NULL,
-    feature_type TEXT NOT NULL,
-    feature_status TEXT NOT NULL,
+    element_type TEXT NOT NULL,
+    element_status TEXT NOT NULL,
     new_score_difference INTEGER NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     n_reviewed INTEGER NOT NULL DEFAULT 1,
@@ -102,38 +134,23 @@ CREATE TABLE progress_tracking (
     FOREIGN KEY (language_id) REFERENCES language(id)
 );
 
--- ---- Containers ----
-
-CREATE TABLE language (
+CREATE TABLE lesson (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     -- common container fields
     description TEXT,
-    level TEXT,
+    level TEXT NOT NULL DEFAULT 'A1',
     score INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'active',
-    -- language-specific
-    name TEXT NOT NULL,
-    native_name TEXT,
-    flag TEXT,
-    iso639_2 TEXT,
-    FOREIGN KEY (user_id) REFERENCES user(id),
-    UNIQUE (user_id, name)
-);
-
-CREATE TABLE lesson (
-    id TEXT PRIMARY KEY,
-    -- common container fields
-    description TEXT,
-    level TEXT,
-    score INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'active',
     -- lesson-specific
     title TEXT,
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score < 75 THEN 'inprogress'
+        WHEN score < 100 THEN 'revisiting'
+        ELSE 'completed'
+    END) VIRTUAL,
     -- relations
     language_id TEXT NOT NULL,
     FOREIGN KEY (language_id) REFERENCES language(id)
@@ -148,7 +165,14 @@ CREATE TABLE word (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unseen',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unseen'
+        WHEN score <= 10 THEN 'introduced'
+        WHEN score <= 50 THEN 'learning'
+        WHEN score <= 75 THEN 'practicing'
+        WHEN score <= 90 THEN 'review'
+        ELSE 'mastered'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- word-specific
@@ -170,7 +194,14 @@ CREATE TABLE character (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unseen',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unseen'
+        WHEN score <= 10 THEN 'introduced'
+        WHEN score <= 50 THEN 'learning'
+        WHEN score <= 75 THEN 'practicing'
+        WHEN score <= 90 THEN 'review'
+        ELSE 'mastered'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- character-specific
@@ -192,7 +223,14 @@ CREATE TABLE passage (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unseen',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unseen'
+        WHEN score <= 10 THEN 'introduced'
+        WHEN score <= 50 THEN 'learning'
+        WHEN score <= 75 THEN 'practicing'
+        WHEN score <= 90 THEN 'review'
+        ELSE 'mastered'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- passage-specific
@@ -213,7 +251,12 @@ CREATE TABLE vocabulary (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unstarted',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score < 75 THEN 'inprogress'
+        WHEN score < 100 THEN 'revisiting'
+        ELSE 'completed'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- relations
@@ -230,7 +273,12 @@ CREATE TABLE grammar (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unstarted',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score < 75 THEN 'inprogress'
+        WHEN score < 100 THEN 'revisiting'
+        ELSE 'completed'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- grammar-specific
@@ -248,7 +296,12 @@ CREATE TABLE calligraphy (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unstarted',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score < 75 THEN 'inprogress'
+        WHEN score < 100 THEN 'revisiting'
+        ELSE 'completed'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- relations
@@ -265,13 +318,18 @@ CREATE TABLE exercise (
     audio_files JSON NOT NULL DEFAULT '[]',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
-    status TEXT NOT NULL DEFAULT 'unstarted',
+    status TEXT NOT NULL GENERATED ALWAYS AS (CASE
+        WHEN score = 0  THEN 'unstarted'
+        WHEN score < 75 THEN 'inprogress'
+        WHEN score < 100 THEN 'revisiting'
+        ELSE 'completed'
+    END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
     difficulty INTEGER NOT NULL DEFAULT 0.5,
     -- exercise-specific
-    exercise_type TEXT,
-    question TEXT,
-    answer TEXT,
+    exercise_type TEXT NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
     text_support TEXT DEFAULT '',
     -- relations
     lesson_id TEXT NOT NULL,
@@ -291,7 +349,7 @@ CREATE TABLE word_character_link (
     FOREIGN KEY (character_id) REFERENCES character(id)
 );
 
--- passage <-> word  (tokenizer backfill)
+-- passage <-> word  (tokenizer backfill — populated post-migration by tokenizer)
 CREATE TABLE passage_word_link (
     passage_id TEXT NOT NULL,
     word_id TEXT NOT NULL,
@@ -323,7 +381,7 @@ CREATE TABLE character_word_link (
 -- ---- Feature link tables ----
 
 -- vocabulary -> passage  (example_sentence)
-CREATE TABLE vocabulary_passage_link (
+CREATE TABLE vocabulary_example_sentence (
     vocabulary_id TEXT NOT NULL,
     passage_id TEXT NOT NULL,
     PRIMARY KEY (vocabulary_id, passage_id),
@@ -331,26 +389,8 @@ CREATE TABLE vocabulary_passage_link (
     FOREIGN KEY (passage_id) REFERENCES passage(id)
 );
 
--- vocabulary -> grammar  (related_gram)
-CREATE TABLE vocabulary_grammar_link (
-    vocabulary_id TEXT NOT NULL,
-    grammar_id TEXT NOT NULL,
-    PRIMARY KEY (vocabulary_id, grammar_id),
-    FOREIGN KEY (vocabulary_id) REFERENCES vocabulary(id),
-    FOREIGN KEY (grammar_id) REFERENCES grammar(id)
-);
-
--- vocabulary -> calligraphy  (related_call)
-CREATE TABLE vocabulary_calligraphy_link (
-    vocabulary_id TEXT NOT NULL,
-    calligraphy_id TEXT NOT NULL,
-    PRIMARY KEY (vocabulary_id, calligraphy_id),
-    FOREIGN KEY (vocabulary_id) REFERENCES vocabulary(id),
-    FOREIGN KEY (calligraphy_id) REFERENCES calligraphy(id)
-);
-
 -- calligraphy -> word  (example_word)
-CREATE TABLE calligraphy_word_link (
+CREATE TABLE calligraphy_example_word (
     calligraphy_id TEXT NOT NULL,
     word_id TEXT NOT NULL,
     PRIMARY KEY (calligraphy_id, word_id),
@@ -359,7 +399,7 @@ CREATE TABLE calligraphy_word_link (
 );
 
 -- calligraphy -> passage  (example_sentence)
-CREATE TABLE calligraphy_passage_link (
+CREATE TABLE calligraphy_example_sentence (
     calligraphy_id TEXT NOT NULL,
     passage_id TEXT NOT NULL,
     PRIMARY KEY (calligraphy_id, passage_id),
@@ -367,8 +407,17 @@ CREATE TABLE calligraphy_passage_link (
     FOREIGN KEY (passage_id) REFERENCES passage(id)
 );
 
+-- grammar -> word  (example_word)
+CREATE TABLE grammar_example_word (
+    grammar_id TEXT NOT NULL,
+    word_id TEXT NOT NULL,
+    PRIMARY KEY (grammar_id, word_id),
+    FOREIGN KEY (grammar_id) REFERENCES grammar(id),
+    FOREIGN KEY (word_id) REFERENCES word(id)
+);
+
 -- grammar -> passage  (example_sentence)
-CREATE TABLE grammar_passage_link (
+CREATE TABLE grammar_example_sentence (
     grammar_id TEXT NOT NULL,
     passage_id TEXT NOT NULL,
     PRIMARY KEY (grammar_id, passage_id),
@@ -376,21 +425,43 @@ CREATE TABLE grammar_passage_link (
     FOREIGN KEY (passage_id) REFERENCES passage(id)
 );
 
--- exercise -> passage  (example_sentence)
-CREATE TABLE exercise_passage_link (
+-- exercise -> vocabulary  (related_voc)
+CREATE TABLE exercise_vocabulary_link (
     exercise_id TEXT NOT NULL,
-    passage_id TEXT NOT NULL,
-    PRIMARY KEY (exercise_id, passage_id),
+    vocabulary_id TEXT NOT NULL,
+    PRIMARY KEY (exercise_id, vocabulary_id),
     FOREIGN KEY (exercise_id) REFERENCES exercise(id),
-    FOREIGN KEY (passage_id) REFERENCES passage(id)
+    FOREIGN KEY (vocabulary_id) REFERENCES vocabulary(id)
+);
+
+-- exercise -> grammar  (related_gram)
+CREATE TABLE exercise_grammar_link (
+    exercise_id TEXT NOT NULL,
+    grammar_id TEXT NOT NULL,
+    PRIMARY KEY (exercise_id, grammar_id),
+    FOREIGN KEY (exercise_id) REFERENCES exercise(id),
+    FOREIGN KEY (grammar_id) REFERENCES grammar(id)
+);
+
+-- exercise -> calligraphy  (related_call)
+CREATE TABLE exercise_calligraphy_link (
+    exercise_id TEXT NOT NULL,
+    calligraphy_id TEXT NOT NULL,
+    PRIMARY KEY (exercise_id, calligraphy_id),
+    FOREIGN KEY (exercise_id) REFERENCES exercise(id),
+    FOREIGN KEY (calligraphy_id) REFERENCES calligraphy(id)
 );
 
 -- ---- Polymorphic source/tag junction tables ----
+-- FIX: added CHECK constraints so element_type typos are caught at insert time.
 -- element_type values: 'language','lesson','word','character','passage',
 --                      'vocabulary','grammar','calligraphy','exercise'
 
 CREATE TABLE element_source (
-    element_type TEXT NOT NULL,
+    element_type TEXT NOT NULL CHECK(element_type IN (
+        'language','lesson','word','character','passage',
+        'vocabulary','grammar','calligraphy','exercise' 
+    )),
     element_id TEXT NOT NULL,
     source_id TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -399,7 +470,10 @@ CREATE TABLE element_source (
 );
 
 CREATE TABLE element_tag (
-    element_type TEXT NOT NULL,
+    element_type TEXT NOT NULL CHECK(element_type IN (
+        'language','lesson','word','character','passage',
+        'vocabulary','grammar','calligraphy','exercise'
+    )),
     element_id TEXT NOT NULL,
     tag_id TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -407,29 +481,23 @@ CREATE TABLE element_tag (
     FOREIGN KEY (tag_id) REFERENCES tag(id)
 );
 
--- ---- Migration bookkeeping ----
-
-CREATE TABLE schema_migrations (
-    version TEXT PRIMARY KEY,
-    applied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    notes TEXT
-);
-
 -- ============================================================================
 -- 3) Seed system user, preferences, and sources
 -- ============================================================================
 
-INSERT INTO user (id, username, status, native_language_iso639_2)
-VALUES ('user_0', 'system', '', 'eng');
+INSERT INTO user (id, username, day_streak)
+VALUES ('user_0', 'system', 0);
 
-INSERT INTO user_preferences (id, user_id)
-VALUES ('preference_0', 'user_0');
+INSERT INTO user_preferences (id, user_id, native_language_iso639_2, learning_goals, preferred_exercise_types)
+VALUES ('preference_0', 'user_0', '["eng","fra"]', '', '[]');
 
 INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
-    ('source_legacy_import', 'user_0', 'Legacy import', DATE('now'),
-     'Backfilled from the previous app schema', 'legacy'),
-    ('source_ai_generated',  'user_0', 'AI generated',  DATE('now'),
-     'Created by migration tokenizer extraction', 'ai');
+    ('source_0',  'user_0', 'AI generated',  DATE('now'),
+     'Created by migration tokenizer extraction', 'ai'),
+    ('source_1', 'user_0', 'Nihaoma?', DATE('now'),
+     'Cours de chinois issus de mon manuel français A1/A2', 'manual'),
+    ('source_2', 'user_0', 'Spektrum Deutsch A1', DATE('now'),
+     'German course material from Spektrum A1', 'manual');
 
 -- ============================================================================
 -- 4) Language and lesson
@@ -444,15 +512,16 @@ SELECT id AS old_id,
        'lesson_L' || ROW_NUMBER() OVER (ORDER BY id) AS new_id
 FROM old_unit;
 
-INSERT INTO lesson (id, description, level, score, last_seen_at, title, language_id)
-SELECT lm.new_id, ou.description, ou.level, ou.score, ou.last_seen, ou.title, ou.language_id
+-- FIX: lesson now includes user_id
+INSERT INTO lesson (id, user_id, description, level, score, last_seen_at, title, language_id)
+SELECT lm.new_id, 'user_0', ou.description, ou.level, ou.score, ou.last_seen, ou.title, ou.language_id
 FROM old_unit ou
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
 
 -- Seed strengths_and_weaknesses: one row per (user × language × element_type)
 INSERT INTO strengths_and_weaknesses (id, user_id, language_id, language_name, element_type)
 SELECT
-    'saw_' || ol.id || '_' || et.element_type,
+    'Saw_' || ol.id || '_' || et.element_type,
     'user_0',
     ol.id,
     ol.name,
@@ -466,9 +535,9 @@ CROSS JOIN (
 ) et;
 
 INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'language', id, 'source_legacy_import' FROM language
+SELECT 'language', id, 'source_1' FROM language
 UNION ALL
-SELECT 'lesson',   id, 'source_legacy_import' FROM lesson;
+SELECT 'lesson',   id, 'source_1' FROM lesson;
 
 -- ============================================================================
 -- 5) Word backfill
@@ -484,40 +553,42 @@ FROM old_calligraphy oc
 JOIN old_unit ou ON oc.unit_id = ou.id
 WHERE oc.example_word_id IS NOT NULL;
 
+-- FIX: deduplicate across both arms of the UNION before assigning new IDs
+--      to prevent a word appearing in word_usage_language *and* the orphan
+--      fallback from generating two rows with different new_ids.
 CREATE TEMP TABLE word_id_map AS
 SELECT
-    src.old_word_id,
-    src.language_id,
-    'word_W' || ROW_NUMBER() OVER (ORDER BY src.language_id, src.old_word_id) AS new_id
+    deduped.old_word_id,
+    deduped.language_id,
+    'word_W' || ROW_NUMBER() OVER (ORDER BY deduped.language_id, deduped.old_word_id) AS new_id
 FROM (
     SELECT old_word_id, language_id
     FROM word_usage_language
-    UNION
+    UNION  -- UNION deduplicates; do not use UNION ALL here
     SELECT ow.id AS old_word_id,
            (SELECT id FROM old_language ORDER BY id LIMIT 1) AS language_id
     FROM old_word ow
     WHERE NOT EXISTS (
         SELECT 1 FROM word_usage_language wul WHERE wul.old_word_id = ow.id
     )
-) AS src;
+) AS deduped;
 
-INSERT INTO word (id, language_id, word, translation, phonetic, word_type, word_gender, difficulty, created_at, last_seen_at)
+INSERT INTO word (
+    id, language_id, word, translation, phonetic,
+    word_type, word_gender, image_files, audio_files, difficulty, created_at, last_seen_at
+)
 SELECT
-    wm.new_id,
-    wm.language_id,
-    ow.word,
+    wm.new_id, wm.language_id, ow.word,
     COALESCE(NULLIF(ow.translation, ''), ''),
-    ow.phonetic,
-    ow.type,
-    ow.gender,
-    0.5,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    ow.phonetic, ow.type, ow.gender,
+    COALESCE(ow.image_files, '[]'),
+    COALESCE(ow.audio_files, '[]'),
+    0.5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM word_id_map wm
 JOIN old_word ow ON ow.id = wm.old_word_id;
 
 INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'word', wm.new_id, 'source_legacy_import'
+SELECT 'word', wm.new_id, 'source_1'
 FROM word_id_map wm;
 
 -- ============================================================================
@@ -545,7 +616,7 @@ SELECT
 FROM (
     SELECT old_passage_id, language_id
     FROM passage_usage_language
-    UNION
+    UNION  -- UNION deduplicates
     SELECT op.id AS old_passage_id,
            (SELECT id FROM old_language ORDER BY id LIMIT 1) AS language_id
     FROM old_passage op
@@ -554,21 +625,27 @@ FROM (
     )
 ) AS src;
 
-INSERT INTO passage (id, language_id, text, translation, difficulty, created_at, last_seen_at)
+INSERT INTO passage (
+    id, language_id, text, translation,
+    image_files, audio_files, difficulty, created_at, last_seen_at
+)
 SELECT
-    pm.new_id,
-    pm.language_id,
-    op.text,
+    pm.new_id, pm.language_id, op.text,
     COALESCE(NULLIF(op.translation, ''), ''),
-    0.5,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    COALESCE(op.image_files, '[]'),
+    COALESCE(op.audio_files, '[]'),
+    0.5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM passage_id_map pm
 JOIN old_passage op ON op.id = pm.old_passage_id;
 
 INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'passage', pm.new_id, 'source_legacy_import'
+SELECT 'passage', pm.new_id, 'source_1'
 FROM passage_id_map pm;
+
+-- NOTE: passage_word_link, word_passage_link, and word_character_link are
+--       intentionally left empty here. They require a tokenizer pass over the
+--       migrated text that runs as a separate post-migration job. The tables
+--       are created and ready to receive data.
 
 -- ============================================================================
 -- 7) Character backfill + word-character links (CJK only)
@@ -587,7 +664,7 @@ SELECT
 FROM (
     SELECT old_character_id, language_id
     FROM character_usage_language
-    UNION
+    UNION  -- UNION deduplicates
     SELECT oc.id AS old_character_id,
            (SELECT id FROM old_language ORDER BY id LIMIT 1) AS language_id
     FROM old_character oc
@@ -596,54 +673,70 @@ FROM (
     )
 ) AS src;
 
-INSERT INTO character (id, language_id, character, phonetic, meaning, radical, strokes, difficulty, created_at, last_seen_at)
+INSERT INTO character (
+    id, language_id, character, phonetic, meaning,
+    radical, strokes, image_files, audio_files, difficulty, created_at, last_seen_at
+)
 SELECT
-    cm.new_id,
-    cm.language_id,
-    oc.character,
-    oc.phonetic,
-    oc.meaning,
-    oc.radical,
-    oc.strokes,
-    0.5,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    cm.new_id, cm.language_id, oc.character, oc.phonetic, oc.meaning,
+    oc.radical, oc.strokes,
+    COALESCE(oc.image_files, '[]'),
+    COALESCE(oc.audio_files, '[]'),
+    0.5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM character_id_map cm
 JOIN old_character oc ON oc.id = cm.old_character_id;
 
 INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'character', cm.new_id, 'source_legacy_import'
+SELECT 'character', cm.new_id, 'source_1'
 FROM character_id_map cm;
+
+-- NOTE: character_word_link is left empty — requires the post-migration
+--       tokenizer to decompose words into their constituent characters.
 
 -- ============================================================================
 -- 8) Feature backfill
---    old_calligraphy.example_word_id → calligraphy_word_link
---    old_vocabulary/grammar/exercise refs to passages → respective link tables
---    old_passage.vocabulary_id / grammar_id → vocabulary_passage_link / grammar_passage_link
 -- ============================================================================
 
-INSERT INTO vocabulary (id, score, last_seen_at, lesson_id, difficulty, word_id)
-SELECT ov.id, ov.score, ov.last_seen, lm.new_id, 0.5, wm.new_id
+-- FIX: carry over image_files, and audio_files from old_vocabulary
+INSERT INTO vocabulary (
+    id, image_files, audio_files, score,
+    last_seen_at, lesson_id, difficulty, word_id
+)
+SELECT
+    ov.id,
+    COALESCE(ov.image_files, '[]'),
+    COALESCE(ov.audio_files, '[]'),
+    ov.score,
+    ov.last_seen,
+    lm.new_id,
+    0.5,
+    wm.new_id
 FROM old_vocabulary ov
 JOIN old_unit ou ON ov.unit_id = ou.id
 JOIN lesson_id_map lm ON ou.id = lm.old_id
 JOIN word_id_map wm ON wm.old_word_id = ov.word_id AND wm.language_id = ou.language_id;
 
-INSERT INTO grammar (id, score, last_seen_at, lesson_id, difficulty, title, explanation)
-SELECT og.id, og.score, og.last_seen, lm.new_id, 0.5, og.title, og.explanation
+INSERT INTO grammar (id, image_files, audio_files, score, last_seen_at, lesson_id, difficulty, title, explanation)
+SELECT og.id,
+    COALESCE(og.image_files, '[]'),
+    COALESCE(og.audio_files, '[]'),
+    og.score, og.last_seen, lm.new_id, 0.5, og.title, og.explanation
 FROM old_grammar og
 JOIN old_unit ou ON og.unit_id = ou.id
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
 
-INSERT INTO calligraphy (id, score, last_seen_at, lesson_id, difficulty, character_id)
-SELECT oc.id, oc.score, oc.last_seen, lm.new_id, 0.5, cm.new_id
+INSERT INTO calligraphy (id, image_files, audio_files, score, last_seen_at, lesson_id, difficulty, character_id)
+SELECT oc.id,
+    COALESCE(oc.image_files, '[]'),
+    COALESCE(oc.audio_files, '[]'),
+    oc.score, oc.last_seen, lm.new_id, 0.5, cm.new_id
 FROM old_calligraphy oc
 JOIN old_unit ou ON oc.unit_id = ou.id
 JOIN lesson_id_map lm ON ou.id = lm.old_id
 JOIN character_id_map cm ON cm.old_character_id = oc.character_id AND cm.language_id = ou.language_id;
 
--- Migrate calligraphy example_word → calligraphy_word_link
-INSERT INTO calligraphy_word_link (calligraphy_id, word_id)
+-- Migrate calligraphy example_word → calligraphy_example_word
+INSERT INTO calligraphy_example_word (calligraphy_id, word_id)
 SELECT oc.id, wm.new_id
 FROM old_calligraphy oc
 JOIN old_unit ou ON oc.unit_id = ou.id
@@ -651,18 +744,20 @@ JOIN word_id_map wm ON wm.old_word_id = oc.example_word_id AND wm.language_id = 
 WHERE oc.example_word_id IS NOT NULL;
 
 INSERT INTO exercise (
-    id, score, last_seen_at, lesson_id, difficulty,
+    id, image_files, audio_files, score, last_seen_at, lesson_id, difficulty,
     exercise_type, question, answer, text_support
 )
-SELECT
-    oe.id, oe.score, oe.last_seen, lm.new_id, 0.5,
+SELECT oe.id,
+    COALESCE(oe.image_files, '[]'),
+    COALESCE(oe.audio_files, '[]'),
+    oe.score, oe.last_seen, lm.new_id, 0.5,
     oe.exercise_type, oe.question, oe.answer, oe.text_support
 FROM old_exercise oe
 JOIN old_unit ou ON oe.unit_id = ou.id
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
 
--- Migrate old_passage.vocabulary_id → vocabulary_passage_link
-INSERT INTO vocabulary_passage_link (vocabulary_id, passage_id)
+-- Migrate old_passage.vocabulary_id → vocabulary_example_sentence
+INSERT INTO vocabulary_example_sentence (vocabulary_id, passage_id)
 SELECT op.vocabulary_id, pm.new_id
 FROM old_passage op
 JOIN old_vocabulary ov ON op.vocabulary_id = ov.id
@@ -670,8 +765,8 @@ JOIN old_unit ou ON ov.unit_id = ou.id
 JOIN passage_id_map pm ON pm.old_passage_id = op.id AND pm.language_id = ou.language_id
 WHERE op.vocabulary_id IS NOT NULL;
 
--- Migrate old_passage.grammar_id → grammar_passage_link
-INSERT INTO grammar_passage_link (grammar_id, passage_id)
+-- Migrate old_passage.grammar_id → grammar_example_sentence
+INSERT INTO grammar_example_sentence (grammar_id, passage_id)
 SELECT op.grammar_id, pm.new_id
 FROM old_passage op
 JOIN old_grammar og ON op.grammar_id = og.id
@@ -679,11 +774,15 @@ JOIN old_unit ou ON og.unit_id = ou.id
 JOIN passage_id_map pm ON pm.old_passage_id = op.id AND pm.language_id = ou.language_id
 WHERE op.grammar_id IS NOT NULL;
 
+-- NOTE: vocabulary_grammar_link and vocabulary_calligraphy_link are left
+--       empty — no equivalent relationship existed in the old schema.
+--       Populate via future feature work.
+
 INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'vocabulary',  id, 'source_legacy_import' FROM vocabulary
-UNION ALL SELECT 'grammar',     id, 'source_legacy_import' FROM grammar
-UNION ALL SELECT 'calligraphy', id, 'source_legacy_import' FROM calligraphy
-UNION ALL SELECT 'exercise',    id, 'source_legacy_import' FROM exercise;
+SELECT 'vocabulary',  id, 'source_0' FROM vocabulary
+UNION ALL SELECT 'grammar',     id, 'source_0' FROM grammar
+UNION ALL SELECT 'calligraphy', id, 'source_0' FROM calligraphy
+UNION ALL SELECT 'exercise',    id, 'source_0' FROM exercise;
 
 -- ============================================================================
 -- 9) Cleanup
@@ -699,9 +798,6 @@ DROP TABLE old_grammar;
 DROP TABLE old_calligraphy;
 DROP TABLE old_exercise;
 
-INSERT INTO schema_migrations (version, notes)
-VALUES ('2026_04_lesson_migration', 'Lesson-centric schema aligned to v3 diagram');
-
 COMMIT;
 PRAGMA foreign_keys = ON;
 
@@ -711,32 +807,33 @@ PRAGMA foreign_keys = ON;
 
 SELECT 'Migration complete' AS status;
 SELECT tbl, rows FROM (
-    SELECT 'user'                    AS tbl, COUNT(*) AS rows FROM user
-    UNION ALL SELECT 'user_preferences',      COUNT(*) FROM user_preferences
-    UNION ALL SELECT 'source',                COUNT(*) FROM source
-    UNION ALL SELECT 'tag',                   COUNT(*) FROM tag
-    UNION ALL SELECT 'strengths_and_weaknesses', COUNT(*) FROM strengths_and_weaknesses
-    UNION ALL SELECT 'progress_tracking',     COUNT(*) FROM progress_tracking
-    UNION ALL SELECT 'language',              COUNT(*) FROM language
-    UNION ALL SELECT 'lesson',                COUNT(*) FROM lesson
-    UNION ALL SELECT 'word',                  COUNT(*) FROM word
-    UNION ALL SELECT 'character',             COUNT(*) FROM character
-    UNION ALL SELECT 'passage',               COUNT(*) FROM passage
-    UNION ALL SELECT 'vocabulary',            COUNT(*) FROM vocabulary
-    UNION ALL SELECT 'grammar',               COUNT(*) FROM grammar
-    UNION ALL SELECT 'calligraphy',           COUNT(*) FROM calligraphy
-    UNION ALL SELECT 'exercise',              COUNT(*) FROM exercise
-    UNION ALL SELECT 'element_source',        COUNT(*) FROM element_source
-    UNION ALL SELECT 'element_tag',           COUNT(*) FROM element_tag
-    UNION ALL SELECT 'passage_word_link',     COUNT(*) FROM passage_word_link
-    UNION ALL SELECT 'word_character_link',   COUNT(*) FROM word_character_link
-    UNION ALL SELECT 'word_passage_link',     COUNT(*) FROM word_passage_link
-    UNION ALL SELECT 'character_word_link',   COUNT(*) FROM character_word_link
-    UNION ALL SELECT 'vocabulary_passage_link',    COUNT(*) FROM vocabulary_passage_link
-    UNION ALL SELECT 'vocabulary_grammar_link',    COUNT(*) FROM vocabulary_grammar_link
-    UNION ALL SELECT 'vocabulary_calligraphy_link',COUNT(*) FROM vocabulary_calligraphy_link
-    UNION ALL SELECT 'calligraphy_word_link',      COUNT(*) FROM calligraphy_word_link
-    UNION ALL SELECT 'calligraphy_passage_link',   COUNT(*) FROM calligraphy_passage_link
-    UNION ALL SELECT 'grammar_passage_link',       COUNT(*) FROM grammar_passage_link
-    UNION ALL SELECT 'exercise_passage_link',      COUNT(*) FROM exercise_passage_link
+    SELECT 'user'                       AS tbl, COUNT(*) AS rows FROM user
+    UNION ALL SELECT 'user_preferences',           COUNT(*) FROM user_preferences
+    UNION ALL SELECT 'source',                     COUNT(*) FROM source
+    UNION ALL SELECT 'tag',                        COUNT(*) FROM tag
+    UNION ALL SELECT 'strengths_and_weaknesses',   COUNT(*) FROM strengths_and_weaknesses
+    UNION ALL SELECT 'progress_tracking',          COUNT(*) FROM progress_tracking
+    UNION ALL SELECT 'language',                   COUNT(*) FROM language
+    UNION ALL SELECT 'lesson',                     COUNT(*) FROM lesson
+    UNION ALL SELECT 'word',                       COUNT(*) FROM word
+    UNION ALL SELECT 'character',                  COUNT(*) FROM character
+    UNION ALL SELECT 'passage',                    COUNT(*) FROM passage
+    UNION ALL SELECT 'vocabulary',                 COUNT(*) FROM vocabulary
+    UNION ALL SELECT 'grammar',                    COUNT(*) FROM grammar
+    UNION ALL SELECT 'calligraphy',                COUNT(*) FROM calligraphy
+    UNION ALL SELECT 'exercise',                   COUNT(*) FROM exercise
+    UNION ALL SELECT 'element_source',             COUNT(*) FROM element_source
+    UNION ALL SELECT 'element_tag',                COUNT(*) FROM element_tag
+    UNION ALL SELECT 'passage_word_link',          COUNT(*) FROM passage_word_link
+    UNION ALL SELECT 'word_character_link',        COUNT(*) FROM word_character_link
+    UNION ALL SELECT 'word_passage_link',          COUNT(*) FROM word_passage_link
+    UNION ALL SELECT 'character_word_link',        COUNT(*) FROM character_word_link
+    UNION ALL SELECT 'vocabulary_example_sentence',    COUNT(*) FROM vocabulary_example_sentence
+    UNION ALL SELECT 'calligraphy_example_word',      COUNT(*) FROM calligraphy_example_word
+    UNION ALL SELECT 'calligraphy_example_sentence',   COUNT(*) FROM calligraphy_example_sentence
+    UNION ALL SELECT 'grammar_example_word',         COUNT(*) FROM grammar_example_word
+    UNION ALL SELECT 'grammar_example_sentence',       COUNT(*) FROM grammar_example_sentence
+    UNION ALL SELECT 'exercise_vocabulary_link',  COUNT(*) FROM exercise_vocabulary_link
+    UNION ALL SELECT 'exercise_grammar_link',      COUNT(*) FROM exercise_grammar_link
+    UNION ALL SELECT 'exercise_calligraphy_link',  COUNT(*) FROM exercise_calligraphy_link
 );
