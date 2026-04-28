@@ -1,43 +1,88 @@
-import os
 from flask import current_app
 from typing import Any
 from pathlib import Path
-from sqlalchemy import Column, String, Integer, Date, JSON, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, JSON, ForeignKey, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr, validates
-from datetime import date
+from datetime import datetime
 
 import logging
 logger = logging.getLogger(__name__)
 
 from ..core.database import Base
 
+# Feature link tables introduced by the lesson migration.
+vocabulary_example_sentence_link = Table(
+    "vocabulary_example_sentence",
+    Base.metadata,
+    Column("vocabulary_id", String, ForeignKey("vocabulary.id"), primary_key=True),
+    Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
+)
+
+grammar_example_sentence_link = Table(
+    "grammar_example_sentence",
+    Base.metadata,
+    Column("grammar_id", String, ForeignKey("grammar.id"), primary_key=True),
+    Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
+)
+
+calligraphy_example_word_link = Table(
+    "calligraphy_example_word",
+    Base.metadata,
+    Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
+    Column("word_id", String, ForeignKey("word.id"), primary_key=True),
+)
+
+exercise_vocabulary_link = Table(
+    "exercise_vocabulary_link",
+    Base.metadata,
+    Column("exercise_id", String, ForeignKey("exercise.id"), primary_key=True),
+    Column("vocabulary_id", String, ForeignKey("vocabulary.id"), primary_key=True),
+)
+
+exercise_grammar_link = Table(
+    "exercise_grammar_link",
+    Base.metadata,
+    Column("exercise_id", String, ForeignKey("exercise.id"), primary_key=True),
+    Column("grammar_id", String, ForeignKey("grammar.id"), primary_key=True),
+)
+
+exercise_calligraphy_link = Table(
+    "exercise_calligraphy_link",
+    Base.metadata,
+    Column("exercise_id", String, ForeignKey("exercise.id"), primary_key=True),
+    Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
+)
+
 class BaseContainerModel(Base):
     """
     Base class for models that are containers for other models.
-    This includes: Unit, Language
+    This includes: Lesson, Language
     """
     __abstract__ = True
 
     id = Column(String, primary_key=True, index=True)
-    score = Column(Integer, default=0)  # e.g., how much the vocabulary is mastered
-    last_seen = Column(Date, default=date.today)  # e.g., when the vocabulary was last seen
+    score = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_seen = Column("last_seen_at", DateTime, default=datetime.utcnow, nullable=True)
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "score": self.score,
-            "last_seen": self.last_seen.isoformat(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
+            "last_seen_at": self.last_seen.isoformat() if self.last_seen else None,
         }
     
 class BaseFeatureModel(BaseContainerModel):
     """
-    Base class for components that belong to both a Unit and a Language.
+    Base class for features that belong to a lesson.
     This includes: Vocabulary, Grammar, Calligraphy, Exercise
     """
     __abstract__ = True
     
     # Foreign keys - shared by all components
-    unit_id: Mapped[str] = mapped_column(ForeignKey("unit.id"))
+    lesson_id: Mapped[str] = mapped_column("lesson_id", ForeignKey("lesson.id"))
     
     # Media files
     image_files = Column(JSON, default=list)
@@ -45,12 +90,10 @@ class BaseFeatureModel(BaseContainerModel):
     
     # Relationships - use declared_attr to dynamically create for each subclass
     @declared_attr
-    def unit(cls) -> Mapped["Unit"]:
-        """Relationship to parent Unit. Each subclass gets its own."""
-        # Get the table name to determine the back_populates name
-        
+    def lesson(cls) -> Mapped["Lesson"]:
+        """Relationship to parent Lesson. Each subclass gets its own."""
         return relationship(
-            "Unit",
+            "Lesson",
             back_populates=cls.__tablename__
         )
     
@@ -63,7 +106,7 @@ class BaseFeatureModel(BaseContainerModel):
         
         if include_relations:
             base_dict.update({
-                "unit_id": self.unit_id
+                "lesson_id": self.lesson_id,
             })
         
         return base_dict
@@ -123,6 +166,10 @@ class BaseComponentModel(Base):
     __abstract__ = True
 
     id = Column(String, primary_key=True, index=True)
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"), nullable=False)
+    score = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_seen = Column("last_seen_at", DateTime, default=datetime.utcnow, nullable=True)
 
     # Media files
     image_files = Column(JSON, default=list)
@@ -131,6 +178,11 @@ class BaseComponentModel(Base):
     def to_dict(self) -> dict:
         return {
             "id": self.id,
+            "language_id": self.language_id,
+            "score": self.score,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
+            "last_seen_at": self.last_seen.isoformat() if self.last_seen else None,
             "image_files": self.image_files,
             "audio_files": self.audio_files
         }

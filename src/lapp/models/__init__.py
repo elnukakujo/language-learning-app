@@ -2,10 +2,12 @@
 from .containers import *
 from .components import *
 from .features import *
+from .system_data import *
 
 __all__ = [
     "Language",
-    "Unit",
+    "Lesson",
+    "Lesson",
     "Vocabulary",
     "Grammar",
     "Calligraphy",
@@ -13,4 +15,13 @@ __all__ = [
     "Character",
     "Word",
     "Passage"
+]
+
+__all__ += [
+    "User",
+    "UserPreferences",
+    "Source",
+    "Tag",
+    "StrengthsAndWeaknesses",
+    "ProgressTracking",
 ]

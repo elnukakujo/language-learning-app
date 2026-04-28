@@ -5,11 +5,11 @@ import NavButton from "../buttons/navButton";
 import type Calligraphy from "@/interface/features/Calligraphy";
 
 export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]}) {
-    const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
+    const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
 
     const router = useRouter();
     const handleClick = (id: string) => {
-        router.push(`/languages/${language_id}/unit/${unit_id}/call/${id}`);
+        router.push(`/languages/${language_id}/lesson/${lesson_id}/call/${id}`);
     };
 
     const averageScore = callProps.reduce((acc, item) => acc + item.score!, 0) / callProps.length;
@@ -39,13 +39,13 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
                 </ul>
             }
             <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/call/new`}
+                path = {`/languages/${language_id}/lesson/${lesson_id}/call/new`}
             >
                 <span>Add New Calligraphy</span>
             </NavButton>
             {callProps.length > 0 && (
             <NavButton
-                path={`/languages/${language_id}/unit/${unit_id}/call/flashcard`}
+                path={`/languages/${language_id}/lesson/${lesson_id}/call/flashcard`}
             >
                 <p>Flashcard Practice</p>
             </NavButton>)}

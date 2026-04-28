@@ -478,7 +478,7 @@ class DatabaseManager:
         
         ID Format:
         - Language: "lang_L{n}"
-        - Unit: "unit_U{n}"
+        - Lesson: "lesson_L{n}"
         - Vocabulary: "voc_V{n}"
         - Grammar: "gram_G{n}"
         - Calligraphy: "call_C{n}"
@@ -506,7 +506,7 @@ class DatabaseManager:
             # Define ID prefixes and letters for each model
             id_config = {
                 "Language": "lang_L",
-                "Unit": "unit_U",
+                "Lesson": "lesson_L",
                 "Vocabulary": "voc_V",
                 "Grammar": "gram_G",
                 "Calligraphy": "call_C",
@@ -514,6 +514,12 @@ class DatabaseManager:
                 "Character": "char_C",
                 "Word": "word_W",
                 "Passage": "pass_P",
+                "User": "user_U",
+                "UserPreferences": "pref_P",
+                "Source": "src_S",
+                "Tag": "tag_T",
+                "StrengthsAndWeaknesses": "sw_SW",
+                "ProgressTracking": "pt_PT"
             }
             
             if model_class.__name__ not in id_config:

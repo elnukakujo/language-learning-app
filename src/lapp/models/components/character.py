@@ -1,12 +1,13 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from ..base import BaseComponentModel
 
 class Character(BaseComponentModel):
     __tablename__ = 'character'
+    __table_args__ = (UniqueConstraint('language_id', 'character', name='uq_character_language_character'),)
     
-    character = Column(String, nullable=False, index=True, unique=True)
+    character = Column(String, nullable=False, index=True)
     phonetic = Column(String, nullable=False)
     meaning = Column(String, nullable=True)
     radical = Column(String, nullable=True)
@@ -26,6 +27,6 @@ class Character(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "calligraphy_id": self.calligraphy.id
+                "calligraphy_ids": [c.id for c in self.calligraphy]
             })
         return base_dict

@@ -33,19 +33,19 @@ def get_all_grammar_from_language(language_id: str):
     return jsonify(grammar)
 
 
-@bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_grammar_from_unit(unit_id: str):
-    """Get all grammar for a specific unit.
+@bp.route('/lesson/<lesson_id>', methods=['GET'])
+def get_all_grammar_from_lesson(lesson_id: str):
+    """Get all grammar for a specific lesson.
     --- 
     tags:
         - Grammar
     parameters:
-        - name: unit_id
+        - name: lesson_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve grammar for
-          example: "unit_U1"
+          description: The ID of the lesson to retrieve grammar for
+          example: "lesson_L1"
     responses:
         200:
             description: A list of grammar items
@@ -55,7 +55,7 @@ def get_all_grammar_from_unit(unit_id: str):
                     type: object
                     description: "A Grammar object"
     """
-    grammar = grammar_service.get_all(unit_id=unit_id, as_dict=True)
+    grammar = grammar_service.get_all(lesson_id=lesson_id, as_dict=True)
     return jsonify(grammar)
 
 
@@ -102,11 +102,11 @@ def create_grammar():
             type: object
             description: Grammar data
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: true
-                    description: "The ID of the unit the grammar belongs to"
+                    description: "The ID of the lesson the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"
@@ -207,11 +207,11 @@ def update_grammar(grammar_id: str):
             type: object
             description: Grammar data
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: false
-                    description: "The ID of the unit the grammar belongs to"
+                    description: "The ID of the lesson the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"

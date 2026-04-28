@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAdd, faTrash } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
 
-export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Vocabulary; unit_id: string}) {
+export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vocabulary; lesson_id: string}) {
     const router = useRouter();
     const isUpdate = Boolean(vocabulary);
 
@@ -29,7 +29,7 @@ export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Voca
                 audio_files: []
             },
             example_sentences: [],
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
     } else {
         vocabularyData = vocabulary;
@@ -66,7 +66,7 @@ export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Voca
                 audio_files: wordAudioUrl
             },
             example_sentences: exampleSentences,          
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
         console.log("Creating vocabulary with data:", element);
         
@@ -77,7 +77,7 @@ export default function VocabularyForm({vocabulary, unit_id}: {vocabulary?: Voca
                 await createVocabulary(element);
             }
 
-            router.push(`/languages/${languageId}/unit/${unit_id}`);
+            router.push(`/languages/${languageId}/lesson/${lesson_id}`);
             router.refresh();
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} vocabulary:`, error);

@@ -101,6 +101,7 @@ CREATE TABLE language (
         WHEN score <= 90 THEN 'advanced'
         ELSE 'fluent'
     END) VIRTUAL,
+    current_lesson TEXT,
     FOREIGN KEY (user_id) REFERENCES user(id),
     UNIQUE (user_id, name)
 );
@@ -504,8 +505,8 @@ INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
 -- 4) Language and lesson
 -- ============================================================================
 
-INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, native_name, flag)
-SELECT id, 'user_0', description, level, score, last_seen, name, native_name, flag
+INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, native_name, flag, current_lesson)
+SELECT id, 'user_0', description, level, score, last_seen, name, native_name, flag, current_unit
 FROM old_language;
 
 CREATE TEMP TABLE lesson_id_map AS
@@ -613,7 +614,7 @@ CREATE TEMP TABLE passage_id_map AS
 SELECT
     src.old_passage_id,
     src.language_id,
-    'passage_P' || ROW_NUMBER() OVER (ORDER BY src.language_id, src.old_passage_id) AS new_id
+    'pass_P' || ROW_NUMBER() OVER (ORDER BY src.language_id, src.old_passage_id) AS new_id
 FROM (
     SELECT old_passage_id, language_id
     FROM passage_usage_language
@@ -784,6 +785,66 @@ SELECT 'vocabulary',  id, 'source_0' FROM vocabulary
 UNION ALL SELECT 'grammar',     id, 'source_0' FROM grammar
 UNION ALL SELECT 'calligraphy', id, 'source_0' FROM calligraphy
 UNION ALL SELECT 'exercise',    id, 'source_0' FROM exercise;
+
+-- Word score: average of all vocabulary features referencing this word
+UPDATE word
+SET score = (
+    SELECT CAST(ROUND(AVG(v.score)) AS INTEGER)
+    FROM vocabulary v
+    WHERE v.word_id = word.id
+),
+last_seen_at = (
+    SELECT MAX(v.last_seen_at)
+    FROM vocabulary v
+    WHERE v.word_id = word.id
+)
+WHERE EXISTS (SELECT 1 FROM vocabulary v WHERE v.word_id = word.id);
+
+-- Character score: average of all calligraphy features referencing this character
+UPDATE character
+SET score = (
+    SELECT CAST(ROUND(AVG(c.score)) AS INTEGER)
+    FROM calligraphy c
+    WHERE c.character_id = character.id
+),
+last_seen_at = (
+    SELECT MAX(c.last_seen_at)
+    FROM calligraphy c
+    WHERE c.character_id = character.id
+)
+WHERE EXISTS (SELECT 1 FROM calligraphy c WHERE c.character_id = character.id);
+
+-- Passage score: average across all features that use it as an example sentence
+UPDATE passage
+SET score = (
+    SELECT CAST(ROUND(AVG(combined.score)) AS INTEGER)
+    FROM (
+        SELECT v.score FROM vocabulary v
+        JOIN vocabulary_example_sentence ves ON ves.vocabulary_id = v.id
+        WHERE ves.passage_id = passage.id
+        UNION ALL
+        SELECT g.score FROM grammar g
+        JOIN grammar_example_sentence ges ON ges.grammar_id = g.id
+        WHERE ges.passage_id = passage.id
+    ) combined
+),
+last_seen_at = (
+    SELECT MAX(combined.last_seen_at)
+    FROM (
+        SELECT v.last_seen_at FROM vocabulary v
+        JOIN vocabulary_example_sentence ves ON ves.vocabulary_id = v.id
+        WHERE ves.passage_id = passage.id
+        UNION ALL
+        SELECT g.last_seen_at FROM grammar g
+        JOIN grammar_example_sentence ges ON ges.grammar_id = g.id
+        WHERE ges.passage_id = passage.id
+    ) combined
+)
+WHERE EXISTS (
+    SELECT 1 FROM vocabulary_example_sentence ves WHERE ves.passage_id = passage.id
+    UNION ALL
+    SELECT 1 FROM grammar_example_sentence ges WHERE ges.passage_id = passage.id
+);
 
 -- ============================================================================
 -- 9) Cleanup

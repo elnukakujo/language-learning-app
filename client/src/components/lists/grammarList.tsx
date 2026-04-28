@@ -5,11 +5,11 @@ import NavButton from "../buttons/navButton";
 import Grammar from "@/interface/features/Grammar";
 
 export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
-    const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
+    const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
 
     const router = useRouter();
     const handleClick = (id: string) => {
-        router.push(`/languages/${language_id}/unit/${unit_id}/gram/${id}`);
+        router.push(`/languages/${language_id}/lesson/${lesson_id}/gram/${id}`);
     };
 
     const averageScore = gramProps.reduce((acc, item) => acc + item.score!, 0) / gramProps.length;
@@ -38,14 +38,14 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
                 </ul>
             }
             <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/gram/new`}
+                path = {`/languages/${language_id}/lesson/${lesson_id}/gram/new`}
             >
                 <span>Add New Grammar</span>
             </NavButton>
 
             {gramProps.length > 0 && (
                 <NavButton
-                    path={`/languages/${language_id}/unit/${unit_id}/gram/flashcard`}
+                    path={`/languages/${language_id}/lesson/${lesson_id}/gram/flashcard`}
                 >
                     <p>Flashcard Practice</p>
                 </NavButton>)

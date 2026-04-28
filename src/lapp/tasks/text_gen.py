@@ -112,7 +112,7 @@ def generate_missing_texts(app: Flask):
                         calligraphy_service.update(
                             calligraphy_id=feature.id,
                             data=CalligraphyDict(
-                                unit_id=feature.unit_id,
+                                lesson_id=feature.lesson_id,
                                 character=feature.character.to_dict(include_relations=False),
                                 example_word={"word": generated_text, "translation": "", "type": ""}
                             )
@@ -121,7 +121,7 @@ def generate_missing_texts(app: Flask):
                         vocabulary_service.update(
                             voc_id=feature.id,
                             data=VocabularyDict(
-                                unit_id=feature.unit_id,
+                                lesson_id=feature.lesson_id,
                                 word=feature.word.to_dict(include_relations=False),
                                 example_sentences=[
                                     {"text": generated_text, "translation": ""}

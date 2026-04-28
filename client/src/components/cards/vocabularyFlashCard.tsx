@@ -141,7 +141,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
             )}
             {graded && currentIndex === vocabularies.length - 1 && (
                 <BackButton>
-                    <p>Back to Unit</p>
+                    <p>Back to Lesson</p>
                 </BackButton>
             )}
         </div>

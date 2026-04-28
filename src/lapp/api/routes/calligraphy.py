@@ -33,19 +33,19 @@ def get_all_calligraphy_from_language(language_id: str):
     return jsonify(calligraphy)
 
 
-@bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_calligraphy_from_unit(unit_id: str):
-    """Get all calligraphy for a specific unit.
+@bp.route('/lesson/<lesson_id>', methods=['GET'])
+def get_all_calligraphy_from_lesson(lesson_id: str):
+    """Get all calligraphy for a specific lesson.
     ---
     tags:
         - Calligraphy
     parameters:
-        - name: unit_id
+        - name: lesson_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve calligraphy from
-          example: "unit_U1"
+          description: The ID of the lesson to retrieve calligraphy from
+          example: "lesson_L1"
     responses:
         200:
             description: List of calligraphy
@@ -55,7 +55,7 @@ def get_all_calligraphy_from_unit(unit_id: str):
                     type: object
                     description: calligraphy object    
     """
-    calligraphy = calligraphy_service.get_all(unit_id=unit_id, as_dict=True)
+    calligraphy = calligraphy_service.get_all(lesson_id=lesson_id, as_dict=True)
     return jsonify(calligraphy)
 
 
@@ -101,10 +101,10 @@ def create_calligraphy():
           schema:
               type: object
               properties:
-                  unit_id:
+                  lesson_id:
                       type: string
-                      example: "unit_U1"
-                      description: The ID of the unit the calligraphy belongs to
+                      example: "lesson_L1"
+                      description: The ID of the lesson the calligraphy belongs to
                       required: true
                   character:
                       type: object
@@ -241,11 +241,11 @@ def update_calligraphy(calligraphy_id: str):
           schema:
               type: object
               properties:
-                  unit_id:
+                  lesson_id:
                       type: string
-                      example: "unit_U1"
+                      example: "lesson_L1"
                       required: false
-                      description: The ID of the unit the calligraphy belongs to
+                      description: The ID of the lesson the calligraphy belongs to
                   character:
                       type: object
                       required: false

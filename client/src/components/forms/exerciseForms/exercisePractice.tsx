@@ -44,7 +44,7 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
                 <section>
                     <p>You have completed all exercises!</p>
                     <BackButton>
-                        <p>Back to Unit</p>
+                        <p>Back to Lesson</p>
                     </BackButton>
                 </section>
             )}

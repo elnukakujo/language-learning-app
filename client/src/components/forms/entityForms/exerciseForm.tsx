@@ -17,7 +17,7 @@ import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
 import type Exercise from "@/interface/features/Exercise";
 
-export interface UnitElements {
+export interface LessonElements {
     vocabularies: Vocabulary[];
     grammars: Grammar[];
     calligraphies: Calligraphy[];
@@ -38,12 +38,12 @@ const EXERCISE_TYPE_OPTIONS: NonNullable<Exercise["exercise_type"]>[] = [
 
 export default function ExerciseForm({
     exercise,
-    unit_id,
-    unitElements,
+    lesson_id,
+    lessonElements,
 }: {
     exercise?: Exercise;
-    unit_id: string;
-    unitElements: UnitElements;
+    lesson_id: string;
+    lessonElements: LessonElements;
 }) {
     const router = useRouter();
     const isUpdate = Boolean(exercise);
@@ -60,7 +60,7 @@ export default function ExerciseForm({
             vocabulary_ids: [],
             grammar_ids: [],
             calligraphy_ids: [],
-            unit_id,
+            lesson_id,
         };
     } else {
         exerciseData = exercise;
@@ -175,7 +175,7 @@ export default function ExerciseForm({
             image_files: imageUrl,
             audio_files: audioUrl,
             answer: normalizedAnswer,
-            unit_id,
+            lesson_id,
             vocabulary_ids: vocAssociated,
             grammar_ids: gramAssociated,
             calligraphy_ids: callAssociated,
@@ -189,10 +189,10 @@ export default function ExerciseForm({
         try {
             if (isUpdate) {
                 await updateExercise(exerciseData.id!, element);
-                router.push(`/languages/${languageId}/unit/${unit_id}/ex/${exerciseData.id}/`);
+                router.push(`/languages/${languageId}/lesson/${lesson_id}/ex/${exerciseData.id}/`);
             } else {
                 await createExercise(element);
-                router.push(`/languages/${languageId}/unit/${unit_id}`);
+                router.push(`/languages/${languageId}/lesson/${lesson_id}`);
             }
 
             router.refresh();
@@ -272,7 +272,7 @@ export default function ExerciseForm({
 
                     <section className="flex flex-col space-y-4 w-full items-baseline">
                         <OpenCloseMenu
-                            elements={unitElements.vocabularies.map((item) => ({
+                            elements={lessonElements.vocabularies.map((item) => ({
                                 id: item.id!,
                                 value: item.word.word + " - " + item.word.translation,
                             }))}
@@ -281,13 +281,13 @@ export default function ExerciseForm({
                             label="Associated Vocabulary"
                         />
                         <OpenCloseMenu
-                            elements={unitElements.grammars.map((item) => ({ id: item.id!, value: item.title }))}
+                            elements={lessonElements.grammars.map((item) => ({ id: item.id!, value: item.title }))}
                             selectedElements={gramAssociated}
                             setSelectedElements={setGramAssociated}
                             label="Associated Grammar"
                         />
                         <OpenCloseMenu
-                            elements={unitElements.calligraphies.map((item) => ({
+                            elements={lessonElements.calligraphies.map((item) => ({
                                 id: item.id!,
                                 value: item.character.character + " - " + item.character.phonetic,
                             }))}

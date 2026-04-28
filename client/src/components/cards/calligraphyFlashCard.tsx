@@ -143,7 +143,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
             )}
             {graded && currentIndex === calligraphies.length - 1 && (
                 <BackButton>
-                    <p>Back to Unit</p>
+                    <p>Back to Lesson</p>
                 </BackButton>
             )}
         </div>

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 from ...schemas.features import CalligraphyDict
 from ...models.features import Calligraphy
 from ...core.database import db_manager
-from ..containers import UnitService, LanguageService
+from ..containers import LessonService, LanguageService
 from ..components import CharacterService, WordService
 from ...utils import update_score
 
-unit_service = UnitService()
+lesson_service = LessonService()
 language_service = LanguageService()
 character_service = CharacterService()
 word_service = WordService()
@@ -32,17 +32,17 @@ class CalligraphyService:
     def get_all(
         self,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Calligraphy] | list[dict]:
         """
-        Get all calligraphies for a specific language or unit.
+        Get all calligraphies for a specific language or lesson.
 
         Args:
             language_id (Optional[str]=None): The id of the language to get all the calligraphies from
-            unit_id (Optional[str]=None): The id of the unit to get all the calligraphies from
+            lesson_id (Optional[str]=None): The id of the lesson to get all the calligraphies from
         Returns:
             List of Calligraphy objects
         """
@@ -51,29 +51,29 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
+            assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
             if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
+                lessons = lesson_service.get_all(language_id=language_id, session=session)
 
                 calligraphies = []
-                for unit in units:
+                for lesson in lessons:
                     calligraphies.extend(
                         db_manager.find_all(
                             model_class=Calligraphy,
-                            filters={'unit_id': unit.id},
+                            filters={'lesson_id': lesson.id},
                             session=session
                         )
                     )
                 return self._serialize_list(calligraphies, as_dict, include_relations)
-            elif unit_id:
+            elif lesson_id:
                 calligraphies = db_manager.find_all(
                     model_class=Calligraphy,
-                    filters={'unit_id': unit_id},
+                    filters={'lesson_id': lesson_id},
                     session=session
                 )
                 return self._serialize_list(calligraphies, as_dict, include_relations)
             else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+                raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -123,7 +123,7 @@ class CalligraphyService:
         self,
         level: str,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -133,7 +133,7 @@ class CalligraphyService:
         
         Args:
             language_id: The id of the language to filter Calligraphy items
-            unit_id: The id of the unit to filter Calligraphy items
+            lesson_id: The id of the lesson to filter Calligraphy items
             level: Calligraphy level (e.g., 'A1', 'B2')
         
         Returns:
@@ -144,30 +144,30 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
+            assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
 
             if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
+                lessons = lesson_service.get_all(language_id=language_id, session=session)
 
                 calligraphies = []
-                for unit in units:
+                for lesson in lessons:
                     calligraphies.extend(
                         db_manager.find_all(
                             model_class=Calligraphy,
-                            filters={'level':level ,'unit_id': unit.id},
+                            filters={'level':level ,'lesson_id': lesson.id},
                             session=session
                         )
                     )
                 return self._serialize_list(calligraphies, as_dict, include_relations)
-            elif unit_id:
+            elif lesson_id:
                 calligraphies = db_manager.find_all(
                     model_class=Calligraphy,
-                    filters={'level': level, 'unit_id': unit_id},
+                    filters={'level': level, 'lesson_id': lesson_id},
                     session=session
                 )
                 return self._serialize_list(calligraphies, as_dict, include_relations)
             else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+                raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -198,13 +198,14 @@ class CalligraphyService:
             session = db_manager.get_session()
         
         try:
-            unit = unit_service.get_by_id(data.unit_id, session=session)
+            lesson = lesson_service.get_by_id(data.lesson_id, session=session)
 
-            if not unit:
-                logger.warning(f"Cannot create Calligraphy item, unit not found: {data.unit_id}")
+            if not lesson:
+                logger.warning(f"Cannot create Calligraphy item, lesson not found: {data.lesson_id}")
                 return None
             
             # Create Character using CharacterService
+            data.character.language_id = lesson.language_id
             character = character_service.create(data.character, session=session)
             if not character:
                 logger.error(f"Failed to create character for calligraphy")
@@ -217,26 +218,26 @@ class CalligraphyService:
             # Create example_word using WordService if provided
             example_word = None
             if data.example_word:
+                data.example_word.language_id = lesson.language_id
                 example_word = word_service.create(data.example_word, session=session)
                 if not example_word:
                     logger.warning(f"Failed to create example_word for calligraphy")
-
-            # Ensure example_word is loaded in session
-            if example_word and not session.get(Calligraphy.example_word.property.mapper.class_, example_word.id):
-                raise ValueError(f"Example word not found in session after creation for calligraphy")
             
             calligraphy = Calligraphy(
                 id = db_manager.generate_new_id(
                     model_class=Calligraphy,
                     session=session
                 ),
-                **data.model_dump(exclude={'character', 'example_word'}, exclude_none=True)
+                **{
+                    k: v
+                    for k, v in data.model_dump(exclude={'character', 'example_word'}, exclude_none=True).items()
+                    if k != 'last_seen_at'
+                }
             )
 
             calligraphy.character_id = character.id
             calligraphy.character = character
-            calligraphy.example_word_id = example_word.id if example_word else None
-            calligraphy.example_word = example_word
+            calligraphy.example_words = [example_word] if example_word else []
             
             result = db_manager.insert(
                 obj=calligraphy,
@@ -289,6 +290,7 @@ class CalligraphyService:
             
             # Handle Character update through CharacterService if provided
             if data.character is not None:
+                data.character.language_id = existing.character.language_id if existing.character else None
                 updated_character = character_service.update(existing.character_id, data.character, session=session)
                 if not updated_character:
                     logger.error(f"Failed to update character for calligraphy: {calligraphy_id}")
@@ -297,19 +299,18 @@ class CalligraphyService:
             
             # Handle example_word update through WordService if provided
             if data.example_word is not None:
-                if existing.example_word_id:
-                    # Update existing word
-                    updated_word = word_service.update(existing.example_word_id, data.example_word, session=session)
+                data.example_word.language_id = existing.character.language_id if existing.character else None
+                existing_example_word = existing.example_words[0] if existing.example_words else None
+                if existing_example_word:
+                    updated_word = word_service.update(existing_example_word.id, data.example_word, session=session)
                     if updated_word:
-                        existing.example_word = updated_word
+                        existing.example_words = [updated_word]
                 else:
-                    # Create new word
                     new_word = word_service.create(data.example_word, session=session)
                     if new_word:
-                        existing.example_word_id = new_word.id
-                        existing.example_word = new_word
+                        existing.example_words = [new_word]
             else:
-                existing.example_word = None
+                existing.example_words = []
             
             
             # Remove nested objects from update_data
@@ -319,10 +320,11 @@ class CalligraphyService:
             update_data.pop('example_word', None)
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data.pop('last_seen_at', None)
             
             # Update the existing object's attributes
             for key, value in update_data.items():
-                if key not in ('character_id', 'example_word_id'):  # Don't overwrite if already set
+                if key not in ('character_id',):
                     setattr(existing, key, value)
             
             # Save to database
@@ -422,7 +424,7 @@ class CalligraphyService:
             )
             
             # Update last_seen
-            calligraphy.last_seen = date.today()
+            calligraphy.last_seen = datetime.utcnow()
             
             # Save changes
             result = db_manager.modify(calligraphy, session=session)
@@ -431,9 +433,9 @@ class CalligraphyService:
                 logger.info(f"Updated Calligraphy item {calligraphy_id} score: {result.score}")
 
             if calligraphy.score != previous_score:
-                if calligraphy.unit_id:
-                    unit_service.update_score(calligraphy.unit_id, session=session)
-                    logger.info(f"Updated unit {calligraphy.unit_id} score due to calligraphy {calligraphy_id}")
+                if calligraphy.lesson_id:
+                    lesson_service.update_score(calligraphy.lesson_id, session=session)
+                    logger.info(f"Updated lesson {calligraphy.lesson_id} score due to calligraphy {calligraphy_id}")
             
             
             

@@ -5,10 +5,10 @@ import NavButton from "../buttons/navButton";
 import Exercise from "@/interface/features/Exercise";
 
 export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
-    const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
+    const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
     const router = useRouter()
     const handleClick = () => {
-        router.push(`/languages/${language_id}/unit/${unit_id}/ex`)
+        router.push(`/languages/${language_id}/lesson/${lesson_id}/ex`)
     }
 
     const averageScore = exProps.reduce((acc, item) => acc + item.score!, 0) / exProps.length;
@@ -45,13 +45,13 @@ export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
                 </ul>
             }
             <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/ex/new`}
+                path = {`/languages/${language_id}/lesson/${lesson_id}/ex/new`}
             >
                 <span>Add New Exercise</span>
             </NavButton>
             {exProps.length > 0 && (
                 <NavButton 
-                    path={`/languages/${language_id}/unit/${unit_id}/ex/practice`}
+                    path={`/languages/${language_id}/lesson/${lesson_id}/ex/practice`}
                 >
                     <p>Exercise Practice</p>
                 </NavButton>)}

@@ -2,33 +2,22 @@ import logging
 from typing import Optional
 
 from sqlalchemy.orm import Session
-logger = logging.getLogger(__name__)
 
-from ...schemas.components import WordDict
-from ...models.components import Word
 from ...core.database import db_manager
+from ...models.components import Word
+from ...schemas.components import WordDict
+
+logger = logging.getLogger(__name__)
 
 
 class WordService:
     def get_all(self, session: Optional[Session] = None) -> list[Word]:
-        """
-        Get all words.
-
-        Args:
-            None
-
-        Returns:
-            List of Word objects
-        """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
+
         try:
-            return db_manager.find_all(
-                model_class=Word,
-                session=session
-            )
+            return db_manager.find_all(model_class=Word, session=session)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -39,24 +28,15 @@ class WordService:
                 session.close()
 
     def get_by_id(self, word_id: str, session: Optional[Session] = None) -> Word | None:
-        """
-        Get a word by its ID.
-
-        Args:
-            word_id: The ID of the word to retrieve.
-
-        Returns:
-            Word object if found, else None
-        """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
+
         try:
             return db_manager.find_by_attr(
                 model_class=Word,
-                attr_values={'id': word_id},
-                session=session
+                attr_values={"id": word_id},
+                session=session,
             )
         except Exception as e:
             if owns_session:
@@ -67,74 +47,56 @@ class WordService:
             if owns_session:
                 session.close()
 
-    def get_by_word(self, word: str, session: Optional[Session] = None) -> Word | None:
-        """
-        Get a word by its word value.
-
-        Args:
-            word: The word string to retrieve.
-
-        Returns:
-            Word object if found, else None
-        """
+    def get_by_word(
+        self,
+        word: str,
+        language_id: Optional[str] = None,
+        session: Optional[Session] = None,
+    ) -> Word | None:
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
+
         try:
+            filters = {"word": word}
+            if language_id:
+                filters["language_id"] = language_id
             return db_manager.find_by_attr(
                 model_class=Word,
-                attr_values={'word': word},
-                session=session
+                attr_values=filters,
+                session=session,
             )
         except Exception as e:
             if owns_session:
                 session.rollback()
-            logger.error(f"Failed to get word by word value '{word}': {e}")
+            logger.error(f"Failed to get word by value '{word}': {e}")
             raise
         finally:
             if owns_session:
                 session.close()
 
     def create(self, data: WordDict, session: Optional[Session] = None) -> Word | None:
-        """
-        Create a new word.
-
-        Args:
-            data: WordDict containing word details.
-
-        Returns:
-            Created Word object if successful, else None
-        """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
+
         try:
-            if existing := self.get_by_word(data.word, session=session):
+            if existing := self.get_by_word(data.word, language_id=data.language_id, session=session):
                 logger.info(f"Word already exists: {data.word} with ID: {existing.id}")
-                    
                 return self.update(word_id=existing.id, data=data, session=session)
-            
-            if data.id is not None:
-                if existing := self.get_by_id(data.id, session=session):
-                    logger.info(f"Word with provided ID already exists: {data.id} with word: {existing.word}")
-                    return self.update(word_id=data.id, data=data, session=session)
-                else:
-                    logger.warning(f"ID provided for new word will be ignored: {data.id}")
-                    data.id = None
-            
+
+            word_data = data.model_dump(exclude_none=True)
+            word_data.pop("last_seen_at", None)
+            if "type" in word_data:
+                word_data["word_type"] = word_data.pop("type")
+            if "gender" in word_data:
+                word_data["word_gender"] = word_data.pop("gender")
+
             word = Word(
                 id=db_manager.generate_new_id(model_class=Word, session=session),
-                **data.model_dump(exclude_none=True)
+                **word_data,
             )
             result = db_manager.insert(obj=word, session=session)
-
-            if result:
-                logger.info(f"Created new word with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new word: {word.word}")
-
             return result
         except Exception as e:
             if owns_session:
@@ -146,45 +108,36 @@ class WordService:
                 session.close()
 
     def update(self, word_id: str, data: WordDict, session: Optional[Session] = None) -> Word | None:
-        """
-        Update an existing word.
-
-        Args:
-            word_id: The ID of the word to update.
-            data: WordDict containing updated word details.
-
-        Returns:
-            Updated Word object if successful, else None
-        """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
+
         try:
             existing = self.get_by_id(word_id, session=session)
-
             if not existing:
                 logger.warning(f"Word not found: {word_id}")
                 return None
 
-            # Update the existing object's attributes
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data = data.model_dump(exclude_none=True)
+            update_data.pop("id", None)
+            update_data.pop("score", None)
+            update_data.pop("last_seen", None)
+            update_data.pop("last_seen_at", None)
+            if "type" in update_data:
+                update_data["word_type"] = update_data.pop("type")
+            if "gender" in update_data:
+                update_data["word_gender"] = update_data.pop("gender")
+
+            incoming_word = update_data.get("word")
+            if incoming_word:
+                conflict = self.get_by_word(incoming_word, language_id=existing.language_id, session=session)
+                if conflict and conflict.id != word_id:
+                    raise ValueError(f"Word with value '{incoming_word}' already exists.")
 
             for key, value in update_data.items():
                 setattr(existing, key, value)
 
-            # Save to database
-            result = db_manager.modify(existing, session=session)
-
-            if result:
-                logger.info(f"Updated word: {word_id}")
-            else:
-                logger.error(f"Failed to update word: {word_id}")
-
-            return result
+            return db_manager.modify(existing, session=session)
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -195,36 +148,16 @@ class WordService:
                 session.close()
 
     def delete(self, word_id: str, session: Optional[Session] = None) -> bool:
-        """
-        Delete a word by its ID.
-
-        Args:
-            word_id: The ID of the word to delete.
-
-        Returns:
-            True if deletion was successful, else False
-        """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
-        
-        try:
-            # Check if word exists before deleting
-            existing = self.get_by_id(word_id, session=session)
 
+        try:
+            existing = self.get_by_id(word_id, session=session)
             if not existing:
                 logger.warning(f"Word not found: {word_id}")
                 return False
-
-            # Delete from database
-            success = db_manager.delete(existing, session=session)
-
-            if success:
-                logger.info(f"Deleted word: {word_id}")
-            else:
-                logger.error(f"Failed to delete word: {word_id}")
-
-            return success
+            return db_manager.delete(existing, session=session)
         except Exception as e:
             if owns_session:
                 session.rollback()

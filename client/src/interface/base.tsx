@@ -8,11 +8,14 @@ export interface BaseComponent extends BaseMediaFiles {
 }
 
 export interface BaseFeature extends BaseContainer, BaseMediaFiles {
-    unit_id: string;
+    lesson_id: string;
+    lesson_id?: string;
 }
 
 export interface BaseContainer {
     id?: string;
     score?: number;
     last_seen?: string; // ISO date string
+    last_seen_at?: string;
+    created_at?: string;
 }

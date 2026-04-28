@@ -1,4 +1,4 @@
-from .containers import LanguageService, UnitService
+from .containers import LanguageService, LessonService
 from .components import CharacterService, WordService, PassageService
 from .features import VocabularyService, CalligraphyService, GrammarService, ExerciseService
 from .media import MediaService
@@ -9,7 +9,7 @@ from .evaluator import EvaluatorService
 
 __all__ = [
     "LanguageService",
-    "UnitService",
+    "LessonService",
     "CharacterService",
     "WordService",
     "PassageService",

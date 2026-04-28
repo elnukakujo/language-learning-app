@@ -1,5 +1,5 @@
 import type Language from "@/interface/containers/Language";
-import type Unit from "@/interface/containers/Unit";
+import type Lesson from "@/interface/containers/Lesson";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import type Exercise from "@/interface/features/Exercise";
 import type Grammar from "@/interface/features/Grammar";
@@ -22,12 +22,12 @@ export async function getLanguageById(languageId: string) {
 
 export async function getLanguageData(languageId: string) {
   const language = await getLanguageById(languageId);
-  const units = await fetch(`${BASE_URL}/api/units/all/${languageId}`);
-  if (!units.ok) throw new Error(`Failed to fetch units for language ${languageId}`);
-  const unitsData = await units.json();
+  const lessons = await fetch(`${BASE_URL}/api/lessons/all/${languageId}`);
+  if (!lessons.ok) throw new Error(`Failed to fetch lessons for language ${languageId}`);
+  const lessonsData = await lessons.json();
   return {
     language,
-    units: unitsData,
+    lessons: lessonsData,
   };
 }
 
@@ -61,47 +61,47 @@ export async function deleteLanguage(languageId: string) {
   if (!res.ok) throw new Error("Failed to delete language");
 }
 
-// ============= Unit API =============
-export async function getUnitData(unit_id: string) {
-  const res = await fetch(`${BASE_URL}/api/units/${unit_id}`);
-  if (!res.ok) throw new Error(`Failed to fetch data for unit ${unit_id}`);
+// ============= Lesson API =============
+export async function getLessonById(lesson_id: string) {
+  const res = await fetch(`${BASE_URL}/api/lessons/${lesson_id}`);
+  if (!res.ok) throw new Error(`Failed to fetch data for lesson ${lesson_id}`);
   return res.json();
 }
 
-export async function getAllUnits(languageId: string) {
-  const res = await fetch(`${BASE_URL}/api/units/all/${languageId}`);
-  if (!res.ok) throw new Error(`Failed to fetch units for language ${languageId}`);
+export async function getAllLessons(languageId: string) {
+  const res = await fetch(`${BASE_URL}/api/lessons/all/${languageId}`);
+  if (!res.ok) throw new Error(`Failed to fetch lessons for language ${languageId}`);
   return res.json();
 }
 
-export async function createUnit(data: Partial<Unit>) {
+export async function createLesson(data: Partial<Lesson>) {
   if (data.id) {
     data.id = undefined;
   }
-  const res = await fetch(`${BASE_URL}/api/units/`, {
+  const res = await fetch(`${BASE_URL}/api/lessons/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create unit");
+  if (!res.ok) throw new Error("Failed to create lesson");
   return res.json();
 }
 
-export async function updateUnit(unitId: string, data: Partial<Unit>) {
-  const res = await fetch(`${BASE_URL}/api/units/${unitId}`, {
+export async function updateLesson(lessonId: string, data: Partial<Lesson>) {
+  const res = await fetch(`${BASE_URL}/api/lessons/${lessonId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update unit");
+  if (!res.ok) throw new Error("Failed to update lesson");
   return res.json();
 }
 
-export async function deleteUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/api/units/${unitId}`, {
+export async function deleteLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/lessons/${lessonId}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete unit");
+  if (!res.ok) throw new Error("Failed to delete lesson");
 }
 
 // ============= Vocabulary API =============
@@ -117,9 +117,9 @@ export async function getVocabularyByLanguage(languageId: string) {
   return res.json();
 }
 
-export async function getVocabularyByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/api/vocabulary/unit/${unitId}`);
-  if (!res.ok) throw new Error(`Failed to fetch vocabulary for unit ${unitId}`);
+export async function getVocabularyByLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/lesson/${lessonId}`);
+  if (!res.ok) throw new Error(`Failed to fetch vocabulary for lesson ${lessonId}`);
   return res.json();
 }
 
@@ -166,9 +166,9 @@ export async function getGrammarByLanguage(languageId: string) {
   return res.json();
 }
 
-export async function getGrammarByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/api/grammar/unit/${unitId}`);
-  if (!res.ok) throw new Error(`Failed to fetch grammar for unit ${unitId}`);
+export async function getGrammarByLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/grammar/lesson/${lessonId}`);
+  if (!res.ok) throw new Error(`Failed to fetch grammar for lesson ${lessonId}`);
   return res.json();
 }
 
@@ -215,9 +215,9 @@ export async function getCalligraphyByLanguage(languageId: string) {
   return res.json();
 }
 
-export async function getCalligraphyByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/api/calligraphy/unit/${unitId}`);
-  if (!res.ok) throw new Error(`Failed to fetch calligraphy for unit ${unitId}`);
+export async function getCalligraphyByLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/calligraphy/lesson/${lessonId}`);
+  if (!res.ok) throw new Error(`Failed to fetch calligraphy for lesson ${lessonId}`);
   return res.json();
 }
 
@@ -264,9 +264,9 @@ export async function getExercisesByLanguage(languageId: string) {
   return res.json();
 }
 
-export async function getExercisesByUnit(unitId: string) {
-  const res = await fetch(`${BASE_URL}/api/exercise/unit/${unitId}`);
-  if (!res.ok) throw new Error(`Failed to fetch exercises for unit ${unitId}`);
+export async function getExercisesByLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/exercise/lesson/${lessonId}`);
+  if (!res.ok) throw new Error(`Failed to fetch exercises for lesson ${lessonId}`);
   return res.json();
 }
 
@@ -405,17 +405,17 @@ export async function uploadAudio(file: File, temporary = false) {
 
 export async function getElementbyId(element_id: string) {
   // Try to determine element type from ID prefix and fetch accordingly
-  if (element_id.startsWith('lang_')) {
+  if (element_id.toLowerCase().startsWith('lang_')) {
     return getLanguageById(element_id);
-  } else if (element_id.startsWith('unit_')) {
-    return getUnitData(element_id);
-  } else if (element_id.startsWith('voc_')) {
+  } else if (element_id.toLowerCase().startsWith('lesson_')) {
+    return getLessonById(element_id);
+  } else if (element_id.toLowerCase().startsWith('voc_')) {
     return getVocabularyById(element_id);
-  } else if (element_id.startsWith('gram_')) {
+  } else if (element_id.toLowerCase().startsWith('gram_')) {
     return getGrammarById(element_id);
-  } else if (element_id.startsWith('call_')) {
+  } else if (element_id.toLowerCase().startsWith('call_')) {
     return getCalligraphyById(element_id);
-  } else if (element_id.startsWith('ex_')) {
+  } else if (element_id.toLowerCase().startsWith('ex_')) {
     return getExerciseById(element_id);
   }
   throw new Error(`Unknown element type for ID: ${element_id}`);
@@ -423,7 +423,7 @@ export async function getElementbyId(element_id: string) {
 
 const typeAliases: Record<string, string> = {
   lang: "Language",
-  unit: "Unit",
+  lesson: "Lesson",
   voc: "Vocabulary",
   gram: "Grammar",
   char: "Calligraphy",
@@ -441,7 +441,7 @@ function normalizeType(type?: string) {
 }
 
 export async function updateElement(
-  data: Calligraphy | Grammar | Vocabulary | Unit | Language | Exercise
+  data: Calligraphy | Grammar | Vocabulary | Lesson | Language | Exercise
 ) {
   const { id, type_element } = data as any;
   const normalizedType = normalizeType(type_element);
@@ -453,8 +453,8 @@ export async function updateElement(
   // Route to appropriate update function based on type_element
   if (normalizedType === "Language" || id.startsWith("lang_")) {
     return updateLanguage(id, data as Partial<Language>);
-  } else if (normalizedType === "Unit" || id.startsWith("unit_")) {
-    return updateUnit(id, data as Partial<Unit>);
+  } else if (normalizedType === "Lesson" || id.startsWith("lesson_")) {
+    return updateLesson(id, data as Partial<Lesson>);
   } else if (normalizedType === "Vocabulary" || id.startsWith("voc_")) {
     return updateVocabulary(id, data as Partial<Vocabulary>);
   } else if (normalizedType === "Grammar" || id.startsWith("gram_")) {
@@ -470,17 +470,17 @@ export async function updateElement(
 
 export async function deleteElement(element_id: string) {
   // Determine element type from ID prefix and delete accordingly
-  if (element_id.startsWith('lang_')) {
+  if (element_id.toLowerCase().startsWith('lang_')) {
     return deleteLanguage(element_id);
-  } else if (element_id.startsWith('unit_')) {
-    return deleteUnit(element_id);
-  } else if (element_id.startsWith('voc_')) {
+  } else if (element_id.toLowerCase().startsWith('lesson_')) {
+    return deleteLesson(element_id);
+  } else if (element_id.toLowerCase().startsWith('voc_')) {
     return deleteVocabulary(element_id);
-  } else if (element_id.startsWith('gram_')) {
+  } else if (element_id.toLowerCase().startsWith('gram_')) {
     return deleteGrammar(element_id);
-  } else if (element_id.startsWith('call_')) {
+  } else if (element_id.toLowerCase().startsWith('call_')) {
     return deleteCalligraphy(element_id);
-  } else if (element_id.startsWith('ex_')) {
+  } else if (element_id.toLowerCase().startsWith('ex_')) {
     return deleteExercise(element_id);
   }
   throw new Error(`Unknown element type for ID: ${element_id}`);

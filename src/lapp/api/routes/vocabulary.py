@@ -35,20 +35,19 @@ def get_all_vocabulary_from_language(language_id: str):
     vocabulary = vocabulary_service.get_all(language_id=language_id, as_dict=True)
     return jsonify(vocabulary)
 
-
-@bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_vocabulary_from_unit(unit_id: str):
-    """Get all vocabulary for a specific unit.
+@bp.route('/lesson/<lesson_id>', methods=['GET'])
+def get_all_vocabulary_from_lesson(lesson_id: str):
+    """Get all vocabulary for a specific lesson.
     ---
     tags:
         - Vocabulary
     parameters:
-        - name: unit_id
+        - name: lesson_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve vocabulary from
-          example: "unit_U1"
+          description: The ID of the lesson to retrieve vocabulary from
+          example: "lesson_L1"
     responses:
         200:
             description: List of vocabulary
@@ -58,7 +57,7 @@ def get_all_vocabulary_from_unit(unit_id: str):
                     type: object
                     description: Vocabulary object
     """
-    vocabulary = vocabulary_service.get_all(unit_id=unit_id, as_dict=True)
+    vocabulary = vocabulary_service.get_all(lesson_id=lesson_id, as_dict=True)
     return jsonify(vocabulary)
 
 
@@ -103,9 +102,9 @@ def create_vocabulary():
           schema:
               type: object
               properties:
-                  unit_id:
+                  lesson_id:
                       type: string
-                      example: "unit_U1"
+                      example: "lesson_L1"
                       required: true
                   word:
                       type: object
@@ -230,9 +229,9 @@ def update_vocabulary(vocabulary_id: str):
           schema:
               type: object
               properties:
-                  unit_id:
+                  lesson_id:
                       type: string
-                      example: "unit_U1"
+                      example: "lesson_L1"
                       required: true
                   word:
                       type: object

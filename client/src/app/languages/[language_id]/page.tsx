@@ -1,14 +1,14 @@
 import { getLanguageData } from "@/api";
 
-import UnitOverviewCard from "@/components/cards/unitOverviewCard";
-import type Unit from "@/interface/containers/Unit";
+import LessonOverviewCard from "@/components/cards/lessonOverviewCard";
+import type Lesson from "@/interface/containers/Lesson";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;
-    const { language, units } = await getLanguageData(language_id);
-    const hasUnits = units && units.length > 0;
+    const { language, lessons } = await getLanguageData(language_id);
+    const hasLessons = lessons && lessons.length > 0;
 
     return (
         <main className="flex flex-col space-y-4">
@@ -17,10 +17,10 @@ export default async function Language({ params }: { params: { language_id: stri
                 {language.level && <p>Language Level: {language.level}</p>}
                 <p>Language Score: {language.score.toFixed(1)}/100</p>
                 <p>Last Seen: {new Date(language.last_seen).toLocaleDateString()}</p>
-                {language.current_unit && <p>Current Unit ID: {language.current_unit}</p>}
+                {language.current_lesson && <p>Current Lesson ID: {language.current_lesson}</p>}
                 <nav className="flex flex-row space-x-4">
-                    {language.current_unit && <NavButton path={`/languages/${language_id}/unit/${language.current_unit}`}>
-                        <p>Go to Current Unit</p>
+                    {language.current_lesson && <NavButton path={`/languages/${language_id}/lesson/${language.current_lesson}`}>
+                        <p>Go to Current Lesson</p>
                     </NavButton>}
                     <NavButton path={`/languages/${language_id}/update`}>
                         <p>Update Language</p>
@@ -30,14 +30,14 @@ export default async function Language({ params }: { params: { language_id: stri
             </header>
             <article className="flex flex-col space-y-4">
                 {
-                    hasUnits && 
+                    hasLessons && 
                     (
                         <section>
-                            <h2>Units</h2>
+                            <h2>Lessons</h2>
                             <ul className="flex flex-col space-y-2">
-                                {units.map((unit: Unit) => (
-                                    <li key={unit.id}>
-                                        <UnitOverviewCard unit={unit} />
+                                {lessons.map((lesson: Lesson) => (
+                                    <li key={lesson.id}>
+                                        <LessonOverviewCard lesson={lesson} />
                                     </li>
                                 ))}
                             </ul>
@@ -45,8 +45,8 @@ export default async function Language({ params }: { params: { language_id: stri
                     )
                 }
                 
-                <NavButton path={`/languages/${language_id}/unit/new`}>
-                    <p>Create New Unit</p>
+                <NavButton path={`/languages/${language_id}/lesson/new`}>
+                    <p>Create New Lesson</p>
                 </NavButton>
             </article>
         </main>

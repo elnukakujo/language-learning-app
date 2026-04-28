@@ -1,4 +1,3 @@
-from datetime import date
 import logging
 from typing import Optional
 
@@ -84,11 +83,7 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_all(
-                model_class=Passage,
-                filters={'vocabulary_id': vocabulary_id},
-                session=session
-            )
+            return session.query(Passage).filter(Passage.vocabulary.any(id=vocabulary_id)).all()
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -97,7 +92,7 @@ class PassageService:
         finally:
             if owns_session:
                 session.close()
-    def get_by_text(self, text: str, session: Optional[Session] = None) -> Passage | None:
+    def get_by_text(self, text: str, language_id: Optional[str] = None, session: Optional[Session] = None) -> Passage | None:
         """
         Get a passage by its text.
 
@@ -112,9 +107,12 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
+            filters = {'text': text}
+            if language_id:
+                filters['language_id'] = language_id
             return db_manager.find_by_attr(
                 model_class=Passage,
-                attr_values={'text': text},
+                attr_values=filters,
                 session=session
             )
         except Exception as e:
@@ -141,11 +139,7 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
-            return db_manager.find_all(
-                model_class=Passage,
-                filters={'grammar_id': grammar_id},
-                session=session
-            )
+            return session.query(Passage).filter(Passage.grammar.any(id=grammar_id)).all()
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -170,7 +164,7 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
-            if existing := self.get_by_text(data.text, session=session):
+            if existing := self.get_by_text(data.text, language_id=data.language_id, session=session):
                 logger.info(f"Passage already exists: {data.text} with ID: {existing.id}")
 
                 if existing not in session:
@@ -189,7 +183,7 @@ class PassageService:
             
             passage = Passage(
                 id=db_manager.generate_new_id(model_class=Passage, session=session),
-                **data.model_dump(exclude_none=True)
+                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'last_seen_at'}
             )
             result = db_manager.insert(obj=passage, session=session)
 
@@ -235,8 +229,9 @@ class PassageService:
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data.pop('last_seen_at', None)
 
-            if (existing_passage := self.get_by_text(update_data['text'], session=session)) and existing_passage.id != passage_id:
+            if (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
                 logger.warning(f"Passage with value '{update_data['text']}' already exists.")
                 raise ValueError(f"Passage with value '{update_data['text']}' already exists.")
 

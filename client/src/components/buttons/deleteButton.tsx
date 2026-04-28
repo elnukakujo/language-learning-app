@@ -14,7 +14,7 @@ export default function DeleteButton({ element_id, children }: { element_id: str
             await deleteElement(element_id);
             const pathname = window.location.pathname;
             let parentPath = pathname.substring(0, pathname.lastIndexOf('/')) || '/';
-            while (/(voc|gram|call|unit|languages)$/.test(parentPath)) {
+            while (/(voc|gram|call|lesson|languages)$/.test(parentPath)) {
                 parentPath = parentPath.substring(0, parentPath.lastIndexOf('/')) || '/';
             }
             router.push(parentPath);

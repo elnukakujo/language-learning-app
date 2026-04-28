@@ -84,7 +84,7 @@ def register_blueprints(app: Flask) -> None:
     
     from ..api.routes import (
         language_bp,
-        unit_bp,
+        lesson_bp,
         vocabulary_bp,
         calligraphy_bp,
         grammar_bp,
@@ -97,7 +97,7 @@ def register_blueprints(app: Flask) -> None:
     # Register blueprints
     blueprints = [
         language_bp,
-        unit_bp,
+        lesson_bp,
         vocabulary_bp,
         calligraphy_bp,
         grammar_bp,

@@ -8,10 +8,21 @@ class WordDict(BaseComponentDict):
     translation: str
     phonetic: Optional[str] = None
     type: Optional[str] = None
+    word_type: Optional[str] = None
     gender: Optional[str] = None
+    word_gender: Optional[str] = None
     
     @model_validator(mode="after")
     def _validate(self):
+        if self.type is None and self.word_type is not None:
+            self.type = self.word_type
+        if self.word_type is None and self.type is not None:
+            self.word_type = self.type
+        if self.gender is None and self.word_gender is not None:
+            self.gender = self.word_gender
+        if self.word_gender is None and self.gender is not None:
+            self.word_gender = self.gender
+
         valid_types = [
             "noun",
             "verb",

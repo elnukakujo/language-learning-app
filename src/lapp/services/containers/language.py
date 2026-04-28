@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
 
@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.containers import LanguageDict
-from ...models.containers import Language, Unit
+from ...models.containers import Language, Lesson
 from ...core.database import db_manager
 
 class LanguageService:
@@ -20,13 +20,13 @@ class LanguageService:
             return languages
         return [language.to_dict(include_relations=include_relations) for language in languages]
 
-    def _check_current_unit(self, language: Language, current_unit_id: str, session: Optional[Session] = None) -> bool:
+    def _check_current_lesson(self, language: Language, current_lesson_id: str, session: Optional[Session] = None) -> bool:
         """
-        Check if the current unit ID is valid for the given language.
+        Check if the current lesson ID is valid for the given language.
 
         Args:
             language: The Language object.
-            current_unit_id: The current unit ID to validate.
+            current_lesson_id: The current lesson ID to validate.
         Returns:
             True if valid, False otherwise.
         """
@@ -35,28 +35,28 @@ class LanguageService:
             session = db_manager.get_session()
         
         try:
-            from .unit import UnitService
-            unit_service = UnitService()
-            if (unit := unit_service.get_by_id(current_unit_id, session=session)):
-                return unit.id
-            new_current_unit_id = self._find_current_unit(language.id, score_threshold=0.75, session=session)
+            from .lesson import LessonService
+            lesson_service = LessonService()
+            if (lesson := lesson_service.get_by_id(current_lesson_id, session=session)):
+                return lesson.id
+            new_current_lesson_id = self._find_current_lesson(language.id, score_threshold=0.75, session=session)
 
-            language.current_unit = new_current_unit_id
+            language.current_lesson = new_current_lesson_id
             db_manager.modify(language, session=session)
-            return new_current_unit_id
+            return new_current_lesson_id
             
         except Exception as e:
             if owns_session:
                 session.rollback()
-            logger.error(f"Failed to check current unit {current_unit_id} for language {language.id}: {e}")
+            logger.error(f"Failed to check current lesson {current_lesson_id} for language {language.id}: {e}")
             raise
         finally:
             if owns_session:
                 session.close()
     
-    def _find_current_unit(self, language_id: str, score_threshold: float, session: Optional[Session] = None) -> Optional[str]:
+    def _find_current_lesson(self, language_id: str, score_threshold: float, session: Optional[Session] = None) -> Optional[str]:
         """
-        Find the first unit ID for a given language with a score below a certain threshold.
+        Find the first lesson ID for a given language with a score below a certain threshold.
 
         Args:
             language_id: The ID of the language.
@@ -64,28 +64,28 @@ class LanguageService:
             session: Optional SQLAlchemy session.
         
         Returns:
-            The ID of the first unit below the threshold, or None if all units meet/exceed the threshold.
+            The ID of the first lesson below the threshold, or None if all lessons meet/exceed the threshold.
         """
         owns_session = session is None
         if owns_session:
             session = db_manager.get_session()
         
         try:
-            from .unit import UnitService
-            unit_service = UnitService()
+            from .lesson import LessonService
+            lesson_service = LessonService()
 
-            units = unit_service.get_all(
+            lessons = lesson_service.get_all(
                 language_id=language_id,
                 session=session
             )
-            for unit in units:
-                if unit.score < score_threshold*100:
-                    return unit.id
-            return units[-1].id if units else None
+            for lesson in lessons:
+                if lesson.score < score_threshold*100:
+                    return lesson.id
+            return lessons[-1].id if lessons else None
         except Exception as e:
             if owns_session:
                 session.rollback()
-            logger.error(f"Failed to find current unit for language {language_id}: {e}")
+            logger.error(f"Failed to find current lesson for language {language_id}: {e}")
             raise
         finally:
             if owns_session:
@@ -116,10 +116,10 @@ class LanguageService:
                 session=session
             )
             for language in languages:
-                # Ensure current_unit is valid
-                language.current_unit = self._check_current_unit(
+                # Ensure current_lesson is valid
+                language.current_lesson = self._check_current_lesson(
                     language=language,
-                    current_unit_id=language.current_unit,
+                    current_lesson_id=language.current_lesson,
                     session=session
                 )
             return self._serialize_list(languages, as_dict, include_relations)
@@ -159,9 +159,9 @@ class LanguageService:
                 session=session
             )
             if language:
-                language.current_unit = self._check_current_unit(
+                language.current_lesson = self._check_current_lesson(
                     language=language,
-                    current_unit_id=language.current_unit,
+                    current_lesson_id=language.current_lesson,
                     session=session
                 )
             return self._serialize(language, as_dict, include_relations)
@@ -201,10 +201,10 @@ class LanguageService:
                 session=session
             )
             for language in languages:
-                # Ensure current_unit is valid
-                language.current_unit = self._check_current_unit(
+                # Ensure current_lesson is valid
+                language.current_lesson = self._check_current_lesson(
                     language=language,
-                    current_unit_id=language.current_unit,
+                    current_lesson_id=language.current_lesson,
                     session=session
                 )
             return self._serialize_list(languages, as_dict, include_relations)
@@ -240,12 +240,12 @@ class LanguageService:
         try:
             language = Language(
                 id = db_manager.generate_new_id(model_class=Language, session=session),
-                **data.model_dump(exclude_none=True)
+                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'current_lesson'}
             )
 
-            language.last_seen = date.today()
+            language.last_seen = datetime.utcnow()
             language.score = 0.0
-            language.current_unit = self._find_current_unit(
+            language.current_lesson = self._find_current_lesson(
                 language_id=language.id,
                 score_threshold=0.75,
                 session=session
@@ -305,14 +305,16 @@ class LanguageService:
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data.pop('last_seen_at', None)
+            update_data.pop('current_lesson', None)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)
             
             # Update last_seen
-            existing.current_unit = self._check_current_unit(
+            existing.current_lesson = self._check_current_lesson(
                 language=existing,
-                current_unit_id=existing.current_unit,
+                current_lesson_id=existing.current_lesson,
                 session=session
             )
             
@@ -376,9 +378,9 @@ class LanguageService:
 
     def update_score(self, language_id: str, session: Optional[Session] = None) -> Language | None:
         """
-        Update language score based on average of all unit scores.
+        Update language score based on average of all lesson scores.
         
-        This should be called whenever a unit's score changes.
+        This should be called whenever a lesson's score changes.
         
         Args:
             language_id: The ID of the language to update
@@ -397,29 +399,29 @@ class LanguageService:
                 logger.warning(f"Language not found: {language_id}")
                 return None
             
-            # Get all units for this language
-            units = db_manager.find_all(
-                model_class=Unit,
+            # Get all lessons for this language
+            lessons = db_manager.find_all(
+                model_class=Lesson,
                 filters={'language_id': language_id},
                 session=session
             )
             
-            if not units:
-                logger.warning(f"No units found for language: {language_id}")
+            if not lessons:
+                logger.warning(f"No lessons found for language: {language_id}")
                 language.score = 0.0
             else:
-                # Calculate average score from all units
-                total_score = sum(unit.score for unit in units)
-                language.score = round(total_score / len(units), 2)
+                # Calculate average score from all lessons
+                total_score = sum(lesson.score for lesson in lessons)
+                language.score = round(total_score / len(lessons), 2)
                 
                 logger.info(
                     f"Calculated language score: {language.score} "
-                    f"(from {len(units)} units)"
+                    f"(from {len(lessons)} lessons)"
                 )
             
             # Update last_seen
-            language.last_seen = date.today()
-            language.current_unit = self._find_current_unit(
+            language.last_seen = datetime.utcnow()
+            language.current_lesson = self._find_current_lesson(
                 language_id=language.id,
                 score_threshold=0.75,
                 session=session

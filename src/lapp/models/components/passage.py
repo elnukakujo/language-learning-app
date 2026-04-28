@@ -1,21 +1,26 @@
-from sqlalchemy import Column, ForeignKey, Text, String
+from sqlalchemy import Column, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from ..base import BaseComponentModel
+from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar_example_sentence_link
 
 class Passage(BaseComponentModel):
     __tablename__ = 'passage'
+    __table_args__ = (UniqueConstraint('language_id', 'text', name='uq_passage_language_text'),)
     
-    text = Column(Text, nullable=False, unique=True)
+    text = Column(Text, nullable=False)
     translation = Column(Text, nullable=False)
-    
-    # Foreign key
-    vocabulary_id = Column(String, ForeignKey('vocabulary.id'), nullable=True)
-    grammar_id = Column(String, ForeignKey('grammar.id'), nullable=True)
 
     # Relationship
-    vocabulary = relationship('Vocabulary', back_populates='example_sentences')      # Many to One
-    grammar = relationship('Grammar', back_populates='learnable_sentences')          # Many to One
+    vocabulary = relationship(
+        'Vocabulary',
+        secondary=vocabulary_example_sentence_link,
+        back_populates='example_sentences'
+    )
+    grammar = relationship(
+        'Grammar',
+        secondary=grammar_example_sentence_link,
+        back_populates='learnable_sentences'
+    )
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
@@ -25,7 +30,7 @@ class Passage(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "vocabulary_id": self.vocabulary_id,
-                "grammar_id": self.grammar_id
+                "vocabulary_ids": [v.id for v in self.vocabulary],
+                "grammar_ids": [g.id for g in self.grammar],
             })
         return base_dict

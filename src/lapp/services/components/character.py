@@ -1,4 +1,3 @@
-from datetime import date
 import logging
 from typing import Optional
 
@@ -69,7 +68,7 @@ class CharacterService:
             if owns_session:
                 session.close()
 
-    def get_by_character(self, character: str, session: Optional[Session] = None) -> Character | None:
+    def get_by_character(self, character: str, language_id: Optional[str] = None, session: Optional[Session] = None) -> Character | None:
         """
         Get a character by its character value.
 
@@ -84,9 +83,12 @@ class CharacterService:
             session = db_manager.get_session()
         
         try:
+            filters = {'character': character}
+            if language_id:
+                filters['language_id'] = language_id
             return db_manager.find_by_attr(
                 model_class=Character,
-                attr_values={'character': character},
+                attr_values=filters,
                 session=session
             )
         except Exception as e:
@@ -113,7 +115,7 @@ class CharacterService:
             session = db_manager.get_session()
         
         try:
-            if existing := self.get_by_character(data.character, session=session):
+            if existing := self.get_by_character(data.character, language_id=data.language_id, session=session):
                 logger.info(f"Character already exists: {data.character} with ID: {existing.id}")
 
                 if existing not in session:
@@ -131,7 +133,7 @@ class CharacterService:
             
             character = Character(
                 id=db_manager.generate_new_id(model_class=Character, session=session),
-                **data.model_dump(exclude_none=True)
+                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'last_seen_at'}
             )
             result = db_manager.insert(obj=character, session=session)
 
@@ -177,8 +179,9 @@ class CharacterService:
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data.pop('last_seen_at', None)
 
-            if (existing_character := self.get_by_character(update_data['character'], session=session)) and existing_character.id != character_id:
+            if (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
                 logger.warning(f"Character with value '{update_data['character']}' already exists.")
                 raise ValueError(f"Character with value '{update_data['character']}' already exists.")
 

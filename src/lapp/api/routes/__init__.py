@@ -1,5 +1,5 @@
 from .language import bp as language_bp
-from .unit import bp as unit_bp
+from .lesson import bp as lesson_bp
 from .vocabulary import bp as vocabulary_bp
 from .calligraphy import bp as calligraphy_bp
 from .grammar import bp as grammar_bp
@@ -11,7 +11,7 @@ from .evaluate import bp as evaluate_bp
 
 __all__ = [
     language_bp,
-    unit_bp,
+    lesson_bp,
     vocabulary_bp,
     calligraphy_bp,
     grammar_bp,

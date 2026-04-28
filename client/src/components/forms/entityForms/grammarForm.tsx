@@ -13,7 +13,7 @@ import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import UpdateButton from "@/components/buttons/updateButton";
 
-export default function GrammarForm({grammar, unit_id}: {grammar?: Grammar; unit_id: string}) {
+export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; lesson_id: string}) {
     const router = useRouter();
     const isUpdate = Boolean(grammar);
 
@@ -23,7 +23,7 @@ export default function GrammarForm({grammar, unit_id}: {grammar?: Grammar; unit
             title: "",
             explanation: "",
             learnable_sentences: [],
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
     } else {
         grammarData = grammar;
@@ -46,7 +46,7 @@ export default function GrammarForm({grammar, unit_id}: {grammar?: Grammar; unit
             title: title,
             explanation: explanation,
             learnable_sentences: learnableSentence,
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
         
         try {
@@ -56,7 +56,7 @@ export default function GrammarForm({grammar, unit_id}: {grammar?: Grammar; unit
                 await createGrammar(element);
             }
 
-            router.push(`/languages/${languageId}/unit/${unit_id}`);
+            router.push(`/languages/${languageId}/lesson/${lesson_id}`);
             router.refresh();
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} grammar:`, error);

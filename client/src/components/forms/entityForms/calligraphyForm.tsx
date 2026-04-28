@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
 
-export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: Calligraphy; unit_id: string}) {
+export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?: Calligraphy; lesson_id: string}) {
     const router = useRouter();
     const isUpdate = Boolean(calligraphy);
     let calligraphyData: Calligraphy;
@@ -28,7 +28,7 @@ export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: C
                 audio_files: []
             },
             example_word: undefined,
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
     } else {
         calligraphyData = calligraphy;
@@ -63,7 +63,7 @@ export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: C
                 audio_files: audioUrl
             },
             example_word: exampleWord,
-            unit_id: unit_id
+            lesson_id: lesson_id
         };
         
         try {
@@ -73,7 +73,7 @@ export default function CalligraphyForm({calligraphy, unit_id}: {calligraphy?: C
                 await createCalligraphy(element);
             }
 
-            router.push(`/languages/${languageId}/unit/${unit_id}`);
+            router.push(`/languages/${languageId}/lesson/${lesson_id}`);
             router.refresh();
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} calligraphy:`, error);

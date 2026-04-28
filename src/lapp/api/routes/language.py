@@ -149,9 +149,9 @@ def update_language(language_id: str):
                     type: string
                     example: "🇫🇷"
                     required: false
-                current_unit:
+                current_lesson:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: false
     responses:
       200:

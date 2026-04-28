@@ -1,10 +1,16 @@
-from datetime import date
+from datetime import date, datetime
 from math import log2
 
 
+def _as_date(value: date | datetime) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    return value
+
+
 def compute_recency_weight(
-    created_at: date,
-    last_seen: date
+    created_at: date | datetime,
+    last_seen: date | datetime
 ) -> float:
     """
     Computes a recency weight from both created_at and last_seen.
@@ -14,7 +20,10 @@ def compute_recency_weight(
     """
     today = date.today()
 
-    days_since_seen    = (today - last_seen).days
+    created_at = _as_date(created_at)
+    last_seen = _as_date(last_seen)
+
+    days_since_seen = (today - last_seen).days
     days_since_created = (today - created_at).days
 
     staleness       = log2(days_since_seen + 2)
@@ -24,9 +33,9 @@ def compute_recency_weight(
 
 def update_score(
     score: float,
-    last_seen: date,
+    last_seen: date | datetime,
     similarity: float,        # 0.0 to 1.0
-    created_at: date = date.today(),
+    created_at: date | datetime = date.today(),
     difficulty: float = 0.5,  # 0.0 (easy) to 1.0 (hard)
     scale: float = 5.0
 ) -> float:
@@ -41,8 +50,11 @@ def update_score(
         difficulty:   Current difficulty ratio (0.0 = easy, 1.0 = hard)
         scale:        Score given for a perfect answer on day one
     """
-    remaining_days  = (date.today() - last_seen).days
-    recency_weight  = compute_recency_weight(created_at, last_seen)
+    created_at = _as_date(created_at)
+    last_seen = _as_date(last_seen)
+
+    remaining_days = (date.today() - last_seen).days
+    recency_weight = compute_recency_weight(created_at, last_seen)
 
     # Slower decay for hard items, faster for easy ones, modulated by recency
     time_weight = log2(remaining_days + 2) * scale * (1 + difficulty) * recency_weight
@@ -55,9 +67,9 @@ def update_score(
 
 def update_difficulty(
     new_score: float,
-    last_seen: date,
+    last_seen: date | datetime,
     previous_difficulty: float,  # Initialize as 0.5 if no prior value
-    created_at: date = date.today(),
+    created_at: date | datetime = date.today(),
     scale: float = 1.0,
     alpha: float = 0.3           # EMA learning rate: higher = more reactive
 ) -> float:
@@ -72,6 +84,8 @@ def update_difficulty(
         scale:               Sensitivity of difficulty shift
         alpha:               EMA learning rate (0.0 = ignore new signal, 1.0 = fully reactive)
     """
+    created_at = _as_date(created_at)
+    last_seen = _as_date(last_seen)
     recency_weight = compute_recency_weight(created_at, last_seen)
 
     # Normalize score to 0–1 performance signal

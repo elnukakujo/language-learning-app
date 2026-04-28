@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -9,12 +9,12 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.features import GrammarDict
 from ...models.features import Grammar
-from ..containers import UnitService, LanguageService
+from ..containers import LessonService, LanguageService
 from ..components import PassageService
 from ...core.database import db_manager
 from ...utils import update_score
 
-unit_service = UnitService()
+lesson_service = LessonService()
 language_service = LanguageService()
 passage_service = PassageService()
 
@@ -32,17 +32,17 @@ class GrammarService:
     def get_all(
         self,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Grammar] | list[dict]:
         """
-        Get all Grammar items for a specific language or unit.
+        Get all Grammar items for a specific language or lesson.
 
         Args:
             language_id (Optional[str] = None): The id of the language to get all the grammars from
-            unit_id (Optional[str] = None): The id of the unit to get all the grammars from
+            lesson_id (Optional[str] = None): The id of the lesson to get all the grammars from
 
         Returns:
             List of Grammar objects
@@ -52,29 +52,29 @@ class GrammarService:
             session = db_manager.get_session()
         
         try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
+            assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
             if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
+                lessons = lesson_service.get_all(language_id=language_id, session=session)
 
                 grammars = []
-                for unit in units:
+                for lesson in lessons:
                     grammars.extend(
                         db_manager.find_all(
                             model_class=Grammar,
-                            filters={'unit_id': unit.id},
+                            filters={'lesson_id': lesson.id},
                             session=session
                         )
                     )
                 return self._serialize_list(grammars, as_dict, include_relations)
-            elif unit_id:
+            elif lesson_id:
                 grammars = db_manager.find_all(
                     model_class=Grammar,
-                    filters={'unit_id': unit_id},
+                    filters={'lesson_id': lesson_id},
                     session=session
                 )
                 return self._serialize_list(grammars, as_dict, include_relations)
             else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+                raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -124,7 +124,7 @@ class GrammarService:
         self,
         level: str,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -134,7 +134,7 @@ class GrammarService:
         
         Args:
             language_id: The id of the language to filter Grammar items
-            unit_id: The id of the unit to filter Grammar items
+            lesson_id: The id of the lesson to filter Grammar items
             level: Grammar level (e.g., 'A1', 'B2')
         
         Returns:
@@ -145,30 +145,30 @@ class GrammarService:
             session = db_manager.get_session()
         
         try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
+            assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
 
             if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
+                lessons = lesson_service.get_all(language_id=language_id, session=session)
 
                 grammars = []
-                for unit in units:
+                for lesson in lessons:
                     grammars.extend(
                         db_manager.find_all(
                             model_class=Grammar,
-                            filters={'level': level, 'unit_id': unit.id},
+                            filters={'level': level, 'lesson_id': lesson.id},
                             session=session
                         )
                     )
                 return self._serialize_list(grammars, as_dict, include_relations)
-            elif unit_id:
+            elif lesson_id:
                 grammars = db_manager.find_all(
                     model_class=Grammar,
-                    filters={'level': level, 'unit_id': unit_id},
+                    filters={'level': level, 'lesson_id': lesson_id},
                     session=session
                 )
                 return self._serialize_list(grammars, as_dict, include_relations)
             else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
+                raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
         except Exception as e:
             if owns_session:
                 session.rollback()
@@ -199,15 +199,16 @@ class GrammarService:
             session = db_manager.get_session()
         
         try:
-            unit = unit_service.get_by_id(data.unit_id, session=session)
+            lesson = lesson_service.get_by_id(data.lesson_id, session=session)
 
-            if not unit:
-                logger.warning(f"Cannot create Grammar item, unit not found: {data.unit_id}")
+            if not lesson:
+                logger.warning(f"Cannot create Grammar item, lesson not found: {data.lesson_id}")
                 return None
 
             # Create Passages using PassageService
             learnable_sentences = []
             for sentence in (data.learnable_sentences or []):
+                sentence.language_id = lesson.language_id
                 passage = passage_service.create(sentence, session=session)
                 if passage:
                     learnable_sentences.append(passage)
@@ -215,6 +216,7 @@ class GrammarService:
             # Prepare data without learnable_sentences to avoid duplication
             grammar_data = data.model_dump(exclude_none=True)
             grammar_data.pop('learnable_sentences', None)
+            grammar_data.pop('last_seen_at', None)
 
             grammar = Grammar(
                 id = db_manager.generate_new_id(
@@ -278,13 +280,10 @@ class GrammarService:
             
             # Handle learnable_sentences update through PassageService if provided
             if data.learnable_sentences is not None:
-                # Delete old passages and create new ones
-                for old_passage in existing.learnable_sentences:
-                    passage_service.delete(old_passage.id, session=session)
-                
                 # Create new passages
                 new_sentences = []
                 for sentence in data.learnable_sentences:
+                    sentence.language_id = existing.lesson.language_id if existing.lesson else None
                     passage = passage_service.create(sentence, session=session)
                     if passage:
                         new_sentences.append(passage)
@@ -299,6 +298,7 @@ class GrammarService:
             update_data.pop('learnable_sentences', None)
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+            update_data.pop('last_seen_at', None)
             
             # Update the existing object's attributes
             for key, value in update_data.items():
@@ -401,7 +401,7 @@ class GrammarService:
             )
             
             # Update last_seen
-            grammar.last_seen = date.today()
+            grammar.last_seen = datetime.utcnow()
             # Save changes
             result = db_manager.modify(grammar, session=session)
             
@@ -409,9 +409,9 @@ class GrammarService:
                 logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
 
             if grammar.score != previous_score:
-                if grammar.unit_id:
-                    unit_service.update_score(grammar.unit_id, session=session)
-                    logger.info(f"Updated unit {grammar.unit_id} score due to Grammar {grammar_id}")
+                if grammar.lesson_id:
+                    lesson_service.update_score(grammar.lesson_id, session=session)
+                    logger.info(f"Updated lesson {grammar.lesson_id} score due to Grammar {grammar_id}")
             
             
             return self._serialize(result, as_dict, include_relations)

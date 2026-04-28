@@ -6,11 +6,11 @@ import NavButton from "../buttons/navButton";
 import Vocabulary from "@/interface/features/Vocabulary";
 
 export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
-    const { language_id, unit_id } = useParams<{ language_id: string, unit_id: string }>();
+    const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
 
     const router = useRouter();
     const handleClick = (id: string) => {
-        router.push(`/languages/${language_id}/unit/${unit_id}/voc/${id}`);
+        router.push(`/languages/${language_id}/lesson/${lesson_id}/voc/${id}`);
     };
 
     const averageScore = vocProps.reduce((acc, item) => acc + item.score!, 0) / vocProps.length;
@@ -40,13 +40,13 @@ export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
                 </ul>
             }
             <NavButton
-                path = {`/languages/${language_id}/unit/${unit_id}/voc/new`}
+                path = {`/languages/${language_id}/lesson/${lesson_id}/voc/new`}
             >
                 <p>Add New Vocabulary</p>
             </NavButton>
             {vocProps.length > 0 && (
                 <NavButton
-                    path={`/languages/${language_id}/unit/${unit_id}/voc/flashcard`}
+                    path={`/languages/${language_id}/lesson/${lesson_id}/voc/flashcard`}
                 >
                     <p>Flashcard Practice</p>
                 </NavButton>

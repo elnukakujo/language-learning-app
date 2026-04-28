@@ -71,7 +71,7 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
             )}
             {graded && currentIndex === grammars.length - 1 && (
                 <BackButton>
-                    <p>Back to Unit</p>
+                    <p>Back to Lesson</p>
                 </BackButton>
             )}
         </section>
