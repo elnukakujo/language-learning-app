@@ -69,7 +69,7 @@ def generate_missing_texts(app: Flask):
             
             grammars_without_sentences: list[Grammar] = db_manager.find_all(
                 model_class=Grammar,
-                filters={"learnable_sentences": None}
+                filters={"example_sentences": None}
             )
 
             features_without_texts = calligraphies_without_words + vocabularies_without_sentences + grammars_without_sentences
@@ -130,13 +130,13 @@ def generate_missing_texts(app: Flask):
                         )
                     elif isinstance(feature, Grammar):
                         grammar_data = feature.to_dict(include_relations=True)
-                        grammar_data.pop("learnable_sentences", None)
+                        grammar_data.pop("example_sentences", None)
 
                         grammar_service.update(
                             grammar_id=feature.id,
                             data=GrammarDict(
                                 **grammar_data,
-                                learnable_sentences=[
+                                example_sentences=[
                                     {"text":generated_text, "translation":""}
                                 ]
                             )

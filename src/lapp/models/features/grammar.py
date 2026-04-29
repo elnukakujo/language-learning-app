@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
-from ..base import BaseFeatureModel, grammar_example_sentence_link
+from ..base import BaseFeatureModel, grammar_example_sentence_link, grammar_example_word_link
 
 class Grammar(BaseFeatureModel):
     __tablename__ = 'grammar'
@@ -10,9 +10,14 @@ class Grammar(BaseFeatureModel):
     explanation = Column(String)
     
     # Relations
-    learnable_sentences = relationship(                 # 1 to Many
+    example_sentences = relationship(                 # 1 to Many
         'Passage',
         secondary=grammar_example_sentence_link,
+        back_populates='grammar'
+    )
+    example_words = relationship(                 # 1 to Many
+        'Word',
+        secondary=grammar_example_word_link,
         back_populates='grammar'
     )
     
@@ -21,6 +26,7 @@ class Grammar(BaseFeatureModel):
             **super().to_dict(include_relations=include_relations),
             "title": self.title,
             "explanation": self.explanation,
-            "learnable_sentences": [p.to_dict(include_relations=False) for p in self.learnable_sentences]
+            "example_sentences": [p.to_dict(include_relations=False) for p in self.example_sentences],
+            "example_words": [w.to_dict(include_relations=False) for w in self.example_words]
         }
         return base_dict

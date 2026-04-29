@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 import logging
@@ -11,7 +10,7 @@ from ...models.features import Vocabulary
 from ..containers import LessonService, LanguageService
 from ..components import WordService, PassageService
 from ...core.database import db_manager
-from ...utils import update_score
+from ...utils import update_score, update_difficulty
 
 lesson_service = LessonService()
 language_service = LanguageService()
@@ -451,19 +450,33 @@ class VocabularyService:
                 similarity=score
             )
 
+            vocabulary.difficulty = update_difficulty(
+                new_score=score,
+                last_seen=vocabulary.last_seen,
+                previous_difficulty=vocabulary.difficulty,
+                created_at=vocabulary.created_at
+            )
+
             # Update last_seen
-            vocabulary.last_seen = datetime.utcnow()
+            vocabulary.last_seen = datetime.now()
             
             # Save changes
             result = db_manager.modify(vocabulary, session=session)
 
             if result:
-                logger.info(f"Updated VocabularyFeature item {voc_id} score: {result.score}")
+                logger.info(f"Updated VocabularyFeature {voc_id} score to {vocabulary.score} and difficulty to {vocabulary.difficulty}")
 
             if vocabulary.score != previous_score:
-                if vocabulary.lesson_id:
-                    lesson_service.update_score(vocabulary.lesson_id, session=session)
-                    logger.info(f"Updated lesson {vocabulary.lesson_id} score due to VocabularyFeature {voc_id}")
+                lesson_service.update_score(vocabulary.lesson_id, session=session)
+                logger.info(f"Updated lesson {vocabulary.lesson_id} score due to VocabularyFeature {voc_id}")
+
+                word_service.update_score(vocabulary.word_id, session=session)
+                logger.info(f"Updated word {vocabulary.word_id} score due to VocabularyFeature {voc_id}")
+
+                if vocabulary.example_sentences:
+                    for passage in vocabulary.example_sentences:
+                        passage_service.update_score(passage.id, session=session)
+                        logger.info(f"Updated passage {passage.id} score due to VocabularyFeature {voc_id}")
                     
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

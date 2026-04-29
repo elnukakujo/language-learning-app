@@ -49,10 +49,10 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                     </section>
                 )}
 
-                {grammar.learnable_sentences!.length > 0 && (
+                {grammar.example_sentences!.length > 0 && (
                     <section className="flex flex-col space-y-4 items-baseline">
                         <h3>Learnable Sentences</h3>
-                        {grammar.learnable_sentences!.map((sentence, index) => (
+                        {grammar.example_sentences!.map((sentence, index) => (
                             <article
                                 key={index}
                                 className="flex flex-col space-y-2 items-baseline"

@@ -1,14 +1,14 @@
 import logging
 from typing import Optional
-
+import datetime
 from sqlalchemy.orm import Session
 
 from ...core.database import db_manager
 from ...models.components import Word
+from ...models.features import Vocabulary, Calligraphy, Grammar
 from ...schemas.components import WordDict
 
 logger = logging.getLogger(__name__)
-
 
 class WordService:
     def get_all(self, session: Optional[Session] = None) -> list[Word]:
@@ -162,6 +162,60 @@ class WordService:
             if owns_session:
                 session.rollback()
             logger.error(f"Failed to delete word {word_id}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
+    def update_score(self, word_id: str, session: Optional[Session] = None) -> Word | None:
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+
+        try:
+            word = self.get_by_id(word_id, session=session)
+            if not word:
+                logger.warning(f"Word not found: {word_id}")
+                return None
+
+            # Recalculate score based on all related features
+            features = []
+            for voc_id in word.vocabulary_ids:
+                voc = db_manager.find_by_id(Vocabulary, voc_id, session=session)
+                if voc:
+                    features.append(voc)
+            for gram_id in word.grammar_ids:
+                gram = db_manager.find_by_id(Grammar, gram_id, session=session)
+                if gram:
+                    features.append(gram)
+            for call_id in word.calligraphy_ids:
+                call = db_manager.find_by_id(Calligraphy, call_id, session=session)
+                if call:
+                    features.append(call)
+            
+            if features and len(features) > 0:
+                total_score = sum(feature.score for feature in features)
+                word.score = total_score / len(features)
+
+                total_difficulty = sum(feature.difficulty for feature in features)
+                word.difficulty = total_difficulty / len(features)
+            else:
+                logger.warning(f"No features found for word: {word_id}")
+                word.score = 0.0
+                word.difficulty = 0.5
+                
+            # Update last_seen
+            word.last_seen = datetime.now()
+
+            result = db_manager.modify(word, session=session)
+
+            if result:
+                logger.info(f"Updated WordComponent {word_id} score to {word.score} and difficulty to {word.difficulty}")
+
+            return result
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to update word score for {word_id}: {e}")
             raise
         finally:
             if owns_session:

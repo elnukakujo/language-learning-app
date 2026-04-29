@@ -1,12 +1,13 @@
+import datetime
 import logging
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 from ...schemas.components import PassageDict
 from ...models.components import Passage
+from ...models.features import Vocabulary, Grammar, Calligraphy
 from ...core.database import db_manager
 
 
@@ -291,6 +292,61 @@ class PassageService:
             if owns_session:
                 session.rollback()
             logger.error(f"Failed to delete passage {passage_id}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
+    def update_score(self, passage_id: str, session: Optional[Session] = None) -> Passage | None:
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+
+        try:
+            passage = self.get_by_id(passage_id, session=session)
+            if not passage:
+                logger.warning(f"Passage not found: {passage_id}")
+                return None
+
+            # Recalculate score based on all related features
+            features = []
+            for voc_id in passage.vocabulary_ids:
+                voc = db_manager.find_by_id(Vocabulary, voc_id, session=session)
+                if voc:
+                    features.append(voc)
+            for gram_id in passage.grammar_ids:
+                gram = db_manager.find_by_id(Grammar, gram_id, session=session)
+                if gram:
+                    features.append(gram)
+                
+            for call_id in passage.calligraphy_ids:
+                call = db_manager.find_by_id(Calligraphy, call_id, session=session)
+                if call:
+                    features.append(call)
+
+            if features and len(features) > 0:
+                total_score = sum(feature.score for feature in features)
+                passage.score = total_score / len(features)
+                
+                total_difficulty = sum(feature.difficulty for feature in features)
+                passage.difficulty = total_difficulty / len(features)
+            else:
+                logger.warning(f"No features found for passage: {passage_id}")
+                passage.score = 0.0
+                passage.difficulty = 0.5
+
+            # Update last_seen
+            passage.last_seen = datetime.now()
+
+            result = db_manager.modify(passage, session=session)
+
+            if result:
+                logger.info(f"Updated PassageComponent {passage_id} score to {passage.score} and difficulty to {passage.difficulty}")
+
+            return result
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to update passage score for {passage_id}: {e}")
             raise
         finally:
             if owns_session:

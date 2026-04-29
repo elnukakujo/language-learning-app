@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar_example_sentence_link
+from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar_example_sentence_link, calligraphy_example_sentence_link
 
 class Passage(BaseComponentModel):
     __tablename__ = 'passage'
@@ -19,7 +19,12 @@ class Passage(BaseComponentModel):
     grammar = relationship(
         'Grammar',
         secondary=grammar_example_sentence_link,
-        back_populates='learnable_sentences'
+        back_populates='example_sentences'
+    )
+    calligraphy = relationship(
+        'Calligraphy',
+        secondary=calligraphy_example_sentence_link,
+        back_populates='example_sentences'
     )
 
     def to_dict(self, include_relations: bool = True) -> dict:
@@ -32,5 +37,6 @@ class Passage(BaseComponentModel):
             base_dict.update({
                 "vocabulary_ids": [v.id for v in self.vocabulary],
                 "grammar_ids": [g.id for g in self.grammar],
+                "calligraphy_ids": [c.id for c in self.calligraphy]
             })
         return base_dict

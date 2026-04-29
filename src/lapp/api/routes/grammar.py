@@ -117,7 +117,7 @@ def create_grammar():
                     example: "The past tense is used to describe actions that have already happened."
                     required: true
                     description: "Explanation of the grammar"
-                learnable_sentences:
+                example_sentences:
                     type: array
                     required: false
                     description: "Array of passages that illustrate the grammar point"
@@ -222,7 +222,7 @@ def update_grammar(grammar_id: str):
                     example: "The past tense is used to describe actions that have already happened."
                     required: false
                     description: "Explanation of the grammar"
-                learnable_sentences:
+                example_sentences:
                     type: array
                     required: false
                     description: "Array of passages that illustrate the grammar point"

@@ -340,28 +340,6 @@ CREATE TABLE exercise (
 
 -- ---- Component link tables ----
 
--- word <-> character  (1..n characters per word, 0..n words per character)
-CREATE TABLE word_character_link (
-    word_id TEXT NOT NULL,
-    character_id TEXT NOT NULL,
-    character_order INTEGER NOT NULL,
-    token_text TEXT NOT NULL,
-    PRIMARY KEY (word_id, character_order),
-    FOREIGN KEY (word_id) REFERENCES word(id),
-    FOREIGN KEY (character_id) REFERENCES character(id)
-);
-
--- passage <-> word  (tokenizer backfill — populated post-migration by tokenizer)
-CREATE TABLE passage_word_link (
-    passage_id TEXT NOT NULL,
-    word_id TEXT NOT NULL,
-    token_order INTEGER NOT NULL,
-    token_text TEXT NOT NULL,
-    PRIMARY KEY (passage_id, token_order),
-    FOREIGN KEY (passage_id) REFERENCES passage(id),
-    FOREIGN KEY (word_id) REFERENCES word(id)
-);
-
 -- word -> passage  (example_sentence on word, 0..n)
 CREATE TABLE word_passage_link (
     word_id TEXT NOT NULL,
@@ -644,11 +622,6 @@ INSERT INTO element_source (element_type, element_id, source_id)
 SELECT 'passage', pm.new_id, 'source_1'
 FROM passage_id_map pm;
 
--- NOTE: passage_word_link, word_passage_link, and word_character_link are
---       intentionally left empty here. They require a tokenizer pass over the
---       migrated text that runs as a separate post-migration job. The tables
---       are created and ready to receive data.
-
 -- ============================================================================
 -- 7) Character backfill + word-character links (CJK only)
 -- ============================================================================
@@ -757,6 +730,30 @@ SELECT oe.id,
 FROM old_exercise oe
 JOIN old_unit ou ON oe.unit_id = ou.id
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
+
+-- Migrate exercise -> vocabulary links
+INSERT INTO exercise_vocabulary_link (exercise_id, vocabulary_id)
+SELECT oe.id, jv.value
+FROM old_exercise oe, json_each(oe.vocabulary_ids) jv
+WHERE oe.vocabulary_ids IS NOT NULL
+  AND oe.vocabulary_ids != '[]'
+  AND EXISTS (SELECT 1 FROM vocabulary v WHERE v.id = jv.value);
+
+-- Migrate exercise -> grammar links
+INSERT INTO exercise_grammar_link (exercise_id, grammar_id)
+SELECT oe.id, jv.value
+FROM old_exercise oe, json_each(oe.grammar_ids) jv
+WHERE oe.grammar_ids IS NOT NULL
+  AND oe.grammar_ids != '[]'
+  AND EXISTS (SELECT 1 FROM grammar g WHERE g.id = jv.value);
+
+-- Migrate exercise -> calligraphy links
+INSERT INTO exercise_calligraphy_link (exercise_id, calligraphy_id)
+SELECT oe.id, jv.value
+FROM old_exercise oe, json_each(oe.calligraphy_ids) jv
+WHERE oe.calligraphy_ids IS NOT NULL
+  AND oe.calligraphy_ids != '[]'
+  AND EXISTS (SELECT 1 FROM calligraphy c WHERE c.id = jv.value);
 
 -- Migrate old_passage.vocabulary_id → vocabulary_example_sentence
 INSERT INTO vocabulary_example_sentence (vocabulary_id, passage_id)
@@ -886,8 +883,6 @@ SELECT tbl, rows FROM (
     UNION ALL SELECT 'exercise',                   COUNT(*) FROM exercise
     UNION ALL SELECT 'element_source',             COUNT(*) FROM element_source
     UNION ALL SELECT 'element_tag',                COUNT(*) FROM element_tag
-    UNION ALL SELECT 'passage_word_link',          COUNT(*) FROM passage_word_link
-    UNION ALL SELECT 'word_character_link',        COUNT(*) FROM word_character_link
     UNION ALL SELECT 'word_passage_link',          COUNT(*) FROM word_passage_link
     UNION ALL SELECT 'character_word_link',        COUNT(*) FROM character_word_link
     UNION ALL SELECT 'vocabulary_example_sentence',    COUNT(*) FROM vocabulary_example_sentence

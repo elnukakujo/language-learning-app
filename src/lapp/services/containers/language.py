@@ -420,7 +420,7 @@ class LanguageService:
                 )
             
             # Update last_seen
-            language.last_seen = datetime.utcnow()
+            language.last_seen = datetime.now()
             language.current_lesson = self._find_current_lesson(
                 language_id=language.id,
                 score_threshold=0.75,

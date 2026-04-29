@@ -1,7 +1,7 @@
 from flask import current_app
 from typing import Any
 from pathlib import Path
-from sqlalchemy import Column, String, Integer, DateTime, JSON, ForeignKey, Table
+from sqlalchemy import Column, Float, String, Integer, DateTime, JSON, ForeignKey, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr, validates
 from datetime import datetime
 
@@ -18,6 +18,13 @@ vocabulary_example_sentence_link = Table(
     Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
 )
 
+grammar_example_word_link = Table(
+    "grammar_example_word",
+    Base.metadata,
+    Column("grammar_id", String, ForeignKey("grammar.id"), primary_key=True),
+    Column("word_id", String, ForeignKey("word.id"), primary_key=True),
+)
+
 grammar_example_sentence_link = Table(
     "grammar_example_sentence",
     Base.metadata,
@@ -30,6 +37,12 @@ calligraphy_example_word_link = Table(
     Base.metadata,
     Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
     Column("word_id", String, ForeignKey("word.id"), primary_key=True),
+)
+calligraphy_example_sentence_link = Table(
+    "calligraphy_example_sentence",
+    Base.metadata,
+    Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
+    Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
 )
 
 exercise_vocabulary_link = Table(
@@ -62,8 +75,9 @@ class BaseContainerModel(Base):
 
     id = Column(String, primary_key=True, index=True)
     score = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_seen = Column("last_seen_at", DateTime, default=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    last_seen = Column("last_seen_at", DateTime, default=datetime.now(), nullable=True)
+    status = Column(String, nullable=False)
 
     def to_dict(self) -> dict:
         return {
@@ -80,6 +94,8 @@ class BaseFeatureModel(BaseContainerModel):
     This includes: Vocabulary, Grammar, Calligraphy, Exercise
     """
     __abstract__ = True
+
+    difficulty = Column(Float, default=0.5)
     
     # Foreign keys - shared by all components
     lesson_id: Mapped[str] = mapped_column("lesson_id", ForeignKey("lesson.id"))
@@ -168,8 +184,10 @@ class BaseComponentModel(Base):
     id = Column(String, primary_key=True, index=True)
     language_id: Mapped[str] = mapped_column(ForeignKey("language.id"), nullable=False)
     score = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_seen = Column("last_seen_at", DateTime, default=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    last_seen = Column("last_seen_at", DateTime, default=datetime.now(), nullable=True)
+    status = Column(String, nullable=False)
+    difficulty = Column(Float, default=0.5)
 
     # Media files
     image_files = Column(JSON, default=list)

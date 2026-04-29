@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+from lapp.utils.helpers import update_difficulty
 from sqlalchemy.orm import Session
 
 import logging
@@ -10,12 +11,13 @@ from ...schemas.features import CalligraphyDict
 from ...models.features import Calligraphy
 from ...core.database import db_manager
 from ..containers import LessonService, LanguageService
-from ..components import CharacterService, WordService
+from ..components import CharacterService, WordService, PassageService
 from ...utils import update_score
 
 lesson_service = LessonService()
 language_service = LanguageService()
 character_service = CharacterService()
+passage_service = PassageService()
 word_service = WordService()
 
 class CalligraphyService:
@@ -423,21 +425,38 @@ class CalligraphyService:
                 similarity=score,
             )
             
+            calligraphy.difficulty = update_difficulty(
+                new_score=score,
+                last_seen=calligraphy.last_seen,
+                previous_difficulty=calligraphy.difficulty,
+                created_at=calligraphy.created_at
+            )
+
             # Update last_seen
-            calligraphy.last_seen = datetime.utcnow()
+            calligraphy.last_seen = datetime.now()    
             
             # Save changes
             result = db_manager.modify(calligraphy, session=session)
             
             if result:
-                logger.info(f"Updated Calligraphy item {calligraphy_id} score: {result.score}")
+                logger.info(f"Updated CalligraphyFeature {calligraphy_id} score to {calligraphy.score} and difficulty to {calligraphy.difficulty}")
 
             if calligraphy.score != previous_score:
-                if calligraphy.lesson_id:
-                    lesson_service.update_score(calligraphy.lesson_id, session=session)
-                    logger.info(f"Updated lesson {calligraphy.lesson_id} score due to calligraphy {calligraphy_id}")
-            
-            
+                lesson_service.update_score(calligraphy.lesson_id, session=session)
+                logger.info(f"Updated lesson {calligraphy.lesson_id} score due to calligraphy {calligraphy_id}")
+
+                character_service.update_score(char_id=calligraphy.character_id, session=session)
+                logger.info(f"Updated character {calligraphy.character_id} score due to calligraphy {calligraphy_id}")
+
+                if calligraphy.example_words:
+                    for word in calligraphy.example_words:
+                        word_service.update_score(word_id=word.id, session=session)
+                        logger.info(f"Updated example word {word.id} score due to calligraphy {calligraphy_id}")
+                    
+                if calligraphy.example_sentences:
+                    for passage in calligraphy.example_sentences:
+                        passage_service.update_score(passage_id=passage.id, session=session)
+                        logger.info(f"Updated example sentence {passage.id} score due to calligraphy {calligraphy_id}")
             
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

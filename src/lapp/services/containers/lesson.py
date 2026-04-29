@@ -333,8 +333,8 @@ class LessonService:
                 )
             
             # Update last_seen
-            lesson.last_seen = datetime.utcnow()
-            
+            lesson.last_seen = datetime.now()
+
             # Save changes
             result = db_manager.modify(lesson, session=session)
             if result:

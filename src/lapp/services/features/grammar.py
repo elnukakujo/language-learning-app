@@ -1,21 +1,20 @@
 from datetime import datetime
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import GrammarDict
 from ...models.features import Grammar
 from ..containers import LessonService, LanguageService
-from ..components import PassageService
+from ..components import PassageService, WordService
 from ...core.database import db_manager
-from ...utils import update_score
+from ...utils import update_score, update_difficulty
 
 lesson_service = LessonService()
 language_service = LanguageService()
+word_service = WordService()
 passage_service = PassageService()
 
 class GrammarService:
@@ -206,16 +205,16 @@ class GrammarService:
                 return None
 
             # Create Passages using PassageService
-            learnable_sentences = []
-            for sentence in (data.learnable_sentences or []):
+            example_sentences = []
+            for sentence in (data.example_sentences or []):
                 sentence.language_id = lesson.language_id
                 passage = passage_service.create(sentence, session=session)
                 if passage:
-                    learnable_sentences.append(passage)
+                    example_sentences.append(passage)
 
-            # Prepare data without learnable_sentences to avoid duplication
+            # Prepare data without example_sentences to avoid duplication
             grammar_data = data.model_dump(exclude_none=True)
-            grammar_data.pop('learnable_sentences', None)
+            grammar_data.pop('example_sentences', None)
             grammar_data.pop('last_seen_at', None)
 
             grammar = Grammar(
@@ -227,7 +226,7 @@ class GrammarService:
             )
             
             # Add the passages to the grammar
-            grammar.learnable_sentences = learnable_sentences
+            grammar.example_sentences = example_sentences
             
             result = db_manager.insert(
                 obj=grammar,
@@ -278,24 +277,24 @@ class GrammarService:
                 logger.warning(f"Grammar item not found: {grammar_id}")
                 return None
             
-            # Handle learnable_sentences update through PassageService if provided
-            if data.learnable_sentences is not None:
+            # Handle example_sentences update through PassageService if provided
+            if data.example_sentences is not None:
                 # Create new passages
                 new_sentences = []
-                for sentence in data.learnable_sentences:
+                for sentence in data.example_sentences:
                     sentence.language_id = existing.lesson.language_id if existing.lesson else None
                     passage = passage_service.create(sentence, session=session)
                     if passage:
                         new_sentences.append(passage)
                 
-                existing.learnable_sentences = new_sentences
+                existing.example_sentences = new_sentences
             else:
-                existing.learnable_sentences = []
+                existing.example_sentences = []
             
             # Remove nested objects from update_data
             update_data = data.model_dump()
             update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('learnable_sentences', None)
+            update_data.pop('example_sentences', None)
             update_data.pop('score', None)  # Don't allow direct score updates
             update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
             update_data.pop('last_seen_at', None)
@@ -399,20 +398,36 @@ class GrammarService:
                 last_seen=grammar.last_seen,
                 similarity=score
             )
+
+            grammar.difficulty = update_difficulty(
+                new_score=score,
+                last_seen=grammar.last_seen,
+                previous_difficulty=grammar.difficulty,
+                created_at=grammar.created_at
+            )
             
             # Update last_seen
-            grammar.last_seen = datetime.utcnow()
+            grammar.last_seen = datetime.now()
+
             # Save changes
             result = db_manager.modify(grammar, session=session)
             
             if result:
-                logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
+                logger.info(f"Updated GrammarFeature {grammar_id} score to {grammar.score} and difficulty to {grammar.difficulty}")
 
             if grammar.score != previous_score:
-                if grammar.lesson_id:
-                    lesson_service.update_score(grammar.lesson_id, session=session)
-                    logger.info(f"Updated lesson {grammar.lesson_id} score due to Grammar {grammar_id}")
-            
+                lesson_service.update_score(grammar.lesson_id, session=session)
+                logger.info(f"Updated lesson {grammar.lesson_id} score due to Grammar {grammar_id}")
+
+                if grammar.example_words:
+                    for word in grammar.example_words:
+                        word_service.update_score(word.id, session=session)
+                        logger.info(f"Updated example Word {word.id} score due to Grammar {grammar_id}")
+
+                if grammar.example_sentences:
+                    for passage in grammar.example_sentences:
+                        passage_service.update_score(passage.id, session=session)
+                        logger.info(f"Updated example Passage {passage.id} score due to Grammar {grammar_id}")
             
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

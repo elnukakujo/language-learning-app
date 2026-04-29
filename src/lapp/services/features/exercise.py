@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 import logging
@@ -8,7 +7,7 @@ import logging
 from ...core.database import db_manager
 from ...models.features import Exercise
 from ...schemas.features import ExerciseDict
-from ...utils import update_score
+from ...utils import update_score, update_difficulty
 from ..containers import LessonService
 from .calligraphy import CalligraphyService
 from .grammar import GrammarService
@@ -20,7 +19,6 @@ lesson_service = LessonService()
 calligraphy_service = CalligraphyService()
 grammar_service = GrammarService()
 vocabulary_service = VocabularyService()
-
 
 class ExerciseService:
     def _serialize(self, exercise: Exercise | None, as_dict: bool, include_relations: bool) -> Exercise | dict | None:
@@ -315,20 +313,35 @@ class ExerciseService:
                 last_seen=exercise.last_seen,
                 similarity=score,
             )
-            exercise.last_seen = datetime.utcnow()
+            exercise.difficulty = update_difficulty(
+                new_score=exercise.score,
+                last_seen=exercise.last_seen,
+                previous_difficulty=exercise.difficulty,
+                created_at=exercise.created_at
+            )
+
+            exercise.last_seen = datetime.now()    
+
             result = db_manager.modify(exercise, session=session)
 
-            for feature in [*exercise.vocabulary, *exercise.calligraphy, *exercise.grammar]:
-                feature.score = update_score(
-                    score=feature.score,
-                    last_seen=feature.last_seen,
-                    similarity=score,
-                )
-                feature.last_seen = datetime.utcnow()
-                db_manager.modify(feature, session=session)
+            if result:
+                logger.info(f"Updated exercise {ex_id} score to {exercise.score} and difficulty to {exercise.difficulty}")
+
+            for vocabulary in exercise.vocabulary:
+                vocabulary_service.update_score(vocabulary.id, score=score, session=session)
+                logger.info(f"Updated vocabulary {vocabulary.id} score due to exercise {ex_id}")
+
+            for grammar in exercise.grammar:
+                grammar_service.update_score(grammar.id, score=score, session=session)
+                logger.info(f"Updated grammar {grammar.id} score due to exercise {ex_id}")
+
+            for calligraphy in exercise.calligraphy:
+                calligraphy_service.update_score(calligraphy.id, score=score, session=session)
+                logger.info(f"Updated calligraphy {calligraphy.id} score due to exercise {ex_id}")
 
             if exercise.score != previous_score:
                 lesson_service.update_score(exercise.lesson_id, session=session)
+                logger.info(f"Updated lesson {exercise.lesson_id} score due to exercise {ex_id}")
 
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

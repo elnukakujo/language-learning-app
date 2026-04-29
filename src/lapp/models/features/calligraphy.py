@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.orm import relationship
 
-from ..base import BaseFeatureModel, calligraphy_example_word_link
+from ..base import BaseFeatureModel, calligraphy_example_word_link, calligraphy_example_sentence_link
 
 class Calligraphy(BaseFeatureModel):
     __tablename__ = 'calligraphy'
@@ -17,6 +17,11 @@ class Calligraphy(BaseFeatureModel):
     example_words = relationship(
         'Word',
         secondary=calligraphy_example_word_link,
+        back_populates='calligraphy'
+    )
+    example_sentences = relationship(
+        'Passage',
+        secondary=calligraphy_example_sentence_link,
         back_populates='calligraphy'
     )
 

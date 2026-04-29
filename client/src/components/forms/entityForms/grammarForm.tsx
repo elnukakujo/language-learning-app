@@ -22,7 +22,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
         grammarData = {
             title: "",
             explanation: "",
-            learnable_sentences: [],
+            example_sentences: [],
             lesson_id: lesson_id
         };
     } else {
@@ -32,7 +32,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
     const [title, setTitle] = useState<string>(grammarData.title);
     const [explanation, setExplanation] = useState<string>(grammarData.explanation);
 
-    const [learnableSentence, setLearnableSentence] = useState<Passage[]>(grammarData.learnable_sentences!);
+    const [learnableSentence, setLearnableSentence] = useState<Passage[]>(grammarData.example_sentences!);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -45,7 +45,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
         const element: Grammar = {
             title: title,
             explanation: explanation,
-            learnable_sentences: learnableSentence,
+            example_sentences: learnableSentence,
             lesson_id: lesson_id
         };
         

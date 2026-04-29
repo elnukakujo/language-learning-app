@@ -32,9 +32,9 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
             <h3>{currentIndex + 1} / {grammars.length}</h3>
 
             <h3>{grammar.title}</h3>
-            {grammar.learnable_sentences![0].image_files && grammar.learnable_sentences![0].image_files.length > 0 && <Image
-                src={BASE_URL + grammar.learnable_sentences![0].image_files?.[0]}
-                alt={grammar.learnable_sentences![0].text}
+            {grammar.example_sentences![0].image_files && grammar.example_sentences![0].image_files.length > 0 && <Image
+                src={BASE_URL + grammar.example_sentences![0].image_files?.[0]}
+                alt={grammar.example_sentences![0].text}
                 width={200}
                 height={200}
             />}
@@ -43,15 +43,15 @@ export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) 
                     Show Answer
                 </button>
             }
-            {showAnswer && grammar.learnable_sentences && grammar.learnable_sentences[0] && (
+            {showAnswer && grammar.example_sentences && grammar.example_sentences[0] && (
                 <article>
                     <h4 className="text-sm text-gray-500">Learnable Sentence:</h4>
-                    {grammar.learnable_sentences![0].audio_files && grammar.learnable_sentences![0].audio_files.length > 0 && <audio
-                        src={BASE_URL + grammar.learnable_sentences![0].audio_files?.[0]}
+                    {grammar.example_sentences![0].audio_files && grammar.example_sentences![0].audio_files.length > 0 && <audio
+                        src={BASE_URL + grammar.example_sentences![0].audio_files?.[0]}
                         controls
                         autoPlay
                     />}
-                    <p className="text-lg font-semibold">{grammar.learnable_sentences[0].text}{grammar.learnable_sentences[0].translation && ` (${grammar.learnable_sentences[0].translation})`}</p>
+                    <p className="text-lg font-semibold">{grammar.example_sentences[0].text}{grammar.example_sentences[0].translation && ` (${grammar.example_sentences[0].translation})`}</p>
                 </article>
             )}
             {showAnswer && !graded && (

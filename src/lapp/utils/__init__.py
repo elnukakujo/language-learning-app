@@ -1,5 +1,5 @@
 from .file_handler import MediaFileHandler
-from .helpers import update_score
+from .helpers import update_score, update_difficulty
 from .detect_language import detect_audio_language, detect_text_language
 from .spacy_model import load_spacy_model
 from .offline import is_offline
@@ -24,6 +24,7 @@ from .tokenize import tokenize, get_content_words, get_characters
 __all__ = [
     MediaFileHandler,
     update_score,
+    update_difficulty,
     detect_text_language,
     detect_audio_language,
     load_spacy_model,

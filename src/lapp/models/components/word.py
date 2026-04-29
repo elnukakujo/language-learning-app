@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from ..base import BaseComponentModel, calligraphy_example_word_link
+from ..base import BaseComponentModel, calligraphy_example_word_link, grammar_example_word_link
 
 class Word(BaseComponentModel):
     __tablename__ = 'word'
@@ -15,6 +15,13 @@ class Word(BaseComponentModel):
     
     # Relationship
     vocabulary = relationship('Vocabulary', back_populates='word')      # One to Many
+
+    grammar = relationship(
+        'Grammar',
+        secondary=grammar_example_word_link,
+        back_populates='example_words'
+    )
+
     calligraphy = relationship(
         'Calligraphy',
         secondary=calligraphy_example_word_link,
@@ -33,6 +40,7 @@ class Word(BaseComponentModel):
         if include_relations:
             base_dict.update({
                 "vocabulary_ids": [v.id for v in self.vocabulary],
+                "grammar_ids": [g.id for g in self.grammar],
                 "calligraphy_ids": [cf.id for cf in self.calligraphy]
             })
         return base_dict

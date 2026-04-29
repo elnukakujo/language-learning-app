@@ -6,4 +6,4 @@ from ..components import PassageDict
 class GrammarDict(BaseFeatureDict):
     title: str
     explanation: str
-    learnable_sentences: Optional[List[PassageDict]] = None
+    example_sentences: Optional[List[PassageDict]] = None

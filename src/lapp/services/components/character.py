@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-
+import datetime
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.components import CharacterDict
 from ...models.components import Character
 from ...core.database import db_manager
-
+from ...models.features import Calligraphy
 
 class CharacterService:
     def get_all(self, session: Optional[Session] = None) -> list[Character]:
@@ -242,6 +242,53 @@ class CharacterService:
             if owns_session:
                 session.rollback()
             logger.error(f"Failed to delete character {character_id}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
+
+    def update_score(self, char_id: str, session: Optional[Session] = None) -> Character | None:
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+
+        try:
+            character = self.get_by_id(char_id, session=session)
+            if not character:
+                logger.warning(f"Character not found: {char_id}")
+                return None
+
+            # Recalculate score based on all related features
+            features = []
+            for call_id in character.calligraphy_ids:
+                call = db_manager.find_by_id(Calligraphy, call_id, session=session)
+                if call:
+                    features.append(call)
+            
+            if features and len(features) > 0:
+                total_score = sum(feature.score for feature in features)
+                character.score = total_score / len(features)
+                
+                total_difficulty = sum(feature.difficulty for feature in features)
+                character.difficulty = total_difficulty / len(features)
+            else:
+                logger.warning(f"No features found for character: {char_id}")
+                character.score = 0.0
+                character.difficulty = 0.5
+
+            # Update last_seen
+            character.last_seen = datetime.now()
+
+            result = db_manager.modify(character, session=session)
+
+            if result:
+                logger.info(f"Updated CharacterComponent {char_id} score to {character.score} and difficulty to {character.difficulty}")
+
+            return result
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to update character score for {char_id}: {e}")
             raise
         finally:
             if owns_session:

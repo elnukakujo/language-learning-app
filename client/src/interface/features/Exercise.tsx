@@ -1,4 +1,7 @@
 import { BaseFeature } from "../base";
+import Calligraphy from "./Calligraphy";
+import Grammar from "./Grammar";
+import Vocabulary from "./Vocabulary";
 
 export default interface Exercise extends BaseFeature {
     exercise_type?: 'essay' | 'answering' | 'translate' | 'organize' | 'conversation' |
@@ -6,7 +9,8 @@ export default interface Exercise extends BaseFeature {
     question: string;
     answer: string;
     text_support?: string;
-    vocabulary_ids?: string[];
-    calligraphy_ids?: string[];
-    grammar_ids?: string[];
+
+    related_vocabularies?: Vocabulary[];
+    related_calligraphies?: Calligraphy[];
+    related_grammars?: Grammar[];
 };
