@@ -236,10 +236,12 @@ class ExerciseService:
                 return None
 
             update_data = data.model_dump(exclude_none=True)
-            update_data.pop("id", None)
-            update_data.pop("score", None)
-            update_data.pop("last_seen", None)
-            update_data.pop("last_seen_at", None)
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
 
             if "lesson_id" in update_data and not lesson_service.get_by_id(update_data["lesson_id"], session=session):
                 update_data["lesson_id"] = existing.lesson_id
@@ -310,17 +312,17 @@ class ExerciseService:
             previous_score = exercise.score
             exercise.score = update_score(
                 score=exercise.score,
-                last_seen=exercise.last_seen,
+                last_seen_at=exercise.last_seen_at,
                 similarity=score,
             )
             exercise.difficulty = update_difficulty(
                 new_score=exercise.score,
-                last_seen=exercise.last_seen,
+                last_seen_at=exercise.last_seen_at,
                 previous_difficulty=exercise.difficulty,
                 created_at=exercise.created_at
             )
 
-            exercise.last_seen = datetime.now()    
+            exercise.last_seen_at = datetime.now()    
 
             result = db_manager.modify(exercise, session=session)
 

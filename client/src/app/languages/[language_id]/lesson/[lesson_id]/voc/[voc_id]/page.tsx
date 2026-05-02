@@ -7,15 +7,15 @@ import Image from "next/image";
 export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {
     const { voc_id, lesson_id, language_id } = await params;
     const vocabulary: Vocabulary = await getElementbyId(voc_id);
-
+    console.log(vocabulary);
     return (
         <main>
             <article className="flex flex-col space-y-4">
                 <h1>Vocabulary Sheet</h1>
                 <section>
                     <h3>Word Information</h3>
-                    <p>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.gender) && `(${[vocabulary.word.phonetic, vocabulary.word.gender].filter(v => v).join(', ')})`} {vocabulary.word.translation}</p>
-                    <p>Type: {vocabulary.word.type || "N/A"}</p>
+                    <p>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.word_gender) && `(${[vocabulary.word.phonetic, vocabulary.word.word_gender].filter(v => v).join(', ')})`} {vocabulary.word.translation}</p>
+                    <p>Type: {vocabulary.word.word_type || "N/A"}</p>
                 </section>
                 {vocabulary.word.image_files!.length > 0 && (
                     <section className="flex flex-row space-x-4 items-center">
@@ -84,7 +84,10 @@ export default async function VocabularyPage({ params }: { params: { language_id
                 <section>
                     <h3>Performance Information</h3>
                     <p>Score: {vocabulary.score?.toFixed(1)}/100</p>
-                    <p>Last seen: {new Date(vocabulary.last_seen || 0).toLocaleDateString('en-US')}</p>
+                    <p>Difficulty: {vocabulary.difficulty?.toFixed(1) || "N/A"}</p>
+                    <p>Status: {vocabulary.status || "N/A"}</p>
+                    <p>Created at: {new Date(vocabulary.created_at || 0).toLocaleDateString('en-US')}</p>
+                    <p>Last seen: {new Date(vocabulary.last_seen_at || 0).toLocaleDateString('en-US')}</p>
                 </section>
             </article>
             <nav className="flex flex-row space-x-4">

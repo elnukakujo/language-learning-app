@@ -14,7 +14,9 @@ export default function LanguageOverviewCard({ language }: { language: Language 
             <h3>{language.name} ({language.native_name})</h3>
             <h5>{language.level}</h5>
             <p>{language.score!.toFixed(1)}/100</p>
-            <p>Last Seen: {new Date(language.last_seen!).toLocaleDateString('en-US')}</p>
+            <p>Status: {language.status}</p>
+            <p>Created at: {new Date(language.created_at || 0).toLocaleDateString('en-US')}</p>
+            <p>Last Seen: {new Date(language.last_seen_at).toLocaleDateString('en-US')}</p>
             {language.current_lesson_id && <p>{language.current_lesson_id}</p>}
         </button>
     );

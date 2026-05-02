@@ -7,8 +7,8 @@ interface BaseElement {
 }
 
 interface BaseMediaFiles {
-    image_files?: string[];
-    audio_files?: string[];
+    image_files: string[];
+    audio_files: string[];
 }
 
 export interface BaseContainer extends BaseElement {

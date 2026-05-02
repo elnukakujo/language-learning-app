@@ -149,7 +149,7 @@ def update_language(language_id: str):
                     type: string
                     example: "🇫🇷"
                     required: false
-                current_lesson:
+                current_lesson_id:
                     type: string
                     example: "lesson_L1"
                     required: false

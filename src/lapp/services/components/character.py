@@ -178,8 +178,10 @@ class CharacterService:
             logger.info(f"Update data for character {character_id}: {update_data}")
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            update_data.pop('last_seen_at', None)
+            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
 
             if (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
                 logger.warning(f"Character with value '{update_data['character']}' already exists.")
@@ -276,8 +278,7 @@ class CharacterService:
                 character.score = 0.0
                 character.difficulty = 0.5
 
-            # Update last_seen
-            character.last_seen = datetime.now()
+            character.last_seen_at = datetime.now()
 
             result = db_manager.modify(character, session=session)
 

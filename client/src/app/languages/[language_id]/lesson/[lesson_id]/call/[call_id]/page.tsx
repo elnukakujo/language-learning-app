@@ -50,47 +50,54 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                     </section>
                 )}
                 
-                {calligraphy.example_word && (
+                {calligraphy.example_words && (
                     <section className="flex flex-col space-y-4 items-baseline">
-                        <h3>Example Word</h3>
+                        <h3>Example Words</h3>
                         <article
                             className="flex flex-col space-y-2 items-baseline"
                         >
-                            <section>
-                                <p>{calligraphy.example_word.word}</p>
-                                {calligraphy.example_word.translation && <p>Sentence Translation: {calligraphy.example_word.translation}</p>}
-                            </section>
-                            {calligraphy.example_word.image_files!.length > 0 && (
-                                <section className="flex flex-row space-x-4 items-center">
-                                    {calligraphy.example_word.image_files!.map((url, index) => (
-                                        <Image
-                                            key={index}
-                                            src={BASE_URL + url}
-                                            alt={calligraphy.example_word!.word}
-                                            width={200}
-                                            height={200}
-                                        />
-                                    ))}
+                            {calligraphy.example_words.map((example_word, index) => (
+                                <section key={index}>
+                                    <section>
+                                        <p>{example_word.word}</p>
+                                        {example_word.translation && <p>Sentence Translation: {example_word.translation}</p>}
+                                    </section>
+                                    {example_word.image_files!.length > 0 && (
+                                        <section className="flex flex-row space-x-4 items-center">
+                                            {example_word.image_files!.map((url, index) => (
+                                                <Image
+                                                    key={index}
+                                                    src={BASE_URL + url}
+                                                    alt={example_word.word}
+                                                    width={200}
+                                                    height={200}
+                                                />
+                                            ))}
+                                        </section>
+                                    )}
+                                    {example_word.audio_files!.length > 0 && (
+                                        <section className="flex flex-col space-y-4 items-baseline">
+                                            {example_word.audio_files!.map((url, index) => (
+                                                <audio
+                                                    key={index}
+                                                    src={BASE_URL + url}
+                                                    controls
+                                                />
+                                            ))}
+                                        </section>
+                                    )}
                                 </section>
-                            )}
-                            {calligraphy.example_word.audio_files!.length > 0 && (
-                                <section className="flex flex-col space-y-4 items-baseline">
-                                    {calligraphy.example_word.audio_files!.map((url, index) => (
-                                        <audio
-                                            key={index}
-                                            src={BASE_URL + url}
-                                            controls
-                                        />
-                                    ))}
-                                </section>
-                            )}
+                            ))}
                         </article>
                     </section>
                 )}
                 <section>
                     <h3>Performance Information</h3>
                     <p>Score: {calligraphy.score?.toFixed(1)}/100</p>
-                    <p>Last seen: {new Date(calligraphy.last_seen || 0).toLocaleDateString('en-US')}</p>
+                    <p>Difficulty: {calligraphy.difficulty.toFixed(1)}</p>
+                    <p>Status: {calligraphy.status}</p>
+                    <p>Created at: {new Date(calligraphy.created_at || 0).toLocaleDateString('en-US')}</p>
+                    <p>Last seen: {new Date(calligraphy.last_seen_at || 0).toLocaleDateString('en-US')}</p>
                 </section>
             </article>
             <nav className="flex flex-row space-x-4">

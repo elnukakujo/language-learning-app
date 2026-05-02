@@ -7,22 +7,11 @@ class WordDict(BaseComponentDict):
     word: str
     translation: str
     phonetic: Optional[str] = None
-    type: Optional[str] = None
     word_type: Optional[str] = None
-    gender: Optional[str] = None
     word_gender: Optional[str] = None
     
     @model_validator(mode="after")
     def _validate(self):
-        if self.type is None and self.word_type is not None:
-            self.type = self.word_type
-        if self.word_type is None and self.type is not None:
-            self.word_type = self.type
-        if self.gender is None and self.word_gender is not None:
-            self.gender = self.word_gender
-        if self.word_gender is None and self.gender is not None:
-            self.word_gender = self.gender
-
         valid_types = [
             "noun",
             "verb",
@@ -40,9 +29,9 @@ class WordDict(BaseComponentDict):
             "modal",
             ""
         ]
-        if self.type is not None and self.type.lower() not in valid_types:
-            raise ValueError(f"Invalid type: {self.type}. Must be one of {valid_types}.")
+        if self.word_type is not None and self.word_type.lower() not in valid_types:
+            raise ValueError(f"Invalid type: {self.word_type}. Must be one of {valid_types}.")
         valid_gender = ["m", "f", "n"]
-        if self.gender is not None and self.gender.lower() not in valid_gender:
-            raise ValueError(f"Invalid gender: {self.gender}. Must be one of {valid_gender}.")
+        if self.word_gender is not None and self.word_gender.lower() not in valid_gender:
+            raise ValueError(f"Invalid gender: {self.word_gender}. Must be one of {valid_gender}.")
         return self

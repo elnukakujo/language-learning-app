@@ -119,10 +119,13 @@ class WordService:
                 return None
 
             update_data = data.model_dump(exclude_none=True)
-            update_data.pop("id", None)
-            update_data.pop("score", None)
-            update_data.pop("last_seen", None)
-            update_data.pop("last_seen_at", None)
+            update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
+            
             if "type" in update_data:
                 update_data["word_type"] = update_data.pop("type")
             if "gender" in update_data:
@@ -203,8 +206,8 @@ class WordService:
                 word.score = 0.0
                 word.difficulty = 0.5
                 
-            # Update last_seen
-            word.last_seen = datetime.now()
+            # Update last_seen_at
+            word.last_seen_at = datetime.now()
 
             result = db_manager.modify(word, session=session)
 

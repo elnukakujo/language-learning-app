@@ -101,7 +101,7 @@ CREATE TABLE language (
         WHEN score <= 90 THEN 'advanced'
         ELSE 'fluent'
     END) VIRTUAL,
-    current_lesson TEXT,
+    current_lesson_id TEXT,
     FOREIGN KEY (user_id) REFERENCES user(id),
     UNIQUE (user_id, name)
 );
@@ -483,7 +483,7 @@ INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
 -- 4) Language and lesson
 -- ============================================================================
 
-INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, native_name, flag, current_lesson)
+INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, native_name, flag, current_lesson_id)
 SELECT id, 'user_0', description, level, score, last_seen, name, native_name, flag, current_unit
 FROM old_language;
 

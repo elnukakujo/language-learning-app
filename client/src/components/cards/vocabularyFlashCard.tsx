@@ -36,8 +36,8 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
             <article className="flex flex-col space-y-4">
                 <section>
                     <h3>Word Information</h3>
-                    <p>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.gender) && revealPhonetic && `(${[vocabulary.word.phonetic, vocabulary.word.gender].filter(v => v).join(', ')})`}</p>
-                    {revealPhonetic && <p>Type: {vocabulary.word.type || "N/A"}</p>}
+                    <p>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.word_gender) && revealPhonetic && `(${[vocabulary.word.phonetic, vocabulary.word.word_gender].filter(v => v).join(', ')})`}</p>
+                    {revealPhonetic && <p>Type: {vocabulary.word.word_type || "N/A"}</p>}
                     {showAnswer && <p>Translation: {vocabulary.word.translation}</p>}
                 </section>
                 {vocabulary.word.image_files!.length > 0 && (
@@ -108,7 +108,10 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                 <section>
                     <h3>Performance Information</h3>
                     <p>Score: {vocabulary.score?.toFixed(1)}/100</p>
-                    <p>Last seen: {new Date(vocabulary.last_seen || 0).toLocaleDateString('en-US')}</p>
+                    <p>Difficulty: {vocabulary.difficulty.toFixed(1)}</p>
+                    <p>Status: {vocabulary.status}</p>
+                    <p>Created at: {new Date(vocabulary.created_at || 0).toLocaleDateString('en-US')}</p>
+                    <p>Last seen: {new Date(vocabulary.last_seen_at || 0).toLocaleDateString('en-US')}</p>
                 </section>
             </article>
             {!showAnswer && <div className="flex flex-row space-x-4">

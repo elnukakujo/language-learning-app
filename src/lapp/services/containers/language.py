@@ -41,7 +41,7 @@ class LanguageService:
                 return lesson.id
             new_current_lesson_id = self._find_current_lesson(language.id, score_threshold=0.75, session=session)
 
-            language.current_lesson = new_current_lesson_id
+            language.current_lesson_id = new_current_lesson_id
             db_manager.modify(language, session=session)
             return new_current_lesson_id
             
@@ -116,10 +116,10 @@ class LanguageService:
                 session=session
             )
             for language in languages:
-                # Ensure current_lesson is valid
-                language.current_lesson = self._check_current_lesson(
+                # Ensure current_lesson_id is valid
+                language.current_lesson_id = self._check_current_lesson(
                     language=language,
-                    current_lesson_id=language.current_lesson,
+                    current_lesson_id=language.current_lesson_id,
                     session=session
                 )
             return self._serialize_list(languages, as_dict, include_relations)
@@ -159,9 +159,9 @@ class LanguageService:
                 session=session
             )
             if language:
-                language.current_lesson = self._check_current_lesson(
+                language.current_lesson_id = self._check_current_lesson(
                     language=language,
-                    current_lesson_id=language.current_lesson,
+                    current_lesson_id=language.current_lesson_id,
                     session=session
                 )
             return self._serialize(language, as_dict, include_relations)
@@ -201,10 +201,10 @@ class LanguageService:
                 session=session
             )
             for language in languages:
-                # Ensure current_lesson is valid
-                language.current_lesson = self._check_current_lesson(
+                # Ensure current_lesson_id is valid
+                language.current_lesson_id = self._check_current_lesson(
                     language=language,
-                    current_lesson_id=language.current_lesson,
+                    current_lesson_id=language.current_lesson_id,
                     session=session
                 )
             return self._serialize_list(languages, as_dict, include_relations)
@@ -243,9 +243,9 @@ class LanguageService:
                 **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'current_lesson'}
             )
 
-            language.last_seen = datetime.utcnow()
+            language.last_seen_at = datetime.utcnow()
             language.score = 0.0
-            language.current_lesson = self._find_current_lesson(
+            language.current_lesson_id = self._find_current_lesson(
                 language_id=language.id,
                 score_threshold=0.75,
                 session=session
@@ -304,17 +304,17 @@ class LanguageService:
             update_data = data.model_dump()
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            update_data.pop('last_seen_at', None)
-            update_data.pop('current_lesson', None)
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
+            update_data.pop('current_lesson_id', None)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)
             
-            # Update last_seen
-            existing.current_lesson = self._check_current_lesson(
+            existing.current_lesson_id = self._check_current_lesson(
                 language=existing,
-                current_lesson_id=existing.current_lesson,
+                current_lesson_id=existing.current_lesson_id,
                 session=session
             )
             
@@ -419,9 +419,8 @@ class LanguageService:
                     f"(from {len(lessons)} lessons)"
                 )
             
-            # Update last_seen
-            language.last_seen = datetime.now()
-            language.current_lesson = self._find_current_lesson(
+            language.last_seen_at = datetime.now()
+            language.current_lesson_id = self._find_current_lesson(
                 language_id=language.id,
                 score_threshold=0.75,
                 session=session

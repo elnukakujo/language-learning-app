@@ -229,8 +229,10 @@ class PassageService:
             update_data = data.model_dump()
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            update_data.pop('last_seen_at', None)
+            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
 
             if (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
                 logger.warning(f"Passage with value '{update_data['text']}' already exists.")
@@ -335,7 +337,7 @@ class PassageService:
                 passage.difficulty = 0.5
 
             # Update last_seen
-            passage.last_seen = datetime.now()
+            passage.last_seen_at = datetime.now()
 
             result = db_manager.modify(passage, session=session)
 

@@ -69,55 +69,62 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                     </section>
                 )}
                 
-                {revealExample &&calligraphy.example_word && (
+                {revealExample &&calligraphy.example_words && (
                     <section className="flex flex-col space-y-4 items-baseline">
-                        <h3>Example Word</h3>
+                        <h3>Example Words</h3>
                         <article
                             className="flex flex-col space-y-2 items-baseline"
                         >
-                            <section>
-                                <p>{calligraphy.example_word.word}</p>
-                                {calligraphy.example_word.translation && showAnswer && <p>Sentence Translation: {calligraphy.example_word.translation}</p>}
-                            </section>
-                            {calligraphy.example_word.image_files!.length > 0 && (
-                                <section className="flex flex-row space-x-4 items-center">
-                                    {calligraphy.example_word.image_files!.map((url, index) => (
-                                        <Image
-                                            key={index}
-                                            src={BASE_URL + url}
-                                            alt={calligraphy.example_word!.word}
-                                            width={200}
-                                            height={200}
-                                        />
-                                    ))}
+                            {calligraphy.example_words!.map((example_word, index) => (
+                                <section key={index}>
+                                    <section>
+                                        <p>{example_word.word}</p>
+                                        {example_word.translation && showAnswer && <p>Sentence Translation: {example_word.translation}</p>}
+                                    </section>
+                                    {example_word.image_files!.length > 0 && (
+                                        <section className="flex flex-row space-x-4 items-center">
+                                            {example_word.image_files!.map((url, index) => (
+                                                <Image
+                                                    key={index}
+                                                    src={BASE_URL + url}
+                                                    alt={example_word.word}
+                                                    width={200}
+                                                    height={200}
+                                                />
+                                            ))}
+                                        </section>
+                                    )}
+                                    {example_word.audio_files!.length > 0 && revealPhonetic && (
+                                        <section className="flex flex-col space-y-4 items-baseline">
+                                            {example_word.audio_files!.map((url, index) => (
+                                                <audio
+                                                    key={index}
+                                                    src={BASE_URL + url}
+                                                    controls
+                                                    autoPlay
+                                                />
+                                            ))}
+                                        </section>
+                                    )}
                                 </section>
-                            )}
-                            {calligraphy.example_word.audio_files!.length > 0 && revealPhonetic && (
-                                <section className="flex flex-col space-y-4 items-baseline">
-                                    {calligraphy.example_word.audio_files!.map((url, index) => (
-                                        <audio
-                                            key={index}
-                                            src={BASE_URL + url}
-                                            controls
-                                            autoPlay
-                                        />
-                                    ))}
-                                </section>
-                            )}
+                            ))}
                         </article>
                     </section>
                 )}
                 <section>
                     <h3>Performance Information</h3>
                     <p>Score: {calligraphy.score?.toFixed(1)}/100</p>
-                    <p>Last seen: {new Date(calligraphy.last_seen || 0).toLocaleDateString('en-US')}</p>
+                    <p>Difficulty: {calligraphy.difficulty.toFixed(1)}</p>
+                    <p>Status: {calligraphy.status}</p>
+                    <p>Created at: {new Date(calligraphy.created_at || 0).toLocaleDateString('en-US')}</p>
+                    <p>Last seen: {new Date(calligraphy.last_seen_at || 0).toLocaleDateString('en-US')}</p>
                 </section>
             </article>
             {!showAnswer && <div className="flex flex-row space-x-4">
                 <button className="bg-yellow-500 text-white rounded-md p-2" onClick={() => setRevealPhonetic(!revealPhonetic)}>
                     {revealPhonetic ? "Hide Phonetic" : "Show Phonetic"}
                 </button>
-                {calligraphy.example_word && (
+                {calligraphy.example_words && (
                     <button className="bg-red-500 text-white rounded-md p-2" onClick={() => setRevealExample(!revealExample)}>
                         {revealExample ? "Hide Example" : "Show Example"}
                     </button>

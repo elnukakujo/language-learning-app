@@ -163,7 +163,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                             'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
                             'classifier', 'auxiliary', 'modal'
                         ]}
-                        selectedOption={exampleWord.type}
+                        selectedOption={exampleWord.word_type}
                         onChange={(value) => handleExampleWordChange("type", value)}
                         required
                     />
@@ -172,7 +172,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                         options={[
                             'm', 'f', 'n'
                         ]}
-                        selectedOption={exampleWord.gender || ""}
+                        selectedOption={exampleWord.word_gender || ""}
                         onChange={(value) => handleExampleWordChange("gender", value)}
                     />
                     <MediaLoader 

@@ -13,6 +13,7 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
     };
 
     const averageScore = callProps.reduce((acc, item) => acc + item.score!, 0) / callProps.length;
+    const averageDifficulty = callProps.reduce((acc, item) => acc + item.difficulty!, 0) / callProps.length;
 
     callProps.sort((a, b) => (a.score || 0) - (b.score || 0));
 
@@ -24,6 +25,7 @@ export default function CalligraphyList({ callProps}: { callProps: Calligraphy[]
                     <>
                         <p>Total: {callProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
                     </>
                 )}
             </header>

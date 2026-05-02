@@ -10,10 +10,10 @@ def _as_date(value: date | datetime) -> date:
 
 def compute_recency_weight(
     created_at: date | datetime,
-    last_seen: date | datetime
+    last_seen_at: date | datetime
 ) -> float:
     """
-    Computes a recency weight from both created_at and last_seen.
+    Computes a recency weight from both created_at and last_seen_at.
 
     - staleness:  how long since last review  → increases weight (more forgetting)
     - maturity:   how long since item created → decreases weight (well-learned items need less boost)
@@ -21,9 +21,9 @@ def compute_recency_weight(
     today = date.today()
 
     created_at = _as_date(created_at)
-    last_seen = _as_date(last_seen)
+    last_seen_at = _as_date(last_seen_at)
 
-    days_since_seen = (today - last_seen).days
+    days_since_seen = (today - last_seen_at).days
     days_since_created = (today - created_at).days
 
     staleness       = log2(days_since_seen + 2)
@@ -33,7 +33,7 @@ def compute_recency_weight(
 
 def update_score(
     score: float,
-    last_seen: date | datetime,
+    last_seen_at: date | datetime,
     similarity: float,        # 0.0 to 1.0
     created_at: date | datetime = date.today(),
     difficulty: float = 0.5,  # 0.0 (easy) to 1.0 (hard)
@@ -45,16 +45,16 @@ def update_score(
     Args:
         score:        Current score (0–100)
         created_at:   Date the item was first created/added
-        last_seen:    Date the item was last reviewed
+        last_seen_at: Date the item was last reviewed
         similarity:   Answer quality (0.0 = wrong, 1.0 = perfect)
         difficulty:   Current difficulty ratio (0.0 = easy, 1.0 = hard)
         scale:        Score given for a perfect answer on day one
     """
     created_at = _as_date(created_at)
-    last_seen = _as_date(last_seen)
+    last_seen_at = _as_date(last_seen_at)
 
-    remaining_days = (date.today() - last_seen).days
-    recency_weight = compute_recency_weight(created_at, last_seen)
+    remaining_days = (date.today() - last_seen_at).days
+    recency_weight = compute_recency_weight(created_at, last_seen_at)
 
     # Slower decay for hard items, faster for easy ones, modulated by recency
     time_weight = log2(remaining_days + 2) * scale * (1 + difficulty) * recency_weight
@@ -67,7 +67,7 @@ def update_score(
 
 def update_difficulty(
     new_score: float,
-    last_seen: date | datetime,
+    last_seen_at: date | datetime,
     previous_difficulty: float,  # Initialize as 0.5 if no prior value
     created_at: date | datetime = date.today(),
     scale: float = 1.0,
@@ -79,14 +79,14 @@ def update_difficulty(
     Args:
         new_score:           Score after calling update_score() (0–100)
         created_at:          Date the item was first created/added
-        last_seen:           Date the item was last reviewed
+        last_seen_at:        Date the item was last reviewed
         previous_difficulty: Prior difficulty (0.0 = easy, 1.0 = hard)
         scale:               Sensitivity of difficulty shift
         alpha:               EMA learning rate (0.0 = ignore new signal, 1.0 = fully reactive)
     """
     created_at = _as_date(created_at)
-    last_seen = _as_date(last_seen)
-    recency_weight = compute_recency_weight(created_at, last_seen)
+    last_seen_at = _as_date(last_seen_at)
+    recency_weight = compute_recency_weight(created_at, last_seen_at)
 
     # Normalize score to 0–1 performance signal
     performance = new_score / 100.0

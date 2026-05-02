@@ -6,13 +6,10 @@ from ..base import BaseContainerModel
 class Lesson(BaseContainerModel):
     __tablename__ = 'lesson'
 
-    user_id = Column(String, ForeignKey('user.id'), nullable=False, default='user_0')
-
     title = Column(String, index=True)
-    description = Column(String)
-    level = Column(String)
 
     # Foreign key
+    user_id = Column(String, ForeignKey('user.id'), nullable=False)
     language_id: Mapped[str] = mapped_column(ForeignKey('language.id'))
 
     # Relationships
@@ -44,17 +41,14 @@ class Lesson(BaseContainerModel):
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
-            "user_id": self.user_id,
-            "title": self.title,
-            "description": self.description,
-            "level": self.level,
-            "language_id": self.language_id,
-            "lesson_id": self.id,
+            **super().to_dict(include_relations=include_relations),
+            "title": self.title
         }
 
         if include_relations:
             base_dict.update({
+                "user_id": self.user_id,
+                "language_id": self.language_id,
                 "calligraphy_ids": [calligraphy.id for calligraphy in self.calligraphy],
                 "grammar_ids": [grammar.id for grammar in self.grammar],
                 "vocabulary_ids": [vocab.id for vocab in self.vocabulary],

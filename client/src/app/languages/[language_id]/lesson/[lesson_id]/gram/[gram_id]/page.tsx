@@ -92,7 +92,10 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
                 <section>
                     <h3>Performance Information</h3>
                     <p>Score: {grammar.score!.toFixed(1)}/100</p>
-                    <p>Last seen: {new Date(grammar.last_seen || 0).toLocaleDateString('en-US')}</p>
+                    <p>Difficulty: {grammar.difficulty.toFixed(1)}</p>
+                    <p>Status: {grammar.status}</p>
+                    <p>Created at: {new Date(grammar.created_at || 0).toLocaleDateString('en-US')}</p>
+                    <p>Last seen: {new Date(grammar.last_seen_at || 0).toLocaleDateString('en-US')}</p>
                 </section>
             </article>
             <nav className="flex flex-row space-x-4">

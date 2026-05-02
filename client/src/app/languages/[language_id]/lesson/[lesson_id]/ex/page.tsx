@@ -59,6 +59,7 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                                         );
                                     })()}
                                     <p>Score: {exercise.score?.toFixed(2)}/100</p>
+                                    <p>Difficulty: {exercise.difficulty?.toFixed(1)}</p>
                                     <nav className="flex flex-row space-x-2">
                                         <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/ex/${exercise.id}`}>
                                             <p>Practice this Exercise</p>

@@ -12,6 +12,7 @@ export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
     }
 
     const averageScore = exProps.reduce((acc, item) => acc + item.score!, 0) / exProps.length;
+    const averageDifficulty = exProps.reduce((acc, item) => acc + item.difficulty!, 0) / exProps.length;
 
     const groupedExercises = exProps.reduce((groups: { [key: string]: Exercise[] }, exercise) => {
         const type = exercise.exercise_type || 'unknown';
@@ -30,6 +31,7 @@ export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
                     <>
                         <p>Total: {exProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
                     </>
                 )}
             </header>

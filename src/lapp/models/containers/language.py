@@ -7,14 +7,16 @@ from .lesson import Lesson
 class Language(BaseContainerModel):
     __tablename__ = 'language'
 
-    user_id = Column(String, ForeignKey('user.id'), nullable=False, default='user_0')
-
     name = Column(String, index=True)
     native_name = Column(String)
-    level = Column(String)
-    description = Column(String, default="")
     flag = Column(String, default="")
-    current_lesson = Column(String, ForeignKey('lesson.id'), nullable=True)
+
+    source_iso639_2t = Column(String, nullable=True)
+    target_iso639_2t = Column(String, nullable=True)
+
+    # Foreign keys
+    user_id = Column(String, ForeignKey('user.id'), nullable=False)
+    current_lesson_id = Column(String, ForeignKey('lesson.id'), nullable=True)
 
     # One-to-many: all lessons belonging to this language
     lessons: Mapped[list["Lesson"]] = relationship(
@@ -26,18 +28,18 @@ class Language(BaseContainerModel):
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
+            **super().to_dict(include_relations),
             "name": self.name,
-            "user_id": self.user_id,
             "native_name": self.native_name,
-            "level": self.level,
-            "description": self.description,
             "flag": self.flag,
-            "current_lesson": self.current_lesson,
+            "source_iso639_2t": self.source_iso639_2t,
+            "target_iso639_2t": self.target_iso639_2t,
         }
 
         if include_relations:
             base_dict.update({
+                "user_id": self.user_id,
+                "current_lesson_id": self.current_lesson_id,
                 "lesson_ids": [lesson.id for lesson in self.lessons],
             })
         

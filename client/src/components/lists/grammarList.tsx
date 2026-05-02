@@ -13,6 +13,8 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
     };
 
     const averageScore = gramProps.reduce((acc, item) => acc + item.score!, 0) / gramProps.length;
+    const averageDifficulty = gramProps.reduce((acc, item) => acc + item.difficulty!, 0) / gramProps.length;
+
     gramProps.sort((a, b) => (a.score || 0) - (b.score || 0));
 
     return (
@@ -23,6 +25,7 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
                     <>
                         <p>Total: {gramProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
                     </>
                 )}
             </header>

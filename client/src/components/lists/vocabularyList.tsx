@@ -14,6 +14,7 @@ export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
     };
 
     const averageScore = vocProps.reduce((acc, item) => acc + item.score!, 0) / vocProps.length;
+    const averageDifficulty = vocProps.reduce((acc, item) => acc + item.difficulty!, 0) / vocProps.length;
 
     vocProps.sort((a, b) => (a.score || 0) - (b.score || 0));
 
@@ -25,6 +26,7 @@ export default function VocabularyList({ vocProps}: { vocProps: Vocabulary[]}) {
                     <>
                         <p>Total: {vocProps.length}</p>
                         <p>Average Score: {averageScore.toFixed(2)}/100</p>
+                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
                     </>
                 )}
             </header>

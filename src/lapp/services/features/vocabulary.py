@@ -342,11 +342,14 @@ class VocabularyService:
             # Remove nested objects from update_data to avoid overwriting our service-managed updates
             update_data = data.model_dump()
             update_data.pop('id', None)  # Don't allow updating the ID
+            update_data.pop('score', None)  # Don't allow direct score updates
+            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
+            
             update_data.pop('word', None)
             update_data.pop('example_sentences', None)
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            update_data.pop('last_seen_at', None)
             
             # Update remaining fields
             for key, value in update_data.items():
@@ -446,19 +449,19 @@ class VocabularyService:
             
             vocabulary.score = update_score(
                 score=vocabulary.score,
-                last_seen=vocabulary.last_seen,
+                last_seen_at=vocabulary.last_seen_at,
                 similarity=score
             )
 
             vocabulary.difficulty = update_difficulty(
                 new_score=score,
-                last_seen=vocabulary.last_seen,
+                last_seen_at=vocabulary.last_seen_at,
                 previous_difficulty=vocabulary.difficulty,
                 created_at=vocabulary.created_at
             )
 
-            # Update last_seen
-            vocabulary.last_seen = datetime.now()
+            # Update last_seen_at
+            vocabulary.last_seen_at = datetime.now()
             
             # Save changes
             result = db_manager.modify(vocabulary, session=session)

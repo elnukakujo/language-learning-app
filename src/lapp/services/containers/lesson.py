@@ -224,8 +224,9 @@ class LessonService:
             update_data = data.model_dump()
             update_data.pop('id', None)  # Don't allow updating the ID
             update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            update_data.pop('last_seen_at', None)
+            update_data.pop('status', None)  # Don't allow direct status updates
+            update_data.pop('created_at', None)  # Don't allow updating created_at
+            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
             update_data.pop('lesson_id', None)
 
             for key, value in update_data.items():
@@ -333,7 +334,7 @@ class LessonService:
                 )
             
             # Update last_seen
-            lesson.last_seen = datetime.now()
+            lesson.last_seen_at = datetime.now()
 
             # Save changes
             result = db_manager.modify(lesson, session=session)

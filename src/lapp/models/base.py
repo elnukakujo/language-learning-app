@@ -66,29 +66,116 @@ exercise_calligraphy_link = Table(
     Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
 )
 
-class BaseContainerModel(Base):
+
+class BaseElementModel(Base):
+    """
+    Base class for all models that represent individual elements.
+    This includes: Word, Passage, and Calligraphy
+    """
+    __abstract__ = True
+
+    id = Column(String, primary_key=True, index=True)
+    score = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
+    last_seen_at = Column("last_seen_at", DateTime, default=datetime.now, nullable=True)
+    status = Column(String, nullable=False)
+
+    def to_dict(self, include_relations: bool = True) -> dict:
+        # Allow cooperative multiple-inheritance: call next to_dict in MRO
+        parent_to_dict = getattr(super(), "to_dict", None)
+        base = parent_to_dict(include_relations=include_relations) if callable(parent_to_dict) else {}
+
+        base.update({
+            "id": self.id,
+            "score": self.score,
+            "created_at": self.created_at.isoformat(),
+            "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
+            "status": self.status
+        })
+
+        return base
+    
+class BaseModelWithMediaFiles(Base):
+    """
+    Base class for models that can have media files.
+    This includes: Word, Passage, Calligraphy, Vocabulary, Grammar, Exercise
+    """
+    __abstract__ = True
+
+    image_files = Column(JSON, default=list)
+    audio_files = Column(JSON, default=list)
+
+    def to_dict(self, include_relations: bool = True) -> dict:
+        return {
+            "image_files": self.image_files,
+            "audio_files": self.audio_files
+        }
+    
+    @validates('image_files', 'audio_files')
+    def validate_media_files(cls, value: Any, info) -> list[str]:
+        """Validate and filter media file paths."""
+        if info is None or not isinstance(info, list):
+            return []
+
+        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
+        valid_files = []
+
+        for file_path in info:
+            if not isinstance(file_path, str):
+                logger.warning(f"Invalid media file path (not a string): {file_path}")
+                continue
+
+            normalized_path = file_path.replace('\\', '/')
+
+            if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                logger.warning(f"Invalid image file extension: {normalized_path}")
+                continue
+            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
+                logger.warning(f"Invalid audio file extension: {normalized_path}")
+                continue
+
+            if normalized_path.lower().startswith('/media/images/') or normalized_path.lower().startswith('/media/audio/'):
+                relative_path = normalized_path[len('/media/'):]
+            elif normalized_path.lower().startswith('/media_dev/images/') or normalized_path.lower().startswith('/media_dev/audio/'):
+                relative_path = normalized_path[len('/media_dev/'):]
+            elif normalized_path.lower().startswith('/media_test/images/') or normalized_path.lower().startswith('/media_test/audio/'):
+                relative_path = normalized_path[len('/media_test/'):]
+            elif normalized_path.lower().startswith('images/') or normalized_path.lower().startswith('audio/'):
+                relative_path = normalized_path
+            else:
+                logger.warning(f"Invalid media URL prefix: {normalized_path}")
+                continue
+
+            try:
+                full_path = (media_root / relative_path).resolve()
+                full_path.relative_to(media_root)
+            except Exception:
+                logger.warning(f"Media path escapes MEDIA_ROOT: {normalized_path}")
+                continue
+
+            if full_path.exists() and full_path.is_file():
+                valid_files.append(normalized_path)
+
+        return valid_files
+    
+class BaseContainerModel(BaseElementModel):
     """
     Base class for models that are containers for other models.
     This includes: Lesson, Language
     """
     __abstract__ = True
 
-    id = Column(String, primary_key=True, index=True)
-    score = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
-    last_seen = Column("last_seen_at", DateTime, default=datetime.now(), nullable=True)
-    status = Column(String, nullable=False)
+    level = Column(String)
+    description = Column(String, default="")
 
-    def to_dict(self) -> dict:
+    def to_dict(self, include_relations: bool = True) -> dict:
         return {
-            "id": self.id,
-            "score": self.score,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
-            "last_seen_at": self.last_seen.isoformat() if self.last_seen else None,
+            **super().to_dict(include_relations=include_relations),
+            "level": self.level,
+            "description": self.description
         }
     
-class BaseFeatureModel(BaseContainerModel):
+class BaseFeatureModel(BaseElementModel, BaseModelWithMediaFiles):
     """
     Base class for features that belong to a lesson.
     This includes: Vocabulary, Grammar, Calligraphy, Exercise
@@ -99,10 +186,6 @@ class BaseFeatureModel(BaseContainerModel):
     
     # Foreign keys - shared by all components
     lesson_id: Mapped[str] = mapped_column("lesson_id", ForeignKey("lesson.id"))
-    
-    # Media files
-    image_files = Column(JSON, default=list)
-    audio_files = Column(JSON, default=list)
     
     # Relationships - use declared_attr to dynamically create for each subclass
     @declared_attr
@@ -115,9 +198,8 @@ class BaseFeatureModel(BaseContainerModel):
     
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {
-            **super().to_dict(),
-            "image_files": self.image_files,
-            "audio_files": self.audio_files
+            **super().to_dict(include_relations=include_relations),
+            "difficulty": self.difficulty
         }
         
         if include_relations:
@@ -127,127 +209,27 @@ class BaseFeatureModel(BaseContainerModel):
         
         return base_dict
     
-    @validates('image_files', 'audio_files')
-    def validate_media_files(cls, value: Any, info) -> list[str]:
-        """Validate and filter media file paths."""
-        if info is None or not isinstance(info, list):
-            return []
-
-        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
-        valid_files = []
-
-        for file_path in info:
-            if not isinstance(file_path, str):
-                logger.warning(f"Invalid media file path (not a string): {file_path}")
-                continue
-
-            normalized_path = file_path.replace('\\', '/')
-
-            if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                logger.warning(f"Invalid image file extension: {normalized_path}")
-                continue
-            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
-                logger.warning(f"Invalid audio file extension: {normalized_path}")
-                continue
-
-            if normalized_path.lower().startswith('/media/images/') or normalized_path.lower().startswith('/media/audio/'):
-                relative_path = normalized_path[len('/media/'):]
-            elif normalized_path.lower().startswith('/media_dev/images/') or normalized_path.lower().startswith('/media_dev/audio/'):
-                relative_path = normalized_path[len('/media_dev/'):]
-            elif normalized_path.lower().startswith('/media_test/images/') or normalized_path.lower().startswith('/media_test/audio/'):
-                relative_path = normalized_path[len('/media_test/'):]
-            elif normalized_path.lower().startswith('images/') or normalized_path.lower().startswith('audio/'):
-                relative_path = normalized_path
-            else:
-                logger.warning(f"Invalid media URL prefix: {normalized_path}")
-                continue
-
-            try:
-                full_path = (media_root / relative_path).resolve()
-                full_path.relative_to(media_root)
-            except Exception:
-                logger.warning(f"Media path escapes MEDIA_ROOT: {normalized_path}")
-                continue
-
-            if full_path.exists() and full_path.is_file():
-                valid_files.append(normalized_path)
-
-        return valid_files
-    
-class BaseComponentModel(Base):
+class BaseComponentModel(BaseElementModel, BaseModelWithMediaFiles):
     """
     Base class for components models.
     This includes: Calligraphy, Word, and Passage
     """
     __abstract__ = True
 
-    id = Column(String, primary_key=True, index=True)
-    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"), nullable=False)
-    score = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
-    last_seen = Column("last_seen_at", DateTime, default=datetime.now(), nullable=True)
-    status = Column(String, nullable=False)
     difficulty = Column(Float, default=0.5)
 
-    # Media files
-    image_files = Column(JSON, default=list)
-    audio_files = Column(JSON, default=list)
+    # Foreign keys 
+    language_id: Mapped[str] = mapped_column(ForeignKey("language.id"), nullable=False)
 
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "language_id": self.language_id,
-            "score": self.score,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
-            "last_seen_at": self.last_seen.isoformat() if self.last_seen else None,
-            "image_files": self.image_files,
-            "audio_files": self.audio_files
+    def to_dict(self, include_relations: bool = True) -> dict:
+        base_dict = {
+            **super().to_dict(include_relations=include_relations),
+            "difficulty": self.difficulty
         }
-    
-    @validates('image_files', 'audio_files')
-    def validate_media_files(cls, value: Any, info) -> list[str]:
-        """Validate and filter media file paths."""
-        if info is None or not isinstance(info, list):
-            return []
-
-        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
-        valid_files = []
-
-        for file_path in info:
-            if not isinstance(file_path, str):
-                logger.warning(f"Invalid media file path (not a string): {file_path}")
-                continue
-
-            normalized_path = file_path.replace('\\', '/')
-
-            if value == "image_files" and not normalized_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-                logger.warning(f"Invalid image file extension: {normalized_path}")
-                continue
-            if value == "audio_files" and not normalized_path.lower().endswith(('.mp3', '.wav', '.ogg', '.flac', '.m4a')):
-                logger.warning(f"Invalid audio file extension: {normalized_path}")
-                continue
-
-            if normalized_path.lower().startswith('/media/images/') or normalized_path.lower().startswith('/media/audio/'):
-                relative_path = normalized_path[len('/media/'):]
-            elif normalized_path.lower().startswith('/media_dev/images/') or normalized_path.lower().startswith('/media_dev/audio/'):
-                relative_path = normalized_path[len('/media_dev/'):]
-            elif normalized_path.lower().startswith('/media_test/images/') or normalized_path.lower().startswith('/media_test/audio/'):
-                relative_path = normalized_path[len('/media_test/'):]
-            elif normalized_path.lower().startswith('images/') or normalized_path.lower().startswith('audio/'):
-                relative_path = normalized_path
-            else:
-                logger.warning(f"Invalid media URL prefix: {normalized_path}")
-                continue
-
-            try:
-                full_path = (media_root / relative_path).resolve()
-                full_path.relative_to(media_root)
-            except Exception:
-                logger.warning(f"Media path escapes MEDIA_ROOT: {normalized_path}")
-                continue
-
-            if full_path.exists() and full_path.is_file():
-                valid_files.append(normalized_path)
-
-        return valid_files
+        
+        if include_relations:
+            base_dict.update({
+                "language_id": self.language_id,
+            })
+        
+        return base_dict
