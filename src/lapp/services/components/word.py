@@ -85,16 +85,9 @@ class WordService:
                 logger.info(f"Word already exists: {data.word} with ID: {existing.id}")
                 return self.update(word_id=existing.id, data=data, session=session)
 
-            word_data = data.model_dump(exclude_none=True)
-            word_data.pop("last_seen_at", None)
-            if "type" in word_data:
-                word_data["word_type"] = word_data.pop("type")
-            if "gender" in word_data:
-                word_data["word_gender"] = word_data.pop("gender")
-
             word = Word(
                 id=db_manager.generate_new_id(model_class=Word, session=session),
-                **word_data,
+                **data.model_dump(exclude={'status', 'difficulty', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
             )
             result = db_manager.insert(obj=word, session=session)
             return result
@@ -118,13 +111,7 @@ class WordService:
                 logger.warning(f"Word not found: {word_id}")
                 return None
 
-            update_data = data.model_dump(exclude_none=True)
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
+            update_data = data.model_dump(exclude={'id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
             
             if "type" in update_data:
                 update_data["word_type"] = update_data.pop("type")
@@ -182,15 +169,15 @@ class WordService:
 
             # Recalculate score based on all related features
             features = []
-            for voc_id in word.vocabulary_ids:
+            for voc_id in word.vocabulary:
                 voc = db_manager.find_by_id(Vocabulary, voc_id, session=session)
                 if voc:
                     features.append(voc)
-            for gram_id in word.grammar_ids:
+            for gram_id in word.grammar:
                 gram = db_manager.find_by_id(Grammar, gram_id, session=session)
                 if gram:
                     features.append(gram)
-            for call_id in word.calligraphy_ids:
+            for call_id in word.calligraphy:
                 call = db_manager.find_by_id(Calligraphy, call_id, session=session)
                 if call:
                     features.append(call)

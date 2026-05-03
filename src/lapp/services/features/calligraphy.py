@@ -232,8 +232,7 @@ class CalligraphyService:
                 ),
                 **{
                     k: v
-                    for k, v in data.model_dump(exclude={'character', 'example_word'}, exclude_none=True).items()
-                    if k != 'last_seen_at'
+                    for k, v in data.model_dump(exclude={'character', 'example_words', 'example_sentences', 'status', 'score'}, exclude_none=True).items()
                 }
             )
 

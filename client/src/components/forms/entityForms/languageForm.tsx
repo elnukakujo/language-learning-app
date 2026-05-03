@@ -14,7 +14,7 @@ const LEVEL_OPTIONS: Array<Language["level"]> = ["A1", "A2", "B1", "B2", "C1", "
 
 const LANGUAGE_to_ISO639_2T: Record<string, string> = {
     "Catalan": "cat",
-    "Chinois": "zho",
+    "Chinese": "zho",
     "Croatian": "hrv",
     "Danish": "dan",
     "Dutch": "nld",
@@ -38,7 +38,7 @@ const LANGUAGE_to_ISO639_2T: Record<string, string> = {
     "Spanish": "spa",
     "Swedish": "swe",
     "Ukrainian": "ukr",
-    "Not Specified": "",
+    "Custom": "",
     // Add more languages as needed
 };
 
@@ -53,19 +53,19 @@ export default function LanguageForm({language}: { language?: Language }) {
     if (!language) {
         languageData = {
             name: "",
-            native_name: "",
+            alias: "",
             description: "",
             level: "A1",
             flag: "",
             target_iso639_2t: "",
-            source_iso639_2t: "",
+            source_iso639_2t: "eng",
         };
     } else {
         languageData = language;
     }
 
     const [name, setName] = useState<string>(languageData.name);
-    const [nativeName, setNativeName] = useState<string | undefined>(languageData.native_name);
+    const [alias, setAlias] = useState<string | undefined>(languageData.alias);
     const [description, setDescription] = useState<string | undefined>(languageData.description);
     const [level, setLevel] = useState<Language["level"]>(languageData.level);
     const [flag, setFlag] = useState<string | undefined>(languageData.flag);
@@ -77,7 +77,7 @@ export default function LanguageForm({language}: { language?: Language }) {
 
         const element: Language = {
             name,
-            native_name: nativeName || undefined,
+            alias: alias || undefined,
             description: description || undefined,
             level,
             flag: flag || undefined,
@@ -86,6 +86,7 @@ export default function LanguageForm({language}: { language?: Language }) {
         };
 
         try {
+            console.debug(element);
             if (isUpdate) {
                 await updateLanguage(languageData.id!, element);
             } else {
@@ -102,23 +103,35 @@ export default function LanguageForm({language}: { language?: Language }) {
 
     return (
         <form className="flex flex-col space-y-4 items-center" onSubmit={handleSubmit}>
-            <AutoWidthInput
-                value={name}
-                label="Name"
-                onChange={(e) => {
-                    setName(e.target.value);
-                    setTargetIso639_2t(LANGUAGE_to_ISO639_2T[e.target.value] || "");
+            <ClassicSelectMenu
+                label="Language Name"
+                options={Object.keys(LANGUAGE_to_ISO639_2T)}
+                selectedOption={name}
+                onChange={(value) => {
+                    setName(value);
+                    setTargetIso639_2t(LANGUAGE_to_ISO639_2T[value] || "");
                 }}
-                placeholder="Enter language name"
-                className="border border-gray-300"
                 required
             />
+            {(name === "Custom" || (!Object.keys(LANGUAGE_to_ISO639_2T).includes(name) && name !== "")) && (
+                <AutoWidthInput
+                    value={name}
+                    label="Custom Language Name"
+                    onChange={(e) => {
+                        setName(e.target.value);
+                        setTargetIso639_2t(LANGUAGE_to_ISO639_2T[e.target.value] || "");
+                    }}
+                    placeholder="Enter language name"
+                    className="border border-gray-300"
+                    required
+                />
+            )}
 
             <AutoWidthInput
-                value={nativeName || ""}
-                label="Native Name"
-                onChange={(e) => setNativeName(e.target.value)}
-                placeholder="Enter native name"
+                value={alias || ""}
+                label="Alias"
+                onChange={(e) => setAlias(e.target.value)}
+                placeholder="Enter alias"
                 className="border border-gray-300"
             />
 

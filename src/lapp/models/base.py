@@ -1,7 +1,8 @@
 from flask import current_app
 from typing import Any
 from pathlib import Path
-from sqlalchemy import Column, Float, String, Integer, DateTime, JSON, ForeignKey, Table
+from sklearn import base
+from sqlalchemy import Column, Float, String, Integer, DateTime, JSON, ForeignKey, Table, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr, validates
 from datetime import datetime
 
@@ -78,7 +79,11 @@ class BaseElementModel(Base):
     score = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.now, nullable=False)
     last_seen_at = Column("last_seen_at", DateTime, default=datetime.now, nullable=True)
-    status = Column(String, nullable=False)
+    status = Column(
+        String, 
+        Computed("CASE WHEN score = 0 THEN 'unstarted' WHEN score <= 30 THEN 'beginner' WHEN score <= 60 THEN 'intermediary' WHEN score <= 90 THEN 'advanced' ELSE 'fluent' END"),
+        nullable=False
+    )
 
     def to_dict(self, include_relations: bool = True) -> dict:
         # Allow cooperative multiple-inheritance: call next to_dict in MRO
@@ -164,16 +169,26 @@ class BaseContainerModel(BaseElementModel):
     This includes: Lesson, Language
     """
     __abstract__ = True
-
+    
     level = Column(String)
     description = Column(String, default="")
 
+    # Foreign key
+    user_id = Column(String, ForeignKey('user.id'), default="user_0")
+
     def to_dict(self, include_relations: bool = True) -> dict:
-        return {
+        base_dict = {
             **super().to_dict(include_relations=include_relations),
             "level": self.level,
             "description": self.description
         }
+
+        if include_relations:
+            base_dict.update({
+                "user_id": self.user_id
+            })
+        return base_dict
+    
     
 class BaseFeatureModel(BaseElementModel, BaseModelWithMediaFiles):
     """

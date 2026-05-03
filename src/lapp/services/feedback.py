@@ -18,28 +18,47 @@ class FeedbackService:
 	model = text_gen_model
 
 	feedback_instruct = (
-		"You are a supportive language-learning tutor. "
-		"Write short, concrete feedback for a learner after an exercise has been evaluated. "
-		"Use at most 2 sentences. Mention one strength, one improvement point, and keep the tone encouraging. "
-		"Do not mention internal model details or numerical scoring unless it helps the learner understand the result."
-		"Higher similarity, grammar error rate, and token difference means better performance. You can use these metrics to identify specific strengths and weaknesses in the learner's answer compared to the reference answer based on the question asked and metrics."
-		"Don't give the correct answer, just feedback on the user's answer and how to improve it."
+		"You are a supportive language-learning tutor.\n"
+		"Follow these rules exactly:\n"
+		"1) Write feedback in SOURCE_LANG_CODE.\n"
+		"2) The learner practices TARGET_LANG_CODE. Evaluate performance for that target language.\n"
+		"3) Output only 1 or 2 short sentences.\n"
+		"4) Mention one strength and one concrete improvement point.\n"
+		"5) Do not provide the correct answer.\n"
+		"6) Do not mention internal model details.\n"
+		"7) You may reference metrics only if useful for the learner."
 	)
 
 	feedback_shots = [
 		[
-			"Exercise type: translate\nScore: 0.92\nCorrect: true\nQuestion: I went to the market.\nUser answer: Je suis allé au marché.\nReference answer: Je suis allé au marché.\nMetrics: {\"similarity\": 0.95, \"grammar_error_rate\": 1.0, \"token_difference_rate\": 1.0}",
-			"Good work. Your answer is accurate and natural. If you want to improve further, focus on keeping the sentence equally smooth in different tenses.",
+			"SOURCE_LANG_CODE: eng\nTARGET_LANG_CODE: fra\nEXERCISE_TYPE: translate\nINPUT_TYPE: text\nSCORE: 0.92\nTHRESHOLD: 0.75\nCORRECT: true\nQUESTION: I went to the market.\nUSER_INPUT: Je suis allé au marché.\nREFERENCE_ANSWER: Je suis allé au marché.\nMETRICS_JSON: {\"similarity\": 0.95, \"grammar_error_rate\": 1.0, \"token_difference_rate\": 1.0}\nOUTPUT:",
+			"Great work: your French answer is accurate and natural. To improve further, keep the same fluency when you use other tenses.",
 		],
 		[
-			"Exercise type: speaking\nScore: 0.58\nCorrect: false\nQuestion: 吗\nUser answer: 马\nReference answer: 吗\nMetrics: {\"similarity\": 0.61, \"grammar_error_rate\": 0.82, \"token_difference_rate\": 0.55}",
-			"You are on the right track, but the pronunciation still needs work. Listen to the reference again and focus on rhythm and the parts that were hard to recognize.",
+			"SOURCE_LANG_CODE: eng\nTARGET_LANG_CODE: zho\nEXERCISE_TYPE: speaking\nINPUT_TYPE: speech\nSCORE: 0.58\nTHRESHOLD: 0.75\nCORRECT: false\nQUESTION: 吗\nUSER_INPUT: 马\nREFERENCE_ANSWER: 吗\nMETRICS_JSON: {\"similarity\": 0.61, \"grammar_error_rate\": 0.82, \"token_difference_rate\": 0.55}\nOUTPUT:",
+			"You are close, but your Mandarin pronunciation changed the meaning. Practice this sound slowly with the reference audio and focus on tone contrast.",
 		],
 		[
-			"Exercise type: answering\nScore: 0.41\nCorrect: false\nQuestion: あなたは明日どうしますか?\nUser answer: I go yesterday store.\nReference answer: I went to the store yesterday.\nMetrics: {\"similarity\": 0.48, \"grammar_error_rate\": 0.57, \"token_difference_rate\": 0.50}",
-			"The main idea is present, but the sentence structure needs correction. Review the verb tense and compare your word order with the reference answer.",
+			"SOURCE_LANG_CODE: spa\nTARGET_LANG_CODE: eng\nEXERCISE_TYPE: answering\nINPUT_TYPE: text\nSCORE: 0.41\nTHRESHOLD: 0.75\nCORRECT: false\nQUESTION: What did you do yesterday?\nUSER_INPUT: I go yesterday store.\nREFERENCE_ANSWER: I went to the store yesterday.\nMETRICS_JSON: {\"similarity\": 0.48, \"grammar_error_rate\": 0.57, \"token_difference_rate\": 0.50}\nOUTPUT:",
+			"Vas bien con la idea principal, pero tu respuesta en ingles necesita mejor estructura. Revisa el tiempo verbal pasado y el orden de palabras para que suene natural.",
 		],
 	]
+
+	def _format_context(self, context: dict[str, object]) -> str:
+		return (
+			f"SOURCE_LANG_CODE: {context.get('source_lang_code', '')}\n"
+			f"TARGET_LANG_CODE: {context.get('target_lang_code', '')}\n"
+			f"EXERCISE_TYPE: {context.get('exercise_type', '')}\n"
+			f"INPUT_TYPE: {context.get('input_type', '')}\n"
+			f"SCORE: {context.get('score', 0.0)}\n"
+			f"THRESHOLD: {context.get('threshold', 0.0)}\n"
+			f"CORRECT: {str(bool(context.get('correct', False))).lower()}\n"
+			f"QUESTION: {context.get('question', '')}\n"
+			f"USER_INPUT: {context.get('user_input', '')}\n"
+			f"REFERENCE_ANSWER: {context.get('reference_answer', '')}\n"
+			f"METRICS_JSON: {json.dumps(context.get('metrics', {}), ensure_ascii=False)}\n"
+			"OUTPUT:"
+		)
 
 	def _build_prompt(self, context: dict[str, object]) -> list[dict[str, str]]:
 		messages = [{"role": "system", "content": self.feedback_instruct}]
@@ -48,7 +67,7 @@ class FeedbackService:
 			messages.append({"role": "user", "content": user_shot})
 			messages.append({"role": "assistant", "content": assistant_shot})
 
-		messages.append({"role": "user", "content": json.dumps(context, ensure_ascii=False, indent=2)})
+		messages.append({"role": "user", "content": self._format_context(context)})
 		return messages
 
 	def _generate_with_model(self, context: dict[str, object]) -> str:
@@ -87,35 +106,49 @@ class FeedbackService:
 		score = float(context.get("score", 0.0) or 0.0)
 		correct = bool(context.get("correct", False))
 		exercise_type = str(context.get("exercise_type", "exercise"))
+		source_lang_code = str(context.get("source_lang_code", "eng") or "eng").lower()
+
+		templates = {
+			"eng": {
+				"correct": f"Good work on this {exercise_type} exercise. Your answer is correct, so the next step is to keep refining clarity and naturalness.",
+				"close": f"You are close on this {exercise_type} exercise. Review the small differences between your answer and the reference, especially wording and sentence flow.",
+				"mid": f"You have the main idea for this {exercise_type} exercise, but part of the answer still needs work. Focus on the structure and compare your response with the reference.",
+				"low": f"This {exercise_type} exercise needs more review. Try the reference again and focus on the key words, grammar pattern, or pronunciation that changed the meaning.",
+			},
+			"fra": {
+				"correct": f"Bon travail pour cet exercice de {exercise_type}. Votre reponse est correcte, et la prochaine etape est d'ameliorer encore la clarte et la fluidite.",
+				"close": f"Vous etes proche pour cet exercice de {exercise_type}. Revoyez les petites differences avec la reponse de reference, surtout le choix des mots et la fluidite.",
+				"mid": f"L'idee principale est presente dans cet exercice de {exercise_type}, mais une partie de la reponse doit etre corrigee. Concentrez-vous sur la structure et comparez avec la reference.",
+				"low": f"Cet exercice de {exercise_type} demande encore de la revision. Reprenez la reference et concentrez-vous sur les mots cles, la grammaire ou la prononciation qui ont change le sens.",
+			},
+			"spa": {
+				"correct": f"Buen trabajo en este ejercicio de {exercise_type}. Tu respuesta es correcta y el siguiente paso es mejorar aun mas la claridad y naturalidad.",
+				"close": f"Estas cerca en este ejercicio de {exercise_type}. Revisa las pequenas diferencias con la respuesta de referencia, sobre todo vocabulario y fluidez.",
+				"mid": f"Tienes la idea principal en este ejercicio de {exercise_type}, pero parte de la respuesta necesita correccion. Enfocate en la estructura y compara con la referencia.",
+				"low": f"Este ejercicio de {exercise_type} necesita mas revision. Intenta de nuevo con la referencia y enfocate en palabras clave, gramatica o pronunciacion que cambiaron el sentido.",
+			},
+		}
+
+		selected = templates.get(source_lang_code, templates["eng"])
 
 		if correct:
-			return (
-				f"Good work on this {exercise_type} exercise. Your answer is correct, "
-				"so the next step is to keep refining clarity and naturalness."
-			)
+			return selected["correct"]
 
 		if score >= 0.75:
-			return (
-				f"You are close on this {exercise_type} exercise. Review the small differences between your answer "
-				"and the reference, especially wording and sentence flow."
-			)
+			return selected["close"]
 
 		if score >= 0.5:
-			return (
-				f"You have the main idea for this {exercise_type} exercise, but part of the answer still needs work. "
-				"Focus on the structure and compare your response with the reference."
-			)
+			return selected["mid"]
 
-		return (
-			f"This {exercise_type} exercise needs more review. Try the reference again and focus on the key words, "
-			"grammar pattern, or pronunciation that changed the meaning."
-		)
+		return selected["low"]
 
 	def generate_feedback(
 		self,
 		ex_id: str,
 		user_input: str,
 		input_type: str,
+		target_lang_code: str,
+		source_lang_code: str,
 		results: dict[str, object],
 		threshold: float,
 		correct_audio_index: int = 0,
@@ -147,6 +180,8 @@ class FeedbackService:
 				"correct": bool(results.get("score", 0.0) > threshold),
 				"user_input": results.get("user_transcription", user_input) if input_type == "speech" else results.get("user_answer", user_input),
 				"reference_answer": results.get("correct_transcription", exercise.answer) if input_type == "speech" else results.get("correct_answer", exercise.answer),
+				"target_lang_code": target_lang_code,
+				"source_lang_code": source_lang_code,
 				"metrics": {
 					key: value
 					for key, value in results.items()
@@ -164,6 +199,8 @@ class FeedbackService:
 				"score": results.get("score", 0.0),
 				"correct": results.get("score", 0.0) > threshold,
 				"exercise_type": input_type,
+				"target_lang_code": target_lang_code,
+				"source_lang_code": source_lang_code,
 			})
 		finally:
 			if owns_session:

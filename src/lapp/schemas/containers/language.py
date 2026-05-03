@@ -3,8 +3,12 @@ from typing import Optional
 from ..base import BaseContainerDict
 
 class LanguageDict(BaseContainerDict):
-    user_id: Optional[str] = None
     name: str
-    native_name: Optional[str] = None
+    alias: Optional[str] = None
     flag: Optional[str] = None  # Flag emoji
+
+    target_iso639_2t: Optional[str] = None
+    source_iso639_2t: Optional[str] = None
+    
+    user_id: Optional[str] = None
     current_lesson_id: Optional[str] = None

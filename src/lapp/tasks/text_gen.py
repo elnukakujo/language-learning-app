@@ -2,6 +2,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask, session
+from lapp.models.containers.language import Language
 
 from ..core.database import db_manager
 from ..models import Grammar, Vocabulary, Calligraphy
@@ -89,17 +90,30 @@ def generate_missing_texts(app: Flask):
             error_count = 0
             
             for feature in features_without_texts:
+                language: Language = db_manager.find_by_id("Language", feature.lesson.language_id)
                 try:
                     # Generate audio using TTS service
                     if isinstance(feature, Calligraphy):
                         text = feature.character.character
-                        generated_text = text_gen_service.generate_example_word(text)
+                        generated_text = text_gen_service.generate_example_word(
+                            text,
+                            source_lang_code=language.source_iso639_2t,
+                            target_lang_code=language.target_iso639_2t
+                        )
                     elif isinstance(feature, Vocabulary):
                         text = feature.word.word
-                        generated_text = text_gen_service.generate_example_sentence(text)
+                        generated_text = text_gen_service.generate_example_sentence(
+                            text,
+                            source_lang_code=language.source_iso639_2t,
+                            target_lang_code=language.target_iso639_2t
+                        )
                     elif isinstance(feature, Grammar):
                         text = f" #{feature.title}\n\n{feature.explanation}"
-                        generated_text = text_gen_service.generate_learnable_sentence(text)
+                        generated_text = text_gen_service.generate_learnable_sentence(
+                            text,
+                            source_lang_code=language.source_iso639_2t,
+                            target_lang_code=language.target_iso639_2t
+                        )
                     else:
                         logger.warning(f"⚠️  Unknown feature type for ID {feature.id}, skipping")
                         continue       

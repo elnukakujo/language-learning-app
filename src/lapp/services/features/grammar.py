@@ -212,17 +212,12 @@ class GrammarService:
                 if passage:
                     example_sentences.append(passage)
 
-            # Prepare data without example_sentences to avoid duplication
-            grammar_data = data.model_dump(exclude_none=True)
-            grammar_data.pop('example_sentences', None)
-            grammar_data.pop('last_seen_at', None)
-
             grammar = Grammar(
                 id = db_manager.generate_new_id(
                     model_class=Grammar,
                     session=session
                 ),
-                **grammar_data
+                **data.model_dump(exclude={"example_sentences", "last_seen_at"}, exclude_none=True)
             )
             
             # Add the passages to the grammar

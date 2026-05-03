@@ -93,6 +93,7 @@ def generate_missing_component_audio(app: Flask):
             for component in components_without_audio:
                 try:
                     # Generate audio using TTS service
+                    language_name = db_manager.find_by_id("Language", component.lesson.language_id).name
 
                     if isinstance(component, Character):
                         text = getattr(component, 'character', None)
@@ -105,7 +106,7 @@ def generate_missing_component_audio(app: Flask):
                         logger.warning(f"⚠️  Component ID {component.id} has no text to generate audio from")
                         continue
 
-                    relative_path = tts_service.generate_audio(text=text)
+                    relative_path = tts_service.generate_audio(text=text, language_name=language_name)
                     component_id = component.id
 
                     updated_component = component.to_dict(include_relations=False)

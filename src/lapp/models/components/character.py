@@ -27,6 +27,6 @@ class Character(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "calligraphy_ids": [c.id for c in self.calligraphy]
+                "calligraphy": [c.id for c in self.calligraphy]
             })
         return base_dict

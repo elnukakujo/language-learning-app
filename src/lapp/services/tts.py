@@ -1,11 +1,10 @@
 import logging
-import random
 import uuid
 from pathlib import Path
-import torch
 import soundfile as sf
 
 from ..utils import detect_text_language, qwen_tts_model
+from ..utils.detect_language import _LANGUAGES
 
 logger = logging.getLogger(__name__)
 
@@ -52,17 +51,18 @@ class TTSService:
     
     def generate_audio(
         self,
-        text: str | list[str]
+        text: str,
+        language_name: str = None,
     ) -> str | list[str]:
         """
         Generate audio file from text using QwenTTS API.
         
         Args:
-            text: Text to convert to speech (string or list of strings)
+            text: Text to convert to speech (string)
         
         Returns:
-            Relative path(s) to generated audio file(s) with forward slashes
-            (e.g., '/media/audio/abc123.wav' or list of paths)
+            Relative path to generated audio file with forward slashes
+            (e.g., '/media/audio/abc123.wav')
         
         Raises:
             ValueError: If text is empty
@@ -72,38 +72,31 @@ class TTSService:
         if not text:
             raise ValueError("Text cannot be empty")
         
-        # Convert single string to list for uniform processing
-        text_list = [text] if isinstance(text, str) else text
-        
-        # Validate all texts
-        for t in text_list:
-            if not t or not t.strip():
-                raise ValueError("Text cannot be empty")
-        
         try:
-            logger.info(f"Generating TTS for: {text_list}")
+            logger.info(f"Generating TTS for: {text}")
 
-            language = detect_text_language(text_list[0])
-            logger.info(f"Detected language: {language.name} ({language.iso1}) for text: '{text_list[0]}'")
+            if not language_name:
+                language_name = detect_text_language(text).name
+            logger.info(f"Detected language: {language_name} for text: '{text}'")
             
             wavs, sr = self.model.generate_custom_voice(
-                text=text_list,
+                text=[text],
                 speaker="Vivian",
-                language=language.name if language.name != "Unknown" else None,
+                language=language_name if language_name and any(
+                    language_name == lang.name for lang in _LANGUAGES.values()
+                ) else None,
             )
             
             generated_paths = []
+            filename = self._get_filename()
+            output_path = self.audio_dir / filename
+            sf.write(output_path, wavs[0], sr)
             
-            for idx, txt in enumerate(text_list):
-                filename = self._get_filename()
-                output_path = self.audio_dir / filename
-                sf.write(output_path, wavs[idx], sr)
-                
-                # Get normalized path with forward slashes
-                relative_path = self._get_relative_path(output_path)
-                generated_paths.append(relative_path)
-                
-                logger.info(f"✅ Generated TTS audio: {filename} for text: '{txt}'")
+            # Get normalized path with forward slashes
+            relative_path = self._get_relative_path(output_path)
+            generated_paths.append(relative_path)
+            
+            logger.info(f"✅ Generated TTS audio: {filename} for text: '{text}'")
             
             # Return single path if input was single string, else return list
             return generated_paths[0] if isinstance(text, str) else generated_paths

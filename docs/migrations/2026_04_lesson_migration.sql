@@ -90,7 +90,7 @@ CREATE TABLE language (
     last_seen_at DATETIME,
     -- language-specific
     name TEXT NOT NULL,
-    native_name TEXT,
+    alias TEXT,
     flag TEXT,
     target_iso639_2t TEXT,
     source_iso639_2t TEXT DEFAULT 'eng',
@@ -483,7 +483,7 @@ INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
 -- 4) Language and lesson
 -- ============================================================================
 
-INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, native_name, flag, current_lesson_id)
+INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, alias, flag, current_lesson_id)
 SELECT id, 'user_0', description, level, score, last_seen, name, native_name, flag, current_unit
 FROM old_language;
 

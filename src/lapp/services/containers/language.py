@@ -240,10 +240,10 @@ class LanguageService:
         try:
             language = Language(
                 id = db_manager.generate_new_id(model_class=Language, session=session),
-                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'current_lesson'}
+                **{k: v for k, v in data.model_dump(exclude={'current_lesson_id', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
             )
 
-            language.last_seen_at = datetime.utcnow()
+            language.last_seen_at = datetime.now()
             language.score = 0.0
             language.current_lesson_id = self._find_current_lesson(
                 language_id=language.id,
@@ -301,13 +301,7 @@ class LanguageService:
                 return None
             
             # Update the existing object's attributes
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-            update_data.pop('current_lesson_id', None)
+            update_data = data.model_dump(exclude={'current_lesson_id', 'id', 'user_id', 'score', 'status', 'created_at', 'last_seen_at'}, exclude_none=True)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)

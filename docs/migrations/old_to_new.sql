@@ -119,9 +119,9 @@ CREATE TABLE exercise (
     question TEXT,
     answer TEXT,
     text_support TEXT DEFAULT '',
-    vocabulary_ids JSON DEFAULT '[]',
-    calligraphy_ids JSON DEFAULT '[]',
-    grammar_ids JSON DEFAULT '[]',
+    vocabulary JSON DEFAULT '[]',
+    calligraphy JSON DEFAULT '[]',
+    grammar JSON DEFAULT '[]',
     FOREIGN KEY (unit_id) REFERENCES unit(id)
 );
 
@@ -272,7 +272,7 @@ JOIN character_id_map cm ON oc.id = cm.old_id;
 INSERT INTO exercise (
     id, score, last_seen, unit_id,
     exercise_type, question, answer, text_support,
-    vocabulary_ids, calligraphy_ids, grammar_ids,
+    vocabulary, calligraphy, grammar,
     image_files, audio_files
 )
 SELECT 

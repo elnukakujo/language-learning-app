@@ -33,24 +33,24 @@ class ExerciseService:
 
     def _resolve_associations(
         self,
-        calligraphy_ids: Optional[list[str]],
-        vocabulary_ids: Optional[list[str]],
-        grammar_ids: Optional[list[str]],
+        calligraphy: Optional[list[str]],
+        vocabulary: Optional[list[str]],
+        grammar: Optional[list[str]],
         session: Optional[Session],
     ) -> tuple[list, list, list]:
         calligraphies = [
             c
-            for cid in (calligraphy_ids or [])
+            for cid in (calligraphy or [])
             if (c := calligraphy_service.get_by_id(calligraphy_id=cid, session=session))
         ]
         vocabularies = [
             v
-            for vid in (vocabulary_ids or [])
+            for vid in (vocabulary or [])
             if (v := vocabulary_service.get_by_id(voc_id=vid, session=session))
         ]
         grammars = [
             g
-            for gid in (grammar_ids or [])
+            for gid in (grammar or [])
             if (g := grammar_service.get_by_id(grammar_id=gid, session=session))
         ]
         return calligraphies, vocabularies, grammars
@@ -189,20 +189,20 @@ class ExerciseService:
                 logger.warning(f"Cannot create exercise, lesson not found: {data.lesson_id}")
                 return None
 
-            exercise_data = data.model_dump(exclude_none=True)
-            exercise_data.pop("last_seen_at", None)
-            calligraphy_ids = exercise_data.pop("calligraphy_ids", None)
-            vocabulary_ids = exercise_data.pop("vocabulary_ids", None)
-            grammar_ids = exercise_data.pop("grammar_ids", None)
+            exercise_data = data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
+            
+            related_calligraphy = exercise_data.pop("related_calligraphy", None)
+            related_vocabulary = exercise_data.pop("related_vocabulary", None)
+            related_grammar = exercise_data.pop("related_grammar", None)
 
             exercise = Exercise(
                 id=db_manager.generate_new_id(model_class=Exercise, session=session),
                 **exercise_data,
             )
-            exercise.calligraphy, exercise.vocabulary, exercise.grammar = self._resolve_associations(
-                calligraphy_ids=calligraphy_ids,
-                vocabulary_ids=vocabulary_ids,
-                grammar_ids=grammar_ids,
+            exercise.related_calligraphy, exercise.related_vocabulary, exercise.related_grammar = self._resolve_associations(
+                calligraphy=related_calligraphy,
+                vocabulary=related_vocabulary,
+                grammar=related_grammar,
                 session=session,
             )
 
@@ -246,18 +246,18 @@ class ExerciseService:
             if "lesson_id" in update_data and not lesson_service.get_by_id(update_data["lesson_id"], session=session):
                 update_data["lesson_id"] = existing.lesson_id
 
-            calligraphy_ids = update_data.pop("calligraphy_ids", None)
-            vocabulary_ids = update_data.pop("vocabulary_ids", None)
-            grammar_ids = update_data.pop("grammar_ids", None)
+            related_calligraphy = update_data.pop("related_calligraphy", None)
+            related_vocabulary = update_data.pop("related_vocabulary", None)
+            related_grammar = update_data.pop("related_grammar", None)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)
 
-            if calligraphy_ids is not None or vocabulary_ids is not None or grammar_ids is not None:
-                existing.calligraphy, existing.vocabulary, existing.grammar = self._resolve_associations(
-                    calligraphy_ids=calligraphy_ids,
-                    vocabulary_ids=vocabulary_ids,
-                    grammar_ids=grammar_ids,
+            if related_calligraphy is not None or related_vocabulary is not None or related_grammar is not None:
+                existing.related_calligraphy, existing.related_vocabulary, existing.related_grammar = self._resolve_associations(
+                    calligraphy=related_calligraphy,
+                    vocabulary=related_vocabulary,
+                    grammar=related_grammar,
                     session=session,
                 )
 
@@ -329,15 +329,15 @@ class ExerciseService:
             if result:
                 logger.info(f"Updated exercise {ex_id} score to {exercise.score} and difficulty to {exercise.difficulty}")
 
-            for vocabulary in exercise.vocabulary:
+            for vocabulary in exercise.related_vocabulary:
                 vocabulary_service.update_score(vocabulary.id, score=score, session=session)
                 logger.info(f"Updated vocabulary {vocabulary.id} score due to exercise {ex_id}")
 
-            for grammar in exercise.grammar:
+            for grammar in exercise.related_grammar:
                 grammar_service.update_score(grammar.id, score=score, session=session)
                 logger.info(f"Updated grammar {grammar.id} score due to exercise {ex_id}")
 
-            for calligraphy in exercise.calligraphy:
+            for calligraphy in exercise.related_calligraphy:
                 calligraphy_service.update_score(calligraphy.id, score=score, session=session)
                 logger.info(f"Updated calligraphy {calligraphy.id} score due to exercise {ex_id}")
 

@@ -35,8 +35,8 @@ class Passage(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "vocabulary_ids": [v.id for v in self.vocabulary],
-                "grammar_ids": [g.id for g in self.grammar],
-                "calligraphy_ids": [c.id for c in self.calligraphy]
+                "vocabulary": [v.id for v in self.vocabulary],
+                "grammar": [g.id for g in self.grammar],
+                "calligraphy": [c.id for c in self.calligraphy]
             })
         return base_dict

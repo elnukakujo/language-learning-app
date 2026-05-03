@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 from ..core.database import db_manager
 from ..utils import (
     detect_text_language,
+    get_language_by_iso2t,
     load_spacy_model,
     text_embedding_model,
     audio_embedding_model,
@@ -53,6 +54,20 @@ class EvaluatorService:
     }
 
     grammar_fallback_score = 1.0
+
+    def _get_language_codes_from_exercise(self, exercise) -> tuple[Optional[str], Optional[str]]:
+        """Best-effort read of source/target ISO 639-2/T from exercise language container."""
+        try:
+            language = exercise.lesson.language if exercise and exercise.lesson else None
+            if not language:
+                return None, None
+
+            source_iso2t = (language.source_iso639_2t or "").strip().lower() or None
+            target_iso2t = (language.target_iso639_2t or "").strip().lower() or None
+            return source_iso2t, target_iso2t
+        except Exception as err:
+            logger.warning(f"Could not resolve language codes from exercise context: {err}")
+            return None, None
 
     def _get_correct_text_and_type(self, ex_id: str, session: Optional[Session]) -> tuple[Optional[str], Optional[str]]:
         owns_session = session is None
@@ -131,8 +146,16 @@ class EvaluatorService:
     def _compute_cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         return float(1-cosine(u = vec1, v = vec2))
 
-    def _compute_grammar_error_rate(self, user_translation: str, correct_translation: str) -> float:
-        language = detect_text_language(correct_translation)
+    def _compute_grammar_error_rate(
+        self,
+        user_translation: str,
+        correct_translation: str,
+        target_lang_iso2t: Optional[str] = None,
+    ) -> float:
+        language = get_language_by_iso2t(target_lang_iso2t) if target_lang_iso2t else detect_text_language(correct_translation)
+        if language.iso1 == "unknown":
+            language = detect_text_language(correct_translation)
+
         try:
             tool = language_tool_python.LanguageTool(language.iso1)
             matches = tool.check(user_translation)
@@ -168,8 +191,16 @@ class EvaluatorService:
         logger.info(substantive_errors)
         return score
     
-    def _compute_token_differences_rate(self, user_translation: str, correct_translation: str) -> float:
-        language = detect_text_language(correct_translation)
+    def _compute_token_differences_rate(
+        self,
+        user_translation: str,
+        correct_translation: str,
+        target_lang_iso2t: Optional[str] = None,
+    ) -> float:
+        language = get_language_by_iso2t(target_lang_iso2t) if target_lang_iso2t else detect_text_language(correct_translation)
+        if language.spacy_model == "unknown":
+            language = detect_text_language(correct_translation)
+
         nlp = load_spacy_model(language.spacy_model)
 
         # Normalize whitespace for CJK languages where spaces are not meaningful
@@ -188,8 +219,14 @@ class EvaluatorService:
         common_tokens = correct_tokens.intersection(user_tokens)
         return min(1, len(common_tokens) / len(user_tokens))
     
-    def _evaluate_text(self, ex_id: str, user_text: str) -> dict[str, float | str]:
-        correct_text, exercise_type = self._get_correct_text_and_type(ex_id, session=None)
+    def _evaluate_text(
+        self,
+        ex_id: str,
+        user_text: str,
+        target_lang_iso2t: Optional[str] = None,
+        session: Optional[Session] = None,
+    ) -> dict[str, float | str]:
+        correct_text, exercise_type = self._get_correct_text_and_type(ex_id, session=session)
         if not correct_text:
             logger.warning(f"Could not retrieve correct text for Exercise {ex_id}. Returning score of 0.")
             raise ValueError("Correct text not found for the given exercise ID.")
@@ -203,10 +240,18 @@ class EvaluatorService:
         )
         logger.info(f"Embedding similarity for Exercise {ex_id}between user: '{user_text}' and correct answer: '{correct_text}' is {embedding_similarity:.4f}")
         
-        grammar_error_rate = self._compute_grammar_error_rate(user_text, correct_text)
+        grammar_error_rate = self._compute_grammar_error_rate(
+            user_translation=user_text,
+            correct_translation=correct_text,
+            target_lang_iso2t=target_lang_iso2t,
+        )
         logger.info(f"Grammar error rate for Exercise {ex_id} for user text: '{user_text}' is {grammar_error_rate:.4f}") 
 
-        token_difference_rate = self._compute_token_differences_rate(user_text, correct_text)
+        token_difference_rate = self._compute_token_differences_rate(
+            user_translation=user_text,
+            correct_translation=correct_text,
+            target_lang_iso2t=target_lang_iso2t,
+        )
         logger.info(f"Token difference rate for Exercise {ex_id} between user: '{user_text}' and correct answer: '{correct_text}' is {token_difference_rate:.4f}")
 
         return {
@@ -218,8 +263,15 @@ class EvaluatorService:
             "correct_answer": correct_text,
         }
     
-    def _evaluate_speech(self, ex_id: str, user_audio_path: str, correct_audio_index: int) -> dict[str, float | str]:
-        correct_audio_path, exercise_type = self._get_correct_audio_path_and_type(ex_id, correct_audio_index, session=None)
+    def _evaluate_speech(
+        self,
+        ex_id: str,
+        user_audio_path: str,
+        correct_audio_index: int,
+        target_lang_iso2t: Optional[str] = None,
+        session: Optional[Session] = None,
+    ) -> dict[str, float | str]:
+        correct_audio_path, exercise_type = self._get_correct_audio_path_and_type(ex_id, correct_audio_index, session=session)
         if not correct_audio_path:
             logger.warning(f"Could not retrieve correct audio path for Exercise {ex_id}. Returning score of 0.")
             raise ValueError("Correct audio path not found for the given exercise ID.")
@@ -245,12 +297,14 @@ class EvaluatorService:
 
         grammar_error_rate = self._compute_grammar_error_rate(
             user_transcription,
-            correct_transcription
+            correct_transcription,
+            target_lang_iso2t=target_lang_iso2t,
         )
 
         token_difference_rate = self._compute_token_differences_rate(
             user_transcription,
-            correct_transcription
+            correct_transcription,
+            target_lang_iso2t=target_lang_iso2t,
         )
 
         # Get the weights for the specific exercise type
@@ -282,33 +336,53 @@ class EvaluatorService:
                 - 'score': The computed score for the user's answer.
                 - 'feedback': A string with feedback for the user (currently empty, to be implemented).      
         """
-        if input_type == 'text':
-            results = self._evaluate_text(ex_id, user_input)
-        elif input_type == 'speech':
-            results = self._evaluate_speech(ex_id, user_input, correct_audio_index=correct_audio_index)
-        else:
-            logger.warning(f"Invalid input type '{input_type}' for evaluation. Returning score of 0.")
-            raise ValueError("Invalid input type for evaluation. Must be 'text' or 'speech'.")
-        
-        logger.info(f"Evaluation results for Exercise {ex_id} with input type '{input_type}': {results}")
+        session = db_manager.get_session()
+        try:
+            exercise = exercise_service.get_by_id(ex_id, session=session)
+            if not exercise:
+                raise ValueError(f"Exercise {ex_id} not found.")
 
-        exercise = exercise_service.get_by_id(ex_id, session=None)
-        if not exercise:
-            raise ValueError(f"Exercise {ex_id} not found.")
+            source_lang_code, target_lang_code = self._get_language_codes_from_exercise(exercise)
 
-        threshold = self.exercises_thresholds.get(exercise.exercise_type, 0.5)
-        feedback = feedback_service.generate_feedback(
-            ex_id=ex_id,
-            user_input=user_input,
-            input_type=input_type,
-            results=results,
-            threshold=threshold,
-            correct_audio_index=correct_audio_index,
-            exercise=exercise,
-        )
+            if input_type == 'text':
+                results = self._evaluate_text(
+                    ex_id=ex_id,
+                    user_text=user_input,
+                    target_lang_iso2t=target_lang_code,
+                    session=session,
+                )
+            elif input_type == 'speech':
+                results = self._evaluate_speech(
+                    ex_id=ex_id,
+                    user_audio_path=user_input,
+                    correct_audio_index=correct_audio_index,
+                    target_lang_iso2t=target_lang_code,
+                    session=session,
+                )
+            else:
+                logger.warning(f"Invalid input type '{input_type}' for evaluation. Returning score of 0.")
+                raise ValueError("Invalid input type for evaluation. Must be 'text' or 'speech'.")
 
-        return {
-            "correct": results["score"] > threshold,
-            "score": results["score"],
-            "feedback": feedback,
-        }
+            logger.info(f"Evaluation results for Exercise {ex_id} with input type '{input_type}': {results}")
+
+            threshold = self.exercises_thresholds.get(exercise.exercise_type, 0.5)
+            feedback = feedback_service.generate_feedback(
+                ex_id=ex_id,
+                user_input=user_input,
+                input_type=input_type,
+                target_lang_code=target_lang_code or "",
+                source_lang_code=source_lang_code or "",
+                results=results,
+                threshold=threshold,
+                correct_audio_index=correct_audio_index,
+                session=session,
+                exercise=exercise,
+            )
+
+            return {
+                "correct": results["score"] > threshold,
+                "score": results["score"],
+                "feedback": feedback,
+            }
+        finally:
+            session.close()

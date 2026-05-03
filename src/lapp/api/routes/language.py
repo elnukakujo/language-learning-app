@@ -71,7 +71,7 @@ def create_language():
                 name:
                     type: string
                     example: "French"
-                native_name:
+                alias:
                     type: string
                     example: "Français"
                 level:
@@ -134,7 +134,7 @@ def update_language(language_id: str):
                 name:
                     type: string
                     example: "French"
-                native_name:
+                alias:
                     type: string
                     example: "Français"
                 level:

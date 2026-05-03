@@ -169,7 +169,7 @@ class LessonService:
                     model_class=Lesson,
                     session=session
                 ),
-                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'lesson_id'}
+                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
             )
             result = db_manager.insert(
                 obj=lesson,

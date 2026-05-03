@@ -142,21 +142,21 @@ def create_exercise():
                     example: "Paris"
                     required: true
                     description: "The correct answer for the exercise"
-                vocabulary_ids:
+                vocabulary:
                     type: array
                     items:
                         type: string
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                calligraphy_ids:
+                calligraphy:
                     type: array
                     items:
                         type: string
                     example: ["call_C1"]
                     description: "List of associated calligraphy IDs"
                     required: false
-                grammar_ids:
+                grammar:
                     type: array
                     items:
                         type: string
@@ -250,21 +250,21 @@ def update_exercise(exercise_id: str):
                     example: "Paris"
                     required: true
                     description: "The correct answer for the exercise"
-                vocabulary_ids:
+                vocabulary:
                     type: array
                     items:
                         type: string
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                calligraphy_ids:
+                calligraphy:
                     type: array
                     items:
                         type: string
                     example: ["call_C1"]
                     description: "List of associated calligraphy IDs"
                     required: false
-                grammar_ids:
+                grammar:
                     type: array
                     items:
                         type: string

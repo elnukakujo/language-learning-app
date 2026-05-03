@@ -39,8 +39,8 @@ class Word(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "vocabulary_ids": [v.id for v in self.vocabulary],
-                "grammar_ids": [g.id for g in self.grammar],
-                "calligraphy_ids": [cf.id for cf in self.calligraphy]
+                "vocabulary": [v.id for v in self.vocabulary],
+                "grammar": [g.id for g in self.grammar],
+                "calligraphy": [cf.id for cf in self.calligraphy]
             })
         return base_dict

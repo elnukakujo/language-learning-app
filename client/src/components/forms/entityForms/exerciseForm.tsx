@@ -57,9 +57,9 @@ export default function ExerciseForm({
             text_support: "",
             image_files: [],
             audio_files: [],
-            vocabulary_ids: [],
-            grammar_ids: [],
-            calligraphy_ids: [],
+            vocabulary: [],
+            grammar: [],
+            calligraphy: [],
             lesson_id,
         };
     } else {
@@ -74,9 +74,9 @@ export default function ExerciseForm({
     const [imageUrl, setImageUrl] = useState<string[]>(exerciseData.image_files!);
     const [audioUrl, setAudioUrl] = useState<string[]>(exerciseData.audio_files!);
 
-    const [vocAssociated, setVocAssociated] = useState<string[]>(exerciseData.vocabulary_ids!);
-    const [callAssociated, setCallAssociated] = useState<string[]>(exerciseData.calligraphy_ids!);
-    const [gramAssociated, setGramAssociated] = useState<string[]>(exerciseData.grammar_ids!);
+    const [vocAssociated, setVocAssociated] = useState<string[]>(exerciseData.vocabulary!);
+    const [callAssociated, setCallAssociated] = useState<string[]>(exerciseData.calligraphy!);
+    const [gramAssociated, setGramAssociated] = useState<string[]>(exerciseData.grammar!);
 
     useEffect(() => {
         switch (exerciseType) {
@@ -176,9 +176,9 @@ export default function ExerciseForm({
             audio_files: audioUrl,
             answer: normalizedAnswer,
             lesson_id,
-            vocabulary_ids: vocAssociated,
-            grammar_ids: gramAssociated,
-            calligraphy_ids: callAssociated,
+            vocabulary: vocAssociated,
+            grammar: gramAssociated,
+            calligraphy: callAssociated,
         };
 
         if (exerciseType === "speaking" && audioUrl.length === 0) {

@@ -184,7 +184,7 @@ class PassageService:
             
             passage = Passage(
                 id=db_manager.generate_new_id(model_class=Passage, session=session),
-                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'last_seen_at'}
+                **{k: v for k, v in data.model_dump(exclude={'status', 'difficulty', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
             )
             result = db_manager.insert(obj=passage, session=session)
 
@@ -226,13 +226,7 @@ class PassageService:
                 return None
 
             # Update the existing object's attributes
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
+            update_data = data.model_dump(exclude={'id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
 
             if (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
                 logger.warning(f"Passage with value '{update_data['text']}' already exists.")
@@ -311,16 +305,16 @@ class PassageService:
 
             # Recalculate score based on all related features
             features = []
-            for voc_id in passage.vocabulary_ids:
+            for voc_id in passage.vocabulary:
                 voc = db_manager.find_by_id(Vocabulary, voc_id, session=session)
                 if voc:
                     features.append(voc)
-            for gram_id in passage.grammar_ids:
+            for gram_id in passage.grammar:
                 gram = db_manager.find_by_id(Grammar, gram_id, session=session)
                 if gram:
                     features.append(gram)
                 
-            for call_id in passage.calligraphy_ids:
+            for call_id in passage.calligraphy:
                 call = db_manager.find_by_id(Calligraphy, call_id, session=session)
                 if call:
                     features.append(call)

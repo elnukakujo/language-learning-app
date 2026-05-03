@@ -47,6 +47,18 @@ def _lookup(iso1: str) -> Language:
     # langdetect sometimes returns "zh-cn" / "zh-tw" — normalise to bare code
     return _LANGUAGES.get(iso1.split("-")[0], _UNKNOWN)
 
+
+def get_language_by_iso2t(iso2t: str) -> Language:
+    """Resolve a language by ISO 639-2/T code (e.g. 'fra', 'zho')."""
+    if not iso2t:
+        return _UNKNOWN
+
+    normalized = iso2t.strip().lower()
+    for lang in _LANGUAGES.values():
+        if lang.iso2t == normalized:
+            return lang
+    return _UNKNOWN
+
 audio_detection_model = whisper.load_model("base")
 
 def detect_text_language(text: str) -> Language:

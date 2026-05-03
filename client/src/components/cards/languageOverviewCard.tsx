@@ -11,7 +11,7 @@ export default function LanguageOverviewCard({ language }: { language: Language 
     return (
         <button className="flex flex-col w-fit items-center p-4 border rounded-lg shadow-md" onClick={handleCardClick}>
             <p>{language.flag}</p>
-            <h3>{language.name} ({language.native_name})</h3>
+            <h3>{language.name} ({language.alias})</h3>
             <h5>{language.level}</h5>
             <p>{language.score!.toFixed(1)}/100</p>
             <p>Status: {language.status}</p>

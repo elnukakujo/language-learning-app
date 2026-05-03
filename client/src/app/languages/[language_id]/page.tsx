@@ -13,7 +13,7 @@ export default async function Language({ params }: { params: { language_id: stri
     return (
         <main className="flex flex-col space-y-4">
             <header className="flex flex-col">
-                <h1>{language.flag} {language.name} ({language.native_name})</h1>
+                <h1>{language.flag} {language.name} ({language.alias})</h1>
                 {language.level && <p>Language Level: {language.level}</p>}
                 <p>Language Score: {language.score.toFixed(1)}/100</p>
                 <p>Status: {language.status}</p>

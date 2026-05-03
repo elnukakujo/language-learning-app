@@ -11,9 +11,9 @@ class Exercise(BaseFeatureModel):
     answer = Column(String)
     text_support = Column(String, default="")   # e.g., additional text information
     
-    vocabulary = relationship('Vocabulary', secondary=exercise_vocabulary_link)
-    calligraphy = relationship('Calligraphy', secondary=exercise_calligraphy_link)
-    grammar = relationship('Grammar', secondary=exercise_grammar_link)
+    related_vocabulary = relationship('Vocabulary', secondary=exercise_vocabulary_link)
+    related_calligraphy = relationship('Calligraphy', secondary=exercise_calligraphy_link)
+    related_grammar = relationship('Grammar', secondary=exercise_grammar_link)
     
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {
@@ -22,8 +22,8 @@ class Exercise(BaseFeatureModel):
             "question": self.question,
             "text_support": self.text_support,
             "answer": self.answer,
-            "vocabulary_ids": [v.id for v in self.vocabulary],
-            "calligraphy_ids": [c.id for c in self.calligraphy],
-            "grammar_ids": [g.id for g in self.grammar],
+            "related_vocabulary": [v.id for v in self.related_vocabulary],
+            "related_calligraphy": [c.id for c in self.related_calligraphy],
+            "related_grammar": [g.id for g in self.related_grammar],
         }
         return base_dict

@@ -2,6 +2,9 @@ from typing import Optional
 from pydantic import model_validator
 
 from ..base import BaseFeatureDict
+from .vocabulary import VocabularyDict
+from .calligraphy import CalligraphyDict
+from .grammar import GrammarDict
 
 class ExerciseDict(BaseFeatureDict):
     exercise_type: Optional[str] = None         # e.g., "type_in_the_blank", "multiple_choice"
@@ -9,9 +12,9 @@ class ExerciseDict(BaseFeatureDict):
     answer: str
     text_support: Optional[str] = None          # e.g., additional text information
 
-    vocabulary_ids: Optional[list[str]] = None # e.g., ["voc_V1"]
-    calligraphy_ids: Optional[list[str]] = None  # e.g., ["call_C1"]
-    grammar_ids: Optional[list[str]] = None    # e.g., ["gram_G1"]
+    related_vocabulary: Optional[list[VocabularyDict]] = None # e.g., ["voc_V1"]
+    related_calligraphy: Optional[list[CalligraphyDict]] = None  # e.g., ["call_C1"]
+    related_grammar: Optional[list[GrammarDict]] = None    # e.g., ["gram_G1"]
 
     @model_validator(mode='after')
     def _validate(self):

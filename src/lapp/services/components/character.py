@@ -133,7 +133,7 @@ class CharacterService:
             
             character = Character(
                 id=db_manager.generate_new_id(model_class=Character, session=session),
-                **{k: v for k, v in data.model_dump(exclude_none=True).items() if k != 'last_seen_at'}
+                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
             )
             result = db_manager.insert(obj=character, session=session)
 
@@ -174,14 +174,8 @@ class CharacterService:
                 logger.warning(f"Character not found: {character_id}")
                 return None
             
-            update_data = data.model_dump()
+            update_data = data.model_dump(exclude={'id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
             logger.info(f"Update data for character {character_id}: {update_data}")
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
 
             if (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
                 logger.warning(f"Character with value '{update_data['character']}' already exists.")
@@ -262,7 +256,7 @@ class CharacterService:
 
             # Recalculate score based on all related features
             features = []
-            for call_id in character.calligraphy_ids:
+            for call_id in character.calligraphy:
                 call = db_manager.find_by_id(Calligraphy, call_id, session=session)
                 if call:
                     features.append(call)

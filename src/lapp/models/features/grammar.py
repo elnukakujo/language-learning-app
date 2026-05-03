@@ -10,14 +10,14 @@ class Grammar(BaseFeatureModel):
     explanation = Column(String)
     
     # Relations
-    example_sentences = relationship(                 # 1 to Many
-        'Passage',
-        secondary=grammar_example_sentence_link,
-        back_populates='grammar'
-    )
     example_words = relationship(                 # 1 to Many
         'Word',
         secondary=grammar_example_word_link,
+        back_populates='grammar'
+    )
+    example_sentences = relationship(                 # 1 to Many
+        'Passage',
+        secondary=grammar_example_sentence_link,
         back_populates='grammar'
     )
     
@@ -26,7 +26,7 @@ class Grammar(BaseFeatureModel):
             **super().to_dict(include_relations=include_relations),
             "title": self.title,
             "explanation": self.explanation,
-            "example_sentences": [p.to_dict(include_relations=False) for p in self.example_sentences],
-            "example_words": [w.to_dict(include_relations=False) for w in self.example_words]
+            "example_words": [w.to_dict(include_relations=False) for w in self.example_words],
+            "example_sentences": [p.to_dict(include_relations=False) for p in self.example_sentences]
         }
         return base_dict
