@@ -10,7 +10,7 @@ export default interface Exercise extends BaseFeature {
     answer: string;
     text_support?: string;
 
-    related_vocabularies?: Vocabulary[];
-    related_calligraphies?: Calligraphy[];
-    related_grammars?: Grammar[];
+    related_vocabularies?: Partial<Vocabulary>[];
+    related_calligraphies?: Partial<Calligraphy>[];
+    related_grammars?: Partial<Grammar>[];
 };

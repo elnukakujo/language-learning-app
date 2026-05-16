@@ -67,7 +67,6 @@ CREATE TABLE source (
 CREATE TABLE tag (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    tagged_element_type TEXT NOT NULL,
     name TEXT NOT NULL,
     color TEXT,
     description TEXT,
@@ -433,31 +432,18 @@ CREATE TABLE exercise_calligraphy_link (
 );
 
 -- ---- Polymorphic source/tag junction tables ----
--- FIX: added CHECK constraints so element_type typos are caught at insert time.
--- element_type values: 'language','lesson','word','character','passage',
---                      'vocabulary','grammar','calligraphy','exercise'
 
-CREATE TABLE element_source (
-    element_type TEXT NOT NULL CHECK(element_type IN (
-        'language','lesson','word','character','passage',
-        'vocabulary','grammar','calligraphy','exercise' 
-    )),
+CREATE TABLE source_element_link (
+    source_id  TEXT NOT NULL,
     element_id TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (element_type, element_id, source_id),
+    PRIMARY KEY (source_id, element_id),
     FOREIGN KEY (source_id) REFERENCES source(id)
 );
 
-CREATE TABLE element_tag (
-    element_type TEXT NOT NULL CHECK(element_type IN (
-        'language','lesson','word','character','passage',
-        'vocabulary','grammar','calligraphy','exercise'
-    )),
+CREATE TABLE tag_element_link (
+    tag_id     TEXT NOT NULL,
     element_id TEXT NOT NULL,
-    tag_id TEXT NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (element_type, element_id, tag_id),
+    PRIMARY KEY (tag_id, element_id),
     FOREIGN KEY (tag_id) REFERENCES tag(id)
 );
 
@@ -466,25 +452,25 @@ CREATE TABLE element_tag (
 -- ============================================================================
 
 INSERT INTO user (id, username, day_streak)
-VALUES ('user_0', 'system', 0);
+VALUES ('user_U0', 'system', 0);
 
 INSERT INTO user_preferences (id, user_id, native_language_iso639_2, learning_goals, preferred_exercise_types)
-VALUES ('preference_0', 'user_0', '["eng","fra"]', '', '[]');
+VALUES ('pref_P0', 'user_U0', '["eng","fra"]', '', '[]');
 
 INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
-    ('source_0',  'user_0', 'AI generated',  DATE('now'),
+    ('src_S0',  'user_U0', 'AI generated',  DATE('now'),
      'Created by migration tokenizer extraction', 'ai'),
-    ('source_1', 'user_0', 'Nihaoma?', DATE('now'),
-     'Cours de chinois issus de mon manuel français A1/A2', 'manual'),
-    ('source_2', 'user_0', 'Spektrum Deutsch A1', DATE('now'),
-     'German course material from Spektrum A1', 'manual');
+    ('src_S1', 'user_U0', 'Nihaoma?', DATE('now'),
+     'Cours de chinois issus de mon manuel français A1/A2', 'textbook'),
+    ('src_S2', 'user_U0', 'Spektrum Deutsch A1', DATE('now'),
+     'German course material from Spektrum A1', 'textbook');
 
 -- ============================================================================
 -- 4) Language and lesson
 -- ============================================================================
 
 INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, alias, flag, current_lesson_id)
-SELECT id, 'user_0', description, level, score, last_seen, name, native_name, flag, current_unit
+SELECT id, 'user_U0', description, level, score, last_seen, name, native_name, flag, current_unit
 FROM old_language;
 
 CREATE TEMP TABLE lesson_id_map AS
@@ -494,30 +480,14 @@ FROM old_unit;
 
 -- FIX: lesson now includes user_id
 INSERT INTO lesson (id, user_id, description, level, score, last_seen_at, title, language_id)
-SELECT lm.new_id, 'user_0', ou.description, ou.level, ou.score, ou.last_seen, ou.title, ou.language_id
+SELECT lm.new_id, 'user_U0', ou.description, ou.level, ou.score, ou.last_seen, ou.title, ou.language_id
 FROM old_unit ou
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
 
--- Seed strengths_and_weaknesses: one row per (user × language × element_type)
-INSERT INTO strengths_and_weaknesses (id, user_id, language_id, language_name, element_type)
-SELECT
-    'Saw_' || ol.id || '_' || et.element_type,
-    'user_0',
-    ol.id,
-    ol.name,
-    et.element_type
-FROM old_language ol
-CROSS JOIN (
-    SELECT 'vocabulary'  AS element_type UNION ALL
-    SELECT 'grammar'                     UNION ALL
-    SELECT 'calligraphy'                 UNION ALL
-    SELECT 'exercise'
-) et;
-
-INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'language', id, 'source_1' FROM language
+INSERT INTO source_element_link (element_id, source_id)
+SELECT id, 'src_S1' FROM language
 UNION ALL
-SELECT 'lesson',   id, 'source_1' FROM lesson;
+SELECT id, 'src_S1' FROM lesson;
 
 -- ============================================================================
 -- 5) Word backfill
@@ -567,8 +537,8 @@ SELECT
 FROM word_id_map wm
 JOIN old_word ow ON ow.id = wm.old_word_id;
 
-INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'word', wm.new_id, 'source_1'
+INSERT INTO source_element_link (element_id, source_id)
+SELECT wm.new_id, 'src_S1'
 FROM word_id_map wm;
 
 -- ============================================================================
@@ -618,8 +588,8 @@ SELECT
 FROM passage_id_map pm
 JOIN old_passage op ON op.id = pm.old_passage_id;
 
-INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'passage', pm.new_id, 'source_1'
+INSERT INTO source_element_link (element_id, source_id)
+SELECT pm.new_id, 'src_S1'
 FROM passage_id_map pm;
 
 -- ============================================================================
@@ -661,8 +631,8 @@ SELECT
 FROM character_id_map cm
 JOIN old_character oc ON oc.id = cm.old_character_id;
 
-INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'character', cm.new_id, 'source_1'
+INSERT INTO source_element_link (element_id, source_id)
+SELECT cm.new_id, 'src_S1'
 FROM character_id_map cm;
 
 -- NOTE: character_word_link is left empty — requires the post-migration
@@ -777,11 +747,11 @@ WHERE op.grammar_id IS NOT NULL;
 --       empty — no equivalent relationship existed in the old schema.
 --       Populate via future feature work.
 
-INSERT INTO element_source (element_type, element_id, source_id)
-SELECT 'vocabulary',  id, 'source_0' FROM vocabulary
-UNION ALL SELECT 'grammar',     id, 'source_0' FROM grammar
-UNION ALL SELECT 'calligraphy', id, 'source_0' FROM calligraphy
-UNION ALL SELECT 'exercise',    id, 'source_0' FROM exercise;
+INSERT INTO source_element_link (element_id, source_id)
+SELECT id, 'src_S0' FROM vocabulary
+UNION ALL SELECT id, 'src_S0' FROM grammar
+UNION ALL SELECT id, 'src_S0' FROM calligraphy
+UNION ALL SELECT id, 'src_S0' FROM exercise;
 
 -- Word score: average of all vocabulary features referencing this word
 UPDATE word
@@ -881,8 +851,8 @@ SELECT tbl, rows FROM (
     UNION ALL SELECT 'grammar',                    COUNT(*) FROM grammar
     UNION ALL SELECT 'calligraphy',                COUNT(*) FROM calligraphy
     UNION ALL SELECT 'exercise',                   COUNT(*) FROM exercise
-    UNION ALL SELECT 'element_source',             COUNT(*) FROM element_source
-    UNION ALL SELECT 'element_tag',                COUNT(*) FROM element_tag
+    UNION ALL SELECT 'source_element_link',             COUNT(*) FROM source_element_link
+    UNION ALL SELECT 'tag_element_link',                COUNT(*) FROM tag_element_link
     UNION ALL SELECT 'word_passage_link',          COUNT(*) FROM word_passage_link
     UNION ALL SELECT 'character_word_link',        COUNT(*) FROM character_word_link
     UNION ALL SELECT 'vocabulary_example_sentence',    COUNT(*) FROM vocabulary_example_sentence

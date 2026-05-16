@@ -8,6 +8,7 @@ from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
+from ..models.containers import Language
 
 passage_service = PassageService()
 word_service = WordService()
@@ -52,7 +53,8 @@ def generate_missing_component_audio(app: Flask):
     Background task to generate audio for Components (Characters/Words/Passages) without audio files.
     """
     logger.info("🎵 Starting TTS generation task for Components...")
-    
+    session = db_manager.get_session()
+
     with app.app_context():
         try:
             # Get config values from app
@@ -60,8 +62,6 @@ def generate_missing_component_audio(app: Flask):
 
             # Initialize TTS service with media_root (avoids app context issue)
             tts_service = TTSService(media_root=media_root)
-
-            session = db_manager.get_session()
             
             # Query Characters without audio_files or with empty audio_files list
             characters_without_audio = session.query(Character).filter(
@@ -93,7 +93,7 @@ def generate_missing_component_audio(app: Flask):
             for component in components_without_audio:
                 try:
                     # Generate audio using TTS service
-                    language_name = db_manager.find_by_id("Language", component.lesson.language_id).name
+                    language_name = db_manager.find_by_pk(Language(id=component.language_id), session=session).name
 
                     if isinstance(component, Character):
                         text = getattr(component, 'character', None)

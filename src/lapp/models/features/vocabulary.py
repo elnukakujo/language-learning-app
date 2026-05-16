@@ -5,6 +5,7 @@ from ..base import BaseFeatureModel, vocabulary_example_sentence_link
 
 class Vocabulary(BaseFeatureModel):
     __tablename__ = 'vocabulary'
+    __mapper_args__ = {"polymorphic_identity": "vocabulary"}
     
     # Foreign key
     word_id = Column(String, ForeignKey('word.id'), nullable=False)

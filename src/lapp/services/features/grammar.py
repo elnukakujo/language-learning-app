@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.features import GrammarDict
 from ...models.features import Grammar
+from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import PassageService, WordService
 from ...core.database import db_manager
@@ -217,12 +218,14 @@ class GrammarService:
                     model_class=Grammar,
                     session=session
                 ),
-                **data.model_dump(exclude={"example_sentences", "last_seen_at"}, exclude_none=True)
+                lesson_id=lesson.id,
+                title=data.title,
+                explanation=data.explanation,
+                example_sentences=example_sentences,
+                tags= session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources= session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
-            
-            # Add the passages to the grammar
-            grammar.example_sentences = example_sentences
-            
+                        
             result = db_manager.insert(
                 obj=grammar,
                 session=session
@@ -272,31 +275,26 @@ class GrammarService:
                 logger.warning(f"Grammar item not found: {grammar_id}")
                 return None
             
+            existing.example_words = []
+            if data.example_words is not None:
+                for example_word_data in data.example_words:
+                    example_word_data.language_id = existing.lesson.language_id
+                    word = word_service.create(example_word_data, session=session)
+                    if word:
+                        existing.example_words.append(word)
+                
+            
             # Handle example_sentences update through PassageService if provided
+            existing.example_sentences = []
             if data.example_sentences is not None:
-                # Create new passages
-                new_sentences = []
                 for sentence in data.example_sentences:
-                    sentence.language_id = existing.lesson.language_id if existing.lesson else None
+                    sentence.language_id = existing.lesson.language_id
                     passage = passage_service.create(sentence, session=session)
                     if passage:
-                        new_sentences.append(passage)
-                
-                existing.example_sentences = new_sentences
-            else:
-                existing.example_sentences = []
-            
+                        existing.example_sentences.append(passage)
+                            
             # Remove nested objects from update_data
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-
-            update_data.pop('example_words', None)
-            update_data.pop('example_sentences', None)
+            update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'example_words', 'example_sentences', 'tags', 'sources'}, exclude_none=True)
             
             # Update the existing object's attributes
             for key, value in update_data.items():
@@ -314,7 +312,7 @@ class GrammarService:
         except Exception as e:
             if owns_session:
                 session.rollback()
-            logger.error(f"Failed to update grammar: {e}")
+            logger.error(f"Failed to update grammar: {e}", exc_info=True)
             raise
         finally:
             if owns_session:

@@ -7,15 +7,17 @@ import UpdateButton from "@/components/buttons/updateButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
-import { createLesson, updateLesson } from "@/api";
+import TagSelector from "@/components/selectMenu/tagSelector";
+import { createLesson, updateLesson, addTagToElement, removeTagFromElement } from "@/api";
 import type Lesson from "@/interface/containers/Lesson";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 
 const LEVEL_OPTIONS: Array<Lesson["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-export default function LessonForm({ lesson, language_id }: { lesson?: Lesson; language_id: string }) {
+export default function LessonForm({ lesson, language_id }: { lesson?: Partial<Lesson>; language_id: string }) {
     const router = useRouter();
-    const isUpdate = Boolean(lesson);
-    let lessonData: Lesson;
+    const isUpdate = Boolean(lesson?.id);
+    let lessonData: Partial<Lesson>;
     if (!lesson) {
         lessonData = {
             language_id: language_id,
@@ -27,25 +29,32 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Lesson; l
         lessonData = lesson;
     }
 
-    const [title, setTitle] = useState<string>(lessonData.title);
+    const [title, setTitle] = useState<string>(lessonData.title || "");
     const [description, setDescription] = useState<string | undefined>(lessonData.description);
-    const [level, setLevel] = useState<Lesson["level"]>(lessonData.level);
+    const [level, setLevel] = useState<Lesson["level"]>(lessonData.level || "A1");
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(lessonData.tags ? lessonData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(lessonData.sources ? lessonData.sources.map(source => source.id!) : []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const element: Lesson = {
+        const element: Partial<Lesson> = {
             title: title,
             level: level,
             description: description,
             language_id: language_id,
+            tags: selectedTagIds.map(id => ({ id })),
+            sources: selectedSourceIds.map(id => ({ id }))
         };
 
         try {
+            let lessonId: string;
             if (isUpdate) {
                 await updateLesson(lessonData.id!, element);
+                lessonId = lessonData.id!;
             } else {
-                await createLesson(element);
+                const response = await createLesson(element);
+                lessonId = response.id;
             }
 
             router.push(`/languages/${language_id}`);
@@ -81,6 +90,17 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Lesson; l
                 selectedOption={level}
                 onChange={(value) => setLevel(value as Lesson["level"])}
                 required={true}
+            />
+
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onTagsChange={setSelectedTagIds}
+                elementId={lessonData.id!}
+            />
+            <SourceSelector
+                selectedSourceIds={selectedSourceIds}
+                onSourcesChange={setSelectedSourceIds}
+                elementId={lessonData.id!}
             />
 
             {isUpdate ? <UpdateButton>Update Lesson</UpdateButton> : <NewElementButton>Add Lesson</NewElementButton>}

@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.features import CalligraphyDict
 from ...models.features import Calligraphy
+from ...models.system_data import Source, Tag
 from ...core.database import db_manager
 from ..containers import LessonService, LanguageService
 from ..components import CharacterService, WordService, PassageService
@@ -206,40 +207,43 @@ class CalligraphyService:
                 logger.warning(f"Cannot create Calligraphy item, lesson not found: {data.lesson_id}")
                 return None
             
-            # Create Character using CharacterService
-            data.character.language_id = lesson.language_id
-            character = character_service.create(data.character, session=session)
-            if not character:
-                logger.error(f"Failed to create character for calligraphy")
-                return None
+            if data.character is not None:
+                data.character.language_id = lesson.language_id
+                character = character_service.create(data.character, session=session)
+                if not character:
+                    logger.error(f"Failed to create character for calligraphy")
+                    return None
             
-            # Ensure character is loaded in session
-            if character and not session.get(Calligraphy.character.property.mapper.class_, character.id):
-                raise ValueError(f"Character not found in session after creation for calligraphy")
-            
-            # Create example_word using WordService if provided
-            example_word = None
-            if data.example_word:
-                data.example_word.language_id = lesson.language_id
-                example_word = word_service.create(data.example_word, session=session)
-                if not example_word:
-                    logger.warning(f"Failed to create example_word for calligraphy")
+            example_words = []
+            if data.example_words is not None:
+                for example_word_data in data.example_words:
+                    example_word_data.language_id = lesson.language_id
+                    word = word_service.create(example_word_data, session=session)
+                    if word:
+                        example_words.append(word)
+
+            example_sentences = []
+            if data.example_sentences is not None:
+                for example_sentence_data in data.example_sentences:
+                    example_sentence_data.language_id = lesson.language_id
+                    sentence = passage_service.create(example_sentence_data, session=session)
+                    if sentence:
+                        example_sentences.append(sentence)
             
             calligraphy = Calligraphy(
                 id = db_manager.generate_new_id(
                     model_class=Calligraphy,
                     session=session
                 ),
-                **{
-                    k: v
-                    for k, v in data.model_dump(exclude={'character', 'example_words', 'example_sentences', 'status', 'score'}, exclude_none=True).items()
-                }
+                lesson_id = lesson.id,
+                character_id = character.id,
+                character = character,
+                example_words = example_words,
+                example_sentences = example_sentences,
+                tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
 
-            calligraphy.character_id = character.id
-            calligraphy.character = character
-            calligraphy.example_words = [example_word] if example_word else []
-            
             result = db_manager.insert(
                 obj=calligraphy,
                 session=session
@@ -299,37 +303,29 @@ class CalligraphyService:
                 existing.character = updated_character
             
             # Handle example_word update through WordService if provided
-            if data.example_word is not None:
-                data.example_word.language_id = existing.character.language_id if existing.character else None
-                existing_example_word = existing.example_words[0] if existing.example_words else None
-                if existing_example_word:
-                    updated_word = word_service.update(existing_example_word.id, data.example_word, session=session)
-                    if updated_word:
-                        existing.example_words = [updated_word]
-                else:
-                    new_word = word_service.create(data.example_word, session=session)
-                    if new_word:
-                        existing.example_words = [new_word]
-            else:
-                existing.example_words = []
+            existing.example_words = []
+            if data.example_words is not None:
+                for example_word_data in data.example_words:
+                    example_word_data.language_id = existing.lesson.language_id
+                    word = word_service.create(example_word_data, session=session)
+                    if word:
+                        existing.example_words.append(word)
+
+            existing.example_sentences = []
+            if data.example_sentences is not None:
+                for example_sentence_data in data.example_sentences:
+                    example_sentence_data.language_id = existing.character.language_id
+                    sentence = passage_service.create(example_sentence_data, session=session)
+                    if sentence:
+                        existing.example_sentences.append(sentence)
             
             
             # Remove nested objects from update_data
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-            
-            update_data.pop('character', None)
-            update_data.pop('example_word', None)
+            update_data = data.model_dump( exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'character', 'example_words', 'example_sentences', 'tags', 'sources'}, exclude_none=True)
 
             # Update the existing object's attributes
             for key, value in update_data.items():
-                if key not in ('character_id',):
-                    setattr(existing, key, value)
+                setattr(existing, key, value)
             
             # Save to database
             result = db_manager.modify(existing, session=session)

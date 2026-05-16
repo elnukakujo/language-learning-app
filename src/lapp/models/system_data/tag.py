@@ -1,7 +1,9 @@
 from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.sql import select
+from collections import defaultdict
 
-from ...core.database import Base
+from ...core.database import Base, db_manager
+from ..base import tag_element_link
 
 
 class Tag(Base):
@@ -9,8 +11,38 @@ class Tag(Base):
 
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey('user.id'), nullable=False)
-    tagged_element_type = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String)
     description = Column(String)
 
+    def get_elements(self) -> dict:
+        session = db_manager.get_session() 
+        linked_ids = [
+            row.element_id for row in session.execute(
+                select(tag_element_link.c.element_id).where(
+                    tag_element_link.c.tag_id == self.id
+                )
+            )
+        ]
+
+        if not linked_ids:
+            return {}
+
+        bucketed = defaultdict(list)
+        for id_ in linked_ids:
+            type_name = id_.split("_")[0]
+            bucketed[type_name].append(id_)
+
+        return dict(bucketed)
+
+    def to_dict(self, include_relations: bool = True) -> dict:
+        base = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "color": self.color,
+            "description": self.description,
+        }
+        if include_relations:
+            base["elements"] = self.get_elements()
+        return base

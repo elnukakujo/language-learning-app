@@ -1,8 +1,8 @@
 export default interface Tag {
     id: string;
     user_id: string;
-    tagged_element_type: string; // e.g., 'vocabulary', 'grammar', 'exercise', ...
     name: string;
-    color?: string;
+    color?: string; // Hex color code, e.g., "#FF5733"
     description?: string;
+    elements?: { string: string[] }; // Mapping of element types to arrays of element IDs
 }

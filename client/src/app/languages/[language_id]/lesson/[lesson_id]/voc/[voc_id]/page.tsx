@@ -1,8 +1,12 @@
-import { BASE_URL, getElementbyId } from "@/api";
+import { getElementbyId } from "@/api";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import type Vocabulary from "@/interface/features/Vocabulary";
-import Image from "next/image";
+import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
+import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import WordCard from "@/components/cards/componentCards/wordCard";
+import SentenceCard from "@/components/cards/componentCards/sentenceCard";
 
 export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {
     const { voc_id, lesson_id, language_id } = await params;
@@ -12,83 +16,18 @@ export default async function VocabularyPage({ params }: { params: { language_id
         <main>
             <article className="flex flex-col space-y-4">
                 <h1>Vocabulary Sheet</h1>
-                <section>
-                    <h3>Word Information</h3>
-                    <p>{vocabulary.word.word} {(vocabulary.word.phonetic || vocabulary.word.word_gender) && `(${[vocabulary.word.phonetic, vocabulary.word.word_gender].filter(v => v).join(', ')})`} {vocabulary.word.translation}</p>
-                    <p>Type: {vocabulary.word.word_type || "N/A"}</p>
-                </section>
-                {vocabulary.word.image_files!.length > 0 && (
-                    <section className="flex flex-row space-x-4 items-center">
-                        {vocabulary.word.image_files!.map((url, index) => (
-                            <Image
-                                key={index}
-                                src={BASE_URL + url}
-                                alt={vocabulary.word.word}
-                                width={200}
-                                height={200}
-                            />
-                        ))}
-                    </section>
-                )}
-                {vocabulary.word.audio_files!.length > 0 && (
-                    <section className="flex flex-col space-y-4 items-baseline" >
-                        {vocabulary.word.audio_files!.map((url, index) => (
-                            <audio
-                                key={index}
-                                src={BASE_URL + url}
-                                controls
-                        />
-                        ))}
-                    </section>
-                )}
+                <WordCard word={vocabulary.word} />
                 {vocabulary.example_sentences!.length > 0 && (
                     <section className="flex flex-col space-y-4 items-baseline">
                         <h3>Example Sentences</h3>
-                        {vocabulary.example_sentences!.map((sentence, index) => (
-                            <article
-                                key={index}
-                                className="flex flex-col space-y-2 items-baseline"
-                            >
-                                <section>
-                                    <p>{sentence.text}</p>
-                                    {sentence.translation && <p>Sentence Translation: {sentence.translation}</p>}
-                                </section>
-                                {sentence.image_files!.length > 0 && (
-                                    <section className="flex flex-row space-x-4 items-center">
-                                        {sentence.image_files!.map((url, index) => (
-                                            <Image
-                                                key={index}
-                                                src={BASE_URL + url}
-                                                alt={sentence.text}
-                                                width={200}
-                                                height={200}
-                                            />
-                                        ))}
-                                    </section>
-                                )}
-                                {sentence.audio_files!.length > 0 && (
-                                    <section className="flex flex-col space-y-4 items-baseline">
-                                        {sentence.audio_files!.map((url, index) => (
-                                            <audio
-                                                key={index}
-                                                src={BASE_URL + url}
-                                                controls
-                                            />
-                                        ))}
-                                    </section>
-                                )}
-                            </article>
+                        {vocabulary.example_sentences!.map((sentence, idx) => (
+                            <SentenceCard key={idx} sentence={sentence} />
                         ))}
                     </section>
                 )}
-                <section>
-                    <h3>Performance Information</h3>
-                    <p>Score: {vocabulary.score?.toFixed(1)}/100</p>
-                    <p>Difficulty: {vocabulary.difficulty?.toFixed(1) || "N/A"}</p>
-                    <p>Status: {vocabulary.status || "N/A"}</p>
-                    <p>Created at: {new Date(vocabulary.created_at || 0).toLocaleDateString('en-US')}</p>
-                    <p>Last seen: {new Date(vocabulary.last_seen_at || 0).toLocaleDateString('en-US')}</p>
-                </section>
+                <ElementTagsCard element={vocabulary} />
+                <ElementSourcesCard element={vocabulary} />
+                <ElementPerformanceCard element={vocabulary} />
             </article>
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/voc/${voc_id}/update`}>

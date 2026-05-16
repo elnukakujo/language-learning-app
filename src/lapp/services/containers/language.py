@@ -1,4 +1,5 @@
 from datetime import datetime
+from os import name
 from typing import Optional
 from sqlalchemy.orm import Session
 
@@ -6,6 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.containers import LanguageDict
+from ...models.system_data import Source, Tag
 from ...models.containers import Language, Lesson
 from ...core.database import db_manager
 
@@ -240,15 +242,13 @@ class LanguageService:
         try:
             language = Language(
                 id = db_manager.generate_new_id(model_class=Language, session=session),
-                **{k: v for k, v in data.model_dump(exclude={'current_lesson_id', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
-            )
-
-            language.last_seen_at = datetime.now()
-            language.score = 0.0
-            language.current_lesson_id = self._find_current_lesson(
-                language_id=language.id,
-                score_threshold=0.75,
-                session=session
+                name = data.name,
+                alias = data.alias,
+                flag = data.get('flag'),
+                source_iso639_2t = data.source_iso639_2t,
+                target_iso639_2t = data.target_iso639_2t,
+                tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
 
             result = db_manager.insert(
@@ -301,10 +301,11 @@ class LanguageService:
                 return None
             
             # Update the existing object's attributes
-            update_data = data.model_dump(exclude={'current_lesson_id', 'id', 'user_id', 'score', 'status', 'created_at', 'last_seen_at'}, exclude_none=True)
+            update_data = data.model_dump(exclude={'current_lesson_id', 'id', 'user_id', 'score', 'status', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
             for key, value in update_data.items():
-                setattr(existing, key, value)
+                if value is not None:
+                    setattr(existing, key, value)
             
             existing.current_lesson_id = self._check_current_lesson(
                 language=existing,

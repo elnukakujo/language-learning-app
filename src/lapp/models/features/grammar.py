@@ -5,6 +5,7 @@ from ..base import BaseFeatureModel, grammar_example_sentence_link, grammar_exam
 
 class Grammar(BaseFeatureModel):
     __tablename__ = 'grammar'
+    __mapper_args__ = {"polymorphic_identity": "grammar"}
     
     title = Column(String, index=True)
     explanation = Column(String)
@@ -25,8 +26,11 @@ class Grammar(BaseFeatureModel):
         base_dict = {
             **super().to_dict(include_relations=include_relations),
             "title": self.title,
-            "explanation": self.explanation,
-            "example_words": [w.to_dict(include_relations=False) for w in self.example_words],
-            "example_sentences": [p.to_dict(include_relations=False) for p in self.example_sentences]
+            "explanation": self.explanation
         }
+        if include_relations:
+            base_dict.update({
+                "example_words": [word.to_dict(include_relations=False) for word in self.example_words],
+                "example_sentences": [sentence.to_dict(include_relations=False) for sentence in self.example_sentences]
+            })
         return base_dict

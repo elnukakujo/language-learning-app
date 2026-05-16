@@ -307,6 +307,7 @@ def update_vocabulary(vocabulary_id: str):
                         example: "/path/to/audio1.mp3"
                         required: false
                         description: List of audio file paths
+
     responses:
         200:
             description: Vocabulary updated successfully
@@ -318,9 +319,13 @@ def update_vocabulary(vocabulary_id: str):
             description: Vocabulary not found
     """
     try:
-        data = VocabularyDict(**request.json)
-        
-        vocabulary = vocabulary_service.update(vocabulary_id, data, as_dict=True)
+        data = VocabularyDict(**(request.get_json() or {}))
+
+        vocabulary = vocabulary_service.update(
+            vocabulary_id,
+            data,
+            as_dict=True,
+        )
         
         if vocabulary:
             return jsonify({

@@ -7,6 +7,7 @@ import logging
 from ...core.database import db_manager
 from ...models.features import Exercise
 from ...schemas.features import ExerciseDict
+from ...models.system_data import Tag, Source
 from ...utils import update_score, update_difficulty
 from ..containers import LessonService
 from .calligraphy import CalligraphyService
@@ -197,7 +198,15 @@ class ExerciseService:
 
             exercise = Exercise(
                 id=db_manager.generate_new_id(model_class=Exercise, session=session),
-                **exercise_data,
+                lesson_id = lesson.id,
+                exercise_type=exercise_data.get("exercise_type"),
+                question=exercise_data.get("question"),
+                answer=exercise_data.get("answer"),
+                text_support=exercise_data.get("text_support", ""),
+                image_files=data.image_files or [],
+                audio_files=data.audio_files or [],
+                tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
             exercise.related_calligraphy, exercise.related_vocabulary, exercise.related_grammar = self._resolve_associations(
                 calligraphy=related_calligraphy,
@@ -235,16 +244,7 @@ class ExerciseService:
                 logger.warning(f"Exercise not found: {ex_id}")
                 return None
 
-            update_data = data.model_dump(exclude_none=True)
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-
-            if "lesson_id" in update_data and not lesson_service.get_by_id(update_data["lesson_id"], session=session):
-                update_data["lesson_id"] = existing.lesson_id
+            update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
             related_calligraphy = update_data.pop("related_calligraphy", None)
             related_vocabulary = update_data.pop("related_vocabulary", None)

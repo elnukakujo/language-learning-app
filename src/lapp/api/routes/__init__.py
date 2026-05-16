@@ -7,8 +7,8 @@ from .exercise import bp as exercise_bp
 from .media import bp as media_bp
 from .backup import bp as backup_bp
 from .evaluate import bp as evaluate_bp
-
-
+from .tag import bp as tag_bp
+from .source import bp as source_bp
 __all__ = [
     language_bp,
     lesson_bp,
@@ -19,4 +19,6 @@ __all__ = [
     media_bp,
     backup_bp,
     evaluate_bp,
+    tag_bp,
+    source_bp
 ]

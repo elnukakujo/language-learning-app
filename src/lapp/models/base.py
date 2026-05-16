@@ -1,8 +1,7 @@
 from flask import current_app
-from typing import Any
+from typing import Any, List
 from pathlib import Path
-from sklearn import base
-from sqlalchemy import Column, Float, String, Integer, DateTime, JSON, ForeignKey, Table, Computed
+from sqlalchemy import Column, Float, String, Integer, DateTime, JSON, ForeignKey, Table, Computed, PrimaryKeyConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declared_attr, validates
 from datetime import datetime
 
@@ -67,6 +66,22 @@ exercise_calligraphy_link = Table(
     Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
 )
 
+# --- Association tables (polymorphic, no FK on element_id) ---
+
+source_element_link = Table(
+    "source_element_link", Base.metadata,
+    Column("source_id", String, ForeignKey("source.id"), nullable=False),
+    Column("element_id", String, nullable=False),
+    PrimaryKeyConstraint("source_id", "element_id")
+)
+
+tag_element_link = Table(
+    "tag_element_link", Base.metadata,
+    Column("tag_id", String, ForeignKey("tag.id"), nullable=False),
+    Column("element_id", String, nullable=False),
+    PrimaryKeyConstraint("tag_id", "element_id")
+)
+
 
 class BaseElementModel(Base):
     """
@@ -85,6 +100,30 @@ class BaseElementModel(Base):
         nullable=False
     )
 
+    @declared_attr
+    def tags(cls) -> Mapped[List["Tag"]]:
+        from .system_data import Tag
+        return relationship(
+            "Tag",
+            secondary=tag_element_link,
+            primaryjoin=cls.id == tag_element_link.c.element_id,
+            secondaryjoin=tag_element_link.c.tag_id == Tag.id,
+            viewonly=False,
+            overlaps="tags",
+        )
+
+    @declared_attr
+    def sources(cls) -> Mapped[List["Source"]]:
+        from .system_data import Source
+        return relationship(
+            "Source",
+            secondary=source_element_link,
+            primaryjoin=cls.id == source_element_link.c.element_id,
+            secondaryjoin=source_element_link.c.source_id == Source.id,
+            viewonly=False,
+            overlaps="sources",
+        )
+
     def to_dict(self, include_relations: bool = True) -> dict:
         # Allow cooperative multiple-inheritance: call next to_dict in MRO
         parent_to_dict = getattr(super(), "to_dict", None)
@@ -97,6 +136,12 @@ class BaseElementModel(Base):
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "status": self.status
         })
+
+        if include_relations:
+            base.update({
+                "tags": [tag.to_dict(include_relations=False) for tag in self.tags],
+                "sources": [source.to_dict(include_relations=False) for source in self.sources]
+            })
 
         return base
     
@@ -174,7 +219,7 @@ class BaseContainerModel(BaseElementModel):
     description = Column(String, default="")
 
     # Foreign key
-    user_id = Column(String, ForeignKey('user.id'), default="user_0")
+    user_id = Column(String, ForeignKey('user.id'), default="user_U0")
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {

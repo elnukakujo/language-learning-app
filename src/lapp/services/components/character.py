@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.components import CharacterDict
 from ...models.components import Character
 from ...core.database import db_manager
-from ...models.features import Calligraphy
+from ...models.system_data import Tag, Source
 
 class CharacterService:
     def get_all(self, session: Optional[Session] = None) -> list[Character]:
@@ -117,9 +117,8 @@ class CharacterService:
         try:
             if existing := self.get_by_character(data.character, language_id=data.language_id, session=session):
                 logger.info(f"Character already exists: {data.character} with ID: {existing.id}")
-
-                if existing not in session:
-                    existing = session.merge(existing)
+                existing = self.update(character_id=existing.id, data=data, session=session)
+                existing = session.merge(existing)
                     
                 return existing
             
@@ -133,7 +132,9 @@ class CharacterService:
             
             character = Character(
                 id=db_manager.generate_new_id(model_class=Character, session=session),
-                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
+                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()},
+                tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
             result = db_manager.insert(obj=character, session=session)
 
@@ -174,7 +175,7 @@ class CharacterService:
                 logger.warning(f"Character not found: {character_id}")
                 return None
             
-            update_data = data.model_dump(exclude={'id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
+            update_data = data.model_dump(exclude={'id', 'language_id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
             logger.info(f"Update data for character {character_id}: {update_data}")
 
             if (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
@@ -255,11 +256,9 @@ class CharacterService:
                 return None
 
             # Recalculate score based on all related features
-            features = []
-            for call_id in character.calligraphy:
-                call = db_manager.find_by_id(Calligraphy, call_id, session=session)
-                if call:
-                    features.append(call)
+            features = [
+                *character.calligraphy
+            ]
             
             if features and len(features) > 0:
                 total_score = sum(feature.score for feature in features)

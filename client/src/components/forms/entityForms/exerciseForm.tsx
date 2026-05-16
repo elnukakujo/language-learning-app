@@ -6,16 +6,18 @@ import NewElementButton from "@/components/buttons/newElementButton";
 import UpdateButton from "@/components/buttons/updateButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import OpenCloseMenu from "@/components/selectMenu/openCloseMenu";
+import TagSelector from "@/components/selectMenu/tagSelector";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import TrueFalseInput from "@/components/input/trueFalseInput";
 import DiscreteInput from "@/components/input/discreteInput";
 import MediaLoader from "@/components/mediaLoader";
-import { createExercise, updateExercise } from "@/api";
+import { createExercise, updateExercise, addTagToElement } from "@/api";
 import ConversationInput from "@/components/input/conversationInput";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
 import type Exercise from "@/interface/features/Exercise";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 
 export interface LessonElements {
     vocabularies: Vocabulary[];
@@ -41,14 +43,14 @@ export default function ExerciseForm({
     lesson_id,
     lessonElements,
 }: {
-    exercise?: Exercise;
+    exercise?: Exercise | Partial<Exercise>;
     lesson_id: string;
     lessonElements: LessonElements;
 }) {
     const router = useRouter();
-    const isUpdate = Boolean(exercise);
+    const isUpdate = Boolean(exercise?.id);
 
-    let exerciseData: Exercise;
+    let exerciseData: Partial<Exercise>;
     if (!exercise) {
         exerciseData = {
             exercise_type: undefined,
@@ -57,9 +59,9 @@ export default function ExerciseForm({
             text_support: "",
             image_files: [],
             audio_files: [],
-            vocabulary: [],
-            grammar: [],
-            calligraphy: [],
+            related_vocabularies: [],
+            related_grammars: [],
+            related_calligraphies: [],
             lesson_id,
         };
     } else {
@@ -67,16 +69,18 @@ export default function ExerciseForm({
     }
 
     const [exerciseType, setExerciseType] = useState<Exercise["exercise_type"]>(exerciseData.exercise_type);
-    const [question, setQuestion] = useState<string>(exerciseData.question);
-    const [answer, setAnswer] = useState<string>(exerciseData.answer);
+    const [question, setQuestion] = useState<string>(exerciseData.question || "");
+    const [answer, setAnswer] = useState<string>(exerciseData.answer || "");
     const [supportText, setSupportText] = useState<string>(exerciseData.text_support || "");
 
     const [imageUrl, setImageUrl] = useState<string[]>(exerciseData.image_files!);
     const [audioUrl, setAudioUrl] = useState<string[]>(exerciseData.audio_files!);
 
-    const [vocAssociated, setVocAssociated] = useState<string[]>(exerciseData.vocabulary!);
-    const [callAssociated, setCallAssociated] = useState<string[]>(exerciseData.calligraphy!);
-    const [gramAssociated, setGramAssociated] = useState<string[]>(exerciseData.grammar!);
+    const [relatedVocabularies, setRelatedVocabularies] = useState<Partial<Vocabulary>[]>(exerciseData.related_vocabularies!);
+    const [relatedCalligraphies, setRelatedCalligraphies] = useState<Partial<Calligraphy>[]>(exerciseData.related_calligraphies!);
+    const [relatedGrammars, setRelatedGrammars] = useState<Partial<Grammar>[]>(exerciseData.related_grammars!);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(exerciseData.tags ? exerciseData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(exerciseData.sources ? exerciseData.sources.map(source => source.id!) : []);
 
     useEffect(() => {
         switch (exerciseType) {
@@ -168,7 +172,7 @@ export default function ExerciseForm({
             normalizedAnswer = question.replaceAll(/__/g, () => blankAnswers[answerIndex++] ?? "");
         }
 
-        const element: Exercise = {
+        const element: Partial<Exercise> = {
             exercise_type: exerciseType,
             question: normalizedQuestion,
             text_support: supportText || undefined,
@@ -176,9 +180,11 @@ export default function ExerciseForm({
             audio_files: audioUrl,
             answer: normalizedAnswer,
             lesson_id,
-            vocabulary: vocAssociated,
-            grammar: gramAssociated,
-            calligraphy: callAssociated,
+            related_vocabularies: relatedVocabularies,
+            related_grammars: relatedGrammars,
+            related_calligraphies: relatedCalligraphies,
+            tags: selectedTagIds.map(id => ({ id })),
+            sources: selectedSourceIds.map(id => ({ id }))
         };
 
         if (exerciseType === "speaking" && audioUrl.length === 0) {
@@ -187,11 +193,14 @@ export default function ExerciseForm({
         }
 
         try {
+            let exerciseId: string;
             if (isUpdate) {
                 await updateExercise(exerciseData.id!, element);
+                exerciseId = exerciseData.id!;
                 router.push(`/languages/${languageId}/lesson/${lesson_id}/ex/${exerciseData.id}/`);
             } else {
-                await createExercise(element);
+                const response = await createExercise(element);
+                exerciseId = response.id;
                 router.push(`/languages/${languageId}/lesson/${lesson_id}`);
             }
 
@@ -276,14 +285,14 @@ export default function ExerciseForm({
                                 id: item.id!,
                                 value: item.word.word + " - " + item.word.translation,
                             }))}
-                            selectedElements={vocAssociated}
-                            setSelectedElements={setVocAssociated}
+                            selectedElements={relatedVocabularies.map(voc => voc.id!)}
+                            setSelectedElements={(selected) => setRelatedVocabularies(selected.map((id: string) => lessonElements.vocabularies.find((voc) => voc.id === id)!))}
                             label="Associated Vocabulary"
                         />
                         <OpenCloseMenu
                             elements={lessonElements.grammars.map((item) => ({ id: item.id!, value: item.title }))}
-                            selectedElements={gramAssociated}
-                            setSelectedElements={setGramAssociated}
+                            selectedElements={relatedGrammars.map(gram => gram.id!)}
+                            setSelectedElements={(selected) => setRelatedGrammars(selected.map((id: string) => lessonElements.grammars.find((gram) => gram.id === id)!))}
                             label="Associated Grammar"
                         />
                         <OpenCloseMenu
@@ -291,11 +300,23 @@ export default function ExerciseForm({
                                 id: item.id!,
                                 value: item.character.character + " - " + item.character.phonetic,
                             }))}
-                            selectedElements={callAssociated}
-                            setSelectedElements={setCallAssociated}
+                            selectedElements={relatedCalligraphies.map(call => call.id!)}
+                            setSelectedElements={(selected) => setRelatedCalligraphies(selected.map((id: string) => lessonElements.calligraphies.find((call) => call.id === id)!))}
                             label="Associated Calligraphies"
                         />
                     </section>
+
+                    <TagSelector
+                        selectedTagIds={selectedTagIds}
+                        onTagsChange={setSelectedTagIds}
+                        elementId={exerciseData.id!}
+                    />
+
+                    <SourceSelector
+                        selectedSourceIds={selectedSourceIds}
+                        onSourcesChange={setSelectedSourceIds}
+                        elementId={exerciseData.id!}
+                    />
 
                     {isUpdate ? <UpdateButton>Update Exercise</UpdateButton> : <NewElementButton>Add Exercise</NewElementButton>}
                 </>

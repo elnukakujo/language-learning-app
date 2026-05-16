@@ -9,47 +9,22 @@ import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import { createLanguage, updateLanguage } from "@/api";
 import type Language from "@/interface/containers/Language";
+import TagSelector from "@/components/selectMenu/tagSelector";
+import { LANGUAGE_to_ISO639_2T } from "@/utils/language_iso639";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 
 const LEVEL_OPTIONS: Array<Language["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-const LANGUAGE_to_ISO639_2T: Record<string, string> = {
-    "Catalan": "cat",
-    "Chinese": "zho",
-    "Croatian": "hrv",
-    "Danish": "dan",
-    "Dutch": "nld",
-    "English": "eng",
-    "Finnish": "fin",
-    "French": "fra",
-    "German": "deu",
-    "Greek": "ell",
-    "Italian": "ita",
-    "Japanese": "jpn",
-    "Korean": "kor",
-    "Lithuanian": "lit",
-    "Macedonian": "mkd",
-    "Norwegian Bokmål": "nob",
-    "Norwegian": "nor",
-    "Polish": "pol",
-    "Portuguese": "por",
-    "Romanian": "ron",
-    "Russian": "rus",
-    "Slovenian": "slv",
-    "Spanish": "spa",
-    "Swedish": "swe",
-    "Ukrainian": "ukr",
-    "Custom": "",
-    // Add more languages as needed
-};
+
 
 const ISO639_2T_to_LANGUAGE: Record<string, string> = Object.fromEntries(
     Object.entries(LANGUAGE_to_ISO639_2T).map(([language, iso]) => [iso, language])
 );
 
-export default function LanguageForm({language}: { language?: Language }) {
+export default function LanguageForm({language}: { language?: Partial<Language> }) {
     const router = useRouter();
-    const isUpdate = Boolean(language);
-    let languageData: Language;
+    const isUpdate = Boolean(language?.id);
+    let languageData: Partial<Language>;
     if (!language) {
         languageData = {
             name: "",
@@ -64,18 +39,20 @@ export default function LanguageForm({language}: { language?: Language }) {
         languageData = language;
     }
 
-    const [name, setName] = useState<string>(languageData.name);
+    const [name, setName] = useState<string>(languageData.name || "");
     const [alias, setAlias] = useState<string | undefined>(languageData.alias);
     const [description, setDescription] = useState<string | undefined>(languageData.description);
-    const [level, setLevel] = useState<Language["level"]>(languageData.level);
+    const [level, setLevel] = useState<Language["level"]>(languageData.level || "A1");
     const [flag, setFlag] = useState<string | undefined>(languageData.flag);
     const [targetIso639_2t, setTargetIso639_2t] = useState<string | undefined>(languageData.target_iso639_2t);
     const [sourceIso639_2t, setSourceIso639_2t] = useState<string | undefined>(languageData.source_iso639_2t);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(languageData.tags ? languageData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(languageData.sources ? languageData.sources.map(source => source.id!) : []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const element: Language = {
+        const element: Partial<Language> = {
             name,
             alias: alias || undefined,
             description: description || undefined,
@@ -83,6 +60,8 @@ export default function LanguageForm({language}: { language?: Language }) {
             flag: flag || undefined,
             target_iso639_2t: targetIso639_2t || undefined,
             source_iso639_2t: sourceIso639_2t || undefined,
+            tags: selectedTagIds.map(id => ({ id })),
+            sources: selectedSourceIds.map(id => ({ id }))
         };
 
         try {
@@ -165,6 +144,18 @@ export default function LanguageForm({language}: { language?: Language }) {
                 selectedOption={ISO639_2T_to_LANGUAGE[sourceIso639_2t || ""] || ""}
                 onChange={(value) => setSourceIso639_2t(LANGUAGE_to_ISO639_2T[value] || "")}
                 required
+            />
+
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onTagsChange={setSelectedTagIds}
+                elementId={languageData.id!}
+            />
+
+            <SourceSelector
+                selectedSourceIds={selectedSourceIds}
+                onSourcesChange={setSelectedSourceIds}
+                elementId={languageData.id!}
             />
 
             {isUpdate ? <UpdateButton>Update Language</UpdateButton> : <NewElementButton>Add Language</NewElementButton>}

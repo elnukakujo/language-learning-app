@@ -4,6 +4,10 @@ import LessonOverviewCard from "@/components/cards/lessonOverviewCard";
 import type Lesson from "@/interface/containers/Lesson";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
+import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import { ISO639_2T_to_LANGUAGE } from "@/utils/language_iso639";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;
@@ -12,14 +16,16 @@ export default async function Language({ params }: { params: { language_id: stri
 
     return (
         <main className="flex flex-col space-y-4">
-            <header className="flex flex-col">
+            <header className="flex flex-col gap-4">
                 <h1>{language.flag} {language.name} ({language.alias})</h1>
-                {language.level && <p>Language Level: {language.level}</p>}
-                <p>Language Score: {language.score.toFixed(1)}/100</p>
-                <p>Status: {language.status}</p>
-                <p>Created at: {new Date(language.created_at || 0).toLocaleDateString('en-US')}</p>
-                <p>Last Seen: {new Date(language.last_seen_at || 0).toLocaleDateString('en-US')}</p>
-                {language.current_lesson_id && <p>Current Lesson ID: {language.current_lesson_id}</p>}
+                <span>
+                    {language.source_iso639_2t && <p>From: {ISO639_2T_to_LANGUAGE[language.source_iso639_2t]}</p>}
+                    {language.target_iso639_2t && <p>To: {ISO639_2T_to_LANGUAGE[language.target_iso639_2t]}</p>}
+                </span>
+                {language.description && <p>{language.description}</p>}
+                <ElementPerformanceCard element={language} />
+                <ElementTagsCard element={language} />
+                <ElementSourcesCard element={language} />
                 <nav className="flex flex-row space-x-4">
                     {language.current_lesson_id && <NavButton path={`/languages/${language_id}/lesson/${language.current_lesson_id}`}>
                         <p>Go to Current Lesson</p>

@@ -6,6 +6,6 @@ export default interface Grammar extends BaseFeature {
     title: string;
     explanation: string;
     
-    example_words?: Word[];
-    example_sentences?: Passage[];
+    example_words?: Partial<Word>[];
+    example_sentences?: Partial<Passage>[];
 };

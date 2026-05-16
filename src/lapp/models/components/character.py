@@ -5,6 +5,7 @@ from ..base import BaseComponentModel
 
 class Character(BaseComponentModel):
     __tablename__ = 'character'
+    __mapper_args__ = {"polymorphic_identity": "character"}
     __table_args__ = (UniqueConstraint('language_id', 'character', name='uq_character_language_character'),)
     
     character = Column(String, nullable=False, index=True)

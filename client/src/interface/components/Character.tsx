@@ -1,6 +1,6 @@
 import { BaseComponent } from '../base';
 
-export default interface CharacterComponent extends BaseComponent {
+export default interface Character extends BaseComponent {
     character: string;
     phonetic: string;
     meaning?: string;

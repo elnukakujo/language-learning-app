@@ -1,12 +1,13 @@
-import Image from "next/image";
-
-import { BASE_URL, getElementbyId } from "@/api";
+import { getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
+import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import SentenceCard from "@/components/cards/componentCards/sentenceCard";
+import GrammarCard from "@/components/cards/grammarCard";
 
 type paramsType = {
     language_id: string;
@@ -21,82 +22,19 @@ export default async function GrammarPage({ params }: { params: paramsType }) {
     return (
         <main>
             <article className="flex flex-col space-y-4">
-                <h1>{grammar.title}</h1>
-                <Markdown remarkPlugins={[remarkGfm]}>{grammar.explanation}</Markdown>
-
-                {grammar.image_files!.length > 0 && (
-                    <section className="flex flex-row space-x-4 items-center">
-                        {grammar.image_files!.map((url, index) => (
-                            <Image
-                                key={index}
-                                src={BASE_URL + url}
-                                alt={grammar.title}
-                                width={200}
-                                height={200}
-                            />
-                        ))}
-                    </section>
-                )}
-                {grammar.audio_files!.length > 0 && (
-                    <section className="flex flex-col space-y-4 items-baseline" >
-                        {grammar.audio_files!.map((url, index) => (
-                            <audio
-                                key={index}
-                                src={BASE_URL + url}
-                                controls
-                        />
-                        ))}
-                    </section>
-                )}
-
+                <h1>Grammar Sheet</h1>
+                <GrammarCard grammar={grammar} />
                 {grammar.example_sentences!.length > 0 && (
                     <section className="flex flex-col space-y-4 items-baseline">
-                        <h3>Learnable Sentences</h3>
-                        {grammar.example_sentences!.map((sentence, index) => (
-                            <article
-                                key={index}
-                                className="flex flex-col space-y-2 items-baseline"
-                            >
-                                <section>
-                                    <p>{sentence.text}</p>
-                                    {sentence.translation && <p>Sentence Translation: {sentence.translation}</p>}
-                                </section>
-                                {sentence.image_files!.length > 0 && (
-                                    <section className="flex flex-row space-x-4 items-center">
-                                        {sentence.image_files!.map((url, index) => (
-                                            <Image
-                                                key={index}
-                                                src={BASE_URL + url}
-                                                alt={sentence.text}
-                                                width={200}
-                                                height={200}
-                                            />
-                                        ))}
-                                    </section>
-                                )}
-                                {sentence.audio_files!.length > 0 && (
-                                    <section className="flex flex-col space-y-4 items-baseline">
-                                        {sentence.audio_files!.map((url, index) => (
-                                            <audio
-                                                key={index}
-                                                src={BASE_URL + url}
-                                                controls
-                                            />
-                                        ))}
-                                    </section>
-                                )}
-                            </article>
+                        <h3>Example Sentences</h3>
+                        {grammar.example_sentences!.map((sentence, idx) => (
+                            <SentenceCard key={idx} sentence={sentence} />
                         ))}
                     </section>
                 )}
-                <section>
-                    <h3>Performance Information</h3>
-                    <p>Score: {grammar.score!.toFixed(1)}/100</p>
-                    <p>Difficulty: {grammar.difficulty.toFixed(1)}</p>
-                    <p>Status: {grammar.status}</p>
-                    <p>Created at: {new Date(grammar.created_at || 0).toLocaleDateString('en-US')}</p>
-                    <p>Last seen: {new Date(grammar.last_seen_at || 0).toLocaleDateString('en-US')}</p>
-                </section>
+                <ElementTagsCard element={grammar} />
+                <ElementSourcesCard element={grammar} />
+                <ElementPerformanceCard element={grammar} />
             </article>
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/gram/${gram_id}/update`}>

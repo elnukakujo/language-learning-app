@@ -1,14 +1,20 @@
-interface BaseElement {
+import Source from "./systemData/Source";
+import Tag from "./systemData/Tag";
+
+export interface BaseElement {
     id: string;
     status: string;
     created_at: string;
     last_seen_at: string;
     score: number;
+
+    tags?: Partial<Tag>[]; 
+    sources?: Partial<Source>[];
 }
 
-interface BaseMediaFiles {
-    image_files: string[];
-    audio_files: string[];
+export interface BaseMediaFiles {
+    image_files?: string[];
+    audio_files?: string[];
 }
 
 export interface BaseContainer extends BaseElement {
@@ -21,7 +27,7 @@ export interface BaseFeature extends BaseElement, BaseMediaFiles {
     difficulty: number; // 0-1 scale, higher the harder
 }
 
-export interface BaseComponent extends BaseMediaFiles {
+export interface BaseComponent extends BaseElement, BaseMediaFiles {
     language_id: string;
     difficulty: number; // 0-1 scale, higher the harder
 }

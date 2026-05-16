@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import TagSelector from "@/components/selectMenu/tagSelector";
 import { createVocabulary, updateVocabulary } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Vocabulary from "@/interface/features/Vocabulary";
@@ -11,20 +12,21 @@ import Passage from "@/interface/components/Passage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAdd, faTrash } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 
-export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vocabulary; lesson_id: string}) {
+export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vocabulary | Partial<Vocabulary>; lesson_id: string}) {
     const router = useRouter();
-    const isUpdate = Boolean(vocabulary);
+    const isUpdate = Boolean(vocabulary?.id);
 
-    let vocabularyData: Vocabulary;
+    let vocabularyData: Partial<Vocabulary>;
     if (!vocabulary) {
         vocabularyData = {
             word: {
                 word: "",
                 translation: "",
-                type: "" as Exclude<typeof type, ''>,
-                gender: undefined,
-                phonetic: "",
+                word_type: "" as Exclude<typeof type, ''>,
+                word_gender: undefined,
+                phonetic: undefined,
                 image_files: [],
                 audio_files: []
             },
@@ -35,17 +37,19 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
         vocabularyData = vocabulary;
     }
 
-    const [word, setWord] = useState<string>(vocabularyData.word.word);
-    const [translation, setTranslation] = useState<string>(vocabularyData.word.translation);
-    const [phonetic, setPhonetic] = useState<string | undefined>(vocabularyData.word.phonetic);
+    const [word, setWord] = useState<string>(vocabularyData!.word!.word!);
+    const [translation, setTranslation] = useState<string>(vocabularyData!.word!.translation!);
+    const [phonetic, setPhonetic] = useState<string | undefined>(vocabularyData.word?.phonetic);
     const [type, setType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
         'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
-        'classifier' | 'auxiliary' | 'modal'>(vocabularyData.word.word_type);
-    const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(vocabularyData.word.word_gender);
-    const [wordImageUrl, setWordImageUrl] = useState<string[]>(vocabularyData.word.image_files!);
-    const [wordAudioUrl, setWordAudioUrl] = useState<string[]>(vocabularyData.word.audio_files!);
+        'classifier' | 'auxiliary' | 'modal'>(vocabularyData.word!.word_type!);
+    const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(vocabularyData.word?.word_gender);
+    const [wordImageUrl, setWordImageUrl] = useState<string[]>(vocabularyData.word?.image_files || []);
+    const [wordAudioUrl, setWordAudioUrl] = useState<string[]>(vocabularyData.word?.audio_files || []);
 
-    const [exampleSentences, setExampleSentences] = useState<Passage[]>(vocabularyData.example_sentences!);
+    const [exampleSentences, setExampleSentences] = useState<Partial<Passage>[]>(vocabularyData.example_sentences!);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(vocabularyData.tags ? vocabularyData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(vocabularyData.sources ? vocabularyData.sources.map(source => source.id!) : []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -55,26 +59,31 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
         const pathParts = currentPath.split('/');
         const languageId = pathParts[2]; // From /languages/LANG_ID/...
         
-        const element: Vocabulary = {
+        const element: Partial<Vocabulary> = {
             word: {
                 word: word,
                 translation: translation,
-                type: type,
-                gender: gender,
+                word_type: type,
+                word_gender: gender,
                 phonetic: phonetic,
                 image_files: wordImageUrl,
                 audio_files: wordAudioUrl
             },
             example_sentences: exampleSentences,          
-            lesson_id: lesson_id
+            lesson_id: lesson_id,
+            tags: selectedTagIds.map(tagId => ({ id: tagId })),
+            sources: selectedSourceIds.map(sourceId => ({ id: sourceId }))
         };
         console.log("Creating vocabulary with data:", element);
         
         try {
+            let vocabularyId: string;
             if (isUpdate) {
                 await updateVocabulary(vocabularyData.id!, element);
+                vocabularyId = vocabularyData.id!;
             } else {
-                await createVocabulary(element);
+                const response = await createVocabulary(element);
+                vocabularyId = response.id;
             }
 
             router.push(`/languages/${languageId}/lesson/${lesson_id}`);
@@ -152,6 +161,16 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
                 />
                 <MediaLoader imageUrl={wordImageUrl} setImageUrl={setWordImageUrl} audioUrl={wordAudioUrl} setAudioUrl={setWordAudioUrl} />
             </article>
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onTagsChange={setSelectedTagIds}
+                elementId={vocabularyData.id!}
+            />
+            <SourceSelector
+                selectedSourceIds={selectedSourceIds}
+                onSourcesChange={setSelectedSourceIds}
+                elementId={vocabularyData.id!}
+            />
             <article className="flex flex-col space-y-2 items-center">
                 <h3>Example Sentences</h3>
                 {exampleSentences.map((sentence, key) => (

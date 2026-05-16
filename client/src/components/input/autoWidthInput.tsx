@@ -68,7 +68,7 @@ export default function AutoWidthInput({
         value={value ?? ""}
         onChange={(e) => onChange(e)}
         style={{ width: `${resizeWidth+1}rem`, height: `${height}rem` }}
-        className={`outline-none rounded-md p-2 ${className}`}
+        className={`outline-none rounded-md p-2 border border-gray-300 ${className}`}
         placeholder={placeholder}
         disabled={disabled}
         required={required}

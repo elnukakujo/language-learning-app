@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.features import VocabularyDict
 from ...models.features import Vocabulary
+from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import WordService, PassageService
 from ...core.database import db_manager
@@ -221,19 +222,19 @@ class VocabularyService:
 
             # Create Vocabulary with references to the persisted Word and Passages
             vocabulary = Vocabulary(
-                id = db_manager.generate_new_id(
+                id=db_manager.generate_new_id(
                     model_class=Vocabulary,
                     session=session
                 ),
                 word_id=word.id,
                 lesson_id=data.lesson_id,
-                image_files=data.image_files,
-                audio_files=data.audio_files
+                image_files=data.image_files or [],
+                audio_files=data.audio_files or [],
+                example_sentences=example_sentences,
+                tags= session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources= session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
-            
-            # Add the passages to the vocabulary
-            vocabulary.example_sentences = example_sentences
-            
+                        
             result = db_manager.insert(
                 obj=vocabulary,
                 session=session
@@ -283,78 +284,27 @@ class VocabularyService:
                 logger.warning(f"VocabularyFeature item not found: {voc_id}")
                 return None
             
-            # Handle Word update through WordService if provided
             if data.word is not None:
-                data.word.language_id = existing.lesson.language_id if existing.lesson else None
-                
-                if (old_word := word_service.get_by_id(existing.word_id, session=session)):
-                    # If word id exists, update that word
-                    updated_word = word_service.update(existing.word_id, data.word, session=session)
-                    if not updated_word:
-                        logger.error(f"Failed to update word for vocabulary: {voc_id}")
-                        return None
-                    
-                    existing.word = updated_word  # Update relationship
-                    
-                elif (old_word := word_service.get_by_word(data.word.word, language_id=existing.lesson.language_id if existing.lesson else None, session=session)):
-                    # If the word already exists, update that word
-
-                    existing_image_files = set(old_word.image_files or [])
-                    new_image_files = data.word.image_files or []
-                    data.word.image_files = list(existing_image_files | set(new_image_files))
-
-                    existing_audio_files = set(old_word.audio_files or [])
-                    new_audio_files = data.word.audio_files or []
-                    data.word.audio_files = list(existing_audio_files | set(new_audio_files))
-
-                    updated_word = word_service.update(
-                        old_word.id,
-                        data.word,
-                        session=session
-                    )
-
-                    existing.word_id = old_word.id  # Update foreign key
-                    existing.word = updated_word  # Update relationship
-                else:
-                    # Create new word if the referenced one doesn't exist
-                    new_word = word_service.create(data.word, session=session)
-                    if not new_word:
-                        logger.error(f"Failed to create new word for vocabulary: {voc_id}")
-                        return None
-                    
-                    existing.word_id = new_word.id  # Update foreign key
-                    existing.word = new_word  # Update relationship
+                data.word.language_id = existing.lesson.language_id
+                word = word_service.create(data.word, session=session)
+                if word:
+                    existing.word = word
+                    existing.word_id = word.id
             
-            # Handle example_sentences update through PassageService if provided
+            existing.example_sentences = []
             if data.example_sentences is not None:
-                # Create new passages
-                new_sentences = []
-                for example_sentence in data.example_sentences:
-                    example_sentence.language_id = existing.lesson.language_id if existing.lesson else None
-                    passage = passage_service.create(example_sentence, session=session)
+                for example_sentence_data in data.example_sentences:
+                    example_sentence_data.language_id = existing.lesson.language_id if existing.lesson else None
+                    passage = passage_service.create(example_sentence_data, session=session)
                     if passage:
-                        new_sentences.append(passage)
-                
-                existing.example_sentences = new_sentences
-            else:
-                existing.example_sentences = []
+                        existing.example_sentences.append(passage)
             
             # Remove nested objects from update_data to avoid overwriting our service-managed updates
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('difficulty', None)  # Don't allow direct difficulty updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-            
-            update_data.pop('word', None)
-            update_data.pop('example_sentences', None)
+            update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'word', 'word_id', 'example_sentences', 'tags', 'sources'}, exclude_none=True)
             
             # Update remaining fields
             for key, value in update_data.items():
-                if key != 'word_id':  # Don't overwrite word_id if we already set it
-                    setattr(existing, key, value)
+                setattr(existing, key, value)
             
             # Save to database
             result = db_manager.modify(existing, session=session)

@@ -148,12 +148,14 @@ def create_calligraphy():
                                 type: string
                                 example: "/path/to/audio1.mp3"
                               required: false
-                  example_word:
-                      type: object
-                      required: false
-                      description: Example word using the character
-                      properties:
-                          word:
+                  example_words:
+                      type: array
+                      items:
+                          type: object
+                          required: false
+                          description: Example word using the character
+                          properties:
+                              word:
                               type: string
                               example: "漢字"
                               required: true
@@ -288,12 +290,14 @@ def update_calligraphy(calligraphy_id: str):
                                 type: string
                                 example: "/path/to/audio1.mp3"
                               required: false
-                  example_word:
-                      type: object
-                      required: false
-                      description: Example word using the character
-                      properties:
-                          word:
+                  example_words:
+                      type: array
+                      items:
+                          type: object
+                          required: false
+                          description: Example word using the character
+                          properties:
+                              word:
                               type: string
                               example: "漢字"
                               required: false

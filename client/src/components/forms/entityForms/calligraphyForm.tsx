@@ -3,19 +3,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
+import TagSelector from "@/components/selectMenu/tagSelector";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 import { createCalligraphy, updateCalligraphy } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Calligraphy from "@/interface/features/Calligraphy";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import Word from "@/interface/components/Word";
+import Passage from "@/interface/components/Passage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
 
-export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?: Calligraphy; lesson_id: string}) {
+export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?: Partial<Calligraphy>; lesson_id: string}) {
     const router = useRouter();
-    const isUpdate = Boolean(calligraphy);
-    let calligraphyData: Calligraphy;
+    const isUpdate = Boolean(calligraphy?.id);
+    let calligraphyData: Partial<Calligraphy>;
     if (!calligraphy) {
         calligraphyData = {
             character: {
@@ -23,26 +26,30 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                 phonetic: "",
                 meaning: "",
                 radical: "",
-                strokes: 0  ,
+                strokes: 0,
                 image_files: [],
                 audio_files: []
             },
-            example_word: undefined,
+            example_words: [],
+            example_sentences: [],
             lesson_id: lesson_id
         };
     } else {
         calligraphyData = calligraphy;
     }
     
-    const [character, setCharacter] = useState<string>(calligraphyData.character.character);
-    const [phonetic, setPhonetic] = useState<string>(calligraphyData.character.phonetic);
-    const [meaning, setMeaning] = useState<string|undefined>(calligraphyData.character.meaning !== null ? calligraphyData.character.meaning : undefined);
-    const [radical, setRadical] = useState<string|undefined>(calligraphyData.character.radical !== null ? calligraphyData.character.radical : undefined);
-    const [strokes, setStrokes] = useState<number|undefined>(calligraphyData.character.strokes !== null ? calligraphyData.character.strokes : undefined);
-    const [imageUrl, setImageUrl] = useState<string[]>(calligraphyData.character.image_files!);
-    const [audioUrl, setAudioUrl] = useState<string[]>(calligraphyData.character.audio_files!);
+    const [character, setCharacter] = useState<string>(calligraphyData.character?.character || "");
+    const [phonetic, setPhonetic] = useState<string>(calligraphyData.character?.phonetic || "");
+    const [meaning, setMeaning] = useState<string|undefined>(calligraphyData.character?.meaning || undefined);
+    const [radical, setRadical] = useState<string|undefined>(calligraphyData.character?.radical || undefined);
+    const [strokes, setStrokes] = useState<number|undefined>(calligraphyData.character?.strokes || undefined);
+    const [imageUrl, setImageUrl] = useState<string[]>(calligraphyData.character?.image_files || []);
+    const [audioUrl, setAudioUrl] = useState<string[]>(calligraphyData.character?.audio_files || []);
 
-    const [exampleWord, setExampleWord] = useState<Word | undefined>(calligraphyData.example_word !== null ? calligraphyData.example_word : undefined);
+    const [exampleWords, setExampleWords] = useState<Partial<Word>[]>(calligraphyData.example_words ? calligraphyData.example_words : []);
+    const [exampleSentences, setExampleSentences] = useState<Partial<Passage>[]>(calligraphyData.example_sentences ? calligraphyData.example_sentences : []);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(calligraphyData.tags ? calligraphyData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(calligraphyData.sources ? calligraphyData.sources.map(source => source.id!) : []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -52,7 +59,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
         const pathParts = currentPath.split('/');
         const languageId = pathParts[2]; // From /languages/LANG_ID/...
         
-        const element: Calligraphy = {
+        const element: Partial<Calligraphy> = {
             character: {
                 character: character,
                 phonetic: phonetic,
@@ -62,15 +69,21 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                 image_files: imageUrl,
                 audio_files: audioUrl
             },
-            example_word: exampleWord,
-            lesson_id: lesson_id
+            example_words: exampleWords,
+            example_sentences: exampleSentences,
+            lesson_id: lesson_id,
+            tags: selectedTagIds.map(id => ({ id })),
+            sources: selectedSourceIds.map(id => ({ id }))
         };
         
         try {
+            let calligraphyId: string;
             if (isUpdate) {
                 await updateCalligraphy(calligraphyData.id!, element);
+                calligraphyId = calligraphyData.id!;
             } else {
-                await createCalligraphy(element);
+                const response = await createCalligraphy(element);
+                calligraphyId = response.id;
             }
 
             router.push(`/languages/${languageId}/lesson/${lesson_id}`);
@@ -80,16 +93,35 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
             alert(`Failed to ${isUpdate ? "update" : "create"} calligraphy. Check console for details.`);
         }
     };
-    const handleExampleWordChange = (field: "word" | "translation" | "type" | "gender" | "image_files" | "audio_files", value: string | string[]) => {
-        setExampleWord(prevWord => {
-            if (!prevWord) return prevWord;
-                const updatedWord = { ...prevWord };
-            if (["word", "translation", "type", "gender"].includes(field)) {
-                (updatedWord as { [key: string]: string | string[] })[field] = value as string;
-            } else if (["image_files", "audio_files"].includes(field)) {
-                (updatedWord as { [key: string]: string | string[] })[field] = value as string[];
+    const handleExampleWordChange = (index: number, field: "word" | "translation" | "word_type" | "word_gender" | "image_files" | "audio_files", value: string | string[]) => {
+        setExampleWords(prevWords => {
+            const updatedWords = [...prevWords];
+            const wordToUpdate = updatedWords[index] || { word: "", translation: "", word_type: "" as const, image_files: [], audio_files: [] };
+            
+            if (field === "word" || field === "translation" || field === "word_type" || field === "word_gender") {
+                (wordToUpdate as { [key: string]: string | string[] })[field] = value as string;
+            } else if (field === "image_files" || field === "audio_files") {
+                (wordToUpdate as { [key: string]: string | string[] })[field] = value as string[];
             }
-            return updatedWord;
+            
+            updatedWords[index] = wordToUpdate;
+            return updatedWords;
+        });
+    };
+
+    const handleExampleSentenceChange = (index: number, field: "text" | "translation" | "image_files" | "audio_files", value: string | string[]) => {
+        setExampleSentences(prevSentences => {
+            const updatedSentences = [...prevSentences];
+            const sentenceToUpdate = updatedSentences[index] || { text: "", translation: "", image_files: [], audio_files: [] };
+            
+            if (field === "text" || field === "translation") {
+                (sentenceToUpdate as { [key: string]: string | string[] })[field] = value as string;
+            } else if (field === "image_files" || field === "audio_files") {
+                (sentenceToUpdate as { [key: string]: string | string[] })[field] = value as string[];
+            }
+            
+            updatedSentences[index] = sentenceToUpdate;
+            return updatedSentences;
         });
     };
 
@@ -131,68 +163,124 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                 />
                 <MediaLoader imageUrl={imageUrl} setImageUrl={setImageUrl} audioUrl={audioUrl} setAudioUrl={setAudioUrl} />
             </article>
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onTagsChange={setSelectedTagIds}
+                elementId={calligraphyData.id!}
+            />
+            <SourceSelector
+                selectedSourceIds={selectedSourceIds}
+                onSourcesChange={setSelectedSourceIds}
+                elementId={calligraphyData.id!}
+            />
             <article className="flex flex-col space-y-2 items-center">
-                <h3>Example Word Informations</h3>
-                {exampleWord && (<section className="flex flex-col space-y-2 items-center">
-                    <button
-                        className="h-fit px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                        onClick={() => {
-                            setExampleWord(undefined);
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faTrash}/>
-                    </button>
-                    <AutoWidthInput
-                        value={exampleWord.word}
-                        onChange={(e) => handleExampleWordChange("word", e.target.value)}
-                        label="Example Word"
-                        className="border border-gray-300"
-                        required
-                    />
-                    <AutoWidthInput
-                        value={exampleWord.translation}
-                        onChange={(e) => handleExampleWordChange("translation", e.target.value)}
-                        label="Example Word Translation"
-                        className="border border-gray-300"
-                        required
-                    />
-                    <ClassicSelectMenu
-                        label="Type of Word"
-                        options={[
-                            'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'article', 
-                            'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
-                            'classifier', 'auxiliary', 'modal'
-                        ]}
-                        selectedOption={exampleWord.word_type}
-                        onChange={(value) => handleExampleWordChange("type", value)}
-                        required
-                    />
-                    <ClassicSelectMenu
-                        label="Gender of Word"
-                        options={[
-                            'm', 'f', 'n'
-                        ]}
-                        selectedOption={exampleWord.word_gender || ""}
-                        onChange={(value) => handleExampleWordChange("gender", value)}
-                    />
-                    <MediaLoader 
-                        imageUrl={exampleWord.image_files} 
-                        setImageUrl={handleExampleWordChange.bind(null, "image_files")} 
-                        audioUrl={exampleWord.audio_files} 
-                        setAudioUrl={handleExampleWordChange.bind(null, "audio_files")}
-                    />
-                </section>)}
-                {!exampleWord && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setExampleWord({ word: "", translation: "", type: "" as Word["type"], image_files: [], audio_files: [] });
-                        }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                    >
-                        <FontAwesomeIcon icon={faAdd}/>
-                    </button>
-                )}
+                <h3>Example Words</h3>
+                {exampleWords.map((exampleWord, key) => (
+                    <section key={key} className="flex flex-col space-y-2 items-center w-full border border-gray-300 p-4 rounded">
+                        <button
+                            type="button"
+                            className="h-fit px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                            onClick={() => {
+                                setExampleWords(prev => prev.filter((_, index) => index !== key));
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faTrash}/>
+                        </button>
+                        <AutoWidthInput
+                            value={exampleWord.word || ""}
+                            onChange={(e) => handleExampleWordChange(key, "word", e.target.value)}
+                            label="Example Word"
+                            className="border border-gray-300"
+                            required
+                        />
+                        <AutoWidthInput
+                            value={exampleWord.translation || ""}
+                            onChange={(e) => handleExampleWordChange(key, "translation", e.target.value)}
+                            label="Example Word Translation"
+                            className="border border-gray-300"
+                            required
+                        />
+                        <ClassicSelectMenu
+                            label="Type of Word"
+                            options={[
+                                'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'article', 
+                                'preposition', 'conjunction', 'particle', 'interjection', 'numeral', 
+                                'classifier', 'auxiliary', 'modal'
+                            ]}
+                            selectedOption={exampleWord.word_type || ""}
+                            onChange={(value) => handleExampleWordChange(key, "word_type", value)}
+                            required
+                        />
+                        <ClassicSelectMenu
+                            label="Gender of Word"
+                            options={[
+                                'm', 'f', 'n'
+                            ]}
+                            selectedOption={exampleWord.word_gender || ""}
+                            onChange={(value) => handleExampleWordChange(key, "word_gender", value)}
+                        />
+                        <MediaLoader 
+                            imageUrl={exampleWord.image_files || []} 
+                            setImageUrl={(files) => handleExampleWordChange(key, "image_files", files)} 
+                            audioUrl={exampleWord.audio_files || []} 
+                            setAudioUrl={(files) => handleExampleWordChange(key, "audio_files", files)}
+                        />
+                    </section>
+                ))}
+                <button
+                    type="button"
+                    onClick={() => {
+                        setExampleWords(prev => [...prev, { word: "", translation: "", word_type: "noun", image_files: [], audio_files: [] }]);
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                >
+                    <FontAwesomeIcon icon={faAdd}/> Add Example Word
+                </button>
+            </article>
+            <article className="flex flex-col space-y-2 items-center">
+                <h3>Example Sentences</h3>
+                {exampleSentences.map((exampleSentence, key) => (
+                    <section key={key} className="flex flex-col space-y-2 items-center w-full border border-gray-300 p-4 rounded">
+                        <button
+                            type="button"
+                            className="h-fit px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                            onClick={() => {
+                                setExampleSentences(prev => prev.filter((_, index) => index !== key));
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faTrash}/>
+                        </button>
+                        <AutoWidthInput
+                            value={exampleSentence.text || ""}
+                            onChange={(e) => handleExampleSentenceChange(key, "text", e.target.value)}
+                            label="Example Sentence"
+                            className="border border-gray-300"
+                            required
+                        />
+                        <AutoWidthInput
+                            value={exampleSentence.translation || ""}
+                            onChange={(e) => handleExampleSentenceChange(key, "translation", e.target.value)}
+                            label="Example Sentence Translation"
+                            className="border border-gray-300"
+                            required
+                        />
+                        <MediaLoader 
+                            imageUrl={exampleSentence.image_files || []} 
+                            setImageUrl={(files) => handleExampleSentenceChange(key, "image_files", files)} 
+                            audioUrl={exampleSentence.audio_files || []} 
+                            setAudioUrl={(files) => handleExampleSentenceChange(key, "audio_files", files)}
+                        />
+                    </section>
+                ))}
+                <button
+                    type="button"
+                    onClick={() => {
+                        setExampleSentences(prev => [...prev, { text: "", translation: "", image_files: [], audio_files: [] }]);
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                >
+                    <FontAwesomeIcon icon={faAdd}/> Add Example Sentence
+                </button>
             </article>
             {isUpdate ? <UpdateButton>Update Calligraphy</UpdateButton> : <NewElementButton>Add Calligraphy</NewElementButton>}
         </form>

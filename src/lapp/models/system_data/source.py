@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, Date, ForeignKey
+from sqlalchemy import Column, Enum, String, Date, ForeignKey, select
+from sqlalchemy.util import defaultdict
 
-from ...core.database import Base
-
+from ...core.database import Base, db_manager
+from ..base import source_element_link
 
 class Source(Base):
     __tablename__ = 'source'
@@ -11,5 +12,37 @@ class Source(Base):
     title = Column(String, nullable=False)
     date = Column(Date)
     description = Column(String)
-    source_type = Column(String)
+    source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai"), nullable=False)
 
+    def get_elements(self) -> dict:
+        session = db_manager.get_session() 
+        linked_ids = [
+            row.element_id for row in session.execute(
+                select(source_element_link.c.element_id).where(
+                    source_element_link.c.source_id == self.id
+                )
+            )
+        ]
+
+        if not linked_ids:
+            return {}
+
+        bucketed = defaultdict(list)
+        for id_ in linked_ids:
+            type_name = id_.split("_")[0]
+            bucketed[type_name].append(id_)
+
+        return dict(bucketed)
+
+    def to_dict(self, include_relations: bool = False) -> dict:
+        base = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "date": self.date.isoformat() if self.date else None,
+            "description": self.description,
+            "source_type": self.source_type
+        }
+        if include_relations:
+            base["elements"] = self.get_elements()
+        return base

@@ -15,6 +15,9 @@ import type Exercise from "@/interface/features/Exercise";
 
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
+import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
 
 
 export default async function Lesson({ params }: { params: { language_id: string, lesson_id: string } }) {
@@ -31,10 +34,9 @@ export default async function Lesson({ params }: { params: { language_id: string
             <header>
                 <h1>{lesson.title}</h1>
                 <Markdown remarkPlugins={[remarkGfm]}>{lesson.description}</Markdown>
-                <p>Score: {lesson.score?.toFixed(1) || "N/A"}/100</p>
-                <p>Status: {lesson.status || "N/A"}</p>
-                <p>Created at: {new Date(lesson.created_at || 0).toLocaleDateString('en-US')}</p>
-                <p>Last Seen: {new Date(lesson.last_seen_at || 0).toLocaleDateString('en-US')}</p>
+                <ElementPerformanceCard element={lesson} />
+                <ElementTagsCard element={lesson} />
+                <ElementSourcesCard element={lesson} />
                 <nav className="flex flex-row space-x-4">
                     <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/update`}>
                         <p>Update this Lesson Informations</p>

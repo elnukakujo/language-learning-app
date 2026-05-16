@@ -5,6 +5,7 @@ from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar
 
 class Passage(BaseComponentModel):
     __tablename__ = 'passage'
+    __mapper_args__ = {"polymorphic_identity": "passage"}
     __table_args__ = (UniqueConstraint('language_id', 'text', name='uq_passage_language_text'),)
     
     text = Column(Text, nullable=False)

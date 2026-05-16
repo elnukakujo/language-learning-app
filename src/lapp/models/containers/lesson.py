@@ -5,6 +5,7 @@ from ..base import BaseContainerModel
 
 class Lesson(BaseContainerModel):
     __tablename__ = 'lesson'
+    __mapper_args__ = {"polymorphic_identity": "lesson"}
 
     title = Column(String, index=True)
 

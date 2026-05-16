@@ -5,6 +5,7 @@ from ..base import BaseComponentModel, calligraphy_example_word_link, grammar_ex
 
 class Word(BaseComponentModel):
     __tablename__ = 'word'
+    __mapper_args__ = {"polymorphic_identity": "word"}
     __table_args__ = (UniqueConstraint('language_id', 'word', name='uq_word_language_word'),)
     
     word = Column(String(255), nullable=False, index=True)

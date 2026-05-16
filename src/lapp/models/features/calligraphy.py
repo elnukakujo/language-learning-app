@@ -5,6 +5,7 @@ from ..base import BaseFeatureModel, calligraphy_example_word_link, calligraphy_
 
 class Calligraphy(BaseFeatureModel):
     __tablename__ = 'calligraphy'
+    __mapper_args__ = {"polymorphic_identity": "calligraphy"}
 
     # Foreign keys
     character_id = Column(String, ForeignKey('character.id'), nullable=False, unique=False)

@@ -1,6 +1,6 @@
 import Vocabulary from "@/interface/features/Vocabulary";
 import { getVocabularyByLesson } from "@/api";
-import VocabularyFlashCard from "@/components/cards/vocabularyFlashCard";
+import VocabularyFlashCard from "@/components/cards/flashCards/vocabularyFlashCard";
 
 export default async function VocabularyFlashCardPage({ params }: { params: { language_id: string; lesson_id: string; voc_id: string }}) {
     const { lesson_id } = await params;

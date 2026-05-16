@@ -5,6 +5,7 @@ from ..base import BaseFeatureModel, exercise_calligraphy_link, exercise_grammar
 
 class Exercise(BaseFeatureModel):
     __tablename__ = 'exercise'
+    __mapper_args__ = {"polymorphic_identity": "exercise"}
 
     exercise_type = Column(String, index=True)  # e.g., multiple choice, fill
     question = Column(String, index=True)

@@ -4,6 +4,8 @@ import type Calligraphy from "@/interface/features/Calligraphy";
 import type Exercise from "@/interface/features/Exercise";
 import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
+import Source from "@/interface/systemData/Source";
+import Tag from "@/interface/systemData/Tag";
 
 export const BASE_URL = process.env.LAPP_URL || "http://127.0.0.1:5000";
 
@@ -21,10 +23,10 @@ export async function getLanguageById(languageId: string) {
 }
 
 export async function getLanguageData(languageId: string) {
-  const language = await getLanguageById(languageId);
+  const language: Language = await getLanguageById(languageId);
   const lessons = await fetch(`${BASE_URL}/api/lessons/all/${languageId}`);
   if (!lessons.ok) throw new Error(`Failed to fetch lessons for language ${languageId}`);
-  const lessonsData = await lessons.json();
+  const lessonsData: Lesson[] = await lessons.json();
   return {
     language,
     lessons: lessonsData,
@@ -400,6 +402,150 @@ export async function uploadAudio(file: File, temporary = false) {
   }
 }
 
+// ============= Tag API =============
+export async function getAllUserTags(userId: string) {
+  const res = await fetch(`${BASE_URL}/api/tags/user/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch user tags");
+  return res.json();
+}
+
+export async function getTagById(tagId: string) {
+  const res = await fetch(`${BASE_URL}/api/tags/${tagId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch tag ${tagId}`);
+  return res.json();
+}
+
+export async function createTag(data: Partial<Tag>) {
+  const res = await fetch(`${BASE_URL}/api/tags/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create tag");
+  return res.json();
+}
+
+export async function updateTag(tagId: string, data: Partial<Tag>) {
+  const res = await fetch(`${BASE_URL}/api/tags/${tagId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update tag");
+  return res.json();
+}
+
+export async function deleteTag(tagId: string) {
+  const res = await fetch(`${BASE_URL}/api/tags/${tagId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete tag");
+}
+
+export async function addTagToElement(tagId: string, elementId: string) {
+  if (!tagId) throw new Error("addTagToElement: missing tagId");
+  if (!elementId) throw new Error("addTagToElement: missing elementId - save the item before adding tags");
+
+  const res = await fetch(`${BASE_URL}/api/tags/add_tag`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tag_id: tagId, element_id: elementId }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to add tag ${tagId} to element ${elementId}: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+export async function removeTagFromElement(tagId: string, elementId: string) {
+  if (!tagId) throw new Error("removeTagFromElement: missing tagId");
+  if (!elementId) throw new Error("removeTagFromElement: missing elementId");
+
+  const res = await fetch(`${BASE_URL}/api/tags/remove_tag`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tag_id: tagId, element_id: elementId }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to remove tag ${tagId} from element ${elementId}: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+// ============= Source API =============
+export async function getAllUserSources(userId: string) {
+  const res = await fetch(`${BASE_URL}/api/sources/user/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch user sources");
+  return res.json();
+}
+
+export async function getSourceById(sourceId: string) {
+  const res = await fetch(`${BASE_URL}/api/sources/${sourceId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch source ${sourceId}`);
+  return res.json();
+}
+
+export async function createSource(data: Partial<Source>) {
+  const res = await fetch(`${BASE_URL}/api/sources/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create source");
+  return res.json();
+}
+
+export async function updateSource(sourceId: string, data: Partial<Source>) {
+  const res = await fetch(`${BASE_URL}/api/sources/${sourceId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update source");
+  return res.json();
+}
+
+export async function deleteSource(sourceId: string) {
+  const res = await fetch(`${BASE_URL}/api/sources/${sourceId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete source");
+}
+
+export async function addSourceToElement(sourceId: string, elementId: string) {
+  const res = await fetch(`${BASE_URL}/api/sources/add_source`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_id: sourceId, element_id: elementId }),
+  });
+  if (!res.ok) throw new Error(`Failed to add source ${sourceId} to element ${elementId}`);
+  return res.json();
+}
+
+export async function removeSourceFromElement(sourceId: string, elementId: string) {
+  const res = await fetch(`${BASE_URL}/api/sources/remove_source`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_id: sourceId, element_id: elementId}),
+  });
+  if (!res.ok) throw new Error(`Failed to remove source ${sourceId} from element ${elementId}`);
+  return res.json();
+}
+
 // ============= Legacy/Compatibility Functions =============
 // These functions provide backward compatibility with existing code
 
@@ -482,6 +628,10 @@ export async function deleteElement(element_id: string) {
     return deleteCalligraphy(element_id);
   } else if (element_id.toLowerCase().startsWith('ex_')) {
     return deleteExercise(element_id);
+  } else if (element_id.toLowerCase().startsWith('tag_')) {
+    return deleteTag(element_id);
+  } else if (element_id.toLowerCase().startsWith('source_')) {
+    return deleteSource(element_id);
   }
   throw new Error(`Unknown element type for ID: ${element_id}`);
 }

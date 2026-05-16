@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.containers import LessonDict
 from ...models.containers import Lesson
+from ...models.system_data import Tag, Source
 from ...models.features import Calligraphy, Vocabulary, Grammar, Exercise
 from ...core.database import db_manager
 from .language import LanguageService
@@ -169,7 +170,9 @@ class LessonService:
                     model_class=Lesson,
                     session=session
                 ),
-                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()}
+                **{k: v for k, v in data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()},
+                tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
             )
             result = db_manager.insert(
                 obj=lesson,
@@ -221,13 +224,7 @@ class LessonService:
                 return None
             
             # Update the existing object's attributes
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('status', None)  # Don't allow direct status updates
-            update_data.pop('created_at', None)  # Don't allow updating created_at
-            update_data.pop('last_seen_at', None)   # Don't allow direct last_seen_at updates
-            update_data.pop('lesson_id', None)
+            update_data = data.model_dump(exclude={'id', 'language_id', 'score', 'status', 'created_at', 'last_seen_at'}, exclude_none=True)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)

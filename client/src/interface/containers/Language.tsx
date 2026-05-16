@@ -1,4 +1,5 @@
 import { BaseContainer } from '../base';
+import Lesson from './Lesson';
 
 export default interface Language extends BaseContainer {
     name: string;
@@ -9,5 +10,5 @@ export default interface Language extends BaseContainer {
     
     user_id?: string;
     current_lesson_id?: string;
-    lesson_ids?: string[];
+    lessons?: Partial<Lesson>[];
 };

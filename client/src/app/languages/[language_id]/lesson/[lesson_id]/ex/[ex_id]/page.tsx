@@ -14,6 +14,9 @@ import MatchingExercise from "@/components/forms/exerciseForms/matchingExercise"
 import SpeakingExercise from "@/components/forms/exerciseForms/speakingExercise";
 import BackButton from "@/components/buttons/backButton";
 import ConversationExercise from "@/components/forms/exerciseForms/conversationExercise";
+import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
+import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; lesson_id: string; ex_id: string }}) {
     const { language_id, lesson_id, ex_id } = await params;
@@ -50,6 +53,10 @@ export default async function ExercisePage( { params } : { params: { language_id
                 <SpeakingExercise exercise={ exercise } />
             )}
             {exercise.exercise_type === 'conversation' && <ConversationExercise exercise={exercise} />}
+            
+            <ElementTagsCard element={exercise} />
+            <ElementSourcesCard element={exercise} />    
+            <ElementPerformanceCard element={exercise} />
 
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/ex/${exercise.id}/update`}>

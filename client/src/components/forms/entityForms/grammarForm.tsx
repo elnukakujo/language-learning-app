@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
+import TagSelector from "@/components/selectMenu/tagSelector";
+import SourceSelector from "@/components/selectMenu/sourceSelector";
 import { createGrammar, updateGrammar } from "@/api";
 import MediaLoader from "@/components/mediaLoader";
 import Grammar from "@/interface/features/Grammar";
@@ -13,11 +15,11 @@ import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import UpdateButton from "@/components/buttons/updateButton";
 
-export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; lesson_id: string}) {
+export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Grammar>; lesson_id: string}) {
     const router = useRouter();
-    const isUpdate = Boolean(grammar);
+    const isUpdate = Boolean(grammar?.id);
 
-    let grammarData: Grammar;
+    let grammarData: Partial<Grammar>;
     if (!grammar) {
         grammarData = {
             title: "",
@@ -29,10 +31,12 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
         grammarData = grammar;
     }
     
-    const [title, setTitle] = useState<string>(grammarData.title);
-    const [explanation, setExplanation] = useState<string>(grammarData.explanation);
+    const [title, setTitle] = useState<string>(grammarData.title || "");
+    const [explanation, setExplanation] = useState<string>(grammarData.explanation || "");
 
-    const [learnableSentence, setLearnableSentence] = useState<Passage[]>(grammarData.example_sentences!);
+    const [learnableSentence, setLearnableSentence] = useState<Partial<Passage>[]>(grammarData.example_sentences!);
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>(grammarData.tags ? grammarData.tags.map(tag => tag.id!) : []);
+    const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(grammarData.sources ? grammarData.sources.map(source => source.id!) : []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -42,18 +46,23 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
         const pathParts = currentPath.split('/');
         const languageId = pathParts[2]; // From /languages/LANG_ID/...
         
-        const element: Grammar = {
+        const element: Partial<Grammar> = {
             title: title,
             explanation: explanation,
             example_sentences: learnableSentence,
-            lesson_id: lesson_id
+            lesson_id: lesson_id,
+            tags: selectedTagIds.map(id => ({ id })),
+            sources: selectedSourceIds.map(id => ({ id }))
         };
         
         try {
+            let grammarId: string;
             if (isUpdate) {
                 await updateGrammar(grammarData.id!, element);
+                grammarId = grammarData.id!;
             } else {
-                await createGrammar(element);
+                const response = await createGrammar(element);
+                grammarId = response.id;
             }
 
             router.push(`/languages/${languageId}/lesson/${lesson_id}`);
@@ -98,6 +107,16 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Grammar; le
                     required={true}
                 />
             </article>
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onTagsChange={setSelectedTagIds}
+                elementId={grammarData.id!}
+            />
+            <SourceSelector
+                selectedSourceIds={selectedSourceIds}
+                onSourcesChange={setSelectedSourceIds}
+                elementId={grammarData.id!}
+            />
             <article className="flex flex-col space-y-2 items-center">
                 <h3>Learnable Sentences</h3>
                 {learnableSentence.map((sentence, key) => (

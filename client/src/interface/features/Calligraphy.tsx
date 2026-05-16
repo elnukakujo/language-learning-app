@@ -5,8 +5,8 @@ import Passage from "../components/Passage";
 import Word from "../components/Word";
 
 export default interface Calligraphy extends BaseFeature {
-    character: Character;
+    character: Partial<Character>;
 
-    example_words?: Word[];
-    example_sentences?: Passage[];
+    example_words?: Partial<Word>[];
+    example_sentences?: Partial<Passage>[];
 };

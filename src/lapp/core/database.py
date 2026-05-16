@@ -486,6 +486,12 @@ class DatabaseManager:
         - Character: "char_C{n}"
         - Word: "word_W{n}"
         - Passage: "pass_P{n}"
+        - User: "user_U{n}"
+        - UserPreferences: "pref_P{n}"
+        - Source: "src_S{n}"
+        - Tag: "tag_T{n}"
+        - StrengthsAndWeaknesses: "sw_S{n}"
+        - ProgressTracking: "pt_P{n}"
         
         Args:
             model_class: The model class to generate ID for
@@ -518,8 +524,8 @@ class DatabaseManager:
                 "UserPreferences": "pref_P",
                 "Source": "src_S",
                 "Tag": "tag_T",
-                "StrengthsAndWeaknesses": "sw_SW",
-                "ProgressTracking": "pt_PT"
+                "StrengthsAndWeaknesses": "sw_S",
+                "ProgressTracking": "pt_P"
             }
             
             if model_class.__name__ not in id_config:

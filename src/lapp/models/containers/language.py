@@ -6,6 +6,7 @@ from .lesson import Lesson
 
 class Language(BaseContainerModel):
     __tablename__ = 'language'
+    __mapper_args__ = {"polymorphic_identity": "language"}
 
     name = Column(String, index=True)
     alias = Column(String)

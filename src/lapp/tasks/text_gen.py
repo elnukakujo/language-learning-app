@@ -1,11 +1,18 @@
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from flask import Flask, session
-from lapp.models.containers.language import Language
+from flask import Flask
+from sqlalchemy import exists
 
 from ..core.database import db_manager
-from ..models import Grammar, Vocabulary, Calligraphy
+from ..models import Grammar, Vocabulary, Calligraphy, Language
+from ..models.base import (
+    calligraphy_example_word_link,
+    calligraphy_example_sentence_link,
+    vocabulary_example_sentence_link,
+    grammar_example_sentence_link,
+    grammar_example_word_link,
+)
 from ..schemas import GrammarDict, CalligraphyDict, VocabularyDict
 from ..services import TextGeneratorService, GrammarService, VocabularyService, CalligraphyService
 
@@ -49,6 +56,7 @@ def generate_missing_texts(app: Flask):
     Background task to generate learnable sentences for Grammars.
     """
     logger.info("🔄 Starting Text Generation task: generate_missing_texts")
+    session = db_manager.get_session()
     
     with app.app_context():
         try:
@@ -58,22 +66,33 @@ def generate_missing_texts(app: Flask):
             vocabulary_service = VocabularyService()
             calligraphy_service = CalligraphyService()
 
-            calligraphies_without_words: list[Calligraphy] = db_manager.find_all(
-                model_class=Calligraphy,
-                filters={"example_word": None}
+            calligraphies_without_examples: list[Calligraphy] = (
+                session.query(Calligraphy)
+                .filter(
+                    ~exists().where(calligraphy_example_word_link.c.calligraphy_id == Calligraphy.id)
+                    & ~exists().where(calligraphy_example_sentence_link.c.calligraphy_id == Calligraphy.id)
+                )
+                .all()
             )
 
-            vocabularies_without_sentences: list[Vocabulary] = db_manager.find_all(
-                model_class=Vocabulary,
-                filters = {"example_sentences": None}
-            )
-            
-            grammars_without_sentences: list[Grammar] = db_manager.find_all(
-                model_class=Grammar,
-                filters={"example_sentences": None}
+            vocabularies_without_examples: list[Vocabulary] = (
+                session.query(Vocabulary)
+                .filter(
+                    ~exists().where(vocabulary_example_sentence_link.c.vocabulary_id == Vocabulary.id)
+                )
+                .all()
             )
 
-            features_without_texts = calligraphies_without_words + vocabularies_without_sentences + grammars_without_sentences
+            grammars_without_examples: list[Grammar] = (
+                session.query(Grammar)
+                .filter(
+                    ~exists().where(grammar_example_sentence_link.c.grammar_id == Grammar.id)
+                    & ~exists().where(grammar_example_word_link.c.grammar_id == Grammar.id)
+                )
+                .all()
+            )
+
+            features_without_texts = calligraphies_without_examples + vocabularies_without_examples + grammars_without_examples
             
             total_features = len(features_without_texts)
             
@@ -82,15 +101,16 @@ def generate_missing_texts(app: Flask):
                 return
             
             logger.info(f"📋 Found {total_features} features without texts:")
-            logger.info(f"   - {len(calligraphies_without_words)} Calligraphies without example words")
-            logger.info(f"   - {len(vocabularies_without_sentences)} Vocabularies without example sentences")
-            logger.info(f"   - {len(grammars_without_sentences)} Grammars without learnable sentences")
+            logger.info(f"   - {len(calligraphies_without_examples)} Calligraphies without example words")
+            logger.info(f"   - {len(vocabularies_without_examples)} Vocabularies without example sentences")
+            logger.info(f"   - {len(grammars_without_examples)} Grammars without example sentences")
             
             success_count = 0
             error_count = 0
             
             for feature in features_without_texts:
-                language: Language = db_manager.find_by_id("Language", feature.lesson.language_id)
+                language: Language = db_manager.find_by_pk(Language(id=feature.lesson.language_id), session=session)
+                logger.info(f"Generating text for feature ID {feature.id} with language {language.source_iso639_2t} -> {language.target_iso639_2t}")
                 try:
                     # Generate audio using TTS service
                     if isinstance(feature, Calligraphy):
@@ -116,10 +136,11 @@ def generate_missing_texts(app: Flask):
                         )
                     else:
                         logger.warning(f"⚠️  Unknown feature type for ID {feature.id}, skipping")
-                        continue       
-                        
-                    if not generated_text or not generated_text.strip():
-                        logger.warning(f"⚠️  Failed to generate text for Feature ID {feature.id} (empty result)")
+                        continue
+
+                    if generated_text is None or not generated_text.strip():
+                        logger.error(f"❌ Failed to generate text for Feature ID {feature.id}: empty or null result")
+                        error_count += 1
                         continue
                     
                     if isinstance(feature, Calligraphy):
@@ -128,8 +149,9 @@ def generate_missing_texts(app: Flask):
                             data=CalligraphyDict(
                                 lesson_id=feature.lesson_id,
                                 character=feature.character.to_dict(include_relations=False),
-                                example_word={"word": generated_text, "translation": "", "type": ""}
-                            )
+                                example_words=[{"word": generated_text, "translation": "", "type": ""}]
+                            ),
+                            session=session
                         )
                     elif isinstance(feature, Vocabulary):
                         vocabulary_service.update(
@@ -140,20 +162,24 @@ def generate_missing_texts(app: Flask):
                                 example_sentences=[
                                     {"text": generated_text, "translation": ""}
                                 ]
-                            )
+                            ),
+                            session=session
                         )
                     elif isinstance(feature, Grammar):
-                        grammar_data = feature.to_dict(include_relations=True)
-                        grammar_data.pop("example_sentences", None)
+                        grammar_data = feature.to_dict(include_relations=False)
+                        grammar_data.pop('id', None)
+                        grammar_data.pop('score', None)
+                        grammar_data.pop('difficulty', None)
+                        grammar_data.pop('status', None)
+                        grammar_data.pop('created_at', None)
+                        grammar_data.pop('last_seen_at', None)
+
+                        grammar_data["example_sentences"] = [{"text": generated_text, "translation": ""}]
 
                         grammar_service.update(
                             grammar_id=feature.id,
-                            data=GrammarDict(
-                                **grammar_data,
-                                example_sentences=[
-                                    {"text":generated_text, "translation":""}
-                                ]
-                            )
+                            data=GrammarDict(**grammar_data),
+                            session=session
                         )
                     
                     success_count += 1
@@ -167,3 +193,5 @@ def generate_missing_texts(app: Flask):
             logger.info(f"✅ Text Generation task completed: {success_count} texts generated, {error_count} errors")
         except Exception as e:
             logger.error(f"❌ Text Generation task failed: {e}", exc_info=True)
+        finally:
+            session.close()

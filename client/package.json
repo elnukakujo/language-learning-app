@@ -17,6 +17,7 @@
     "lodash": "^4.17.21",
     "next": "15.3.5",
     "react": "^19.0.0",
+    "react-colorful": "^5.7.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "react-media-recorder": "^1.7.2",
