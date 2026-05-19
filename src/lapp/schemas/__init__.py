@@ -2,6 +2,7 @@ from .containers import *
 from .components import *
 from .features import *
 from .system_data import *
+from .data_collection import *
 
 __all__ = [
     "LanguageDict",
@@ -12,14 +13,14 @@ __all__ = [
     "ExerciseDict",
     "CharacterDict",
     "WordDict",
-    "PassageDict"
-]
-
-__all__ += [
+    "PassageDict",
     "UserDict",
     "UserPreferencesDict",
     "SourceDict",
     "TagDict",
     "StrengthsAndWeaknessesDict",
     "ProgressTrackingDict",
+    "ScoreHistoryDict",
+    "DailyStatsDict",
+    "CommitmentLogDict",
 ]

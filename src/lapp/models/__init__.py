@@ -3,10 +3,10 @@ from .containers import *
 from .components import *
 from .features import *
 from .system_data import *
+from .data_collection import *
 
 __all__ = [
     "Language",
-    "Lesson",
     "Lesson",
     "Vocabulary",
     "Grammar",
@@ -14,14 +14,14 @@ __all__ = [
     "Exercise",
     "Character",
     "Word",
-    "Passage"
-]
-
-__all__ += [
+    "Passage",
     "User",
     "UserPreferences",
     "Source",
     "Tag",
     "StrengthsAndWeaknesses",
     "ProgressTracking",
+    "ScoreHistory",
+    "DailyStats",
+    "CommitmentLog",
 ]

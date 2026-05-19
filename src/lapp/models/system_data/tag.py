@@ -14,6 +14,8 @@ class Tag(Base):
     name = Column(String, nullable=False)
     color = Column(String)
     description = Column(String)
+    created_at = Column(String)
+    updated_at = Column(String, nullable=True)
 
     def get_elements(self) -> dict:
         session = db_manager.get_session() 
@@ -42,6 +44,8 @@ class Tag(Base):
             "name": self.name,
             "color": self.color,
             "description": self.description,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
         }
         if include_relations:
             base["elements"] = self.get_elements()

@@ -3,7 +3,6 @@ from .user_preferences import UserPreferences
 from .source import Source
 from .tag import Tag
 from .strengths_and_weaknesses import StrengthsAndWeaknesses
-from .progress_tracking import ProgressTracking
 
 __all__ = [
     "User",
@@ -11,5 +10,4 @@ __all__ = [
     "Source",
     "Tag",
     "StrengthsAndWeaknesses",
-    "ProgressTracking",
 ]

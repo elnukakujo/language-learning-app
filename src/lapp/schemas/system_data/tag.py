@@ -9,3 +9,5 @@ class TagDict(BaseModel):
     color: Optional[str] = None
     description: Optional[str] = None
     elements: Optional[dict] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None

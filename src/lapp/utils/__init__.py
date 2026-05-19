@@ -20,6 +20,7 @@ from .phonetics import get_phonetic
 from .strokes import get_cjk_character_info
 from .enrich_components import enrich_character, enrich_word, enrich_passage
 from .tokenize import tokenize, get_content_words, get_characters
+from .resolve_orm_table import resolve_element_model
 
 __all__ = [
     MediaFileHandler,
@@ -49,4 +50,5 @@ __all__ = [
     tokenize,
     get_content_words,
     get_characters,
+    resolve_element_model,
 ]

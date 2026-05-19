@@ -31,3 +31,11 @@ export interface BaseComponent extends BaseElement, BaseMediaFiles {
     language_id: string;
     difficulty: number; // 0-1 scale, higher the harder
 }
+
+export interface BaseDataCollection {
+    id: string;
+    user_id: string;
+    language_id: string;
+    created_at: string;
+    updated_at?: string;
+}

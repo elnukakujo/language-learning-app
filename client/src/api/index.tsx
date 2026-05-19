@@ -6,6 +6,7 @@ import type Grammar from "@/interface/features/Grammar";
 import type Vocabulary from "@/interface/features/Vocabulary";
 import Source from "@/interface/systemData/Source";
 import Tag from "@/interface/systemData/Tag";
+import User from "@/interface/systemData/User";
 
 export const BASE_URL = process.env.LAPP_URL || "http://127.0.0.1:5000";
 
@@ -544,6 +545,53 @@ export async function removeSourceFromElement(sourceId: string, elementId: strin
   });
   if (!res.ok) throw new Error(`Failed to remove source ${sourceId} from element ${elementId}`);
   return res.json();
+}
+
+// ============= User API =============
+
+export async function getAllUsers() {
+  const res = await fetch(`${BASE_URL}/api/user`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
+export async function getUserById(userId: string) {
+  const res = await fetch(`${BASE_URL}/api/user/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch user ${userId}`);
+  return res.json();
+}
+
+export async function createUser(data: Partial<User>) {
+  const res = await fetch(`${BASE_URL}/api/user/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create user");
+  return res.json();
+}
+
+export async function updateUser(userId: string, data: Partial<User>) {
+  const res = await fetch(`${BASE_URL}/api/user/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update user");
+  return res.json();
+}
+
+export async function deleteUser(userId: string) {
+  const res = await fetch(`${BASE_URL}/api/user/${userId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete user");
 }
 
 // ============= Legacy/Compatibility Functions =============

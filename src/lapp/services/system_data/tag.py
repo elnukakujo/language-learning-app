@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import Optional
 from sqlalchemy.orm import Session
 
 import logging
@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.system_data import TagDict
 from ...models.system_data import Tag
 from ...core.database import db_manager
+from ...utils import resolve_element_model
 
 class TagService:
     """Service layer for tag CRUD operations.
@@ -20,36 +21,6 @@ class TagService:
         if not as_dict or tag_obj is None:
             return tag_obj
         return tag_obj.to_dict(include_relations=include_relations)
-
-    def _resolve_element_model(self, element_id: str) -> Optional[Type]:
-        """Map an element id string to the corresponding ORM model.
-        
-        ID Format:
-        - Language: "lang_L{n}"
-        - Lesson: "lesson_L{n}"
-        - Vocabulary: "voc_V{n}"
-        - Grammar: "gram_G{n}"
-        - Calligraphy: "call_C{n}"
-        - Exercise: "ex_E{n}"
-        - Character: "char_C{n}"
-        - Word: "word_W{n}"
-        - Passage: "pass_P{n}"
-        """
-        from ...models.features import Vocabulary, Grammar, Calligraphy, Exercise
-        from ...models.components import Word, Passage, Character
-        from ...models.containers import Language, Lesson
-        model_map = {
-            "lang": Language,
-            "lesson": Lesson,
-            "voc": Vocabulary,
-            "gram": Grammar,
-            "call": Calligraphy,
-            "ex": Exercise,
-            "char": Character,
-            "word": Word,
-            "pass": Passage,
-        }
-        return model_map.get(element_id.split("_")[0])
 
     def get_by_id(
             self, 
@@ -239,7 +210,7 @@ class TagService:
             if not tag_obj:
                 return False
 
-            element_model = self._resolve_element_model(element_id)
+            element_model = resolve_element_model(element_id)
             if not element_model:
                 return False
 
@@ -277,7 +248,7 @@ class TagService:
             if not tag_obj:
                 return False
 
-            element_model = self._resolve_element_model(element_id)
+            element_model = resolve_element_model(element_id)
             if not element_model:
                 return False
 

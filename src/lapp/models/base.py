@@ -123,6 +123,20 @@ class BaseElementModel(Base):
             viewonly=False,
             overlaps="sources",
         )
+    
+    def get_progress_tracking(self):
+        """Retrieve all ProgressTracking entries linked to this element."""
+        from ..models.data_collection import ProgressTracking
+        from ..core.database import db_manager
+        
+        return db_manager.find_by_attr(ProgressTracking, {"element_id": self.id})
+    
+    def get_score_history(self):
+        """Retrieve all ProgressTracking entries linked to this element."""
+        from ..models.data_collection import ScoreHistory
+        from ..core.database import db_manager
+        
+        return db_manager.find_by_attr(ScoreHistory, {"element_id": self.id})
 
     def to_dict(self, include_relations: bool = True) -> dict:
         # Allow cooperative multiple-inheritance: call next to_dict in MRO
@@ -140,7 +154,9 @@ class BaseElementModel(Base):
         if include_relations:
             base.update({
                 "tags": [tag.to_dict(include_relations=False) for tag in self.tags],
-                "sources": [source.to_dict(include_relations=False) for source in self.sources]
+                "sources": [source.to_dict(include_relations=False) for source in self.sources],
+                "progress_tracking": [pt.to_dict(include_relations=False) for pt in self.get_progress_tracking()],
+                "score_history": [sh.to_dict(include_relations=False) for sh in self.get_score_history()]
             })
 
         return base
@@ -292,4 +308,29 @@ class BaseComponentModel(BaseElementModel, BaseModelWithMediaFiles):
                 "language_id": self.language_id,
             })
         
+        return base_dict
+    
+class BaseDataCollectionModel(Base):
+    """
+    Base class for models that are used for data collection and user-specific data.
+    This includes: User, UserPreferences, Source, Tag, StrengthsAndWeaknesses, ProgressTracking
+    """
+    __abstract__ = True
+
+    id = Column(String, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now, nullable=True)
+
+    # Foreign keys - commonly used in data collection models
+    user_id = Column(String, ForeignKey('user.id'), nullable=False)
+    language_id = Column(String, ForeignKey('language.id'), nullable=False)
+
+    def to_dict(self, include_relations: bool = True) -> dict:
+        base_dict = {
+            "id": self.id,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "user_id": self.user_id,
+            "language_id": self.language_id
+        }
         return base_dict

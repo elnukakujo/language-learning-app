@@ -31,3 +31,10 @@ class BaseFeatureDict(BaseElementDict, BaseModelWithMediaFiles):
 class BaseComponentDict(BaseElementDict, BaseModelWithMediaFiles):
     language_id: Optional[str] = None
     difficulty: Optional[float] = 0.5
+
+class BaseDataCollectionDict(BaseModel):
+    id: Optional[str] = None
+    user_id: Optional[str] = None
+    language_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

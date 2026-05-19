@@ -105,36 +105,6 @@ CREATE TABLE language (
     UNIQUE (user_id, name)
 );
 
--- FIX: moved after language so FK to language(id) resolves
-CREATE TABLE strengths_and_weaknesses (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    language_id TEXT NOT NULL,
-    language_name TEXT NOT NULL,
-    element_type TEXT NOT NULL,
-    strengths TEXT DEFAULT '',
-    weaknesses TEXT DEFAULT '',
-    last_updated DATE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES user(id),
-    FOREIGN KEY (language_id) REFERENCES language(id),
-    UNIQUE (user_id, language_id, element_type)
-);
-
--- FIX: moved after language so FK to language(id) resolves
-CREATE TABLE progress_tracking (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    language_id TEXT NOT NULL,
-    language_name TEXT NOT NULL,
-    element_type TEXT NOT NULL,
-    element_status TEXT NOT NULL,
-    new_score_difference INTEGER NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    n_reviewed INTEGER NOT NULL DEFAULT 1,
-    FOREIGN KEY (user_id) REFERENCES user(id),
-    FOREIGN KEY (language_id) REFERENCES language(id)
-);
-
 CREATE TABLE lesson (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -154,6 +124,19 @@ CREATE TABLE lesson (
     END) VIRTUAL,
     -- relations
     language_id TEXT NOT NULL,
+    FOREIGN KEY (language_id) REFERENCES language(id)
+);
+
+CREATE TABLE strengths_and_weaknesses (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    language_id TEXT NOT NULL,
+    element_type TEXT NOT NULL,
+    strengths JSON NOT NULL DEFAULT '{}',
+    weaknesses JSON NOT NULL DEFAULT '{}',
+    embeddings FLOAT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id),
     FOREIGN KEY (language_id) REFERENCES language(id)
 );
 
@@ -335,6 +318,81 @@ CREATE TABLE exercise (
     -- relations
     lesson_id TEXT NOT NULL,
     FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+);
+
+-- ---- Data Collection Tables ----
+
+CREATE TABLE progress_tracking (
+  id TEXT PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME,
+  user_id TEXT NOT NULL,
+  language_id TEXT NOT NULL,
+
+  element_id TEXT NOT NULL,
+  element_type TEXT NOT NULL,
+  element_status TEXT NOT NULL,
+  new_score_difference INTEGER NOT NULL,
+  result BOOLEAN NOT NULL,
+  duration_ms FLOAT NOT NULL,
+  hint_used BOOLEAN,
+  attempt_number INTEGER,
+  session_completed BOOLEAN,
+
+  FOREIGN KEY (user_id) REFERENCES user(id),
+  FOREIGN KEY (language_id) REFERENCES language(id)
+);
+
+CREATE TABLE score_history (
+  id TEXT PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME,
+  user_id TEXT NOT NULL,
+  language_id TEXT NOT NULL,
+
+  element_id TEXT NOT NULL,
+  element_type TEXT NOT NULL,
+  score_before INTEGER NOT NULL,
+  score_after INTEGER NOT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES user(id),
+  FOREIGN KEY (language_id) REFERENCES language(id)
+);
+
+CREATE TABLE daily_stats (
+    id TEXT PRIMARY KEY,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    user_id TEXT NOT NULL,
+    language_id TEXT NOT NULL,
+
+    items_reviewed INTEGER NOT NULL,
+    items_correct INTEGER NOT NULL,
+    time_studied_ms FLOAT NOT NULL,
+    streak_day BOOLEAN NOT NULL DEFAULT FALSE,
+    current_streak_length INTEGER NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (language_id) REFERENCES language(id)
+);
+
+CREATE TABLE commitment_log (
+    id TEXT PRIMARY KEY,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    user_id TEXT NOT NULL,
+    language_id TEXT NOT NULL,
+
+    week_start_date DATE NOT NULL,
+    days_active INTEGER NOT NULL,
+    total_items_reviewed INTEGER NOT NULL,
+    total_time_ms FLOAT NOT NULL,
+    weekly_goal_met BOOLEAN NOT NULL DEFAULT FALSE,
+    longest_streak_ever INTEGER NOT NULL,
+    streak_last_computed_at DATE NOT NULL,
+    
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (language_id) REFERENCES language(id)
 );
 
 -- ---- Component link tables ----

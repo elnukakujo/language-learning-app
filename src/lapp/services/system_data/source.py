@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.system_data import SourceDict
 from ...models.system_data import Source
 from ...core.database import db_manager
+from ...utils import resolve_element_model
 
 
 class SourceService:
@@ -27,35 +28,6 @@ class SourceService:
             return source_obj
         return source_obj.to_dict(include_relations=include_relations)
     
-    def _resolve_element_model(self, element_id: str) -> Optional[Type]:
-        """Map an element id string to the corresponding ORM model.
-        
-        ID Format:
-        - Language: "lang_L{n}"
-        - Lesson: "lesson_L{n}"
-        - Vocabulary: "voc_V{n}"
-        - Grammar: "gram_G{n}"
-        - Calligraphy: "call_C{n}"
-        - Exercise: "ex_E{n}"
-        - Character: "char_C{n}"
-        - Word: "word_W{n}"
-        - Passage: "pass_P{n}"
-        """
-        from ...models.features import Vocabulary, Grammar, Calligraphy, Exercise
-        from ...models.components import Word, Passage, Character
-        from ...models.containers import Language, Lesson
-        model_map = {
-            "voc": Vocabulary,
-            "gram": Grammar,
-            "call": Calligraphy,
-            "exer": Exercise,
-            "word": Word,
-            "pass": Passage,
-            "char": Character,
-            "lang": Language,
-            "lesson": Lesson
-        }
-        return model_map.get(element_id.split("_")[0])
 
     def get_by_id(
             self, 
@@ -246,7 +218,7 @@ class SourceService:
             if not source_obj:
                 return False
 
-            element_type = self._resolve_element_model(element_id)
+            element_type = resolve_element_model(element_id)
             if not element_type:
                 return False
 
@@ -290,7 +262,7 @@ class SourceService:
             if not source_obj:
                 return False
 
-            element_type = self._resolve_element_model(element_id)
+            element_type = resolve_element_model(element_id)
             if not element_type:
                 return False
 

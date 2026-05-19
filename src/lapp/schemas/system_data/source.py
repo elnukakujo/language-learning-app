@@ -10,6 +10,8 @@ class SourceDict(BaseModel):
     description: Optional[str] = None
     source_type: Optional[str] = None
     elements: Optional[dict] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     @model_validator(mode="before")
     def validate_source_type(cls, values):

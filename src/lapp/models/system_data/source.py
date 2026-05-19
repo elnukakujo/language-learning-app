@@ -13,6 +13,8 @@ class Source(Base):
     date = Column(Date)
     description = Column(String)
     source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai"), nullable=False)
+    created_at = Column(String)
+    updated_at = Column(String, nullable=True)
 
     def get_elements(self) -> dict:
         session = db_manager.get_session() 
@@ -41,7 +43,9 @@ class Source(Base):
             "title": self.title,
             "date": self.date.isoformat() if self.date else None,
             "description": self.description,
-            "source_type": self.source_type
+            "source_type": self.source_type,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
         }
         if include_relations:
             base["elements"] = self.get_elements()

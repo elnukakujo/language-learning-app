@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, String, ForeignKey, Date
+from sqlalchemy import JSON, Column, Float, String, ForeignKey, Date
 
 from ...core.database import Base
 
@@ -10,9 +10,20 @@ class StrengthsAndWeaknesses(Base):
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey('user.id'), nullable=False)
     language_id = Column(String, ForeignKey('language.id'), nullable=False)
-    language_name = Column(String, nullable=False)
     element_type = Column(String, nullable=False)
-    strengths = Column(String, default='')
-    weaknesses = Column(String, default='')
-    last_updated = Column(Date, default=datetime.now())
+    strengths = Column(JSON, default={})
+    weaknesses = Column(JSON, default={})
+    embeddings = Column(Float, nullable=False)
+    created_at = Column(Date, default=datetime.now())
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "language_id": self.language_id,
+            "element_type": self.element_type,
+            "strengths": self.strengths,
+            "weaknesses": self.weaknesses,
+            "embeddings": self.embeddings,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
