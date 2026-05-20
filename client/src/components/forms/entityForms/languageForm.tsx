@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import UpdateButton from "@/components/buttons/updateButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
-import { createLanguage, updateLanguage } from "@/api";
+import { createLanguage, updateLanguage } from "@/api/language";
 import type Language from "@/interface/containers/Language";
 import TagSelector from "@/components/selectMenu/tagSelector";
 import { LANGUAGE_to_ISO639_2T } from "@/utils/language_iso639";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 const LEVEL_OPTIONS: Array<Language["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -27,6 +28,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
     let languageData: Partial<Language>;
     if (!language) {
         languageData = {
+            user_id: "",
             name: "",
             alias: "",
             description: "",
@@ -39,6 +41,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
         languageData = language;
     }
 
+    const [userId, setUserId] = useState<string>("");
     const [name, setName] = useState<string>(languageData.name || "");
     const [alias, setAlias] = useState<string | undefined>(languageData.alias);
     const [description, setDescription] = useState<string | undefined>(languageData.description);
@@ -49,6 +52,14 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(languageData.tags ? languageData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(languageData.sources ? languageData.sources.map(source => source.id!) : []);
 
+    useEffect(() => {
+        const fetchUserId = async () => {
+            const userId: string | null = await getCurrentUserId();
+            setUserId(userId!);
+        }
+        fetchUserId();
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -58,6 +69,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
             description: description || undefined,
             level,
             flag: flag || undefined,
+            user_id: userId,
             target_iso639_2t: targetIso639_2t || undefined,
             source_iso639_2t: sourceIso639_2t || undefined,
             tags: selectedTagIds.map(id => ({ id })),

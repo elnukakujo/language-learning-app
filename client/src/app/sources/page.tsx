@@ -1,9 +1,11 @@
-import { getAllUserSources } from "@/api";
+import { getAllUserSources } from "@/api/source";
 import NavButton from "@/components/buttons/navButton";
 import Source from "@/interface/systemData/Source";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 export default async function SourcesPage() {
-    const sources: Source[] = await getAllUserSources("user_U0");
+    const userId: string | null = await getCurrentUserId();
+    const sources: Source[] = await getAllUserSources(userId!);
 
     return (
         <div className="p-6">

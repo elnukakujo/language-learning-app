@@ -3,11 +3,12 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HexColorPicker, HexColorInput } from "react-colorful";
 import Tag from '@/interface/systemData/Tag';
-import { createTag, updateTag } from "@/api";
+import { createTag, updateTag } from "@/api/tag";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import UpdateButton from "@/components/buttons/updateButton";
 import NewElementButton from "@/components/buttons/newElementButton";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 const PRESET_COLORS = [
   "#EF4444", "#F97316", "#EAB308", "#22C55E",
@@ -19,9 +20,10 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
   const router = useRouter();
 
   const tagData: Partial<Tag> = tag ?? {
-    id: "", user_id: "user_U0", name: "", color: "", description: ""
+    id: "", user_id: "", name: "", color: "", description: ""
   };
 
+  const [userId, setUserId] = useState<string>("");
   const [name, setName] = useState<string>(tagData.name || "");
   const [color, setColor] = useState<string>(tagData.color || "#3B82F6");
   const [description, setDescription] = useState<string>(tagData.description || "");
@@ -39,11 +41,19 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const currentUserId = await getCurrentUserId();
+      setUserId(currentUserId!);
+    };
+    fetchUserId();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const element: Partial<Tag> = {
       id: tagData.id,
-      user_id: tagData.user_id || "user_U0",
+      user_id: userId,
       name,
       color,
       description,

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MediaRecorder, register } from "extendable-media-recorder";
 import { connect } from "extendable-media-recorder-wav-encoder";
-import { uploadAudio } from "@/api";
+import { uploadAudio } from "@/api/process";
 
 // ── Register the WAV encoder once (no-op if already registered) ───────────────
 

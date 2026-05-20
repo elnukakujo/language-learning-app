@@ -2,11 +2,11 @@
 
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { BASE_URL, updateScoreById } from "@/api";
+import { updateScoreById } from "@/api/process";
 import shuffle from 'lodash/shuffle';
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 
 type Item = {
     value: string;
@@ -104,34 +104,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
-            {image_support && image_support.length > 0 && (
-                <section>
-                    <h3>Image Support: </h3>
-                    {image_support.map((imgSrc, index) => (
-                    <Image 
-                        key={index}
-                        src={`${BASE_URL}${imgSrc}`} 
-                        alt="Support" 
-                        className="mt-2" 
-                        width={300}
-                        height={300}
-                    />
-                    ))}
-                </section>
-            )}
-            {audio_support && audio_support.length > 0 && (
-                <section>
-                    <h3>Audio Support: </h3>
-                    {audio_support.map((audioSrc, index) => (
-                        <audio 
-                            key={index}
-                            src={`${BASE_URL}${audioSrc}`}
-                            controls
-                            className="mt-2"
-                        />
-                    ))}
-                </section>
-            )}
+            <ElementMediaCard element={exercise}/>
 
             {(!isSuccess && attempts > 0) && 
                 <section className="w-[32rem] mx-auto flex flex-row space-x-5">

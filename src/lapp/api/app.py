@@ -94,6 +94,7 @@ def register_blueprints(app: Flask) -> None:
         evaluate_bp,
         tag_bp,
         source_bp,
+        user_bp,
     )
     
     # Register blueprints
@@ -108,7 +109,8 @@ def register_blueprints(app: Flask) -> None:
         backup_bp,
         evaluate_bp,
         tag_bp,
-        source_bp
+        source_bp,
+        user_bp,
     ]
     
     for blueprint in blueprints:

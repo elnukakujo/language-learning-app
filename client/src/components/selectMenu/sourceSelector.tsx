@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAllUserSources, addSourceToElement, removeSourceFromElement } from "@/api";
+import { getAllUserSources, addSourceToElement, removeSourceFromElement } from "@/api/source";
 import SourceForm from "@/components/forms/entityForms/sourceForm";
 import { createPortal } from "react-dom";
 import type Source from "@/interface/systemData/Source";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 interface SourceSelectorProps {
   selectedSourceIds: string[];
   onSourcesChange: (sourceIds: string[]) => void;
   elementId: string;
   disabled?: boolean;
-  userId?: string;
 }
 
 function normalizeSources(payload: unknown): Source[] {
@@ -29,8 +29,7 @@ export default function SourceSelector({
   selectedSourceIds,
   onSourcesChange,
   elementId,
-  disabled = false,
-  userId = "user_U0",
+  disabled = false
 }: SourceSelectorProps) {
   const [allSources, setAllSources] = useState<Source[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -46,7 +45,8 @@ export default function SourceSelector({
   const fetchSources = async () => {
     setIsLoading(true);
     try {
-      const response = await getAllUserSources(userId);
+      const currentUserId: string | null = await getCurrentUserId();
+      const response = await getAllUserSources(currentUserId!);
       setAllSources(normalizeSources(response));
     } catch (err) {
       console.error("Failed to fetch sources:", err);
@@ -58,12 +58,9 @@ export default function SourceSelector({
 
   useEffect(() => {
     let active = true;
-    getAllUserSources(userId)
-      .then((response) => { if (active) setAllSources(normalizeSources(response)); })
-      .catch(() => { if (active) setError("Failed to load sources"); })
-      .finally(() => { if (active) setIsLoading(false); });
+    fetchSources();
     return () => { active = false; };
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

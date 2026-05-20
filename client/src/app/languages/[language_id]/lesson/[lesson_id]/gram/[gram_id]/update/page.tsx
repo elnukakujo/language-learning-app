@@ -1,6 +1,6 @@
-import { getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
 import GrammarForm from "@/components/forms/entityForms/grammarForm";
+import { getGrammarById } from "@/api/grammar";
 
 type paramsType = {
     language_id: string;
@@ -10,7 +10,7 @@ type paramsType = {
 
 export default async function UpdateGrammarPage({ params }: { params: paramsType }) {
     const { gram_id } = await params;
-    const grammar: Grammar = await getElementbyId(gram_id);
+    const grammar: Grammar = await getGrammarById(gram_id);
 
     return (
         <main className="flex flex-col items-center">

@@ -1,5 +1,7 @@
+import { getCalligraphyByLesson } from "@/api/calligraphy";
+import { getGrammarByLesson } from "@/api/grammar";
+import { getVocabularyByLesson } from "@/api/vocabulary";
 import ExerciseForm from "@/components/forms/entityForms/exerciseForm";
-import { getCalligraphyByLesson, getGrammarByLesson, getVocabularyByLesson } from "@/api";
 import Calligraphy from "@/interface/features/Calligraphy";
 import Grammar from "@/interface/features/Grammar";
 import Vocabulary from "@/interface/features/Vocabulary";

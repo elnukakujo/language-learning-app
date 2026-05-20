@@ -1,9 +1,12 @@
-import { getCalligraphyByLesson, getElementbyId, getGrammarByLesson, getVocabularyByLesson } from "@/api";
 import type Exercise from "@/interface/features/Exercise";
 import ExerciseForm from "@/components/forms/entityForms/exerciseForm";
 import Calligraphy from "@/interface/features/Calligraphy";
 import Grammar from "@/interface/features/Grammar";
 import Vocabulary from "@/interface/features/Vocabulary";
+import { getExerciseById } from "@/api/exercise";
+import { getCalligraphyByLesson } from "@/api/calligraphy";
+import { getGrammarByLesson } from "@/api/grammar";
+import { getVocabularyByLesson } from "@/api/vocabulary";
 
 type paramsType = {
     language_id: string;
@@ -19,7 +22,7 @@ interface LessonElements {
 
 export default async function UpdateExercisePage({ params }: { params: paramsType }) {
     const { lesson_id, ex_id } = await params;
-    const exercise: Exercise = await getElementbyId(ex_id);
+    const exercise: Exercise = await getExerciseById(ex_id);
 
     const calligraphies: Calligraphy[] = await getCalligraphyByLesson(lesson_id);
     const grammars: Grammar[] = await getGrammarByLesson(lesson_id);

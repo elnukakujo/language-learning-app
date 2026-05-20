@@ -154,10 +154,12 @@ class BaseElementModel(Base):
         if include_relations:
             base.update({
                 "tags": [tag.to_dict(include_relations=False) for tag in self.tags],
-                "sources": [source.to_dict(include_relations=False) for source in self.sources],
-                "progress_tracking": [pt.to_dict(include_relations=False) for pt in self.get_progress_tracking()],
-                "score_history": [sh.to_dict(include_relations=False) for sh in self.get_score_history()]
+                "sources": [source.to_dict(include_relations=False) for source in self.sources]
             })
+            if (pts := self.get_progress_tracking()) is not None:
+                base["progress_tracking"] = [pt.to_dict(include_relations=False) for pt in pts]
+            if (shs := self.get_score_history()) is not None:
+                base["score_history"] = [sh.to_dict(include_relations=False) for sh in shs]
 
         return base
     

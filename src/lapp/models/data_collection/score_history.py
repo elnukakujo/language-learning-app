@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, String, Integer
+from sqlalchemy import Column, Float, String
 
 from ...core. database import db_manager
 from ..base import BaseDataCollectionModel

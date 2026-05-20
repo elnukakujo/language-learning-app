@@ -1,4 +1,4 @@
-import { getExercisesByLesson } from "@/api";
+import { getExercisesByLesson } from "@/api/exercise";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";

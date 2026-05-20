@@ -1,4 +1,3 @@
-import { getElementbyId } from "@/api";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
@@ -17,11 +16,12 @@ import ConversationExercise from "@/components/forms/exerciseForms/conversationE
 import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
 import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import { getExerciseById } from "@/api/exercise";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; lesson_id: string; ex_id: string }}) {
     const { language_id, lesson_id, ex_id } = await params;
 
-    const exercise: Exercise = await getElementbyId(ex_id);
+    const exercise: Exercise = await getExerciseById(ex_id);
 
     return(
         <main className="flex flex-col space-y-4">

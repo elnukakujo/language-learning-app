@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Ring } from "ldrs/react";
@@ -9,7 +8,8 @@ import { Ring } from "ldrs/react";
 import 'ldrs/react/Ring.css';
 
 import type Exercise from "@/interface/features/Exercise";
-import { BASE_URL, updateScoreById, evaluateText } from "@/api";
+import { updateScoreById, evaluateText } from "@/api/process";
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 import { getLevelForScore } from "@/utils/speech_levels";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 
@@ -17,8 +17,6 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
     const question = exercise.question || "";
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
     
     const [userAnswer, setUserAnswer] = useState<string>('');
 
@@ -76,34 +74,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
-            {image_support && image_support.length > 0 && (
-                <section>
-                    <h3>Image Support: </h3>
-                    {image_support.map((imgSrc, index) => (
-                    <Image 
-                        key={index}
-                        src={`${BASE_URL}${imgSrc}`} 
-                        alt="Support" 
-                        className="mt-2" 
-                        width={300}
-                        height={300}
-                    />
-                    ))}
-                </section>
-            )}
-            {audio_support && audio_support.length > 0 && (
-                <section>
-                    <h3>Audio Support: </h3>
-                    {audio_support.map((audioSrc, index) => (
-                        <audio 
-                            key={index}
-                            src={`${BASE_URL}${audioSrc}`}
-                            controls
-                            className="mt-2"
-                        />
-                    ))}
-                </section>
-            )}
+            <ElementMediaCard element={exercise}/>
             <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}

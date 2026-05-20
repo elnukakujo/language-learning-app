@@ -1,5 +1,5 @@
 import Lesson from "@/interface/containers/Lesson";
-import { getLessonById } from "@/api";
+import { getLessonById } from "@/api/lesson";
 import LessonForm from "@/components/forms/entityForms/lessonForm";
 
 export default async function UpdateLessonPage({ params }: { params: { language_id: string, lesson_id: string } }) {

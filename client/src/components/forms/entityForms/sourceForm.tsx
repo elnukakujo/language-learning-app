@@ -2,30 +2,40 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Source from '@/interface/systemData/Source';
-import { createSource, updateSource } from "@/api";
+import { createSource, updateSource } from "@/api/source";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import UpdateButton from "@/components/buttons/updateButton";
 import NewElementButton from "@/components/buttons/newElementButton";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 export default function SourceForm({ source, navDisabled = false, onSuccess }: { source?: Source | Partial<Source>, navDisabled?: boolean, onSuccess?: () => void }) {
     const isUpdate = Boolean(source?.id);
     const router = useRouter();
 
     const sourceData: Partial<Source> = source ?? {
-        id: "", user_id: "user_U0", title: "", date: "", description: "", source_type: ""
+        id: "", user_id: "", title: "", date: "", description: "", source_type: ""
     };
 
+    const [userId, setUserId] = useState<string>("");
     const [title, setTitle] = useState<string>(sourceData.title || "");
     const [description, setDescription] = useState<string>(sourceData.description || "");
     const [sourceType, setSourceType] = useState<string>(sourceData.source_type || "original");
+
+    useEffect(() => {
+        const fetchUserId = async () => {
+            const currentUserId = await getCurrentUserId();
+            setUserId(currentUserId!);
+        };
+        fetchUserId();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const element: Partial<Source> = {
             id: sourceData.id,
-            user_id: sourceData.user_id || "user_U0",
+            user_id: userId,
             title,
             source_type: sourceType,
             description,

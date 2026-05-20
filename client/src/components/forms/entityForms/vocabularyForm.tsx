@@ -5,7 +5,7 @@ import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import TagSelector from "@/components/selectMenu/tagSelector";
-import { createVocabulary, updateVocabulary } from "@/api";
+import { createVocabulary, updateVocabulary } from "@/api/vocabulary";
 import MediaLoader from "@/components/mediaLoader";
 import Vocabulary from "@/interface/features/Vocabulary";
 import Passage from "@/interface/components/Passage";

@@ -1,4 +1,4 @@
-import { getSourceById } from "@/api";
+import { getSourceById } from "@/api/source";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import SourceCard from "@/components/cards/sourceCard";

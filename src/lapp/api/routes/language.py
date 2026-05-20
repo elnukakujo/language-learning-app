@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
+import logging
+logger = logging.getLogger(__name__)
 
 from ...services import LanguageService
 from ...schemas.containers import LanguageDict
@@ -7,10 +9,10 @@ from ...schemas.containers import LanguageDict
 bp = Blueprint('language', __name__, url_prefix='/api/languages')
 language_service = LanguageService()
 
-@bp.route('/', methods=['GET'])
-def get_all_languages():
+@bp.route('/all/<user_id>', methods=['GET'])
+def get_all_user_languages(user_id: str):
     """
-    Get all languages
+    Get all languages for the current user
     ---
     tags:
       - Languages
@@ -22,7 +24,9 @@ def get_all_languages():
           items:
             type: object
     """
-    languages = language_service.get_all(as_dict=True)
+    languages = language_service.get_by_user_id(user_id=user_id, as_dict=True)
+    if languages is None or len(languages) == 0:
+        return jsonify([]), 200
     return jsonify(languages)
 
 
@@ -48,6 +52,7 @@ def get_language(language_id: str):
         description: Language not found
     """
     language = language_service.get_by_id(language_id, as_dict=True)
+    logger.debug(f"Retrieved language for ID {language_id}: {language}")
     
     if not language:
         return jsonify({'error': 'Language not found'}), 404
@@ -86,6 +91,18 @@ def create_language():
                     type: string
                     example: "🇫🇷"
                     required: false
+                user_id:
+                    type: string
+                    example: "user_U0"
+                    required: true
+                target_iso639_2t:
+                    type: string
+                    example: "fra"
+                    required: false
+                source_iso639_2t:
+                    type: string
+                    example: "eng"
+                    required: false
     responses:
       201:
         description: Language created successfully
@@ -97,6 +114,7 @@ def create_language():
     try:
         # Validate request data
         data = LanguageDict(**request.json)
+        logger.debug(f"Validated language data: {data}")
         
         # Create language
         language = language_service.create(data, as_dict=True)

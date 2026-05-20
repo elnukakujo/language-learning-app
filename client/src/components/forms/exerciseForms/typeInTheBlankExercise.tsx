@@ -1,6 +1,6 @@
 "use client";
 
-import { BASE_URL, evaluateText, updateScoreById } from "@/api";
+import { evaluateText, updateScoreById } from "@/api/process";
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
 import Image from 'next/image';
@@ -11,13 +11,12 @@ import { getLevelForScore } from "@/utils/speech_levels";
 import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 
 export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercise }) {
     const question = exercise.question || "";
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
 
     const lines = question.split('\n').filter(line => line.trim());
     const totalBlanks = (question.match(/__/g) || []).length;
@@ -125,22 +124,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
-            {image_support && image_support.length > 0 && (
-                <section>
-                    <h3>Image Support:</h3>
-                    {image_support.map((imgSrc, index) => (
-                        <Image key={index} src={`${BASE_URL}${imgSrc}`} alt="Support" className="mt-2" width={300} height={300} />
-                    ))}
-                </section>
-            )}
-            {audio_support && audio_support.length > 0 && (
-                <section>
-                    <h3>Audio Support:</h3>
-                    {audio_support.map((audioSrc, index) => (
-                        <audio key={index} src={`${BASE_URL}${audioSrc}`} controls className="mt-2" />
-                    ))}
-                </section>
-            )}
+            <ElementMediaCard element={exercise}/>
 
             <div className="flex flex-col space-y-2">
                 {lines.map((line, lineIdx) => (

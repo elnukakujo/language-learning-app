@@ -1,7 +1,6 @@
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { getLessonById, getVocabularyByLesson, getGrammarByLesson, getCalligraphyByLesson, getExercisesByLesson } from "@/api";
 import VocabularyList from "@/components/lists/vocabularyList";
 import GrammarList from "@/components/lists/grammarList";
 import CalligraphyList from "@/components/lists/characterList";
@@ -18,6 +17,11 @@ import DeleteButton from "@/components/buttons/deleteButton";
 import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import { getLessonById } from "@/api/lesson";
+import { getVocabularyByLesson } from "@/api/vocabulary";
+import { getGrammarByLesson } from "@/api/grammar";
+import { getCalligraphyByLesson } from "@/api/calligraphy";
+import { getExercisesByLesson } from "@/api/exercise";
 
 
 export default async function Lesson({ params }: { params: { language_id: string, lesson_id: string } }) {

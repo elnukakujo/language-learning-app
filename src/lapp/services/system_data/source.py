@@ -118,7 +118,7 @@ class SourceService:
             if result:
                 logger.info(f"Created new Source item with ID: {result.id}")
             else:
-                logger.error(f"Failed to create new Source item: {result.title}")
+                logger.error(f"Failed to create new Source item: {source_obj.title}")
 
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

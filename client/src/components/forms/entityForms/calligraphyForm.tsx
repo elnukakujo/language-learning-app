@@ -5,7 +5,7 @@ import NewElementButton from "@/components/buttons/newElementButton";
 import AutoWidthInput from "@/components/input/autoWidthInput";
 import TagSelector from "@/components/selectMenu/tagSelector";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
-import { createCalligraphy, updateCalligraphy } from "@/api";
+import { createCalligraphy, updateCalligraphy } from "@/api/calligraphy";
 import MediaLoader from "@/components/mediaLoader";
 import Calligraphy from "@/interface/features/Calligraphy";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";

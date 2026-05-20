@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
+import logging
+logger = logging.getLogger(__name__)
 
 from ...services import TagService
 from ...schemas.system_data import TagDict
@@ -30,7 +32,9 @@ def get_by_user(user_id: str):
                     description: Tag object
     """
     tags = tag_service.get_by_user_id(user_id=user_id, as_dict=True)
-    return jsonify(tags)
+    if tags is None or len(tags) == 0:
+        return jsonify([]), 200
+    return jsonify(tags), 200
 
 @bp.route('/<tag_id>', methods=['GET'])
 def get_by_id(tag_id: str):
@@ -57,7 +61,7 @@ def get_by_id(tag_id: str):
     if not tag:
         return jsonify({'error': 'Tag not found'}), 404
     
-    return jsonify(tag)
+    return jsonify(tag), 200
 
 
 @bp.route('/', methods=['POST'])

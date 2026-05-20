@@ -8,8 +8,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Image from 'next/image';
 import Exercise from "@/interface/features/Exercise";
-import { BASE_URL, updateScoreById, evaluateSpeech } from "@/api";
-
+import { updateScoreById, evaluateSpeech } from "@/api/process";
+import { BASE_URL } from "@/api";
 import { getLevelForScore } from "@/utils/speech_levels";
 
 import dynamic from 'next/dynamic';

@@ -9,6 +9,7 @@ from .backup import bp as backup_bp
 from .evaluate import bp as evaluate_bp
 from .tag import bp as tag_bp
 from .source import bp as source_bp
+from .user import bp as user_bp
 __all__ = [
     language_bp,
     lesson_bp,
@@ -20,5 +21,6 @@ __all__ = [
     backup_bp,
     evaluate_bp,
     tag_bp,
-    source_bp
+    source_bp,
+    user_bp,
 ]

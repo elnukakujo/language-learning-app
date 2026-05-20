@@ -93,17 +93,21 @@ class LanguageService:
             if owns_session:
                 session.close()
         
-    def get_all(
+    def get_by_user_id(
         self,
+        user_id: str,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Language] | list[dict]:
         """
-        Get all languages.
+        Get all languages for a specific user.
 
         Args:
-            None
+            user_id: The ID of the user.
+            session: Optional SQLAlchemy session.
+            as_dict: Whether to return dictionaries instead of objects.
+            include_relations: Whether to include related objects.
 
         Returns:
             List of Language objects
@@ -115,6 +119,7 @@ class LanguageService:
         try:
             languages = db_manager.find_all(
                 model_class=Language,
+                filters={'user_id': user_id},
                 session=session
             )
             for language in languages:
@@ -160,6 +165,7 @@ class LanguageService:
                 attr_values={'id': language_id},
                 session=session
             )
+            logger.info(f"Retrieved language by ID {language_id}: {language.to_dict() if language else 'Not found'}")
             if language:
                 language.current_lesson_id = self._check_current_lesson(
                     language=language,
@@ -242,9 +248,12 @@ class LanguageService:
         try:
             language = Language(
                 id = db_manager.generate_new_id(model_class=Language, session=session),
+                user_id = data.user_id,
                 name = data.name,
                 alias = data.alias,
-                flag = data.get('flag'),
+                flag = data.flag,
+                level = data.level,
+                description = data.description,
                 source_iso639_2t = data.source_iso639_2t,
                 target_iso639_2t = data.target_iso639_2t,
                 tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],

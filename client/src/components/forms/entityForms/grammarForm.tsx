@@ -7,7 +7,7 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import TagSelector from "@/components/selectMenu/tagSelector";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
-import { createGrammar, updateGrammar } from "@/api";
+import { createGrammar, updateGrammar } from "@/api/grammar";
 import MediaLoader from "@/components/mediaLoader";
 import Grammar from "@/interface/features/Grammar";
 import Passage from "@/interface/components/Passage";

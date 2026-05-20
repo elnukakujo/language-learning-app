@@ -1,4 +1,3 @@
-import { getElementbyId } from "@/api";
 import type Grammar from "@/interface/features/Grammar";
 
 import NavButton from "@/components/buttons/navButton";
@@ -8,6 +7,7 @@ import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCa
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import SentenceCard from "@/components/cards/componentCards/sentenceCard";
 import GrammarCard from "@/components/cards/grammarCard";
+import { getGrammarById } from "@/api/grammar";
 
 type paramsType = {
     language_id: string;
@@ -17,7 +17,7 @@ type paramsType = {
 
 export default async function GrammarPage({ params }: { params: paramsType }) {
     const { gram_id, language_id, lesson_id } = await params;
-    const grammar: Grammar = await getElementbyId(gram_id);
+    const grammar: Grammar = await getGrammarById(gram_id);
 
     return (
         <main>

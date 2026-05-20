@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getElementbyId } from '@/api';
 import Calligraphy from '@/interface/features/Calligraphy';
 import Exercise from '@/interface/features/Exercise';
 import Grammar from '@/interface/features/Grammar';
@@ -9,6 +8,12 @@ import Vocabulary from '@/interface/features/Vocabulary';
 import Source from '@/interface/systemData/Source';
 import Lesson from '@/interface/containers/Lesson';
 import Language from '@/interface/containers/Language';
+import { getVocabularyById } from '@/api/vocabulary';
+import { getCalligraphyById } from '@/api/calligraphy';
+import { getGrammarById } from '@/api/grammar';
+import { getExerciseById } from '@/api/exercise';
+import { getLessonById } from '@/api/lesson';
+import { getLanguageById } from '@/api/language';
 
 interface RelatedElementsProps {
     voc?: Vocabulary[];
@@ -36,12 +41,12 @@ export default function SourceCard({source}: { source: Source }) {
             const elements = source.elements as Record<string, string[] | undefined>;
 
             const [voc, call, gram, ex, lesson, lang] = await Promise.all([
-                elements["voc"] ? Promise.all(elements["voc"].map((id: string) => getElementbyId(id))) : [],
-                elements["call"] ? Promise.all(elements["call"].map((id: string) => getElementbyId(id))) : [],
-                elements["gram"] ? Promise.all(elements["gram"].map((id: string) => getElementbyId(id))) : [],
-                elements["ex"] ? Promise.all(elements["ex"].map((id: string) => getElementbyId(id))) : [],
-                elements["lesson"] ? Promise.all(elements["lesson"].map((id: string) => getElementbyId(id))) : [],
-                elements["lang"] ? Promise.all(elements["lang"].map((id: string) => getElementbyId(id))) : []
+                elements["voc"] ? Promise.all(elements["voc"].map((id: string) => getVocabularyById(id))) : [],
+                elements["call"] ? Promise.all(elements["call"].map((id: string) => getCalligraphyById(id))) : [],
+                elements["gram"] ? Promise.all(elements["gram"].map((id: string) => getGrammarById(id))) : [],
+                elements["ex"] ? Promise.all(elements["ex"].map((id: string) => getExerciseById(id))) : [],
+                elements["lesson"] ? Promise.all(elements["lesson"].map((id: string) => getLessonById(id))) : [],
+                elements["lang"] ? Promise.all(elements["lang"].map((id: string) => getLanguageById(id))) : []
             ]);
 
             if (isMounted) {

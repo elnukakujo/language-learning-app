@@ -1,4 +1,4 @@
-import { getSourceById } from "@/api";
+import { getSourceById } from "@/api/source";
 import SourceForm from "@/components/forms/entityForms/sourceForm";
 
 export default async function UpdateSourcePage({ params }: { params: { source_id: string } }) {

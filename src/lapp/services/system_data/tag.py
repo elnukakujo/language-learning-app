@@ -112,7 +112,7 @@ class TagService:
             if result:
                 logger.info(f"Created new Tag item with ID: {result.id}")
             else:
-                logger.error(f"Failed to create new Tag item: {result.name}")
+                logger.error(f"Failed to create new Tag item: {tag_obj.name}")
 
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:

@@ -1,5 +1,3 @@
-import { getLanguageData } from "@/api";
-
 import LessonOverviewCard from "@/components/cards/lessonOverviewCard";
 import type Lesson from "@/interface/containers/Lesson";
 import NavButton from "@/components/buttons/navButton";
@@ -8,11 +6,13 @@ import ElementPerformanceCard from "@/components/cards/elementCards/elementPerfo
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
 import { ISO639_2T_to_LANGUAGE } from "@/utils/language_iso639";
+import { getLanguageData } from "@/api/language";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;
     const { language, lessons } = await getLanguageData(language_id);
     const hasLessons = lessons && lessons.length > 0;
+    console.log(language);
 
     return (
         <main className="flex flex-col space-y-4">

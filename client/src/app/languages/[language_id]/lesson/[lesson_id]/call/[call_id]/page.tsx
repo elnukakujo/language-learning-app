@@ -1,6 +1,3 @@
-import Image from "next/image";
-
-import { BASE_URL, getElementbyId } from "@/api";
 import type Character from "@/interface/features/Calligraphy";
 import NavButton from "@/components/buttons/navButton";
 import DeleteButton from "@/components/buttons/deleteButton";
@@ -10,6 +7,7 @@ import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCa
 import WordCard from "@/components/cards/componentCards/wordCard";
 import SentenceCard from "@/components/cards/componentCards/sentenceCard";
 import CharacterCard from "@/components/cards/componentCards/characterCard";
+import { getCalligraphyById } from "@/api/calligraphy";
 
 type paramsType = {
     language_id: string;
@@ -19,7 +17,7 @@ type paramsType = {
 
 export default async function CalligraphyPage({ params }: { params: paramsType }) {
     const { call_id, language_id, lesson_id } = await params;
-    const calligraphy: Character = await getElementbyId(call_id);
+    const calligraphy: Character = await getCalligraphyById(call_id);
 
     return (
         <main>

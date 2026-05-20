@@ -7,7 +7,8 @@ import remarkGfm from "remark-gfm";
 
 import Exercise from "@/interface/features/Exercise";
 import TrueFalseInput from "@/components/input/trueFalseInput";
-import { BASE_URL, updateScoreById } from "@/api";
+import { updateScoreById } from "@/api/process";
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 
 export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
     const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -15,8 +16,6 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
     const question = exercise.question || "";
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
     
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
         const [attempts, setAttempts] = useState<number>(0);
@@ -54,34 +53,7 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
-            {image_support && image_support.length > 0 && (
-                <section>
-                    <h3>Image Support: </h3>
-                    {image_support.map((imgSrc, index) => (
-                    <Image 
-                        key={index}
-                        src={`${BASE_URL}${imgSrc}`} 
-                        alt="Support" 
-                        className="mt-2" 
-                        width={300}
-                        height={300}
-                    />
-                    ))}
-                </section>
-            )}
-            {audio_support && audio_support.length > 0 && (
-                <section>
-                    <h3>Audio Support: </h3>
-                    {audio_support.map((audioSrc, index) => (
-                        <audio 
-                            key={index}
-                            src={`${BASE_URL}${audioSrc}`}
-                            controls
-                            className="mt-2"
-                        />
-                    ))}
-                </section>
-            )}
+            <ElementMediaCard element={exercise}/>
             {!hasFeedback && (
                 <>
                     <TrueFalseInput

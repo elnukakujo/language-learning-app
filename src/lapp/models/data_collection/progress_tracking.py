@@ -1,8 +1,7 @@
-from sqlalchemy import Column, String, Integer
-from sympy import Float
-from wrapt import Boolean
+from sqlalchemy import Column, String, Integer, Float, Boolean
 
-from ..base import BaseDataCollectionModel, db_manager
+from ..base import BaseDataCollectionModel
+from ...core.database import db_manager
 from ...utils import resolve_element_model
 
 class ProgressTracking(BaseDataCollectionModel):

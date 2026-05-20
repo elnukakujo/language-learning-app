@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-def resolve_element_model(self, element_id: str) -> Optional[Type]:
+def resolve_element_model(element_id: str) -> Optional[Type]:
         """Map an element id string to the corresponding ORM model.
         
         ID Format:

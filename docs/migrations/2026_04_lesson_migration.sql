@@ -39,7 +39,6 @@ ALTER TABLE exercise    RENAME TO old_exercise;
 CREATE TABLE user (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
-    day_streak INTEGER NOT NULL DEFAULT 0,
     last_review DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -61,6 +60,8 @@ CREATE TABLE source (
     date DATE,
     description TEXT,
     source_type TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
@@ -70,6 +71,8 @@ CREATE TABLE tag (
     name TEXT NOT NULL,
     color TEXT,
     description TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
     UNIQUE (user_id, name),
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
@@ -509,8 +512,8 @@ CREATE TABLE tag_element_link (
 -- 3) Seed system user, preferences, and sources
 -- ============================================================================
 
-INSERT INTO user (id, username, day_streak)
-VALUES ('user_U0', 'system', 0);
+INSERT INTO user (id, username)
+VALUES ('user_U0', 'system');
 
 INSERT INTO user_preferences (id, user_id, native_language_iso639_2, learning_goals, preferred_exercise_types)
 VALUES ('pref_P0', 'user_U0', '["eng","fra"]', '', '[]');

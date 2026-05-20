@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import shuffle from 'lodash/shuffle';
@@ -11,8 +10,9 @@ import { Ring } from 'ldrs/react';
 import 'ldrs/react/Ring.css';
 
 import Exercise from "@/interface/features/Exercise";
-import { BASE_URL, updateScoreById, evaluateText } from "@/api";
+import { updateScoreById, evaluateText } from "@/api/process";
 import { getLevelForScore } from "@/utils/speech_levels";
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const normalize = (str: string) => str.toLowerCase();
@@ -79,34 +79,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                         </section>
                     )}
-                    {image_support && image_support.length > 0 && (
-                        <section>
-                            <h3>Image Support: </h3>
-                            {image_support.map((imgSrc, index) => (
-                            <Image 
-                                key={index}
-                                src={`${BASE_URL}${imgSrc}`} 
-                                alt="Support" 
-                                className="mt-2" 
-                                width={300}
-                                height={300}
-                            />
-                            ))}
-                        </section>
-                    )}
-                    {audio_support && audio_support.length > 0 && (
-                        <section>
-                            <h3>Audio Support: </h3>
-                            {audio_support.map((audioSrc, index) => (
-                                <audio 
-                                    key={index}
-                                    src={`${BASE_URL}${audioSrc}`}
-                                    controls
-                                    className="mt-2"
-                                />
-                            ))}
-                        </section>
-                    )}
+                    <ElementMediaCard element={exercise}/>
                     <section>
                         <h3>Words to Organize:</h3>
                         <div className="flex flex-wrap space-x-2">

@@ -1,6 +1,6 @@
 import GrammarFlashCard from "@/components/cards/flashCards/grammarFlashCard";
 import type Grammar from "@/interface/features/Grammar";
-import { getGrammarByLesson } from "@/api";
+import { getGrammarByLesson } from "@/api/grammar";
 
 type paramsType = {
     language_id: string;

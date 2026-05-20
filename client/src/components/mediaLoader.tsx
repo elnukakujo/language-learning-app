@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDeleteLeft } from '@fortawesome/free-solid-svg-icons'
 
-import { BASE_URL, uploadImage, uploadAudio } from "@/api";
+import { uploadImage, uploadAudio } from "@/api/process";
+import { BASE_URL } from '@/api';
 
 export default function MediaLoader({ 
   imageUrl = [],

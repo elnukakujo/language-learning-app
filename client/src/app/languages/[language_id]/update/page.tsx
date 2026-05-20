@@ -1,4 +1,4 @@
-import { getLanguageData } from "@/api";
+import { getLanguageData } from "@/api/language";
 import Language from "@/interface/containers/Language";
 import LanguageForm from "@/components/forms/entityForms/languageForm";
 

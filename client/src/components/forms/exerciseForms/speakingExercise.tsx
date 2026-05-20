@@ -4,14 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Exercise from "@/interface/features/Exercise";
-import { BASE_URL, updateScoreById, evaluateSpeech } from "@/api";
-
+import { updateScoreById, evaluateSpeech } from "@/api/process";
 import dynamic from 'next/dynamic';
 import { getLevelForScore } from "@/utils/speech_levels";
+import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 const AudioRecorder = dynamic(() => import('@/components/audioRecorder'), { ssr: false });
 
 export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
@@ -90,18 +89,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
                 </section>
             )}
 
-            {image_support && image_support.length > 0 && image_support.map((imgSrc, index) => (
-                <Image key={index} src={`${BASE_URL}${imgSrc}`} alt="Support"
-                className="mt-2" width={300} height={300} />
-            ))}
-
-            {audio_support && audio_support.length > 0 && showExample && (
-                <section>
-                    {audio_support.map((audioSrc, index) => (
-                        <audio key={index} src={`${BASE_URL}${audioSrc}`} controls className="mt-2" />
-                    ))}
-                </section>
-            )}
+            <ElementMediaCard element={exercise}/>
 
             {!isCorrect && attempts < 3 && (
                 <section className="flex flex-col space-y-4">

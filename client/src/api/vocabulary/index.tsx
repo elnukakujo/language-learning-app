@@ -1,0 +1,50 @@
+import Vocabulary from "@/interface/features/Vocabulary";
+import { BASE_URL } from "..";
+
+export async function getVocabularyById(vocabularyId: string) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`);
+  if (!res.ok) throw new Error(`Failed to fetch vocabulary ${vocabularyId}`);
+  return res.json();
+}
+
+export async function getVocabularyByLanguage(languageId: string) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/language/${languageId}`);
+  if (!res.ok) throw new Error(`Failed to fetch vocabulary for language ${languageId}`);
+  return res.json();
+}
+
+export async function getVocabularyByLesson(lessonId: string) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/lesson/${lessonId}`);
+  if (!res.ok) throw new Error(`Failed to fetch vocabulary for lesson ${lessonId}`);
+  return res.json();
+}
+
+export async function createVocabulary(data: Partial<Vocabulary>) {
+  if (data.id) {
+    data.id = undefined;
+  }
+  const res = await fetch(`${BASE_URL}/api/vocabulary/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create vocabulary");
+  return res.json();
+}
+
+export async function updateVocabulary(vocabularyId: string, data: Partial<Vocabulary>) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update vocabulary");
+  return res.json();
+}
+
+export async function deleteVocabulary(vocabularyId: string) {
+  const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete vocabulary");
+}

@@ -1,9 +1,11 @@
-import { getAllUserTags } from "@/api";
+import { getAllUserTags } from "@/api/tag";
 import Tag from "@/interface/systemData/Tag";
 import NavButton from "@/components/buttons/navButton";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 export default async function TagsPage() {
-    const tags: Tag[] = await getAllUserTags("user_U0");
+    const userId: string | null = await getCurrentUserId();
+    const tags: Tag[] = await getAllUserTags(userId!);
 
     return (
         <div className="p-6">

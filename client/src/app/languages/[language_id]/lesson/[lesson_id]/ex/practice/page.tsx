@@ -1,5 +1,5 @@
 import Exercise from "@/interface/features/Exercise";
-import { getExercisesByLesson } from "@/api";
+import { getExercisesByLesson } from "@/api/exercise";
 import ExercisePractice from "@/components/forms/exerciseForms/exercisePractice";
 
 export default async function PracticeExercisePage({ params }: { params: { lesson_id: string } }) {

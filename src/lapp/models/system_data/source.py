@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Column, Enum, String, Date, ForeignKey, select
 from sqlalchemy.util import defaultdict
 
@@ -13,7 +14,7 @@ class Source(Base):
     date = Column(Date)
     description = Column(String)
     source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai"), nullable=False)
-    created_at = Column(String)
+    created_at = Column(String, nullable=False, default=datetime.now())
     updated_at = Column(String, nullable=True)
 
     def get_elements(self) -> dict:

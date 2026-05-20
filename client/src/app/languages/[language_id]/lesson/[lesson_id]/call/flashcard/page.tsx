@@ -1,6 +1,6 @@
 import Calligraphy from "@/interface/features/Calligraphy";
-import { getCalligraphyByLesson } from "@/api";
-import CalligraphyFlashCard from "@/components/cards/calligraphyFlashCard";
+import { getCalligraphyByLesson } from "@/api/calligraphy";
+import CalligraphyFlashCard from "@/components/cards/flashCards/calligraphyFlashCard";
 
 export default async function CalligraphyFlashCardPage({ params }: { params: { language_id: string; lesson_id: string; }}) {
     const { lesson_id } = await params;

@@ -1,6 +1,6 @@
-import { getElementbyId } from "@/api";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import CalligraphyForm from "@/components/forms/entityForms/calligraphyForm";
+import { getCalligraphyById } from "@/api/calligraphy";
 
 type paramsType = {
     language_id: string;
@@ -10,7 +10,7 @@ type paramsType = {
 
 export default async function UpdateCalligraphyPage({ params }: { params: paramsType }) {
     const { call_id } = await params;
-    const calligraphy: Calligraphy = await getElementbyId(call_id);
+    const calligraphy: Calligraphy = await getCalligraphyById(call_id);
 
     return (
         <main className="p-4">

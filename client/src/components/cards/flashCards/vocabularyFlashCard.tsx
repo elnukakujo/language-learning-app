@@ -1,7 +1,7 @@
 "use client";
 
 import BackButton from "@/components/buttons/backButton";
-import { updateScoreById } from "@/api";
+import { updateScoreById } from "@/api/process";
 import { useEffect, useState } from "react";
 import type Vocabulary from "@/interface/features/Vocabulary";
 import WordCard from "../componentCards/wordCard";

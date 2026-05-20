@@ -30,7 +30,9 @@ def get_by_user(user_id: str):
                     description: Source object
     """
     sources = source_service.get_by_user_id(user_id=user_id, as_dict=True)
-    return jsonify(sources)
+    if sources is None or len(sources) == 0:
+        return jsonify([]), 200
+    return jsonify(sources), 200
 
 @bp.route('/<source_id>', methods=['GET'])
 def get_by_id(source_id: str):
@@ -57,7 +59,7 @@ def get_by_id(source_id: str):
     if not source:
         return jsonify({'error': 'Source not found'}), 404
     
-    return jsonify(source)
+    return jsonify(source), 200
 
 
 @bp.route('/', methods=['POST'])

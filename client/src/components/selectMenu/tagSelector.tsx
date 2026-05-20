@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAllUserTags, addTagToElement, removeTagFromElement } from "@/api";
+import { getAllUserTags, addTagToElement, removeTagFromElement } from "@/api/tag";
 import TagForm from "@/components/forms/entityForms/tagForm";
 import { createPortal } from "react-dom";
 import type Tag from "@/interface/systemData/Tag";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { getCurrentUserId } from "@/utils/user_cookie";
 
 interface TagSelectorProps {
   selectedTagIds: string[];
   onTagsChange: (tagIds: string[]) => void;
   elementId: string;
   disabled?: boolean;
-  userId?: string;
 }
 
 function normalizeTags(payload: unknown): Tag[] {
@@ -29,8 +29,7 @@ export default function TagSelector({
   selectedTagIds,
   onTagsChange,
   elementId,
-  disabled = false,
-  userId = "user_U0",
+  disabled = false
 }: TagSelectorProps) {
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -46,7 +45,8 @@ export default function TagSelector({
   const fetchTags = async () => {
     setIsLoading(true);
     try {
-      const response = await getAllUserTags(userId);
+      const currentUserId: string | null = await getCurrentUserId();
+      const response = await getAllUserTags(currentUserId!);
       setAllTags(normalizeTags(response));
     } catch (err) {
       console.error("Failed to fetch tags:", err);
@@ -58,12 +58,9 @@ export default function TagSelector({
 
   useEffect(() => {
     let active = true;
-    getAllUserTags(userId)
-      .then((response) => { if (active) setAllTags(normalizeTags(response)); })
-      .catch(() => { if (active) setError("Failed to load tags"); })
-      .finally(() => { if (active) setIsLoading(false); });
+    fetchTags();
     return () => { active = false; };
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

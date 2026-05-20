@@ -1,9 +1,9 @@
 "use client";
 
-import { updateScoreById } from "@/api";
+import { updateScoreById } from "@/api/process";
 import { useEffect, useState } from "react";
 import Calligraphy from "@/interface/features/Calligraphy";
-import BackButton from "../buttons/backButton";
+import BackButton from "@/components/buttons/backButton";
 import CharacterCard from "../componentCards/characterCard";
 import WordCard from "../componentCards/wordCard";
 import SentenceCard from "../componentCards/sentenceCard";

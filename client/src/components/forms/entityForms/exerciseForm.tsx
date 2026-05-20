@@ -11,7 +11,7 @@ import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import TrueFalseInput from "@/components/input/trueFalseInput";
 import DiscreteInput from "@/components/input/discreteInput";
 import MediaLoader from "@/components/mediaLoader";
-import { createExercise, updateExercise, addTagToElement } from "@/api";
+import { createExercise, updateExercise } from "@/api/exercise";
 import ConversationInput from "@/components/input/conversationInput";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import type Grammar from "@/interface/features/Grammar";

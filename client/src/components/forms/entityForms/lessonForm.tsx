@@ -8,7 +8,7 @@ import AutoWidthInput from "@/components/input/autoWidthInput";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/selectMenu/classicSelectMenu";
 import TagSelector from "@/components/selectMenu/tagSelector";
-import { createLesson, updateLesson, addTagToElement, removeTagFromElement } from "@/api";
+import { createLesson, updateLesson } from "@/api/lesson";
 import type Lesson from "@/interface/containers/Lesson";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
 

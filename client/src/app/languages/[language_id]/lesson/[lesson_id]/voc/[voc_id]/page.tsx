@@ -1,4 +1,3 @@
-import { getElementbyId } from "@/api";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import type Vocabulary from "@/interface/features/Vocabulary";
@@ -7,10 +6,11 @@ import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCa
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import WordCard from "@/components/cards/componentCards/wordCard";
 import SentenceCard from "@/components/cards/componentCards/sentenceCard";
+import { getVocabularyById } from "@/api/vocabulary";
 
 export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {
     const { voc_id, lesson_id, language_id } = await params;
-    const vocabulary: Vocabulary = await getElementbyId(voc_id);
+    const vocabulary: Vocabulary = await getVocabularyById(voc_id);
     console.log(vocabulary);
     return (
         <main>

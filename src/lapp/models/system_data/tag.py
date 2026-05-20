@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.sql import select
 from collections import defaultdict
@@ -14,7 +15,7 @@ class Tag(Base):
     name = Column(String, nullable=False)
     color = Column(String)
     description = Column(String)
-    created_at = Column(String)
+    created_at = Column(String, nullable=False, default=datetime.now())
     updated_at = Column(String, nullable=True)
 
     def get_elements(self) -> dict:

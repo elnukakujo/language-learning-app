@@ -1,4 +1,4 @@
-import { getTagById } from "@/api";
+import { getTagById } from "@/api/tag";
 import DeleteButton from "@/components/buttons/deleteButton";
 import NavButton from "@/components/buttons/navButton";
 import TagCard from "@/components/cards/tagCard";

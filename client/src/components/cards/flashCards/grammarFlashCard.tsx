@@ -2,7 +2,7 @@
 
 import type Grammar from "@/interface/features/Grammar";
 import { useEffect, useState } from "react";
-import { updateScoreById } from "@/api";
+import { updateScoreById } from "@/api/process";
 import BackButton from "../../buttons/backButton";
 import GrammarCard from "../grammarCard";
 import ElementTagsCard from "../elementCards/elementTagsCard";

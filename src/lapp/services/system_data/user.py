@@ -115,8 +115,6 @@ class UserService:
             user_obj = User(
                 id=user_id,
                 username=user_data.username,
-                email=user_data.email,
-                full_name=user_data.full_name,
             )
             logger.debug(f"Constructed User ORM object: {user_obj.to_dict()}")
 
