@@ -19,7 +19,7 @@ class Character(BaseComponentModel):
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
+            **super().to_dict(include_relations=False),
             "character": self.character,
             "meaning": self.meaning,
             "phonetic": self.phonetic,

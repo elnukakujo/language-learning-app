@@ -52,7 +52,6 @@ def get_language(language_id: str):
         description: Language not found
     """
     language = language_service.get_by_id(language_id, as_dict=True)
-    logger.debug(f"Retrieved language for ID {language_id}: {language}")
     
     if not language:
         return jsonify({'error': 'Language not found'}), 404
@@ -114,7 +113,6 @@ def create_language():
     try:
         # Validate request data
         data = LanguageDict(**request.json)
-        logger.debug(f"Validated language data: {data}")
         
         # Create language
         language = language_service.create(data, as_dict=True)

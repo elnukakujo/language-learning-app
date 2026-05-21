@@ -31,7 +31,7 @@ class Word(BaseComponentModel):
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
+            **super().to_dict(include_relations=False),
             "word": self.word,
             "translation": self.translation,
             "phonetic": self.phonetic,

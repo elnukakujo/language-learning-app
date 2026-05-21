@@ -77,7 +77,6 @@ def detect_text_language(text: str) -> Language:
     """
     try:
         lang = _lookup(detect(text))
-        logger.debug(f"Detected text language: {lang}")
         return lang
     except Exception as e:
         logger.error(f"Error detecting text language: {e}")
@@ -111,7 +110,6 @@ def detect_audio_language(audio_file_path: str) -> tuple[Language, float]:
         confidence = probs[iso1]
 
         lang = _lookup(iso1)
-        logger.debug(f"Detected audio language: {lang} (confidence: {confidence:.2f})")
         return lang, confidence
 
     except Exception as e:

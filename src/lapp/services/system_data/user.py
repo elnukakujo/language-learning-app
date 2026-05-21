@@ -110,13 +110,11 @@ class UserService:
             session = db_manager.get_session()
         try:
             # Ensure we have an ORM object to insert
-            logger.debug(f"Creating User with data: {user_data}")
             user_id = getattr(user_data, "id", None) or db_manager.generate_new_id(User)
             user_obj = User(
                 id=user_id,
                 username=user_data.username,
             )
-            logger.debug(f"Constructed User ORM object: {user_obj.to_dict()}")
 
             result = db_manager.insert(
                 obj=user_obj,

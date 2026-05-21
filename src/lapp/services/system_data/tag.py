@@ -93,7 +93,6 @@ class TagService:
             session = db_manager.get_session()
         try:
             # Ensure we have an ORM object to insert
-            logger.debug(f"Creating Tag with data: {tag_data}")
             tag_id = getattr(tag_data, "id", None) or db_manager.generate_new_id(Tag)
             tag_obj = Tag(
                 id=tag_id,
@@ -102,7 +101,6 @@ class TagService:
                 color=tag_data.color,
                 description=tag_data.description,
             )
-            logger.debug(f"Constructed Tag ORM object: {tag_obj.to_dict()}")
 
             result = db_manager.insert(
                 obj=tag_obj,

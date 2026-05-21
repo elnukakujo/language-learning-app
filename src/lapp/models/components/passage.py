@@ -30,7 +30,7 @@ class Passage(BaseComponentModel):
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
+            **super().to_dict(include_relations=False),
             "text": self.text,
             "translation": self.translation
         }
