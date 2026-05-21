@@ -4,8 +4,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...models.system_data import User
-from ...schemas.system_data import UserDict
+from ...schemas.system_data import UserDict, UserPreferencesDict
 from ...core.database import db_manager
+from .user_preferences import UserPreferencesService
+user_preferences_service = UserPreferencesService()
 
 class UserService:
     """Service layer for user CRUD operations.
@@ -116,6 +118,15 @@ class UserService:
                 username=user_data.username,
             )
 
+            user_obj.preferences = user_preferences_service.create(
+                data=UserPreferencesDict(
+                    user_id=user_id,
+                    native_language_iso639_2=user_data.preferences.native_language_iso639_2 if user_data.preferences else [],
+                    learning_goals=user_data.preferences.learning_goals if user_data.preferences else "",
+                    preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else []
+                ),
+            )
+
             result = db_manager.insert(
                 obj=user_obj,
                 session=session
@@ -125,6 +136,7 @@ class UserService:
                 logger.info(f"Created new User item with ID: {result.id}")
             else:
                 logger.error(f"Failed to create new User item: {result.username}")
+
 
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:
@@ -171,7 +183,16 @@ class UserService:
                 return None
             
             # Update fields
-            for field, value in update_data.model_dump(exclude_unset=True).items():
+            user.preferences = user_preferences_service.create(
+                data=UserPreferencesDict(
+                    user_id=user_id,
+                    native_language_iso639_2=update_data.preferences.native_language_iso639_2 if update_data.preferences else [],
+                    learning_goals=update_data.preferences.learning_goals if update_data.preferences else "",
+                    preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else []
+                ),
+            )
+
+            for field, value in update_data.model_dump(exclude={"id", "preferences"}, exclude_unset=True).items():
                 setattr(user, field, value)
             
             result = db_manager.modify(
@@ -183,6 +204,7 @@ class UserService:
                 logger.info(f"Updated User item with ID: {result.id}")
             else:
                 logger.error(f"Failed to update User item with ID: {user_id}")
+
 
             return self._serialize(result, as_dict, include_relations)
         except Exception as e:
@@ -226,6 +248,10 @@ class UserService:
                 logger.info(f"Deleted User item with ID: {user_id}")
             else:
                 logger.warning(f"User with ID {user_id} not found for deletion.")
+            
+            user_preferences_service.delete(
+                pref_id=user.preferences_id,
+            )
             return result
         except Exception as e:
             if own_session:

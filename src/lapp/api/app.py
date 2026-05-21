@@ -1,5 +1,4 @@
 import logging
-import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flasgger import Swagger
@@ -95,6 +94,7 @@ def register_blueprints(app: Flask) -> None:
         tag_bp,
         source_bp,
         user_bp,
+        user_preferences_bp,
     )
     
     # Register blueprints
@@ -111,6 +111,7 @@ def register_blueprints(app: Flask) -> None:
         tag_bp,
         source_bp,
         user_bp,
+        user_preferences_bp,
     ]
     
     for blueprint in blueprints:
