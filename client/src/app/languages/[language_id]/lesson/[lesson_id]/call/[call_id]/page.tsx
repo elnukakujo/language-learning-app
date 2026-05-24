@@ -7,6 +7,7 @@ import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCa
 import WordCard from "@/components/cards/componentCards/wordCard";
 import SentenceCard from "@/components/cards/componentCards/sentenceCard";
 import CharacterCard from "@/components/cards/componentCards/characterCard";
+import RelatedCard from "@/components/cards/relatedCard";
 import { getCalligraphyById } from "@/api/calligraphy";
 
 type paramsType = {
@@ -40,6 +41,13 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
                         ))}
                     </section>
                 )}
+
+                <RelatedCard
+                    languageId={language_id}
+                    characters={[calligraphy.character]}
+                    words={calligraphy.example_words}
+                    passages={calligraphy.example_sentences}
+                />
 
                 <ElementTagsCard element={calligraphy} />
                 <ElementSourcesCard element={calligraphy} />

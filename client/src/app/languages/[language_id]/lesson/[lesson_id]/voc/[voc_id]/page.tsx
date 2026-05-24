@@ -6,12 +6,12 @@ import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCa
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import WordCard from "@/components/cards/componentCards/wordCard";
 import SentenceCard from "@/components/cards/componentCards/sentenceCard";
+import RelatedCard from "@/components/cards/relatedCard";
 import { getVocabularyById } from "@/api/vocabulary";
 
 export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {
     const { voc_id, lesson_id, language_id } = await params;
     const vocabulary: Vocabulary = await getVocabularyById(voc_id);
-    console.log(vocabulary);
     return (
         <main>
             <article className="flex flex-col space-y-4">
@@ -25,6 +25,11 @@ export default async function VocabularyPage({ params }: { params: { language_id
                         ))}
                     </section>
                 )}
+                <RelatedCard
+                    languageId={language_id}
+                    words={[vocabulary.word]}
+                    passages={vocabulary.example_sentences}
+                />
                 <ElementTagsCard element={vocabulary} />
                 <ElementSourcesCard element={vocabulary} />
                 <ElementPerformanceCard element={vocabulary} />
