@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import BackButton from "@/components/buttons/backButton";
+import SearchBar from "@/components/searchBar";
 import { clearUserCookie } from "@/utils/user_cookie";
 
 const primaryLinks = [
@@ -59,6 +60,9 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 						);
 					})}
 				</nav>
+				<div className="min-w-0 flex-1">
+					<SearchBar currentUserId={currentUserId} />
+				</div>
                 <div className={`flex items-center gap-2 ${currentUserId ? "visible" : "invisible pointer-events-none"}`}>
                     <button
                         type="button"

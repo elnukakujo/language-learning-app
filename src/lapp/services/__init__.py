@@ -7,6 +7,7 @@ from .tts import TTSService
 from .text_gen import TextGeneratorService
 from .feedback import FeedbackService
 from .evaluator import EvaluatorService
+from .search import SearchService
 
 __all__ = [
     "LanguageService",
@@ -23,6 +24,7 @@ __all__ = [
     "TextGeneratorService",
     "FeedbackService",
     "EvaluatorService",
+    "SearchService",
     "TagService",
     "SourceService",
     "UserService",
