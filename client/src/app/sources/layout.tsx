@@ -7,9 +7,6 @@ export default function RootLayout({
 }>) {
   return (
     <main>
-        <header>
-            <BackButton />
-        </header>
         {children}
     </main>
   );

@@ -418,6 +418,15 @@ CREATE TABLE character_word_link (
     FOREIGN KEY (word_id) REFERENCES word(id)
 );
 
+-- character -> passage  (example_sentence on character, 0..n)
+CREATE TABLE character_passage_link (
+    character_id TEXT NOT NULL,
+    passage_id TEXT NOT NULL,
+    PRIMARY KEY (character_id, passage_id),
+    FOREIGN KEY (character_id) REFERENCES character(id),
+    FOREIGN KEY (passage_id) REFERENCES passage(id)
+);
+
 -- ---- Feature link tables ----
 
 -- vocabulary -> passage  (example_sentence)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from typing import Optional
 from datetime import datetime
 
@@ -12,6 +12,13 @@ class BaseElementDict(BaseModel):
     status: Optional[str] = None
     tags: Optional[list[TagDict]] = None
     sources: Optional[list[SourceDict]] = None
+
+    @model_validator(mode="before")
+    def ensure_no_empty_strings(cls, values):
+        for key, value in values.items():
+            if isinstance(value, str) and value.strip() == "":
+                values[key] = None
+        return values
 
 class BaseModelWithMediaFiles(BaseModel):
     image_files: Optional[list[str]] = []     # e.g. list of image file paths

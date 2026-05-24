@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 from ...schemas.components import PassageDict
-from ...models.components import Passage
+from ...models.components import Passage, Word, Character
 from ...models.system_data import Tag, Source
+from ...models.containers import Language
 from ...core.database import db_manager
+from ...utils import enrich_passage, get_language_by_iso2t
 
 
 class PassageService:
@@ -172,20 +174,61 @@ class PassageService:
                     
                 return existing
 
-            if data.id is not None:
-                if existing := self.get_by_id(data.id, session=session):
-                    logger.info(f"Passage with provided ID already exists: {data.id} with text: {existing.text}")
-                    return self.update(passage_id=data.id, data=data, session=session)
-                else:
-                    logger.warning(f"ID provided for new passage will be ignored: {data.id}")
-                    data.id = None
+            language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
 
-            
+            target_language_info = get_language_by_iso2t(language.target_iso639_2t) if language else None
+            target_iso1 = target_language_info.iso1 if target_language_info else None
+            target_spacy_model = target_language_info.spacy_model if target_language_info else None
+
+            source_language_info = get_language_by_iso2t(language.source_iso639_2t) if language else None
+            source_iso1 = source_language_info.iso1 if source_language_info else None
+
+            enriched_data = enrich_passage(passage_text=data.text, target_iso1=target_iso1, source_iso1=source_iso1, target_spacy_model=target_spacy_model)
+
+            characters: dict[str, Character] = {}
+            if len(enriched_data["characters"]) > 0:
+                logger.debug(f"Enriched characters for passage '{data.text}': {enriched_data['characters']}")
+                from .character import CharacterService
+                from ...schemas.components import CharacterDict
+                character_service = CharacterService()
+
+                for character in enriched_data["characters"]:
+                    created_character = character_service.create(
+                        data=CharacterDict(
+                            character=character,
+                            language_id=data.language_id
+                        ),
+                        session=session
+                    )
+                    if created_character.id not in characters:
+                        characters[created_character.id] = created_character
+
+            words: dict[str, Word] = {}
+            if len(enriched_data["words"]) > 0:
+                logger.debug(f"Enriched words for passage '{data.text}': {enriched_data['words']}")
+                from .word import WordService
+                from ...schemas.components import WordDict
+                word_service = WordService()
+
+                for word in enriched_data["words"]:
+                    created_word = word_service.create(
+                        data=WordDict(
+                            word=word,
+                            language_id=data.language_id
+                        ),
+                        session=session
+                    )
+                    if created_word.id not in words:
+                        words[created_word.id] = created_word
+
             passage = Passage(
                 id=db_manager.generate_new_id(model_class=Passage, session=session),
-                **{k: v for k, v in data.model_dump(exclude={'status', 'difficulty', 'score', 'created_at', 'last_seen_at'}, exclude_none=True).items()},
+                **{k: v for k, v in data.model_dump(exclude={'id','status', 'difficulty', 'score', 'created_at', 'last_seen_at', 'translation', 'tags', 'sources'}, exclude_none=True).items()},
+                translation=data.translation if (data.translation is not None and data.translation != "") else enriched_data["translation"],
                 tags = session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
-                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []            
+                sources = session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else [],
+                characters=list(characters.values()),
+                words=list(words.values())
             )
             result = db_manager.insert(obj=passage, session=session)
 
@@ -220,7 +263,7 @@ class PassageService:
             session = db_manager.get_session()
         
         try:
-            existing = self.get_by_id(passage_id, session=session)
+            existing: Passage = self.get_by_id(passage_id, session=session)
 
             if not existing:
                 logger.warning(f"Passage not found: {passage_id}")
@@ -232,10 +275,68 @@ class PassageService:
             if (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
                 logger.warning(f"Passage with value '{update_data['text']}' already exists.")
                 raise ValueError(f"Passage with value '{update_data['text']}' already exists.")
+            
+            language = db_manager.find_by_attr(model_class=Language, attr_values={"id": existing.language_id}, session=session)
 
-            for key, value in update_data.items():
-                setattr(existing, key, value)
+            target_language_info = get_language_by_iso2t(language.target_iso639_2t) if language else None
+            target_iso1 = target_language_info.iso1 if target_language_info else None
+            target_spacy_model = target_language_info.spacy_model if target_language_info else None
 
+            source_language_info = get_language_by_iso2t(language.source_iso639_2t) if language else None
+            source_iso1 = source_language_info.iso1 if source_language_info else None
+
+            enriched_data = enrich_passage(passage_text=data.text, target_iso1=target_iso1, source_iso1=source_iso1, target_spacy_model=target_spacy_model)
+
+            characters: dict[str, Character] = {c.id: session.merge(c) for c in existing.characters}
+            if len(enriched_data["characters"]) > 0:
+                logger.debug(f"Enriched characters for passage '{data.text}': {enriched_data['characters']}")
+                from .character import CharacterService
+                from ...schemas.components import CharacterDict
+                character_service = CharacterService()
+
+                for character in enriched_data["characters"]:
+                    created_character = character_service.create(
+                        data=CharacterDict(
+                            character=character,
+                            language_id=existing.language_id
+                        ),
+                        session=session
+                    )
+                    if created_character.id not in characters:
+                        characters[created_character.id] = created_character
+
+            words: dict[str, Word] = {w.id: session.merge(w) for w in existing.words}
+            if len(enriched_data["words"]) > 0:
+                logger.debug(f"Enriched words for passage '{data.text}': {enriched_data['words']}")
+                from .word import WordService
+                from ...schemas.components import WordDict
+                word_service = WordService()
+
+                for word in enriched_data["words"]:
+                    created_word = word_service.create(
+                        data=WordDict(
+                            word=word,
+                            language_id=existing.language_id
+                        ),
+                        session=session
+                    )
+                    if created_word.id not in [w.id for w in words]:
+                        words.append(created_word)
+
+
+            def resolve(field: str, existing_val):
+                provided = update_data.get(field)
+                if provided is not None and provided != "":
+                    return provided
+                return existing_val if existing_val is not None and existing_val != "" else enriched_data.get(field)
+
+            existing.text = update_data.get('text', existing.text)
+            existing.translation = resolve('translation', existing.translation)
+            existing.audio_files = update_data.get('audio_files', existing.audio_files)
+            existing.image_files = update_data.get('image_files', existing.image_files)
+            existing.words = list(words.values())
+            existing.characters = list(characters.values())
+            
             # Save to database
             result = db_manager.modify(existing, session=session)
 

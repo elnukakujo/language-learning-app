@@ -194,7 +194,9 @@ def create_vocabulary():
     """
     try:
         # Validate request data
+        logger.debug(f"Received request data for creating vocabulary: {request.json}")
         data = VocabularyDict(**request.json)
+        logger.debug(f"Validated data for creating vocabulary: {data}")
         
         # Create vocabulary
         vocabulary = vocabulary_service.create(data, as_dict=True)

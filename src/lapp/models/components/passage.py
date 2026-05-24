@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar_example_sentence_link, calligraphy_example_sentence_link
+from ..base import BaseComponentModel, vocabulary_example_sentence_link, grammar_example_sentence_link, calligraphy_example_sentence_link, character_passage_link, word_passage_link
 
 class Passage(BaseComponentModel):
     __tablename__ = 'passage'
@@ -27,6 +27,16 @@ class Passage(BaseComponentModel):
         secondary=calligraphy_example_sentence_link,
         back_populates='example_sentences'
     )
+    characters = relationship(
+        'Character',
+        secondary=character_passage_link,
+        back_populates='passages'
+    )
+    words = relationship(
+        'Word',
+        secondary=word_passage_link,
+        back_populates='passages'
+    )
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
@@ -36,8 +46,10 @@ class Passage(BaseComponentModel):
         }
         if include_relations:
             base_dict.update({
-                "vocabulary": [v.id for v in self.vocabulary],
-                "grammar": [g.id for g in self.grammar],
-                "calligraphy": [c.id for c in self.calligraphy]
+                "vocabulary": [v.to_dict(include_relations=False) for v in self.vocabulary],
+                "grammar": [g.to_dict(include_relations=False) for g in self.grammar],
+                "calligraphy": [cf.to_dict(include_relations=False) for cf in self.calligraphy],
+                "characters": [c.to_dict(include_relations=False) for c in self.characters],
+                "words": [w.to_dict(include_relations=False) for w in self.words]
             })
         return base_dict

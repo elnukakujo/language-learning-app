@@ -133,14 +133,13 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Gra
                                 label="Example Sentence"
                                 value={sentence.text || ""}
                                 className="border border-gray-300"
-                                required={true}
+                                required
                                 onChange={(e) => handleLearnableSentenceChange(key, "text", e.target.value)}
                             />
                             <AutoWidthInput
                                 label="Example Sentence Translation"
                                 value={sentence.translation || ""}
                                 className="border border-gray-300"
-                                required={true}
                                 onChange={(e) => handleLearnableSentenceChange(key, "translation", e.target.value)}
                             />
                             <MediaLoader imageUrl={sentence.image_files} setImageUrl={handleLearnableSentenceChange.bind(null, key, "image_files")} audioUrl={sentence.audio_files} setAudioUrl={handleLearnableSentenceChange.bind(null, key, "audio_files")} />

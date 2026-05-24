@@ -59,6 +59,14 @@ def get_language_by_iso2t(iso2t: str) -> Language:
             return lang
     return _UNKNOWN
 
+def get_language_by_iso1(iso1: str) -> Language:
+    """Resolve a language by ISO 639-1 code (e.g. 'fr', 'zh')."""
+    if not iso1:
+        return _UNKNOWN
+
+    normalized = iso1.strip().lower()
+    return _LANGUAGES.get(normalized, _UNKNOWN)
+
 audio_detection_model = whisper.load_model("base")
 
 def detect_text_language(text: str) -> Language:

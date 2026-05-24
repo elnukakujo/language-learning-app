@@ -2,8 +2,10 @@ from .phonetics import get_phonetic
 from .strokes import get_cjk_character_info
 from .tokenize import get_content_words, get_characters
 from .translate import translate
+from .word_type import get_word_type
+from .word_gender import get_gender
 
-def enrich_character(character_text: str, iso1: str, native_iso1: str) -> dict:
+def enrich_character(character_text: str, target_iso1: str, source_iso1: str) -> dict:
     """
     Compute all storable fields for a Character DB entity.
  
@@ -14,68 +16,74 @@ def enrich_character(character_text: str, iso1: str, native_iso1: str) -> dict:
  
     Args:
         character_text: Single character, e.g. "北" or "Ω".
-        iso1:           Language ISO code,       e.g. "zh".
-        native_iso1:    Learner's native language, e.g. "fr".
+        target_iso1:           Language ISO code,       e.g. "zh".
+        source_iso1:    Learner's native language, e.g. "fr".
  
     Returns:
         {
           "phonetic": "běi",
           "radical":  "匕",         # "" for non-CJK
-          "strokes":  5,            # None for non-CJK
-          "meaning":  "nord",       # translated into native_iso1
+          "meaning":  "nord",       # translated into source_iso1
         }
     """
-    cjk = get_cjk_character_info(character_text, iso1)
+    cjk = get_cjk_character_info(character_text, target_iso1)
  
     if cjk["meaning"]:
         # Translate CEDICT English gloss → learner's language
         meaning = (
-            translate(cjk["meaning"], "en", native_iso1)
-            if native_iso1 != "en"
+            translate(cjk["meaning"], "en", source_iso1)
+            if source_iso1 != "en"
             else cjk["meaning"]
         )
     else:
         # Non-CJK or unknown: translate the character itself
-        meaning = translate(character_text, iso1, native_iso1)
+        meaning = translate(character_text, target_iso1, source_iso1)
  
     return {
-        "phonetic": get_phonetic(character_text, iso1),
+        "phonetic": get_phonetic(character_text, target_iso1),
         "radical":  cjk["radical"],
-        "strokes":  cjk["strokes"],
         "meaning":  meaning,
     }
  
  
-def enrich_word(word_text: str, iso1: str, native_iso1: str) -> dict:
+def enrich_word(word_text: str, source_iso1: str, target_iso1: str, target_spacy_model: str) -> dict:
     """
     Compute all storable fields for a Word DB entity.
- 
+
     Args:
         word_text:   The word, e.g. "北京" or "courir".
-        iso1:        Language of the word, e.g. "zh".
-        native_iso1: Learner's native language, e.g. "en".
- 
+        source_iso1: Language of the translation, e.g. "en".
+        target_iso1: Language of the word, e.g. "zh".
+        target_spacy_model: The spaCy model to use for tokenization.
+
     Returns:
         {
-          "phonetic":    "běi jīng",   # "" for Latin-script languages
+          "phonetic":    "běi jīng",
           "translation": "Beijing",
+          "word_type":   "noun",
+          "word_gender":      "",
+          "characters":  ["北", "京"],
         }
     """
     return {
-        "phonetic":    get_phonetic(word_text, iso1),
-        "translation": translate(word_text, iso1, native_iso1),
+        "phonetic":    get_phonetic(word_text, target_iso1),
+        "translation": translate(word_text, target_iso1, source_iso1),
+        "word_type":   get_word_type(word_text, target_iso1),
+        "word_gender": get_gender(word_text, target_iso1),
+        "characters":  get_characters(word_text, target_spacy_model),
     }
  
  
-def enrich_passage(passage_text: str, iso1: str, native_iso1: str) -> dict:
+def enrich_passage(passage_text: str, target_iso1: str, source_iso1: str, target_spacy_model: str) -> dict:
     """
     Compute all storable fields for a Passage DB entity and return the token
     lists needed to populate passage_word and passage_character junction tables.
  
     Args:
         passage_text: Full passage text.
-        iso1:         Language of the passage.
-        native_iso1:  Learner's native language.
+        target_iso1:         Language of the passage.
+        source_iso1:  Learner's native language.
+        target_spacy_model: The spaCy model to use for tokenization.
  
     Returns:
         {
@@ -85,7 +93,7 @@ def enrich_passage(passage_text: str, iso1: str, native_iso1: str) -> dict:
         }
     """
     return {
-        "translation": translate(passage_text, iso1, native_iso1),
-        "words":       get_content_words(passage_text, iso1),
-        "characters":  get_characters(passage_text, iso1),
+        "translation": translate(passage_text, target_iso1, source_iso1),
+        "words":       get_content_words(passage_text, target_spacy_model),
+        "characters":  get_characters(passage_text, target_spacy_model),
     }

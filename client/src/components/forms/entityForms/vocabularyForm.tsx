@@ -131,7 +131,6 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
                     onChange={(e) => setTranslation(e.target.value)}
                     placeholder="Enter translation"
                     className="border border-gray-300"
-                    required={true}
                 />
                 <ClassicSelectMenu
                     label="Type of Word"
@@ -142,12 +141,11 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
                     ]}
                     selectedOption={type}
                     onChange={(value) => setType(value as typeof type)}
-                    required={true}
                 />
                 <ClassicSelectMenu
                     label="Gender of Word"
                     options={[
-                        'm', 'f', 'n'
+                        'm', 'f', 'n', 'c', ''
                     ]}
                     selectedOption={gender || ""}
                     onChange={(value) => setGender(value as typeof gender)}
@@ -194,7 +192,6 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
                             label="Example Sentence Translation"
                             value={sentence.translation || ""}
                             className="border border-gray-300"
-                            required
                             onChange={(e) => handleExampleSentenceChange(key, "translation", e.target.value)}
                         />
                         <MediaLoader imageUrl={sentence.image_files} setImageUrl={handleExampleSentenceChange.bind(null, key, "image_files")} audioUrl={sentence.audio_files} setAudioUrl={handleExampleSentenceChange.bind(null, key, "audio_files")} />

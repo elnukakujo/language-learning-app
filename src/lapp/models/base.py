@@ -66,6 +66,29 @@ exercise_calligraphy_link = Table(
     Column("calligraphy_id", String, ForeignKey("calligraphy.id"), primary_key=True),
 )
 
+# --- Association tables for between components ---
+
+character_word_link = Table(
+    "character_word_link",
+    Base.metadata,
+    Column("character_id", String, ForeignKey("character.id"), primary_key=True),
+    Column("word_id", String, ForeignKey("word.id"), primary_key=True),
+)
+
+character_passage_link = Table(
+    "character_passage_link",
+    Base.metadata,
+    Column("character_id", String, ForeignKey("character.id"), primary_key=True),
+    Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
+)
+
+word_passage_link = Table(
+    "word_passage_link",
+    Base.metadata,
+    Column("word_id", String, ForeignKey("word.id"), primary_key=True),
+    Column("passage_id", String, ForeignKey("passage.id"), primary_key=True),
+)
+
 # --- Association tables (polymorphic, no FK on element_id) ---
 
 source_element_link = Table(
@@ -81,6 +104,8 @@ tag_element_link = Table(
     Column("element_id", String, nullable=False),
     PrimaryKeyConstraint("tag_id", "element_id")
 )
+
+
 
 
 class BaseElementModel(Base):

@@ -134,14 +134,13 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                     onChange={(e) => setCharacter(e.target.value)}
                     label="Character"
                     className="border border-gray-300"
-                    required={true}
+                    required
                 />
                 <AutoWidthInput
                     value={phonetic}
                     onChange={(e) => setPhonetic(e.target.value)}
                     label="Phonetic"
                     className="border border-gray-300"
-                    required={true}
                 />
                 <AutoWidthInput
                     value={meaning || ""}
@@ -198,7 +197,6 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                             onChange={(e) => handleExampleWordChange(key, "translation", e.target.value)}
                             label="Example Word Translation"
                             className="border border-gray-300"
-                            required
                         />
                         <ClassicSelectMenu
                             label="Type of Word"
@@ -209,12 +207,11 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                             ]}
                             selectedOption={exampleWord.word_type || ""}
                             onChange={(value) => handleExampleWordChange(key, "word_type", value)}
-                            required
                         />
                         <ClassicSelectMenu
                             label="Gender of Word"
                             options={[
-                                'm', 'f', 'n'
+                                'm', 'f', 'n', 'c', ''
                             ]}
                             selectedOption={exampleWord.word_gender || ""}
                             onChange={(value) => handleExampleWordChange(key, "word_gender", value)}
@@ -262,7 +259,6 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                             onChange={(e) => handleExampleSentenceChange(key, "translation", e.target.value)}
                             label="Example Sentence Translation"
                             className="border border-gray-300"
-                            required
                         />
                         <MediaLoader 
                             imageUrl={exampleSentence.image_files || []} 
