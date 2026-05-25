@@ -1,0 +1,25 @@
+import { BASE_URL } from "..";
+import DailyStats from "@/interface/dataCollection/DailyStats";
+
+export async function getTodayDailyStats(userId: string, languageId: string): Promise<DailyStats | null> {
+  const params = new URLSearchParams({
+    user_id: userId,
+    language_id: languageId,
+  });
+  const res = await fetch(`${BASE_URL}/api/daily-stats/me/today?${params.toString()}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Failed to fetch today's daily stats");
+  return res.json();
+}
+
+export async function getDailyStatsById(dailyStatsId: string, userId: string): Promise<DailyStats> {
+  const params = new URLSearchParams({ user_id: userId });
+  const res = await fetch(`${BASE_URL}/api/daily-stats/${dailyStatsId}?${params.toString()}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch daily stats ${dailyStatsId}`);
+  return res.json();
+}

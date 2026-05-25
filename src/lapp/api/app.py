@@ -99,6 +99,7 @@ def register_blueprints(app: Flask) -> None:
         word_bp,
         character_bp,
         passage_bp,
+        daily_stats_bp,
     )
     
     # Register blueprints
@@ -120,6 +121,7 @@ def register_blueprints(app: Flask) -> None:
         word_bp,
         character_bp,
         passage_bp,
+        daily_stats_bp,
     ]
     
     for blueprint in blueprints:

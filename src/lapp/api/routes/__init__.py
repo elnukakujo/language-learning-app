@@ -15,6 +15,7 @@ from .search import bp as search_bp
 from .word import bp as word_bp
 from .character import bp as character_bp
 from .passage import bp as passage_bp
+from .daily_stats import bp as daily_stats_bp
 __all__ = [
     language_bp,
     lesson_bp,
@@ -33,4 +34,5 @@ __all__ = [
     word_bp,
     character_bp,
     passage_bp,
+    daily_stats_bp,
 ]

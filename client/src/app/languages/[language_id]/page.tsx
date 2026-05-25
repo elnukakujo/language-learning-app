@@ -5,12 +5,15 @@ import DeleteButton from "@/components/buttons/deleteButton";
 import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
 import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
 import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import DailyStatsCard from "@/components/cards/dailyStatsCard";
 import { ISO639_2T_to_LANGUAGE } from "@/utils/language_iso639";
 import { getLanguageData } from "@/api/language";
+import { getTodayDailyStats } from "@/api/dailyStats";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;
     const { language, lessons } = await getLanguageData(language_id);
+    const dailyStats = language.user_id ? await getTodayDailyStats(language.user_id, language_id) : null;
     const hasLessons = lessons && lessons.length > 0;
     console.log(language);
 
@@ -26,6 +29,7 @@ export default async function Language({ params }: { params: { language_id: stri
                 <ElementPerformanceCard element={language} />
                 <ElementTagsCard element={language} />
                 <ElementSourcesCard element={language} />
+                {dailyStats && <DailyStatsCard dailyStats={dailyStats} />}
                 <nav className="flex flex-row space-x-4">
                     {language.current_lesson_id && <NavButton path={`/languages/${language_id}/lesson/${language.current_lesson_id}`}>
                         <p>Go to Current Lesson</p>

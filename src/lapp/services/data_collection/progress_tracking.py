@@ -6,8 +6,11 @@ from sqlalchemy.orm import Session
 from ...core.database import db_manager
 from ...models.data_collection.progress_tracking import ProgressTracking
 from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
+from .daily_stats import DailyStatsService
 
 logger = logging.getLogger(__name__)
+
+daily_stats_service = DailyStatsService()
 
 
 class ProgressTrackingService:
@@ -95,6 +98,7 @@ class ProgressTrackingService:
             )
 
             result = db_manager.insert(obj=entry, session=session)
+            daily_stats_service.update(progress_tracking_id=result.id, session=session)
             return self._serialize(result, as_dict, include_relations)
         except Exception as error:
             if owns_session:

@@ -129,6 +129,9 @@ class LanguageService:
                     current_lesson_id=language.current_lesson_id,
                     session=session
                 )
+
+            if not as_dict:
+                return languages
             return self._serialize_list(languages, as_dict, include_relations)
         except Exception as e:
             if owns_session:

@@ -525,7 +525,8 @@ class DatabaseManager:
                 "Source": "src_S",
                 "Tag": "tag_T",
                 "StrengthsAndWeaknesses": "sw_S",
-                "ProgressTracking": "pt_P"
+                "ProgressTracking": "pt_P",
+                "DailyStats": "day_D",
             }
             
             if model_class.__name__ not in id_config:

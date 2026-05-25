@@ -5,6 +5,7 @@ import type Language from '@/interface/containers/Language';
 
 export default function LanguageOverviewCard({ language }: { language: Language }) {
     const router = useRouter();
+
     const handleCardClick = () => {
         router.push(`/languages/${language.id}`);
     };
