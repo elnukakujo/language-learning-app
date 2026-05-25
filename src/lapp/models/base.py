@@ -155,13 +155,6 @@ class BaseElementModel(Base):
         from ..core.database import db_manager
         
         return db_manager.find_by_attr(ProgressTracking, {"element_id": self.id})
-    
-    def get_score_history(self):
-        """Retrieve all ProgressTracking entries linked to this element."""
-        from ..models.data_collection import ScoreHistory
-        from ..core.database import db_manager
-        
-        return db_manager.find_by_attr(ScoreHistory, {"element_id": self.id})
 
     def to_dict(self, include_relations: bool = True) -> dict:
         # Allow cooperative multiple-inheritance: call next to_dict in MRO
@@ -183,8 +176,6 @@ class BaseElementModel(Base):
             })
             if (pts := self.get_progress_tracking()) is not None:
                 base["progress_tracking"] = [pt.to_dict(include_relations=False) for pt in pts]
-            if (shs := self.get_score_history()) is not None:
-                base["score_history"] = [sh.to_dict(include_relations=False) for sh in shs]
 
         return base
     

@@ -21,7 +21,6 @@ __all__ = [
     "Tag",
     "StrengthsAndWeaknesses",
     "ProgressTracking",
-    "ScoreHistory",
     "DailyStats",
     "CommitmentLog",
 ]

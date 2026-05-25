@@ -4,7 +4,8 @@ export default interface ProgressTracking extends BaseDataCollection {
     element_id: string;
     element_type: string; // e.g., 'vocabulary', 'grammar', 'calligraphy', 'exercise'
     element_status: string; // e.g., 'new', 'reviewing', 'mastered'
-    new_score_difference: number;
+    score_before: number;
+    score_after: number;
     result: boolean; // true for correct, false for incorrect
     duration_ms: number; // time taken to answer in milliseconds
     hint_used?: boolean; // whether the user used a hint

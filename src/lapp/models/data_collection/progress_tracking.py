@@ -9,7 +9,8 @@ class ProgressTracking(BaseDataCollectionModel):
 
     element_type = Column(String, nullable=False)
     element_status = Column(String, nullable=False)
-    new_score_difference = Column(Integer, nullable=False)
+    score_before = Column(Float, nullable=False)
+    score_after = Column(Float, nullable=False)
     result = Column(Boolean, nullable=False)
     duration_ms = Column(Float, nullable=False)
     hint_used = Column(Boolean, nullable=True)
@@ -36,7 +37,8 @@ class ProgressTracking(BaseDataCollectionModel):
             "element_id": self.element_id,
             "element_type": self.element_type,
             "element_status": self.element_status,
-            "new_score_difference": self.new_score_difference,
+            "score_before": self.score_before,
+            "score_after": self.score_after,
             "result": self.result,
             "duration_ms": self.duration_ms,
             "hint_used": self.hint_used,

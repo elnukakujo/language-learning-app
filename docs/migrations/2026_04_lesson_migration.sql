@@ -335,28 +335,13 @@ CREATE TABLE progress_tracking (
   element_id TEXT NOT NULL,
   element_type TEXT NOT NULL,
   element_status TEXT NOT NULL,
-  new_score_difference INTEGER NOT NULL,
+  score_before FLOAT NOT NULL,
+  score_after FLOAT NOT NULL,
   result BOOLEAN NOT NULL,
   duration_ms FLOAT NOT NULL,
   hint_used BOOLEAN,
   attempt_number INTEGER,
   session_completed BOOLEAN,
-
-  FOREIGN KEY (user_id) REFERENCES user(id),
-  FOREIGN KEY (language_id) REFERENCES language(id)
-);
-
-CREATE TABLE score_history (
-  id TEXT PRIMARY KEY,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME,
-  user_id TEXT NOT NULL,
-  language_id TEXT NOT NULL,
-
-  element_id TEXT NOT NULL,
-  element_type TEXT NOT NULL,
-  score_before INTEGER NOT NULL,
-  score_after INTEGER NOT NULL,
 
   FOREIGN KEY (user_id) REFERENCES user(id),
   FOREIGN KEY (language_id) REFERENCES language(id)
