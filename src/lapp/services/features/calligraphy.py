@@ -8,11 +8,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import CalligraphyDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Calligraphy
 from ...models.system_data import Source, Tag
 from ...core.database import db_manager
 from ..containers import LessonService, LanguageService
 from ..components import CharacterService, WordService, PassageService
+from ..data_collection import ProgressTrackingService
 from ...utils import update_score
 
 lesson_service = LessonService()
@@ -20,6 +22,7 @@ language_service = LanguageService()
 character_service = CharacterService()
 passage_service = PassageService()
 word_service = WordService()
+progress_tracking_service = ProgressTrackingService()
 
 class CalligraphyService:
     def _serialize(self, calligraphy: Calligraphy | None, as_dict: bool, include_relations: bool) -> Calligraphy | dict | None:
@@ -388,6 +391,8 @@ class CalligraphyService:
         self,
         calligraphy_id: str,
         score: float,
+        duration_ms: float,
+        hint_used: bool = False,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -438,6 +443,22 @@ class CalligraphyService:
             
             if result:
                 logger.info(f"Updated CalligraphyFeature {calligraphy_id} score to {calligraphy.score} and difficulty to {calligraphy.difficulty}")
+
+                progress_tracking_service.create(
+                    data=ProgressTrackingDict(
+                        user_id=calligraphy.lesson.user_id,
+                        language_id=calligraphy.lesson.language_id,
+                        element_id=calligraphy_id,
+                        element_type="calligraphy",
+                        element_status=calligraphy.status,
+                        score_before=previous_score,
+                        score_after=result.score,
+                        result=result.score > previous_score,
+                        duration_ms=duration_ms,
+                        hint_used=hint_used,
+                    ),
+                    session=session,
+                )
 
             if calligraphy.score != previous_score:
                 lesson_service.update_score(calligraphy.lesson_id, session=session)

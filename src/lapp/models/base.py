@@ -149,12 +149,15 @@ class BaseElementModel(Base):
             overlaps="sources",
         )
     
-    def get_progress_tracking(self):
+    def get_progress_tracking(self) -> List["ProgressTracking"]:
         """Retrieve all ProgressTracking entries linked to this element."""
         from ..models.data_collection import ProgressTracking
         from ..core.database import db_manager
         
-        return db_manager.find_by_attr(ProgressTracking, {"element_id": self.id})
+        pts = db_manager.find_by_attr(ProgressTracking, {"element_id": self.id})
+        if isinstance(pts, list):
+            return pts
+        return [pts] if pts else []
 
     def to_dict(self, include_relations: bool = True) -> dict:
         # Allow cooperative multiple-inheritance: call next to_dict in MRO

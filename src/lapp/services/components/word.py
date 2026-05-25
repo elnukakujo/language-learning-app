@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-import datetime
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ...core.database import db_manager

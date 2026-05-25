@@ -126,6 +126,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
     const [isFinished, setIsFinished] = useState(false);
     const [playQueue, setPlayQueue] = useState<number[]>([]);
     const [playingLineIndex, setPlayingLineIndex] = useState<number | null>(null);
+    const startTimeRef = useRef<number>(performance.now());
 
     const audioRefs = useRef<Record<number, HTMLAudioElement | null>>({});
     const previousLineIndexRef = useRef<number>(currentLineIndex);
@@ -167,6 +168,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
         isSequencePlayingRef.current = false;
         previousLineIndexRef.current = firstUserLineIndex;
         skipRevealEffectRef.current = true;
+        startTimeRef.current = performance.now();
     }, [exercise.id]);
 
     useEffect(() => {
@@ -287,7 +289,9 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
 
                     setVisibleLineIndex(conversation.lines.length - 1);
                     const averageScore = userLineIndices.reduce((acc, idx) => acc + (lineStates[idx]?.similarityScore ?? 0), 0) / userLineIndices.length;
-                    updateScoreById(exercise.id!, averageScore).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    const attemptNumber = userLineIndices.reduce((acc, idx) => acc + (lineStates[idx]?.attempts ?? 0), 0) + userLineIndices.length;
+                    updateScoreById(exercise.id!, averageScore, duration_ms, false, attemptNumber).catch(console.error);
                     setIsFinished(true);
                 } else {
                     const nextUserLine = userLineIndices.find((i) => i > currentLineIndex)!;
@@ -304,7 +308,12 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                 });
  
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, 0).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    const completedUserLines = userLineIndices.filter((idx) => idx < currentLineIndex).length;
+                    const previousAttempts = userLineIndices
+                        .filter((idx) => idx < currentLineIndex)
+                        .reduce((acc, idx) => acc + (lineStates[idx]?.attempts ?? 0) + 1, 0);
+                    updateScoreById(exercise.id!, 0, duration_ms, false, previousAttempts + newAttempts).catch(console.error);
                     setIsFinished(true);
                 }
             }

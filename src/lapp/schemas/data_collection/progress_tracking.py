@@ -13,4 +13,4 @@ class ProgressTrackingDict(BaseDataCollectionDict):
     attempt_number: Optional[int] = None
     session_completed: Optional[bool] = None
 
-    element: Optional[BaseElementDict] = None
+    element_id: Optional[str] = None

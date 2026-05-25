@@ -3,6 +3,7 @@
 import { evaluateText, updateScoreById } from "@/api/process";
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -40,6 +41,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         setFilledAnswers(Array(totalBlanks).fill(null));
@@ -48,6 +50,7 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
         setCurrentLevel(null);
         setIsLoading(false);
         setFeedbackMessage(null);
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,12 +68,14 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
             setCurrentLevel(getLevelForScore(result.score, "type_in_the_blank"));
             if (result.correct === true) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, result.score).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, result.score, duration_ms, false, attempts + 1).catch(console.error);
             } else {
                 const newAttempts = attempts + 1;
                 setAttempts(newAttempts);
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, result.score).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    updateScoreById(exercise.id!, result.score, duration_ms, false, newAttempts).catch(console.error);
                 }
             }
             setIsLoading(false);

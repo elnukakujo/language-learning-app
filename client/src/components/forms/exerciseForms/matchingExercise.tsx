@@ -2,6 +2,7 @@
 
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { updateScoreById } from "@/api/process";
@@ -30,6 +31,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
     const numColumns = pairs[0].length;
 
     const [shuffledPairs, setShuffledPairs] = useState<Item[][]>([]);
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         // Shuffle each column independently
@@ -48,6 +50,7 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         setAttempts(3);
         setSelection([]);
         setIsSuccess(false);
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     const [attempts, setAttempts] = useState<number>(3);
@@ -91,7 +94,8 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
 
     useEffect(() => {
         if (isSuccess) {
-            updateScoreById(exercise.id!, 1).catch(console.error);
+            const duration_ms = Math.round(performance.now() - startTimeRef.current);
+            updateScoreById(exercise.id!, 1, duration_ms, false, 4 - attempts).catch(console.error);
         };
     }, [isSuccess, exercise]);
 

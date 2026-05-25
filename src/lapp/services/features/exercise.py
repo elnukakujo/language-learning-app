@@ -7,9 +7,11 @@ import logging
 from ...core.database import db_manager
 from ...models.features import Exercise
 from ...schemas.features import ExerciseDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.system_data import Tag, Source
 from ...utils import update_score, update_difficulty
 from ..containers import LessonService
+from ..data_collection import ProgressTrackingService
 from .calligraphy import CalligraphyService
 from .grammar import GrammarService
 from .vocabulary import VocabularyService
@@ -20,6 +22,7 @@ lesson_service = LessonService()
 calligraphy_service = CalligraphyService()
 grammar_service = GrammarService()
 vocabulary_service = VocabularyService()
+progress_tracking_service = ProgressTrackingService()
 
 class ExerciseService:
     def _serialize(self, exercise: Exercise | None, as_dict: bool, include_relations: bool) -> Exercise | dict | None:
@@ -295,7 +298,10 @@ class ExerciseService:
         self,
         ex_id: str,
         score: float,
+        duration_ms: float,
         session: Optional[Session] = None,
+        hint_used: bool = False,
+        attempt_number: Optional[int] = None,
         as_dict: bool = False,
         include_relations: bool = True,
     ) -> Exercise | dict | None:
@@ -329,16 +335,51 @@ class ExerciseService:
             if result:
                 logger.info(f"Updated exercise {ex_id} score to {exercise.score} and difficulty to {exercise.difficulty}")
 
+                progress_tracking_service.create(
+                    data=ProgressTrackingDict(
+                        user_id=exercise.lesson.user_id,
+                        language_id=exercise.lesson.language_id,
+                        element_id=ex_id,
+                        element_type="exercise",
+                        element_status=exercise.status,
+                        score_before=previous_score,
+                        score_after=result.score,
+                        result=result.score > previous_score,
+                        duration_ms=duration_ms,
+                        hint_used=hint_used,
+                        attempt_number=attempt_number,
+                    ),
+                    session=session,
+                )
+
             for vocabulary in exercise.related_vocabulary:
-                vocabulary_service.update_score(vocabulary.id, score=score, session=session)
+                vocabulary_service.update_score(
+                    vocabulary.id,
+                    score=score,
+                    duration_ms=duration_ms,
+                    hint_used=hint_used,
+                    session=session,
+                )
                 logger.info(f"Updated vocabulary {vocabulary.id} score due to exercise {ex_id}")
 
             for grammar in exercise.related_grammar:
-                grammar_service.update_score(grammar.id, score=score, session=session)
+                grammar_service.update_score(
+                    grammar.id,
+                    score=score,
+                    duration_ms=duration_ms,
+                    hint_used=hint_used,
+                    session=session,
+                )
                 logger.info(f"Updated grammar {grammar.id} score due to exercise {ex_id}")
 
             for calligraphy in exercise.related_calligraphy:
-                calligraphy_service.update_score(calligraphy.id, score=score, session=session)
+                calligraphy_service.update_score(
+                    calligraphy.id,
+                    score=score,
+                    duration_ms=duration_ms,
+                    hint_used=hint_used,
+                    session=session,
+                )
                 logger.info(f"Updated calligraphy {calligraphy.id} score due to exercise {ex_id}")
 
             if exercise.score != previous_score:

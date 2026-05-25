@@ -2,7 +2,7 @@
 
 import BackButton from "@/components/buttons/backButton";
 import { updateScoreById } from "@/api/process";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type Vocabulary from "@/interface/features/Vocabulary";
 import WordCard from "../componentCards/wordCard";
 import SentenceCard from "../componentCards/sentenceCard";
@@ -12,10 +12,13 @@ import ElementTagsCard from "../elementCards/elementTagsCard";
 
 export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vocabulary[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    let vocabulary: Vocabulary = vocabularies[currentIndex];
+    const vocabulary: Vocabulary = vocabularies[currentIndex];
+    const startTimeRef = useRef<number>(performance.now());
+    const [hintUsed, setHintUsed] = useState<boolean>(false);
 
     useEffect(() => {
-        vocabulary = vocabularies[currentIndex];
+        startTimeRef.current = performance.now();
+        setHintUsed(false);
     }, [currentIndex]);
 
     const [hiddenTranslation, setHiddenTranslation] = useState<boolean>(true);
@@ -23,7 +26,8 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
     const [hiddenAdditionalInformations, setHiddenAdditionalInformations] = useState<boolean>(true);
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(vocabulary.id!, isCorrect ? 1 : 0);
+        const duration_ms = Math.round(performance.now() - startTimeRef.current);
+        updateScoreById(vocabulary.id!, isCorrect ? 1 : 0, duration_ms, hintUsed);
     };
 
     const handleGoNext = () => {
@@ -56,7 +60,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                         <button className="bg-yellow-500 text-white rounded-md p-2" onClick={() => setHiddenAdditionalInformations(!hiddenAdditionalInformations)}>
                             {hiddenAdditionalInformations ? "Show Additional Informations" : "Hide Additional Informations"}
                         </button>
-                        <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => { setHiddenTranslation(false); }}>
+                        <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => { setHiddenTranslation(false); setHintUsed(true); }}>
                             Show Translation
                         </button>
                     </>

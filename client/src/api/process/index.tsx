@@ -23,22 +23,28 @@ export async function evaluateSpeech(exerciseId: string, user_audio_url: string,
 }
 
 // ============= Scoring API =============
-export async function updateScoreById(elementId: string, score: number) {
+export async function updateScoreById(
+  elementId: string,
+  score: number,
+  duration_ms: number,
+  hint_used: boolean = false,
+  attempt_number?: number,
+) {
   let endpoint = "";
-  let payload: Record<string, string|number> = {};
+  let payload: Record<string, string | number | boolean> = {};
 
   if (elementId.startsWith("voc_")) {
     endpoint = `${BASE_URL}/api/vocabulary/score/`;
-    payload = { vocabulary_id: elementId, score: score };
+    payload = { vocabulary_id: elementId, score, duration_ms, hint_used };
   } else if (elementId.startsWith("gram_")) {
     endpoint = `${BASE_URL}/api/grammar/score`;
-    payload = { grammar_id: elementId, score: score };
+    payload = { grammar_id: elementId, score, duration_ms, hint_used };
   } else if (elementId.startsWith("call_")) {
     endpoint = `${BASE_URL}/api/calligraphy/score`;
-    payload = { calligraphy_id: elementId, score: score };
+    payload = { calligraphy_id: elementId, score, duration_ms, hint_used };
   } else if (elementId.startsWith("ex_")) {
     endpoint = `${BASE_URL}/api/exercise/score`;
-    payload = { exercise_id: elementId, score: score };
+    payload = { exercise_id: elementId, score, duration_ms, hint_used, ...(attempt_number !== undefined ? { attempt_number } : {}) };
   } else {
     throw new Error(`Unsupported element ID for scoring: ${elementId}`);
   }

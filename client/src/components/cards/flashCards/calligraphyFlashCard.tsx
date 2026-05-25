@@ -1,7 +1,7 @@
 "use client";
 
 import { updateScoreById } from "@/api/process";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Calligraphy from "@/interface/features/Calligraphy";
 import BackButton from "@/components/buttons/backButton";
 import CharacterCard from "../componentCards/characterCard";
@@ -13,10 +13,13 @@ import ElementPerformanceCard from "../elementCards/elementPerformanceCard";
 
 export default function CalligraphyFlashCard({ calligraphies }: { calligraphies: Calligraphy[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    let calligraphy: Calligraphy = calligraphies[currentIndex];
+    const calligraphy: Calligraphy = calligraphies[currentIndex];
+    const startTimeRef = useRef<number>(performance.now());
+    const [hintUsed, setHintUsed] = useState<boolean>(false);
 
     useEffect(() => {
-        calligraphy = calligraphies[currentIndex];
+        startTimeRef.current = performance.now();
+        setHintUsed(false);
     }, [currentIndex]);
         
     const [hiddenTranslation, setHiddenTranslation] = useState<boolean>(true);
@@ -25,7 +28,8 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
 
     const handleGrade = (isCorrect: boolean) => {
         setGraded(true);
-        updateScoreById(calligraphy.id!, isCorrect ? 1 : 0);
+        const duration_ms = Math.round(performance.now() - startTimeRef.current);
+        updateScoreById(calligraphy.id!, isCorrect ? 1 : 0, duration_ms, hintUsed);
     };
 
     const handleGoNext = () => {
@@ -68,7 +72,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                         <button className="bg-yellow-500 text-white rounded-md p-2" onClick={() => setHiddenAdditionalInformations(!hiddenAdditionalInformations)}>
                             {hiddenAdditionalInformations ? "Show Additional Informations" : "Hide Additional Informations"}
                         </button>
-                        <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => { setHiddenTranslation(false); }}>
+                        <button className="bg-blue-500 text-white rounded-md p-2" onClick={() => { setHiddenTranslation(false); setHintUsed(true); }}>
                             Show Translation
                         </button>
                     </>

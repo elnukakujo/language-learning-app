@@ -347,6 +347,11 @@ def score_exercise():
                     example: 0.8
                     description: "The score for the exercise"
                     required: true
+                attempt_number:
+                    type: integer
+                    example: 2
+                    description: "The number of attempts made for the exercise"
+                    required: false
     responses:
         200:
             description: Exercise scored successfully
@@ -359,8 +364,19 @@ def score_exercise():
     data = request.json
     exercise_id = data['exercise_id']
     score = float(data['score'])
+    duration_ms = float(data['duration_ms'])
+    hint_used = bool(data.get('hint_used', False))
+    attempt_number = int(data['attempt_number']) if data.get('attempt_number') is not None else None
 
-    exercise = exercise_service.update_score(exercise_id, score, as_dict=True, include_relations=False)
+    exercise = exercise_service.update_score(
+        exercise_id,
+        score,
+        duration_ms=duration_ms,
+        hint_used=hint_used,
+        attempt_number=attempt_number,
+        as_dict=True,
+        include_relations=False,
+    )
     
     if exercise:
         return jsonify({

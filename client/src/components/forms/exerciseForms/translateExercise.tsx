@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
@@ -28,11 +29,13 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         setAttempts(0);
         setIsCorrect(false);
         setUserAnswer('');
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -44,12 +47,14 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
             setCurrentLevel(getLevelForScore(result.score, "translate"));
             if (result.correct === true) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, result.score).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, result.score, duration_ms, false, attempts + 1).catch(console.error);
             } else {
                 const newAttempts = attempts + 1;
                 setAttempts(newAttempts);
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, result.score).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    updateScoreById(exercise.id!, result.score, duration_ms, false, newAttempts).catch(console.error);
                 }
             }
             setIsLoading(false);

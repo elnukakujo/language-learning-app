@@ -6,10 +6,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import GrammarDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Grammar
 from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import PassageService, WordService
+from ..data_collection import ProgressTrackingService
 from ...core.database import db_manager
 from ...utils import update_score, update_difficulty
 
@@ -17,6 +19,7 @@ lesson_service = LessonService()
 language_service = LanguageService()
 word_service = WordService()
 passage_service = PassageService()
+progress_tracking_service = ProgressTrackingService()
 
 class GrammarService:
     def _serialize(self, grammar: Grammar | None, as_dict: bool, include_relations: bool) -> Grammar | dict | None:
@@ -361,6 +364,8 @@ class GrammarService:
         self,
         grammar_id: str,
         score: float,
+        duration_ms: float,
+        hint_used: bool = False,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -411,6 +416,22 @@ class GrammarService:
             
             if result:
                 logger.info(f"Updated GrammarFeature {grammar_id} score to {grammar.score} and difficulty to {grammar.difficulty}")
+
+                progress_tracking_service.create(
+                    data=ProgressTrackingDict(
+                        user_id=grammar.lesson.user_id,
+                        language_id=grammar.lesson.language_id,
+                        element_id=grammar_id,
+                        element_type="grammar",
+                        element_status=grammar.status,
+                        score_before=previous_score,
+                        score_after=result.score,
+                        result=result.score > previous_score,
+                        duration_ms=duration_ms,
+                        hint_used=hint_used,
+                    ),
+                    session=session,
+                )
 
             if grammar.score != previous_score:
                 lesson_service.update_score(grammar.lesson_id, session=session)

@@ -1,7 +1,7 @@
 "use client";
 
 import type Grammar from "@/interface/features/Grammar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { updateScoreById } from "@/api/process";
 import BackButton from "../../buttons/backButton";
 import GrammarCard from "../grammarCard";
@@ -13,16 +13,18 @@ import WordCard from "../componentCards/wordCard";
 
 export default function GrammarFlashCard({ grammars }: { grammars: Grammar[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    let grammar: Grammar = grammars[currentIndex];
+    const grammar: Grammar = grammars[currentIndex];
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
-        grammar = grammars[currentIndex];
+        startTimeRef.current = performance.now();
     }, [currentIndex]);
 
 
     const handleGoNext = () => {
+        const duration_ms = Math.round(performance.now() - startTimeRef.current);
+        updateScoreById(grammar.id!, 1, duration_ms, false);
         setCurrentIndex(currentIndex + 1);
-        updateScoreById(grammar.id!, 1);
     }
 
     return (

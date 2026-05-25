@@ -400,8 +400,17 @@ def score_vocabulary():
     data = request.json
     vocabulary_id = data['vocabulary_id']
     score = float(data['score'])
+    duration_ms = float(data['duration_ms'])
+    hint_used = bool(data.get('hint_used', False))
 
-    vocabulary = vocabulary_service.update_score(vocabulary_id, score, as_dict=True, include_relations=False)
+    vocabulary = vocabulary_service.update_score(
+        vocabulary_id,
+        score,
+        duration_ms=duration_ms,
+        hint_used=hint_used,
+        as_dict=True,
+        include_relations=False,
+    )
     
     if vocabulary:
         return jsonify({

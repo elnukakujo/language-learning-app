@@ -3,6 +3,7 @@
 import { updateScoreById } from "@/api/process";
 import type Exercise from "@/interface/features/Exercise";
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import shuffle from 'lodash/shuffle';
@@ -22,12 +23,14 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
     const [filledAnswers, setFilledAnswers] = useState<(string | null)[]>(Array(totalBlanks).fill(null));
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [attempts, setAttempts] = useState(0);
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         setWordBank(shuffle(correctAnswers));
         setFilledAnswers(Array(totalBlanks).fill(null));
         setIsCorrect(false);
         setAttempts(0);
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     // Next unfilled blank index
@@ -62,11 +65,14 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
 
         if (filledAnswers.every((ans, idx) => ans === correctAnswers[idx])) {
             setIsCorrect(true);
-            updateScoreById(exercise.id!, 1).catch(console.error);
+            const duration_ms = Math.round(performance.now() - startTimeRef.current);
+            updateScoreById(exercise.id!, 1, duration_ms, false, attempts + 1).catch(console.error);
         } else {
-            setAttempts(prev => prev + 1);
+            const newAttempts = attempts + 1;
+            setAttempts(newAttempts);
             if (attempts >= 2) {
-                updateScoreById(exercise.id!, 0).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, 0, duration_ms, false, newAttempts).catch(console.error);
             }
         }
     };

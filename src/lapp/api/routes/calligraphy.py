@@ -425,8 +425,17 @@ def score_calligraphy():
     data = request.json
     calligraphy_id = data['calligraphy_id']
     score = float(data['score'])
+    duration_ms = float(data['duration_ms'])
+    hint_used = bool(data.get('hint_used', False))
 
-    calligraphy = calligraphy_service.update_score(calligraphy_id, score, as_dict=True, include_relations=False)
+    calligraphy = calligraphy_service.update_score(
+        calligraphy_id,
+        score,
+        duration_ms=duration_ms,
+        hint_used=hint_used,
+        as_dict=True,
+        include_relations=False,
+    )
     
     if calligraphy:
         return jsonify({

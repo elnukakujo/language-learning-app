@@ -6,10 +6,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import VocabularyDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Vocabulary
 from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import WordService, PassageService
+from ..data_collection import ProgressTrackingService
 from ...core.database import db_manager
 from ...utils import update_score, update_difficulty
 
@@ -17,6 +19,7 @@ lesson_service = LessonService()
 language_service = LanguageService()
 word_service = WordService()
 passage_service = PassageService()
+progress_tracking_service = ProgressTrackingService()
 
 
 class VocabularyService:
@@ -368,6 +371,8 @@ class VocabularyService:
         self,
         voc_id: str,
         score: float,
+        duration_ms: float,
+        hint_used: bool = False,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -418,6 +423,22 @@ class VocabularyService:
 
             if result:
                 logger.info(f"Updated VocabularyFeature {voc_id} score to {vocabulary.score} and difficulty to {vocabulary.difficulty}")
+
+                progress_tracking_service.create(
+                    data=ProgressTrackingDict(
+                        user_id=vocabulary.lesson.user_id,
+                        language_id=vocabulary.lesson.language_id,
+                        element_id=voc_id,
+                        element_type="vocabulary",
+                        element_status=vocabulary.status,
+                        score_before=previous_score,
+                        score_after=result.score,
+                        result=result.score >= previous_score, # Consider it a "success" (1) if the score improved or stayed the same
+                        duration_ms=min(duration_ms, 10*60*1000), # Cap duration at 10 minutes to avoid skewing data with outliers
+                        hint_used=hint_used,
+                    ),
+                    session=session,
+                )
 
             if vocabulary.score != previous_score:
                 lesson_service.update_score(vocabulary.lesson_id, session=session)

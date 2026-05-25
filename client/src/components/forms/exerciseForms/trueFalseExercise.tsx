@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRef } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -21,22 +22,27 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
         const [attempts, setAttempts] = useState<number>(0);
     const [userAnswer, setUserAnswer] = useState<boolean>(true);
         const hasFeedback = isCorrect || attempts > 0;
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
             setIsCorrect(false);
             setAttempts(0);
             setUserAnswer(true);
+            startTimeRef.current = performance.now();
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (String(userAnswer) === normalize(answer.toLowerCase())) {
             setIsCorrect(true);
-            updateScoreById(exercise.id!, 1).catch(console.error);
+            const duration_ms = Math.round(performance.now() - startTimeRef.current);
+            updateScoreById(exercise.id!, 1, duration_ms, false, attempts + 1).catch(console.error);
         } else {
+            const newAttempts = attempts + 1;
             setIsCorrect(false);
-            setAttempts((prev) => prev + 1);
-            updateScoreById(exercise.id!, 0).catch(console.error);
+            setAttempts(newAttempts);
+            const duration_ms = Math.round(performance.now() - startTimeRef.current);
+            updateScoreById(exercise.id!, 0, duration_ms, false, newAttempts).catch(console.error);
         };
     };
 

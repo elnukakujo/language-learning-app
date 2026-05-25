@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
@@ -25,6 +25,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string } | null>(null);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
     const hasFeedback = isCorrect || attempts > 0;
+    const startTimeRef = useRef<number>(performance.now());
 
     // Lifted state from AudioRecorder via onStatusChange
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
         setAudioUrl(null);
         setFeedbackMessage(null);
         setResetKey((k) => k + 1); // remount AudioRecorder to clear its state
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     // AudioRecorder calls this after a successful upload, giving us the server URL
@@ -60,12 +62,14 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
 
             if (result.correct) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, 1).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, 1, duration_ms, false, attempts + 1).catch(console.error);
             } else {
                 const newAttempts = attempts + 1;
                 setAttempts(newAttempts);
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, 0).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    updateScoreById(exercise.id!, 0, duration_ms, false, newAttempts).catch(console.error);
                 }
             }
 

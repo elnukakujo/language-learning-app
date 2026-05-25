@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,6 +28,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
     const [attempts, setAttempts] = useState<number>(0);
     const [currentLevel, setCurrentLevel] = useState<{ label: string; description: string, stars: string } | null>(null);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         setUserAnswer('');
@@ -35,6 +37,7 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
         setAttempts(0);
         setCurrentLevel(null);
         setFeedbackMessage(null);
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -46,12 +49,14 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
             setCurrentLevel(getLevelForScore(result.score, "essay"));
             if (result.correct === true) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, result.score).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, result.score, duration_ms, false, attempts + 1).catch(console.error);
             } else {
                 const newAttempts = attempts + 1;
                 setAttempts(newAttempts);
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, result.score).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    updateScoreById(exercise.id!, result.score, duration_ms, false, newAttempts).catch(console.error);
                 }
             }
             setIsLoading(false);

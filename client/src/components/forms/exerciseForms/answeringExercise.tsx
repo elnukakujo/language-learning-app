@@ -12,6 +12,7 @@ import { updateScoreById, evaluateText } from "@/api/process";
 import ElementMediaCard from "@/components/cards/elementCards/elementMediaCard";
 import { getLevelForScore } from "@/utils/speech_levels";
 import AutoSizeTextArea from "@/components/textArea/autoSizeTextArea";
+import { useRef } from "react";
 
 export default function AnsweringExercise({ exercise }: { exercise: Exercise }) {
     const question = exercise.question || "";
@@ -26,6 +27,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
     const hasFeedback = isCorrect || attempts > 0;
+    const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
         setUserAnswer('');
@@ -34,6 +36,7 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
         setIsCorrect(false);
         setAttempts(0);
         setFeedbackMessage(null);
+        startTimeRef.current = performance.now();
     }, [exercise]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -45,12 +48,14 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
             setCurrentLevel(getLevelForScore(result.score, "answering"));
             if (result.correct === true) {
                 setIsCorrect(true);
-                updateScoreById(exercise.id!, result.score).catch(console.error);
+                const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                updateScoreById(exercise.id!, result.score, duration_ms, false, attempts + 1).catch(console.error);
             } else {
                 const newAttempts = attempts + 1;
                 setAttempts(newAttempts);
                 if (newAttempts >= 3) {
-                    updateScoreById(exercise.id!, result.score).catch(console.error);
+                    const duration_ms = Math.round(performance.now() - startTimeRef.current);
+                    updateScoreById(exercise.id!, result.score, duration_ms, false, newAttempts).catch(console.error);
                 }
             }
             setIsLoading(false);
