@@ -320,8 +320,8 @@ class PassageService:
                         ),
                         session=session
                     )
-                    if created_word.id not in [w.id for w in words]:
-                        words.append(created_word)
+                    if created_word.id not in words:
+                        words[created_word.id] = created_word
 
 
             def resolve(field: str, existing_val):

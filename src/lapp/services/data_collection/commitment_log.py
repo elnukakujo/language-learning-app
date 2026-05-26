@@ -6,9 +6,7 @@ logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from ...core.database import db_manager
-from ...models.data_collection.commitment_log import CommitmentLog
-from ...models.data_collection.daily_stats import DailyStats
-
+from ...models.data_collection import CommitmentLog, DailyStats, ProgressTracking
 
 class CommitmentLogService:
     def _serialize(
@@ -139,6 +137,57 @@ class CommitmentLogService:
         if result is None:
             raise RuntimeError("Failed to create commitment log entry")
         return result
+    
+    def apply_progress_tracking(
+        self,
+        progress_tracking_id: str,
+        session: Session,
+    ) -> CommitmentLog:
+        """Append-only update invoked when a review session is completed.
+
+        Caller MUST pass an open session.
+        """
+        try:
+            progress_tracking = db_manager.find_by_attr(
+                model_class=ProgressTracking,
+                attr_values={"id": progress_tracking_id},
+                session=session,
+            )
+
+            if progress_tracking is None:
+                raise ValueError(f"ProgressTracking entry not found: {progress_tracking_id}")
+
+            commitment_log = (
+                session.query(CommitmentLog)
+                .filter(
+                    CommitmentLog.user_id == progress_tracking.user_id,
+                    CommitmentLog.language_id == progress_tracking.language_id,
+                )
+                .order_by(CommitmentLog.created_at.desc())
+                .first()
+            )
+
+            if commitment_log is None:
+                commitment_log = self.create(
+                    user_id=progress_tracking.user_id,
+                    language_id=progress_tracking.language_id,
+                    session=session,
+                )
+
+            # Apply append-only aggregation
+            if commitment_log.streak_last_computed_at.split("T")[0] != datetime.utcnow().isoformat().split("T")[0]: # Only count a new day if the last computed streak date is not today
+                commitment_log.days_active += 1
+
+            commitment_log.total_items_reviewed += 1
+            commitment_log.total_time_ms += int(progress_tracking.duration_ms)
+
+            result = db_manager.modify(obj=commitment_log, session=session)
+            if result is None:
+                raise RuntimeError("Failed to persist commitment log update")
+            return result
+        except Exception as error:
+            logger.error(f"Failed to apply progress tracking to commitment log: {error}")
+            raise
 
     def apply_daily_stats(
         self,
@@ -177,12 +226,9 @@ class CommitmentLogService:
                 )
 
             # Apply append-only aggregation
-            commitment_log.days_active += 1
-            commitment_log.total_items_reviewed += int(daily_stats.items_reviewed or 0)
-            commitment_log.total_time_ms += int(daily_stats.time_studied_ms or 0)
             if (daily_stats.current_streak_length or 0) > (commitment_log.longest_streak_ever or 0):
                 commitment_log.longest_streak_ever = int(daily_stats.current_streak_length)
-            commitment_log.streak_last_computed_at = datetime.utcnow().isoformat()
+            commitment_log.streak_last_computed_at = datetime.now().isoformat()
 
             result = db_manager.modify(obj=commitment_log, session=session)
             if result is None:
@@ -191,6 +237,3 @@ class CommitmentLogService:
         except Exception as error:
             logger.error(f"Failed to apply daily stats to commitment log: {error}")
             raise
-
-
-commitment_log_service = CommitmentLogService()

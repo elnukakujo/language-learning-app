@@ -7,11 +7,12 @@ from ...core.database import db_manager
 from ...models.data_collection.progress_tracking import ProgressTracking
 from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from .daily_stats import DailyStatsService
+from .commitment_log import CommitmentLogService
 
 logger = logging.getLogger(__name__)
 
 daily_stats_service = DailyStatsService()
-
+commitment_log_service = CommitmentLogService()
 
 class ProgressTrackingService:
     def _serialize(
@@ -99,6 +100,7 @@ class ProgressTrackingService:
 
             result = db_manager.insert(obj=entry, session=session)
             daily_stats_service.update(progress_tracking_id=result.id, session=session)
+            commitment_log_service.apply_progress_tracking(progress_tracking_id=result.id, session=session)
             return self._serialize(result, as_dict, include_relations)
         except Exception as error:
             if owns_session:

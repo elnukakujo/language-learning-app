@@ -203,10 +203,6 @@ class DailyStatsService:
             daily_goal_ms = user_preferences.daily_goal_minutes * 60 * 1000
 
         streak_just_set = False
-        
-        logger.debug(daily_stats.time_studied_ms)
-        logger.debug(daily_goal_ms)
-
         if daily_stats.time_studied_ms >= daily_goal_ms and daily_stats.streak_day is False:
             streak_just_set = True
             daily_stats.streak_day = True
@@ -225,10 +221,10 @@ class DailyStatsService:
                 .first()
             )
 
-            if previous_daily_stats is not None:
+            if previous_daily_stats.streak_day is True:
                 daily_stats.current_streak_length = previous_daily_stats.current_streak_length + 1
             else:
-                daily_stats.current_streak_length = 1
+                daily_stats.current_streak_length = 0
 
         result = db_manager.modify(obj=daily_stats, session=session)
         if result is None:
