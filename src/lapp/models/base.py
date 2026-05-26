@@ -252,7 +252,7 @@ class BaseContainerModel(BaseElementModel):
     """
     __abstract__ = True
     
-    level = Column(String)
+    level = Column(Integer, default=0)
     description = Column(String, default="")
 
     # Foreign key

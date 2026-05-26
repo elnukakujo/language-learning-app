@@ -14,7 +14,7 @@ export default async function WordPage({
 }: {
   params: { language_id: string; word_id: string };
 }) {
-  const { word_id } = await params;
+  const { word_id, language_id } = await params;
   const word = (await getWordById(word_id)) as Word & {
     characters?: Partial<Character>[];
     passages?: Partial<Passage>[];
@@ -27,7 +27,7 @@ export default async function WordPage({
         <WordCard word={word} />
 
         <RelatedCard
-          languageId={params.language_id}
+          languageId={language_id}
           characters={word.characters}
           passages={word.passages}
         />

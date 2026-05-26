@@ -125,7 +125,7 @@ class GrammarService:
 
     def get_by_level(
         self,
-        level: str,
+        level: int,
         language_id: Optional[str] = None,
         lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
@@ -138,7 +138,7 @@ class GrammarService:
         Args:
             language_id: The id of the language to filter Grammar items
             lesson_id: The id of the lesson to filter Grammar items
-            level: Grammar level (e.g., 'A1', 'B2')
+            level: Grammar level (e.g., 0, 1, 2, etc.)
         
         Returns:
             List of matching Grammar objects

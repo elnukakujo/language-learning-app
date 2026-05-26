@@ -89,10 +89,10 @@ def create_lesson():
                     description: A brief description of the lesson
                     example: "This lesson covers basic phrases in the language."
                 level:
-                    type: string
+                    type: number
                     required: false
                     description: The proficiency level of the lesson
-                    example: "A1"
+                    example: 0
     responses:
         201:
             description: Lesson created successfully
@@ -167,10 +167,10 @@ def update_lesson(lesson_id: str):
                     required: false
                     example: "This lesson covers basic phrases in the language."
                 level:
-                    type: string
+                    type: number
                     description: The proficiency level of the lesson
                     required: false
-                    example: "A1" 
+                    example: 0
     """
     try:
         data = LessonDict(**request.json)

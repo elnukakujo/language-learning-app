@@ -26,7 +26,7 @@ class BaseModelWithMediaFiles(BaseModel):
 
 # High-level base schemas for languages and lessons containers
 class BaseContainerDict(BaseElementDict):
-    level: Optional[str] = None
+    level: Optional[int] = None
     description: Optional[str] = None
 
 # Middle-level base schema for features like Vocabulary, Grammar, Calligraphy, Exercise

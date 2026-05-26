@@ -128,7 +128,7 @@ class VocabularyService:
         self,
         language_id: Optional[str],
         lesson_id: Optional[str],
-        level: str,
+        level: int,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -139,7 +139,7 @@ class VocabularyService:
         Args:
             language_id: The id of the language to filter vocabulary items
             lesson_id: The id of the lesson to filter vocabulary items
-            level: Vocabulary level (e.g., 'A1', 'B2')
+            level: Vocabulary level (e.g., 0, 1, 2, etc.)
         
         Returns:
             List of matching VocabularyFeature objects

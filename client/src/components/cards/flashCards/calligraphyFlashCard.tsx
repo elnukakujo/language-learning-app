@@ -64,7 +64,7 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                 )}
                 <ElementTagsCard element={calligraphy}/>
                 <ElementSourcesCard element={calligraphy}/>
-                <ElementPerformanceCard element={calligraphy} />
+                <ElementPerformanceCard element={calligraphy}/>
             </section>
             <section className="flex flex-row space-x-4">
                 {hiddenTranslation ? (

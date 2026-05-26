@@ -32,7 +32,7 @@ export default async function VocabularyPage({ params }: { params: { language_id
                 />
                 <ElementTagsCard element={vocabulary} />
                 <ElementSourcesCard element={vocabulary} />
-                <ElementPerformanceCard element={vocabulary} />
+                <ElementPerformanceCard element={vocabulary}/>
             </article>
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/voc/${voc_id}/update`}>

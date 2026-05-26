@@ -100,7 +100,7 @@ class LessonService:
 
     def get_by_level(
         self,
-        level: str,
+        level: int,
         language_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
@@ -111,7 +111,7 @@ class LessonService:
         
         Args:
             language_id: The id of the language to filter lessons
-            level: Lesson level (e.g., 'A1', 'B2')
+            level: Lesson level (e.g., 0, 1, 2, etc.)
         
         Returns:
             List of matching LessonContainer objects
@@ -224,7 +224,7 @@ class LessonService:
                 return None
             
             # Update the existing object's attributes
-            update_data = data.model_dump(exclude={'id', 'language_id', 'score', 'status', 'created_at', 'last_seen_at'}, exclude_none=True)
+            update_data: LessonDict = data.model_dump(exclude={'id', 'language_id', 'score', 'status', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
             for key, value in update_data.items():
                 setattr(existing, key, value)

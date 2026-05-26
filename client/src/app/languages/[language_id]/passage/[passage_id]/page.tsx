@@ -14,7 +14,7 @@ export default async function PassagePage({
 }: {
   params: { language_id: string; passage_id: string };
 }) {
-  const { passage_id } = await params;
+  const { passage_id, language_id } = await params;
   const passage = (await getPassageById(passage_id)) as Passage & {
     words?: Partial<Word>[];
     characters?: Partial<Character>[];
@@ -27,7 +27,7 @@ export default async function PassagePage({
         <SentenceCard sentence={passage} />
 
         <RelatedCard
-          languageId={params.language_id}
+          languageId={language_id}
           words={passage.words}
           characters={passage.characters}
         />

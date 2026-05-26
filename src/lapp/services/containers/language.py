@@ -187,7 +187,7 @@ class LanguageService:
 
     def get_by_level(
         self,
-        level: str,
+        level: int,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -196,7 +196,7 @@ class LanguageService:
         Get all languages of a specific level.
         
         Args:
-            level: Language level (e.g., 'A1', 'B2')
+            level: Language level (e.g., 0, 1, 2, etc.)
         
         Returns:
             List of matching Language objects

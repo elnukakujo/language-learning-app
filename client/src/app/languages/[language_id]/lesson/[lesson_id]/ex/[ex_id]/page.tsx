@@ -56,7 +56,7 @@ export default async function ExercisePage( { params } : { params: { language_id
             
             <ElementTagsCard element={exercise} />
             <ElementSourcesCard element={exercise} />    
-            <ElementPerformanceCard element={exercise} />
+            <ElementPerformanceCard element={exercise}/>
 
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/ex/${exercise.id}/update`}>

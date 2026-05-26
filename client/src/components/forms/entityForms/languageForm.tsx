@@ -1,5 +1,6 @@
 "use client";
 
+import { languageProficiencySystems } from "@/utils/language_iso639";
 import {getUserById} from "@/api/user";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,8 +17,6 @@ import SourceSelector from "@/components/selectMenu/sourceSelector";
 import { getCurrentUserId } from "@/utils/user_cookie";
 import User from "@/interface/systemData/User";
 
-const LEVEL_OPTIONS: Array<Language["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
 const ISO639_2T_to_LANGUAGE: Record<string, string> = Object.fromEntries(
     Object.entries(LANGUAGE_to_ISO639_2T).map(([language, iso]) => [iso, language])
 );
@@ -32,7 +31,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
             name: "",
             alias: "",
             description: "",
-            level: "A1",
+            level: 0,
             flag: "",
             target_iso639_2t: "",
             source_iso639_2t: "eng",
@@ -45,7 +44,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
     const [name, setName] = useState<string>(languageData.name || "");
     const [alias, setAlias] = useState<string | undefined>(languageData.alias);
     const [description, setDescription] = useState<string | undefined>(languageData.description);
-    const [level, setLevel] = useState<Language["level"]>(languageData.level || "A1");
+    const [level, setLevel] = useState<Language["level"]>(languageData.level || 0);
     const [flag, setFlag] = useState<string | undefined>(languageData.flag);
     const [targetIso639_2t, setTargetIso639_2t] = useState<string | undefined>(languageData.target_iso639_2t);
     const [sourceIso639_2t, setSourceIso639_2t] = useState<string | undefined>(languageData.source_iso639_2t);
@@ -75,6 +74,13 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
         };
         fetchKnownLanguages();
     }, [userId]);
+
+    const [levelOptions, setLevelOptions] = useState<string[]>(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']); // Default options if no target language is selected
+    useEffect(() => {
+        if (targetIso639_2t) {
+            setLevelOptions(languageProficiencySystems[targetIso639_2t].levels.map((l) => l.code));
+        }
+    }, [targetIso639_2t]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -152,9 +158,9 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
 
             <ClassicSelectMenu
                 label="Level"
-                options={LEVEL_OPTIONS}
-                selectedOption={level}
-                onChange={(value) => setLevel(value as Language["level"])}
+                options={levelOptions}
+                selectedOption={levelOptions[level]}
+                onChange={(value) => setLevel(levelOptions.indexOf(value as string))}
                 required
             />
 

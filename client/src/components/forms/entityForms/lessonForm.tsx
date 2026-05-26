@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { languageProficiencySystems } from "@/utils/language_iso639";
+import { getLanguageById } from "@/api/language";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
 import UpdateButton from "@/components/buttons/updateButton";
@@ -11,8 +13,7 @@ import TagSelector from "@/components/selectMenu/tagSelector";
 import { createLesson, updateLesson } from "@/api/lesson";
 import type Lesson from "@/interface/containers/Lesson";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
-
-const LEVEL_OPTIONS: Array<Lesson["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
+import Language from "@/interface/containers/Language";
 
 export default function LessonForm({ lesson, language_id }: { lesson?: Partial<Lesson>; language_id: string }) {
     const router = useRouter();
@@ -23,7 +24,7 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
             language_id: language_id,
             title: "",
             description: "",
-            level: "A1"
+            level: 0
         };
     } else {
         lessonData = lesson;
@@ -31,9 +32,21 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
 
     const [title, setTitle] = useState<string>(lessonData.title || "");
     const [description, setDescription] = useState<string | undefined>(lessonData.description);
-    const [level, setLevel] = useState<Lesson["level"]>(lessonData.level || "A1");
+    const [level, setLevel] = useState<Lesson["level"]>(lessonData.level || 0);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(lessonData.tags ? lessonData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(lessonData.sources ? lessonData.sources.map(source => source.id!) : []);
+
+    const [levelOptions, setLevelOptions] = useState<string[]>(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']); // Default options if no target language is selected
+    useEffect(() => {
+        const getLanguageAndSetLevels = async () => {
+            const language: Language = await getLanguageById(language_id);
+            const targetIso639_2t = language.target_iso639_2t;
+            if (targetIso639_2t) {
+                setLevelOptions(languageProficiencySystems[targetIso639_2t].levels.map((l) => l.code));
+            }
+        };
+        getLanguageAndSetLevels();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -86,10 +99,10 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
 
             <ClassicSelectMenu
                 label="Level"
-                options={LEVEL_OPTIONS}
-                selectedOption={level}
-                onChange={(value) => setLevel(value as Lesson["level"])}
-                required={true}
+                options={levelOptions}
+                selectedOption={levelOptions[level]}
+                onChange={(value) => setLevel(levelOptions.indexOf(value as string))}
+                required
             />
 
             <TagSelector

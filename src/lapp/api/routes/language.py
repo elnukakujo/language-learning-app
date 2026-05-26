@@ -79,8 +79,8 @@ def create_language():
                     type: string
                     example: "Français"
                 level:
-                    type: string
-                    example: "A1"
+                    type: number
+                    example: 0
                     required: false
                 description:
                     type: string
@@ -154,8 +154,8 @@ def update_language(language_id: str):
                     type: string
                     example: "Français"
                 level:
-                    type: string
-                    example: "A1"
+                    type: number
+                    example: 0
                     required: false
                 description:
                     type: string

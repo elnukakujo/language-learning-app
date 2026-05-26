@@ -14,7 +14,7 @@ export default async function CharacterPage({
 }: {
   params: { language_id: string; character_id: string };
 }) {
-  const { character_id } = await params;
+  const { character_id, language_id } = await params;
   const character = (await getCharacterById(character_id)) as Character & {
     words?: Partial<Word>[];
     passages?: Partial<Passage>[];
@@ -27,7 +27,7 @@ export default async function CharacterPage({
         <CharacterCard character={character} />
 
         <RelatedCard
-          languageId={params.language_id}
+          languageId={language_id}
           words={character.words}
           passages={character.passages}
         />

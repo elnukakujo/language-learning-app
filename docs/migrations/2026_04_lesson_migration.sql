@@ -87,7 +87,7 @@ CREATE TABLE language (
     user_id TEXT NOT NULL,
     -- common container fields
     description TEXT,
-    level TEXT NOT NULL DEFAULT 'A1',
+    level INTEGER NOT NULL DEFAULT 0,
     score INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
@@ -114,7 +114,7 @@ CREATE TABLE lesson (
     user_id TEXT NOT NULL,
     -- common container fields
     description TEXT,
-    level TEXT NOT NULL DEFAULT 'A1',
+    level INTEGER NOT NULL DEFAULT 0,
     score INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen_at DATETIME,
@@ -524,7 +524,7 @@ INSERT INTO source (id, user_id, title, date, description, source_type) VALUES
 -- ============================================================================
 
 INSERT INTO language (id, user_id, description, level, score, last_seen_at, name, alias, flag, current_lesson_id)
-SELECT id, 'user_U0', description, level, score, last_seen, name, native_name, flag, current_unit
+SELECT id, 'user_U0', description, 0, score, last_seen, name, native_name, flag, current_unit
 FROM old_language;
 
 CREATE TEMP TABLE lesson_id_map AS
@@ -534,7 +534,7 @@ FROM old_unit;
 
 -- FIX: lesson now includes user_id
 INSERT INTO lesson (id, user_id, description, level, score, last_seen_at, title, language_id)
-SELECT lm.new_id, 'user_U0', ou.description, ou.level, ou.score, ou.last_seen, ou.title, ou.language_id
+SELECT lm.new_id, 'user_U0', ou.description, 0, ou.score, ou.last_seen, ou.title, ou.language_id
 FROM old_unit ou
 JOIN lesson_id_map lm ON ou.id = lm.old_id;
 

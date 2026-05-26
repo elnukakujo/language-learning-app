@@ -51,7 +51,7 @@ export default async function CalligraphyPage({ params }: { params: paramsType }
 
                 <ElementTagsCard element={calligraphy} />
                 <ElementSourcesCard element={calligraphy} />
-                <ElementPerformanceCard element={calligraphy} />
+                <ElementPerformanceCard element={calligraphy}/>
             </article>
             <nav className="flex flex-row space-x-4">
                 <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/call/${call_id}/update`}>
