@@ -344,7 +344,7 @@ class ExerciseService:
                         element_status=exercise.status,
                         score_before=previous_score,
                         score_after=result.score,
-                        result=result.score > previous_score,
+                        result=result.score >= previous_score, # Consider it a "success" (1) if the score improved or stayed the same
                         duration_ms=duration_ms,
                         hint_used=hint_used,
                         attempt_number=attempt_number,

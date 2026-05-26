@@ -123,7 +123,8 @@ class UserService:
                     user_id=user_id,
                     native_language_iso639_2=user_data.preferences.native_language_iso639_2 if user_data.preferences else [],
                     learning_goals=user_data.preferences.learning_goals if user_data.preferences else "",
-                    preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else []
+                    preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else [],
+                    daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20
                 ),
             )
 
@@ -188,7 +189,8 @@ class UserService:
                     user_id=user_id,
                     native_language_iso639_2=update_data.preferences.native_language_iso639_2 if update_data.preferences else [],
                     learning_goals=update_data.preferences.learning_goals if update_data.preferences else "",
-                    preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else []
+                    preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else [],
+                    daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20
                 ),
             )
 

@@ -9,9 +9,8 @@ logger = logging.getLogger(__name__)
 bp = Blueprint('daily_stats', __name__, url_prefix='/api/daily-stats')
 daily_stats_service = DailyStatsService()
 
-
 @bp.route('/me/today', methods=['GET'])
-def get_my_daily_stats_today():
+def get_daily_stats_today():
     """Get today's daily stats for the current user and language.
     ---
     tags:

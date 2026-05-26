@@ -23,6 +23,7 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
     const [native_language_iso639_2, setNativeLanguageIso639_2] = useState<string[]>(userData.preferences?.native_language_iso639_2 || []);
     const [learning_goals, setLearningGoals] = useState<string>(userData.preferences?.learning_goals || "");
     const [preferred_exercise_types, setPreferredExerciseTypes] = useState<string[]>(userData.preferences?.preferred_exercise_types || []);
+    const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(userData.preferences?.daily_goal_minutes || 20);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -35,7 +36,8 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 user_id: userData.id!,
                 native_language_iso639_2: native_language_iso639_2,
                 learning_goals: learning_goals,
-                preferred_exercise_types: preferred_exercise_types
+                preferred_exercise_types: preferred_exercise_types,
+                daily_goal_minutes: dailyGoalMinutes
             }
         };
         try {
@@ -87,6 +89,12 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                     selectedOption={preferred_exercise_types}
                     onChange={(selected) => setPreferredExerciseTypes(selected as string[])}
                     multiple
+                />
+                <ClassicSelectMenu
+                    label="Daily Goal (minutes)"
+                    options={['5', '10', '15', '20', '30', '45', '60']}
+                    selectedOption={dailyGoalMinutes.toString()}
+                    onChange={(selected) => setDailyGoalMinutes(parseInt((selected as string)))}
                 />
             </article>
 

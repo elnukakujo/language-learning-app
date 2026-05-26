@@ -16,6 +16,7 @@ from .word import bp as word_bp
 from .character import bp as character_bp
 from .passage import bp as passage_bp
 from .daily_stats import bp as daily_stats_bp
+from .commitment_log import commitment_log_bp
 __all__ = [
     language_bp,
     lesson_bp,
@@ -35,4 +36,5 @@ __all__ = [
     character_bp,
     passage_bp,
     daily_stats_bp,
+    commitment_log_bp,
 ]

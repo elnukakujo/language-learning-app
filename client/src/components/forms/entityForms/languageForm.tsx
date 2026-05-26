@@ -1,5 +1,6 @@
 "use client";
 
+import {getUserById} from "@/api/user";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import NewElementButton from "@/components/buttons/newElementButton";
@@ -13,10 +14,9 @@ import TagSelector from "@/components/selectMenu/tagSelector";
 import { LANGUAGE_to_ISO639_2T } from "@/utils/language_iso639";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
 import { getCurrentUserId } from "@/utils/user_cookie";
+import User from "@/interface/systemData/User";
 
 const LEVEL_OPTIONS: Array<Language["level"]> = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
-
 
 const ISO639_2T_to_LANGUAGE: Record<string, string> = Object.fromEntries(
     Object.entries(LANGUAGE_to_ISO639_2T).map(([language, iso]) => [iso, language])
@@ -51,7 +51,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
     const [sourceIso639_2t, setSourceIso639_2t] = useState<string | undefined>(languageData.source_iso639_2t);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(languageData.tags ? languageData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(languageData.sources ? languageData.sources.map(source => source.id!) : []);
-
+    
     useEffect(() => {
         const fetchUserId = async () => {
             const userId: string | null = await getCurrentUserId();
@@ -59,6 +59,22 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
         }
         fetchUserId();
     }, []);
+
+    const [knownLanguageISO639_2T, setKnownLanguageISO639_2T] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchKnownLanguages = async () => {
+            if (!userId) return;
+
+            try {
+                const response: User = await getUserById(userId);
+                setKnownLanguageISO639_2T(response.preferences?.native_language_iso639_2 || []);
+            } catch (error) {
+                console.error("Failed to fetch user data:", error);
+            }
+        };
+        fetchKnownLanguages();
+    }, [userId]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -152,7 +168,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
 
             <ClassicSelectMenu
                 label="Language Used to Study"
-                options={Object.keys(LANGUAGE_to_ISO639_2T)}
+                options={knownLanguageISO639_2T.map(iso => ISO639_2T_to_LANGUAGE[iso] || iso)}
                 selectedOption={ISO639_2T_to_LANGUAGE[sourceIso639_2t || ""] || ""}
                 onChange={(value) => setSourceIso639_2t(LANGUAGE_to_ISO639_2T[value] || "")}
                 required

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
@@ -12,6 +12,7 @@ class UserPreferences(Base):
     native_language_iso639_2 = Column(JSON, nullable=False, default=list)
     learning_goals = Column(String, default='')
     preferred_exercise_types = Column(JSON, default=list)
+    daily_goal_minutes = Column(Integer, default=20)
     last_updated = Column(DateTime, default=datetime.now())
     
     # Foreign keys

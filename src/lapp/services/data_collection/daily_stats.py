@@ -2,15 +2,17 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import logging
+logger = logging.getLogger(__name__)
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ...core.database import db_manager
 from ...models.data_collection.daily_stats import DailyStats
 from ...models.data_collection.progress_tracking import ProgressTracking
-
-logger = logging.getLogger(__name__)
-
+from ..system_data import UserPreferencesService
+user_preferences_service = UserPreferencesService()
+from .commitment_log import CommitmentLogService
+commitment_log_service = CommitmentLogService()
 
 class DailyStatsService:
     def _serialize(
@@ -32,6 +34,40 @@ class DailyStatsService:
         if not as_dict:
             return entries
         return [entry.to_dict(include_relations=include_relations) for entry in entries]
+
+    def is_session_complete(
+        self,
+        user_id: str,
+        language_id: str,
+        session: Optional[Session] = None
+    ) -> bool:
+        """Check if the current session has any progress tracking entries that haven't been applied to daily stats."""
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+
+        try:
+            today: datetime.date = datetime.now().date()
+            language_stats = db_manager.find_by_attr(
+                model_class=DailyStats,
+                attr_values={"user_id": user_id, "language_id": language_id},
+                session=session,
+                many=True
+            )
+
+            for stats in list(language_stats):
+                if stats.created_at.date() == today:
+                    today_stats = stats
+                    break
+            return today_stats.streak_day is True if today_stats else False
+        except Exception as error:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to check if session is complete: {error}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
 
     def get_by_id(
         self,
@@ -75,7 +111,7 @@ class DailyStatsService:
             session = db_manager.get_session()
 
         try:
-            today = datetime.utcnow().date()
+            today = datetime.now().date()
             entry = (
                 session.query(DailyStats)
                 .filter(
@@ -94,40 +130,6 @@ class DailyStatsService:
             if owns_session:
                 session.rollback()
             logger.error(f"Failed to get today's daily stats entry: {error}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
-    def get_today_for_user_no_create(
-        self,
-        user_id: str,
-        language_id: str,
-        session: Optional[Session] = None,
-        as_dict: bool = False,
-        include_relations: bool = True,
-    ) -> DailyStats | dict | None:
-        """Get today's DailyStats entry without creating a new row."""
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-
-        try:
-            today = datetime.now().date()
-            entry = (
-                session.query(DailyStats)
-                .filter(
-                    DailyStats.user_id == user_id,
-                    DailyStats.language_id == language_id,
-                    func.date(DailyStats.created_at) == today.isoformat(),
-                )
-                .first()
-            )
-            return self._serialize(entry, as_dict, include_relations)
-        except Exception as error:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get today's daily stats entry without creating one: {error}")
             raise
         finally:
             if owns_session:
@@ -179,7 +181,7 @@ class DailyStatsService:
         if progress_tracking is None:
             raise ValueError(f"ProgressTracking entry not found: {progress_tracking_id}")
 
-        daily_stats = self.get_today_for_user(
+        daily_stats: DailyStats = self.get_today_for_user(
             user_id=progress_tracking.user_id,
             language_id=progress_tracking.language_id,
             session=session,
@@ -193,10 +195,24 @@ class DailyStatsService:
             daily_stats.items_correct += 1
         daily_stats.time_studied_ms += int(progress_tracking.duration_ms)
 
-        if daily_stats.items_reviewed >= 20 and daily_stats.streak_day is False:
-            daily_stats.streak_day = True
+        user_preferences = user_preferences_service.get_by_user_id(user_id=progress_tracking.user_id, session=session)
+        if user_preferences is None:
+            logger.warning(f"User preferences not found for user {progress_tracking.user_id}. Skipping streak day check.")
+            daily_goal_ms = 20 * 60 * 1000  # Default to 20 minutes if user preferences are missing
+        else:
+            daily_goal_ms = user_preferences.daily_goal_minutes * 60 * 1000
 
-            yesterday = (datetime.utcnow() - timedelta(days=1)).date().isoformat()
+        streak_just_set = False
+        
+        logger.debug(daily_stats.time_studied_ms)
+        logger.debug(daily_goal_ms)
+
+        if daily_stats.time_studied_ms >= daily_goal_ms and daily_stats.streak_day is False:
+            streak_just_set = True
+            daily_stats.streak_day = True
+            logger.info(f"User {progress_tracking.user_id} just achieved a streak day for language {progress_tracking.language_id}!")
+
+            yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
             previous_daily_stats = (
                 session.query(DailyStats)
                 .filter(
@@ -217,4 +233,12 @@ class DailyStatsService:
         result = db_manager.modify(obj=daily_stats, session=session)
         if result is None:
             raise RuntimeError(f"Failed to update daily stats entry for progress tracking {progress_tracking_id}")
+
+        # If we just set today's streak flag, propagate to the commitment log
+        if daily_stats.streak_day is True and streak_just_set:
+            commitment_log_service.apply_daily_stats(
+                daily_stats_id=daily_stats.id,
+                session=session,
+            )
+
         return result

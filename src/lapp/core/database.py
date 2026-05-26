@@ -361,7 +361,8 @@ class DatabaseManager:
         model_class: Type[model_types],
         attr_values: dict[str, Any],
         session: Optional[Session] = None,
-        load_relationships: bool = True
+        load_relationships: bool = True,
+        many: bool = False
     ) -> Optional[model_types]:
         """
         Find a record by specific attributes.
@@ -371,6 +372,7 @@ class DatabaseManager:
             attr_values: Dictionary of attribute names and values
             session: Optional session. If None, creates a new one.
             load_relationships: If True, eagerly load all relationships
+            many: If True, return a list of matching records instead of just one
         
         Returns:
             The matching record or None if not found
@@ -386,7 +388,10 @@ class DatabaseManager:
             # Add relationship loading
             query = self._load_relationships(query, model_class, load_relationships)
             
-            existing = query.first()
+            if many:
+                existing = query.all()
+            else:
+                existing = query.first()
             
             if existing:
                 return existing
@@ -527,6 +532,7 @@ class DatabaseManager:
                 "StrengthsAndWeaknesses": "sw_S",
                 "ProgressTracking": "pt_P",
                 "DailyStats": "day_D",
+                "CommitmentLog": "cl_C",
             }
             
             if model_class.__name__ not in id_config:

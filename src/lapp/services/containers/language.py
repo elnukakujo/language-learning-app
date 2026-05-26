@@ -168,7 +168,7 @@ class LanguageService:
                 attr_values={'id': language_id},
                 session=session
             )
-            logger.info(f"Retrieved language by ID {language_id}: {language.to_dict() if language else 'Not found'}")
+            logger.info(f"Retrieved language with ID {language_id}")
             if language:
                 language.current_lesson_id = self._check_current_lesson(
                     language=language,
@@ -265,6 +265,15 @@ class LanguageService:
 
             result = db_manager.insert(
                 obj=language,
+                session=session
+            )
+
+            # Create also the Commitment Log entry for this language
+            from ..data_collection.commitment_log import CommitmentLogService
+            commitment_log_service = CommitmentLogService()
+            commitment_log_service.create(
+                user_id=data.user_id,
+                language_id=language.id,
                 session=session
             )
 

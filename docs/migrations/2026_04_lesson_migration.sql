@@ -49,6 +49,7 @@ CREATE TABLE user_preferences (
     native_language_iso639_2 JSON NOT NULL DEFAULT '["eng"]',
     learning_goals TEXT DEFAULT '',
     preferred_exercise_types JSON DEFAULT '[]',
+    daily_goal_minutes INTEGER DEFAULT 20 NOT NULL,
     last_updated DATE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
@@ -371,11 +372,9 @@ CREATE TABLE commitment_log (
     user_id TEXT NOT NULL,
     language_id TEXT NOT NULL,
 
-    week_start_date DATE NOT NULL,
     days_active INTEGER NOT NULL,
     total_items_reviewed INTEGER NOT NULL,
     total_time_ms FLOAT NOT NULL,
-    weekly_goal_met BOOLEAN NOT NULL DEFAULT FALSE,
     longest_streak_ever INTEGER NOT NULL,
     streak_last_computed_at DATE NOT NULL,
     

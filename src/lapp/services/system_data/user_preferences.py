@@ -54,6 +54,40 @@ class UserPreferencesService:
             if owns_session:
                 session.close()
 
+    def get_by_user_id(
+        self,
+        user_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True
+    ) -> UserPreferences | UserPreferencesDict | None:
+        """Get user preferences by user ID.
+
+        Args:
+            user_id (str): The ID of the user whose preferences to retrieve.
+            session (Session | None): Optional SQLAlchemy session to use for the query. If None, a new session will be created and managed internally.
+            as_dict (bool): If True, return a UserPreferencesDict instance. Otherwise, return a UserPreferences model.
+            include_relations (bool): If True, include related objects in the serialized output.
+
+        Returns:
+            UserPreferences | UserPreferencesDict | None: The user preferences in the requested format, or None if not found.
+        """
+        owns_session = session is None
+        if owns_session:
+            session = db_manager.get_session()
+        
+        try:
+            pref = db_manager.find_by_attr(UserPreferences, {"user_id": user_id}, session=session)
+            return self._serialize(pref, as_dict, include_relations)
+        except Exception as e:
+            if owns_session:
+                session.rollback()
+            logger.error(f"Failed to get preferences for user {user_id}: {e}")
+            raise
+        finally:
+            if owns_session:
+                session.close()
+
     def create(
         self,
         data: UserPreferencesDict,
@@ -85,7 +119,8 @@ class UserPreferencesService:
                 user_id=data.user_id,
                 native_language_iso639_2=data.native_language_iso639_2,
                 learning_goals=data.learning_goals,
-                preferred_exercise_types=data.preferred_exercise_types
+                preferred_exercise_types=data.preferred_exercise_types,
+                daily_goal_minutes=data.daily_goal_minutes
             )
             result = db_manager.insert(pref, session=session)
             if result:
