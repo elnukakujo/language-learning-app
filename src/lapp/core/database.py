@@ -495,7 +495,6 @@ class DatabaseManager:
         - UserPreferences: "pref_P{n}"
         - Source: "src_S{n}"
         - Tag: "tag_T{n}"
-        - StrengthsAndWeaknesses: "sw_S{n}"
         - ProgressTracking: "pt_P{n}"
         
         Args:
@@ -529,7 +528,6 @@ class DatabaseManager:
                 "UserPreferences": "pref_P",
                 "Source": "src_S",
                 "Tag": "tag_T",
-                "StrengthsAndWeaknesses": "sw_S",
                 "ProgressTracking": "pt_P",
                 "DailyStats": "day_D",
                 "CommitmentLog": "cl_C",

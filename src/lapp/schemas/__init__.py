@@ -18,7 +18,6 @@ __all__ = [
     "UserPreferencesDict",
     "SourceDict",
     "TagDict",
-    "StrengthsAndWeaknessesDict",
     "ProgressTrackingDict",
     "DailyStatsDict",
     "CommitmentLogDict",

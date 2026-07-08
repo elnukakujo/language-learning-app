@@ -19,7 +19,6 @@ __all__ = [
     "UserPreferences",
     "Source",
     "Tag",
-    "StrengthsAndWeaknesses",
     "ProgressTracking",
     "DailyStats",
     "CommitmentLog",

@@ -334,7 +334,7 @@ class BaseComponentModel(BaseElementModel, BaseModelWithMediaFiles):
 class BaseDataCollectionModel(Base):
     """
     Base class for models that are used for data collection and user-specific data.
-    This includes: User, UserPreferences, Source, Tag, StrengthsAndWeaknesses, ProgressTracking
+    This includes: User, UserPreferences, Source, Tag, ProgressTracking
     """
     __abstract__ = True
 

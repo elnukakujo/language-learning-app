@@ -197,6 +197,8 @@ class CharacterService:
                 if provided is not None and provided != "":
                     return provided
                 return existing_val if existing_val is not None and existing_val != "" else enriched_data.get(field)
+            
+            logger.debug(update_data)
 
             existing.character = update_data.get('character', existing.character)
             existing.phonetic = resolve('phonetic', existing.phonetic)
@@ -205,9 +207,13 @@ class CharacterService:
             existing.strokes = update_data.get('strokes', existing.strokes)
             existing.audio_files = update_data.get('audio_files', existing.audio_files)
             existing.image_files = update_data.get('image_files', existing.image_files)
+
+            logger.debug(existing.to_dict(False))
             
             # Save to database
             result = db_manager.modify(existing, session=session)
+
+            logger.debug(result.to_dict(False))
 
             if result:
                 logger.info(f"Updated character: {character_id}")

@@ -79,7 +79,7 @@ CREATE TABLE tag (
 );
 
 -- ---- Containers ----
--- NOTE: language must be created before strengths_and_weaknesses and
+-- NOTE: language must be created before
 --       progress_tracking so their FKs resolve correctly.
 
 CREATE TABLE language (
@@ -128,19 +128,6 @@ CREATE TABLE lesson (
     END) VIRTUAL,
     -- relations
     language_id TEXT NOT NULL,
-    FOREIGN KEY (language_id) REFERENCES language(id)
-);
-
-CREATE TABLE strengths_and_weaknesses (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    language_id TEXT NOT NULL,
-    element_type TEXT NOT NULL,
-    strengths JSON NOT NULL DEFAULT '{}',
-    weaknesses JSON NOT NULL DEFAULT '{}',
-    embeddings FLOAT NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES user(id),
     FOREIGN KEY (language_id) REFERENCES language(id)
 );
 
@@ -894,7 +881,6 @@ SELECT tbl, rows FROM (
     UNION ALL SELECT 'user_preferences',           COUNT(*) FROM user_preferences
     UNION ALL SELECT 'source',                     COUNT(*) FROM source
     UNION ALL SELECT 'tag',                        COUNT(*) FROM tag
-    UNION ALL SELECT 'strengths_and_weaknesses',   COUNT(*) FROM strengths_and_weaknesses
     UNION ALL SELECT 'progress_tracking',          COUNT(*) FROM progress_tracking
     UNION ALL SELECT 'language',                   COUNT(*) FROM language
     UNION ALL SELECT 'lesson',                     COUNT(*) FROM lesson

@@ -17,7 +17,7 @@ def resolve_element_model(element_id: str) -> Optional[Type]:
         from ..models.features import Vocabulary, Grammar, Calligraphy, Exercise
         from ..models.components import Word, Passage, Character
         from ..models.containers import Language, Lesson
-        from ..models.system_data import Tag, Source, User, StrengthsAndWeaknesses, UserPreferences
+        from ..models.system_data import Tag, Source, User, UserPreferences
         from ..models.data_collection import ProgressTracking
         model_map = {
             "lang": Language,
@@ -33,7 +33,6 @@ def resolve_element_model(element_id: str) -> Optional[Type]:
             "pref": UserPreferences,
             "src": Source,
             "tag": Tag,
-            "sw": StrengthsAndWeaknesses,
             "pt": ProgressTracking,
         }
         return model_map.get(element_id.split("_")[0])
