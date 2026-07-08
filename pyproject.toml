@@ -57,6 +57,7 @@ dependencies = [
     "pykakasi>=2.3.0",
     "hangul-romanize>=0.1.0",
     "hanzipy>=1.0.4",
+    "alembic>=1.18.5",
 ]
 [build-system]
 requires = ["hatchling"]

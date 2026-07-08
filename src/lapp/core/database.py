@@ -90,11 +90,50 @@ class DatabaseManager:
         """Create all tables defined in models."""
         if not self.engine:
             raise RuntimeError("Database engine not initialized. Call init_app() first.")
-        
+
         import lapp.models  # Ensure models are imported in the right order
 
         Base.metadata.create_all(self.engine)
         logger.info("Database tables created successfully")
+
+    def run_migrations(self) -> None:
+        """Bring the schema up to date, bootstrapping brand-new databases.
+
+        - No `alembic_version` table yet (fresh DB): create the full schema via
+          create_all(), then stamp it at Alembic's baseline revision so future
+          `upgrade head` calls apply only genuinely new migrations.
+        - Otherwise: run `alembic upgrade head` to apply any pending revisions.
+
+        This replaces bare create_all() as the app-startup path; create_tables()
+        stays available directly for tests/scripts that want an unmanaged schema.
+        """
+        if not self.engine:
+            raise RuntimeError("Database engine not initialized. Call init_app() first.")
+
+        from alembic import command
+        from alembic.config import Config as AlembicConfig
+        from alembic.runtime.migration import MigrationContext
+
+        repo_root = Path(__file__).resolve().parents[3]
+        alembic_cfg = AlembicConfig(str(repo_root / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(repo_root / "alembic"))
+        alembic_cfg.set_main_option("sqlalchemy.url", str(self.engine.url))
+
+        with self.engine.connect() as connection:
+            is_fresh = MigrationContext.configure(connection).get_current_revision() is None
+            has_tables = inspect(self.engine).has_table("user")
+
+        if is_fresh and not has_tables:
+            self.create_tables()
+            command.stamp(alembic_cfg, "head")
+            logger.info("Fresh database: created schema via create_all() and stamped at head")
+        elif is_fresh and has_tables:
+            # Pre-Alembic database (created before this migration path existed).
+            command.stamp(alembic_cfg, "head")
+            logger.info("Existing pre-Alembic database: stamped at head without altering schema")
+        else:
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrated to head")
     
     def drop_tables(self) -> None:
         """Drop all tables (use with caution!)."""
@@ -787,5 +826,9 @@ def init_db(app: Flask) -> DatabaseManager:
         DatabaseManager instance
     """
     db_manager.init_app(app)
-    db_manager.create_tables()
+    if app.config.get("TESTING"):
+        # Tests want a fast, unmanaged schema reset (see tests/conftest.py), not migrations.
+        db_manager.create_tables()
+    else:
+        db_manager.run_migrations()
     return db_manager
