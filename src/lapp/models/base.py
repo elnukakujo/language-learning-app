@@ -150,11 +150,22 @@ class BaseElementModel(Base):
         )
     
     def get_progress_tracking(self) -> List["ProgressTracking"]:
-        """Retrieve all ProgressTracking entries linked to this element."""
+        """Retrieve all ProgressTracking entries linked to this element.
+
+        Reuses `self`'s own session via object_session() rather than letting
+        find_by_attr() open (and, critically, CLOSE) an "independent" one:
+        db_manager's scoped_session is thread-local, so an "independent"
+        session here is actually the same session as an active caller
+        transaction (e.g. create()'s @transactional scope) — closing it
+        prematurely silently discards that transaction's pending writes
+        before the outer commit runs. Falls back to find_by_attr's own
+        session handling when `self` is detached (no active session).
+        """
         from ..models.data_collection import ProgressTracking
         from ..core.database import db_manager
-        
-        pts = db_manager.find_by_attr(ProgressTracking, {"element_id": self.id})
+        from sqlalchemy.orm import object_session
+
+        pts = db_manager.find_by_attr(ProgressTracking, {"element_id": self.id}, session=object_session(self))
         if isinstance(pts, list):
             return pts
         return [pts] if pts else []

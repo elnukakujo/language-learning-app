@@ -169,7 +169,9 @@ class GrammarService:
         if data.example_words is not None:
             for example_word_data in data.example_words:
                 example_word_data.language_id = existing.lesson.language_id
-                word = word_service.create(example_word_data, session=session)
+                # merge: example words are auxiliary/derived, not the primary
+                # thing the user is creating — preserve silent-merge behavior.
+                word = word_service.create(example_word_data, session=session, on_conflict="merge")
                 if word:
                     existing.example_words.append(word)
 

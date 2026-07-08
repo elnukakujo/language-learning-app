@@ -24,12 +24,18 @@ class ProgressTracking(BaseDataCollectionModel):
         """Resolve element_id to its concrete model instance."""
         if not self.element_id:
             return None
-        
+
         model_class = resolve_element_model(self.element_id)
         if model_class is None:
             raise ValueError(f"Unknown element prefix in id '{self.element_id}'")
-        
-        return db_manager.find_by_attr(model_class, {id: self.element_id})
+
+        # Reuse self's own session (see the equivalent comment on
+        # BaseElementModel.get_progress_tracking in models/base.py) — an
+        # "independent" session here would really be the same thread-local
+        # scoped session as an active caller transaction, and closing it
+        # prematurely silently discards that transaction's pending writes.
+        from sqlalchemy.orm import object_session
+        return db_manager.find_by_attr(model_class, {"id": self.element_id}, session=object_session(self))
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base = {

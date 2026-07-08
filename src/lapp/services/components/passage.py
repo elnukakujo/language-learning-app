@@ -126,12 +126,16 @@ class PassageService:
             character_service = CharacterService()
 
             for character in enriched_data["characters"]:
+                # merge: characters/words tokenized out of the full passage text
+                # are auxiliary/derived, not the primary thing the user is
+                # creating — preserve silent-merge behavior for these.
                 created_character = character_service.create(
                     data=CharacterDict(
                         character=character,
                         language_id=data.language_id
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_character.id not in characters:
                     characters[created_character.id] = created_character
@@ -149,7 +153,8 @@ class PassageService:
                         word=word,
                         language_id=data.language_id
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_word.id not in words:
                     words[created_word.id] = created_word
@@ -215,12 +220,14 @@ class PassageService:
             character_service = CharacterService()
 
             for character in enriched_data["characters"]:
+                # merge: see the equivalent comment in create() above.
                 created_character = character_service.create(
                     data=CharacterDict(
                         character=character,
                         language_id=existing.language_id
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_character.id not in characters:
                     characters[created_character.id] = created_character
@@ -238,7 +245,8 @@ class PassageService:
                         word=word,
                         language_id=existing.language_id
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_word.id not in words:
                     words[created_word.id] = created_word

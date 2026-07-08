@@ -9,6 +9,7 @@ from ...schemas.components import CharacterDict
 from ...models.components import Character
 from ...models.containers import Language
 from ...core.database import db_manager, transactional
+from ...core.exceptions import DuplicateEntityError
 from ...models.system_data import Tag, Source
 from ...utils import enrich_character, get_language_by_iso2t
 
@@ -38,11 +39,39 @@ class CharacterService:
         return db_manager.find_by_attr(model_class=Character, attr_values=filters, session=session)
 
     @transactional
-    def create(self, data: CharacterDict, session: Optional[Session] = None) -> Character | None:
-        """Create a new character (upserts if one already exists for the language)."""
+    def create(
+        self,
+        data: CharacterDict,
+        session: Optional[Session] = None,
+        on_conflict: Optional[str] = None,
+    ) -> Character | None:
+        """Create a new character.
+
+        Args:
+            on_conflict: How to resolve an existing character for this
+                language: None (default) raises DuplicateEntityError so the
+                caller can ask the user; "keep" returns the existing row
+                unchanged; "overwrite" recomputes it from `data` + fresh
+                enrichment, ignoring the existing value entirely; "merge"
+                fills only what's missing, preferring `data` over the
+                existing value over enrichment (the prior silent-upsert
+                behavior).
+        """
         if existing := self.get_by_character(data.character, language_id=data.language_id, session=session):
-            logger.info(f"Character already exists: {data.character} with ID: {existing.id}")
-            return self.update(character_id=existing.id, data=data, session=session)
+            if on_conflict is None:
+                raise DuplicateEntityError(
+                    entity_type="character",
+                    existing=existing.to_dict(include_relations=False),
+                    incoming=data.model_dump(exclude_none=True),
+                )
+            if on_conflict == "keep":
+                logger.info(f"Character already exists: {data.character} with ID: {existing.id}; keeping existing")
+                return existing
+            if on_conflict not in ("overwrite", "merge"):
+                raise ValueError(f"Invalid on_conflict value: {on_conflict}")
+
+            logger.info(f"Character already exists: {data.character} with ID: {existing.id}; resolving as {on_conflict}")
+            return self.update(character_id=existing.id, data=data, session=session, force=(on_conflict == "overwrite"))
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
 
@@ -70,8 +99,22 @@ class CharacterService:
         return result
 
     @transactional
-    def update(self, character_id: str, data: CharacterDict, session: Optional[Session] = None) -> Character | None:
-        """Update an existing character."""
+    def update(
+        self,
+        character_id: str,
+        data: CharacterDict,
+        session: Optional[Session] = None,
+        force: bool = False,
+    ) -> Character | None:
+        """Update an existing character.
+
+        Args:
+            force: If True ("overwrite" conflict resolution), the existing
+                row's values are never consulted — a field is `data`'s value
+                if given, else freshly re-enriched. If False (default), a
+                missing field falls back to the existing value first, then
+                to enrichment — a "merge", not a replace.
+        """
         existing = self.get_by_id(character_id, session=session)
 
         if not existing:
@@ -94,8 +137,10 @@ class CharacterService:
 
         def resolve(field: str, existing_val):
             provided = update_data.get(field)
-            if provided is not None and provided != "":
+            if provided is not None and (force or provided != ""):
                 return provided
+            if force:
+                return enriched_data.get(field)
             return existing_val if existing_val is not None and existing_val != "" else enriched_data.get(field)
 
         existing.character = update_data.get('character', existing.character)

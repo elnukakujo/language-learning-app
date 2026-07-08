@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 
 from ...services import VocabularyService
 from ...schemas.features import VocabularyDict
+from ...core.exceptions import DuplicateEntityError
 
 bp = Blueprint('vocabulary', __name__, url_prefix='/api/vocabulary')
 vocabulary_service = VocabularyService()
@@ -184,6 +185,9 @@ def create_vocabulary():
                         example: "/path/to/audio1.mp3"
                         required: false
                         description: List of audio file paths
+    Pass "on_conflict" in the body ("keep" | "overwrite" | "merge") to resolve
+    a word that already exists for this language. Omit it to have the server
+    respond 409 with the existing/incoming/diff instead of guessing.
     responses:
         201:
             description: Vocabulary created successfully
@@ -191,16 +195,19 @@ def create_vocabulary():
                 type: object
         400:
             description: Validation error
+        409:
+            description: A word with this text already exists for the language; resolve with on_conflict
     """
     try:
         # Validate request data
         logger.debug(f"Received request data for creating vocabulary: {request.json}")
+        on_conflict = request.json.pop('on_conflict', None) if request.json else None
         data = VocabularyDict(**request.json)
         logger.debug(f"Validated data for creating vocabulary: {data}")
-        
+
         # Create vocabulary
-        vocabulary = vocabulary_service.create(data, as_dict=True)
-        
+        vocabulary = vocabulary_service.create(data, as_dict=True, on_conflict=on_conflict)
+
         if vocabulary:
             return jsonify({
                 'success': True,
@@ -208,9 +215,17 @@ def create_vocabulary():
             }), 201
         else:
             return jsonify({'error': 'Failed to create vocabulary'}), 400
-            
+
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
+    except DuplicateEntityError as e:
+        return jsonify({
+            'conflict': True,
+            'entity_type': e.entity_type,
+            'existing': e.existing,
+            'incoming': e.incoming,
+            'diff': e.diff,
+        }), 409
 
 
 @bp.route('/<vocabulary_id>', methods=['PUT', 'PATCH'])

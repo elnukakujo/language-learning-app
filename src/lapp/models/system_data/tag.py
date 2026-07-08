@@ -19,7 +19,11 @@ class Tag(Base):
     updated_at = Column(String, nullable=True)
 
     def get_elements(self) -> dict:
-        session = db_manager.get_session() 
+        # Reuse self's own session rather than leaking an unclosed one from
+        # db_manager.get_session() (see the equivalent comment on
+        # BaseElementModel.get_progress_tracking in models/base.py).
+        from sqlalchemy.orm import object_session
+        session = object_session(self) or db_manager.get_session()
         linked_ids = [
             row.element_id for row in session.execute(
                 select(tag_element_link.c.element_id).where(

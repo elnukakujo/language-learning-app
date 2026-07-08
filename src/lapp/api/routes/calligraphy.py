@@ -3,6 +3,7 @@ from pydantic import ValidationError
 
 from ...services import CalligraphyService
 from ...schemas import CalligraphyDict
+from ...core.exceptions import DuplicateEntityError
 
 bp = Blueprint('calligraphy', __name__, url_prefix='/api/calligraphy')
 calligraphy_service = CalligraphyService()
@@ -196,6 +197,9 @@ def create_calligraphy():
                         example: "/path/to/audio1.mp3"
                         required: false
                         description: List of audio file paths for the calligraphy item
+    Pass "on_conflict" in the body ("keep" | "overwrite" | "merge") to resolve
+    a character that already exists for this language. Omit it to have the
+    server respond 409 with the existing/incoming/diff instead of guessing.
     responses:
         201:
             description: calligraphy created successfully
@@ -204,14 +208,17 @@ def create_calligraphy():
                 description: The created calligraphy object
         400:
             description: calligraphy creation failed
+        409:
+            description: A character already exists for the language; resolve with on_conflict
     """
     try:
         # Validate request data
+        on_conflict = request.json.pop('on_conflict', None) if request.json else None
         data = CalligraphyDict(**request.json)
-        
+
         # Create calligraphy
-        calligraphy = calligraphy_service.create(data, as_dict=True)
-        
+        calligraphy = calligraphy_service.create(data, as_dict=True, on_conflict=on_conflict)
+
         if calligraphy:
             return jsonify({
                 'success': True,
@@ -219,9 +226,17 @@ def create_calligraphy():
             }), 201
         else:
             return jsonify({'error': 'Failed to create calligraphy'}), 400
-            
+
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
+    except DuplicateEntityError as e:
+        return jsonify({
+            'conflict': True,
+            'entity_type': e.entity_type,
+            'existing': e.existing,
+            'incoming': e.incoming,
+            'diff': e.diff,
+        }), 409
 
 
 @bp.route('/<calligraphy_id>', methods=['PUT', 'PATCH'])

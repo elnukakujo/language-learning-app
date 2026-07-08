@@ -153,13 +153,19 @@ class CalligraphyService:
         data: CalligraphyDict,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
+        on_conflict: Optional[str] = None,
     ) -> Calligraphy | dict | None:
         """
         Create a new Calligraphy item.
 
         Args:
             data: CalligraphyDict containing calligraphy item details.
+            on_conflict: Forwarded to CharacterService.create() for the
+                underlying character — None raises DuplicateEntityError on an
+                existing character for this language so the caller can ask
+                the user; "keep" / "overwrite" / "merge" resolve it directly.
+                See CharacterService.create.
 
         Returns:
             Created Calligraphy object if successful, else None
@@ -172,7 +178,7 @@ class CalligraphyService:
 
         if data.character is not None:
             data.character.language_id = lesson.language_id
-            character = character_service.create(data.character, session=session)
+            character = character_service.create(data.character, session=session, on_conflict=on_conflict)
             if not character:
                 logger.error(f"Failed to create character for calligraphy")
                 return None
@@ -181,7 +187,9 @@ class CalligraphyService:
         if data.example_words is not None:
             for example_word_data in data.example_words:
                 example_word_data.language_id = lesson.language_id
-                word = word_service.create(example_word_data, session=session)
+                # merge: example words are auxiliary/derived, not the primary
+                # thing the user is creating — preserve silent-merge behavior.
+                word = word_service.create(example_word_data, session=session, on_conflict="merge")
                 if word:
                     example_words.append(word)
 
@@ -253,7 +261,7 @@ class CalligraphyService:
         if data.example_words is not None:
             for example_word_data in data.example_words:
                 example_word_data.language_id = existing.lesson.language_id
-                word = word_service.create(example_word_data, session=session)
+                word = word_service.create(example_word_data, session=session, on_conflict="merge")
                 if word:
                     existing.example_words.append(word)
 

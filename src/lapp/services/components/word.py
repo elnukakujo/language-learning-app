@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ...core.database import db_manager, transactional
+from ...core.exceptions import DuplicateEntityError
 from ...models.components import Word, Character
 from ...models.system_data import Tag, Source
 from ...models.containers import Language
@@ -42,12 +43,38 @@ class WordService:
         )
 
     @transactional
-    def create(self, data: WordDict, session: Optional[Session] = None) -> Word | None:
+    def create(
+        self,
+        data: WordDict,
+        session: Optional[Session] = None,
+        on_conflict: Optional[str] = None,
+    ) -> Word | None:
+        """Create a new word.
+
+        Args:
+            on_conflict: How to resolve an existing word for this language:
+                None (default) raises DuplicateEntityError so the caller can
+                ask the user; "keep" returns the existing row unchanged;
+                "overwrite" recomputes it from `data` + fresh enrichment,
+                ignoring the existing value entirely; "merge" fills only
+                what's missing, preferring `data` over the existing value
+                over enrichment (the prior silent-upsert behavior).
+        """
         if existing := self.get_by_word(data.word, language_id=data.language_id, session=session):
-            logger.info(f"Word already exists: {data.word} with ID: {existing.id}")
-            existing = self.update(word_id=existing.id, data=data, session=session)
-            existing = session.merge(existing)
-            return existing
+            if on_conflict is None:
+                raise DuplicateEntityError(
+                    entity_type="word",
+                    existing=existing.to_dict(include_relations=False),
+                    incoming=data.model_dump(exclude_none=True),
+                )
+            if on_conflict == "keep":
+                logger.info(f"Word already exists: {data.word} with ID: {existing.id}; keeping existing")
+                return existing
+            if on_conflict not in ("overwrite", "merge"):
+                raise ValueError(f"Invalid on_conflict value: {on_conflict}")
+
+            logger.info(f"Word already exists: {data.word} with ID: {existing.id}; resolving as {on_conflict}")
+            return self.update(word_id=existing.id, data=data, session=session, force=(on_conflict == "overwrite"))
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
 
@@ -67,13 +94,17 @@ class WordService:
             from ...schemas.components import CharacterDict
             character_service = CharacterService()
             for character in enriched_data["characters"]:
+                # merge: auto-derived characters are expected to recur across many
+                # words, so silently reuse the existing row rather than asking the
+                # user about a conflict they didn't initiate.
                 created_character = character_service.create(
                     data=CharacterDict(
                         character=character,
                         phonetic="",
                         language_id=data.language_id
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_character.id not in characters:
                     characters[created_character.id] = created_character
@@ -96,7 +127,22 @@ class WordService:
         return db_manager.insert(obj=word, session=session, commit=False)
 
     @transactional
-    def update(self, word_id: str, data: WordDict, session: Optional[Session] = None) -> Word | None:
+    def update(
+        self,
+        word_id: str,
+        data: WordDict,
+        session: Optional[Session] = None,
+        force: bool = False,
+    ) -> Word | None:
+        """Update an existing word.
+
+        Args:
+            force: If True ("overwrite" conflict resolution), the existing
+                row's values are never consulted — a field is `data`'s value
+                if given, else freshly re-enriched. If False (default), a
+                missing field falls back to the existing value first, then
+                to enrichment — a "merge", not a replace.
+        """
         existing: Word = self.get_by_id(word_id, session=session)
         if not existing:
             logger.warning(f"Word not found: {word_id}")
@@ -128,21 +174,25 @@ class WordService:
             character_service = CharacterService()
 
             for character in enriched_data["characters"]:
+                # merge: see the equivalent comment in create() above.
                 created_character = character_service.create(
                     data=CharacterDict(
                         language_id=existing.language_id,
                         character=character,
                         phonetic=""
                     ),
-                    session=session
+                    session=session,
+                    on_conflict="merge",
                 )
                 if created_character.id not in characters:
                     characters[created_character.id] = created_character
 
         def resolve(field: str, existing_val):
             provided = update_data.get(field)
-            if provided is not None and provided != "":
+            if provided is not None and (force or provided != ""):
                 return provided
+            if force:
+                return enriched_data.get(field)
             return existing_val if existing_val is not None and existing_val != "" else enriched_data.get(field)
 
         existing.word = update_data.get('word', existing.word)

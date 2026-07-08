@@ -119,15 +119,24 @@ class VocabularyService:
         data: VocabularyDict,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
+        on_conflict: Optional[str] = None,
     ) -> Vocabulary | dict | None:
+        """Create a new vocabulary item.
+
+        Args:
+            on_conflict: Forwarded to WordService.create() for the underlying
+                word — None raises DuplicateEntityError on an existing word
+                for this language so the caller can ask the user; "keep" /
+                "overwrite" / "merge" resolve it directly. See WordService.create.
+        """
         lesson = lesson_service.get_by_id(data.lesson_id, session=session)
         if not lesson:
             logger.warning(f"Cannot create vocabulary item, lesson not found: {data.lesson_id}")
             return None
 
         data.word.language_id = lesson.language_id
-        word = word_service.create(data.word, session=session)
+        word = word_service.create(data.word, session=session, on_conflict=on_conflict)
         if not word:
             logger.error(f"Failed to create word for vocabulary")
             return None
@@ -175,7 +184,10 @@ class VocabularyService:
 
         if data.word is not None:
             data.word.language_id = existing.lesson.language_id
-            word = word_service.create(data.word, session=session)
+            # merge: updating a vocabulary's word isn't the "am I creating a
+            # duplicate" moment the dialog is for — preserve the old silent-merge
+            # behavior here rather than surfacing a conflict on every edit.
+            word = word_service.create(data.word, session=session, on_conflict="merge")
             if word:
                 existing.word = word
                 existing.word_id = word.id
