@@ -58,6 +58,7 @@ dependencies = [
     "hangul-romanize>=0.1.0",
     "hanzipy>=1.0.4",
     "alembic>=1.18.5",
+    "psycopg[binary]>=3.3.4",
 ]
 [build-system]
 requires = ["hatchling"]

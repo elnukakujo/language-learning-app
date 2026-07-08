@@ -9,6 +9,19 @@ INSTANCE_DIR = BASE_DIR / 'instance'
 MEDIA_DIR = BASE_DIR / 'media'
 BACKUP_DIR = BASE_DIR / 'backups'
 
+
+def _normalize_database_url(url: str) -> str:
+    """Point Postgres URLs at the installed psycopg (v3) driver.
+
+    Also upgrades the legacy "postgres://" scheme some hosts (e.g. Heroku)
+    still hand out, which SQLAlchemy 2.x no longer accepts as-is.
+    """
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url[len("postgresql://"):]
+    return url
+
 class Config:
     """Base configuration for personal use"""
     # Database
@@ -56,7 +69,9 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{INSTANCE_DIR}/languages.db')
+    SQLALCHEMY_DATABASE_URI = _normalize_database_url(
+        os.getenv('DATABASE_URL', f'sqlite:///{INSTANCE_DIR}/languages.db')
+    )
     ENV = 'production'
 
 # Default to development

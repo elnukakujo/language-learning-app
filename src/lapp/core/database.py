@@ -5,11 +5,13 @@ from pathlib import Path
 from typing import Optional, Type, TypeVar, Any
 
 import sqlalchemy
-from sqlalchemy import create_engine, select, union_all, literal
+from sqlalchemy import create_engine, select, union_all, literal, update, Table, Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from flask import Flask
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,37 @@ Base = declarative_base()
 
 # Type variable for model classes
 model_types = TypeVar('T', bound="Base")
+
+# Prefixes for generate_new_id(), keyed by model class name.
+ID_PREFIXES = {
+    "Language": "lang_L",
+    "Lesson": "lesson_L",
+    "Vocabulary": "voc_V",
+    "Grammar": "gram_G",
+    "Calligraphy": "call_C",
+    "Exercise": "ex_E",
+    "Character": "char_C",
+    "Word": "word_W",
+    "Passage": "pass_P",
+    "User": "user_U",
+    "UserPreferences": "pref_P",
+    "Source": "src_S",
+    "Tag": "tag_T",
+    "ProgressTracking": "pt_P",
+    "DailyStats": "day_D",
+    "CommitmentLog": "cl_C",
+}
+
+# Backing store for generate_new_id()'s atomic counters. One row per entity
+# type; an atomic "UPDATE ... SET next_value = next_value + 1 RETURNING" is
+# race-free under concurrent writers on both SQLite and Postgres, unlike the
+# old max(existing_ids) + 1 scan.
+id_counter_table = Table(
+    "id_counter",
+    Base.metadata,
+    Column("entity_type", String, primary_key=True),
+    Column("next_value", Integer, nullable=False),
+)
 
 class DatabaseManager:
     """
@@ -542,92 +575,86 @@ class DatabaseManager:
         session: Optional[Session] = None,
     ) -> str:
         """
-        Generate a new sequential ID for any model type.
-        
-        ID Format:
-        - Language: "lang_L{n}"
-        - Lesson: "lesson_L{n}"
-        - Vocabulary: "voc_V{n}"
-        - Grammar: "gram_G{n}"
-        - Calligraphy: "call_C{n}"
-        - Exercise: "ex_E{n}"
-        - Character: "char_C{n}"
-        - Word: "word_W{n}"
-        - Passage: "pass_P{n}"
-        - User: "user_U{n}"
-        - UserPreferences: "pref_P{n}"
-        - Source: "src_S{n}"
-        - Tag: "tag_T{n}"
-        - ProgressTracking: "pt_P{n}"
-        
+        Generate a new sequential ID for any model type, e.g. "voc_V42".
+
+        Backed by an atomic per-entity-type counter (id_counter_table), so
+        concurrent callers never race to compute the same next number the way
+        a max(existing_ids) + 1 scan would. The counter is lazily seeded from
+        the current max existing ID the first time an entity type is used,
+        so numbering picks up where legacy rows left off; every call after
+        that is a single atomic UPDATE ... RETURNING, not a full table scan.
+
         Args:
             model_class: The model class to generate ID for
-            session: Optional session. If None, creates a new one.
-        
+            session: Optional session. If None, creates a new one and commits;
+                if given, the caller's transaction owns commit (matches the
+                commit=False convention used by insert/modify/delete).
+
         Returns:
             New ID string (e.g., "voc_V42")
-        
+
         Raises:
-            ValueError: If required scope parameters are missing
+            ValueError: If model_class has no configured ID prefix
         """
-        close_session = False
-        if session is None:
+        close_session = session is None
+        if close_session:
             session = self.get_session()
-            close_session = True
-        
+
         try:
-            # Define ID prefixes and letters for each model
-            id_config = {
-                "Language": "lang_L",
-                "Lesson": "lesson_L",
-                "Vocabulary": "voc_V",
-                "Grammar": "gram_G",
-                "Calligraphy": "call_C",
-                "Exercise": "ex_E",
-                "Character": "char_C",
-                "Word": "word_W",
-                "Passage": "pass_P",
-                "User": "user_U",
-                "UserPreferences": "pref_P",
-                "Source": "src_S",
-                "Tag": "tag_T",
-                "ProgressTracking": "pt_P",
-                "DailyStats": "day_D",
-                "CommitmentLog": "cl_C",
-            }
-            
-            if model_class.__name__ not in id_config:
-                raise ValueError(f"Unsupported model class: {model_class.__name__}")
-            
-            prefix = id_config[model_class.__name__]
-            
-            # Build query based on scope
-            query = select(model_class.id)
-            
-            # Get all existing IDs
-            existing_ids = session.scalars(query).all()
-            
-            # Extract numeric parts
-            numbers = []
-            for id_str in existing_ids:
-                try:
-                    # Split by underscore and get the part after the letter
-                    # e.g., "voc_V42" -> ["voc", "V42"] -> "42"
-                    num_part = id_str.split("_")[-1][1:]  # Remove the letter prefix
-                    num = int(num_part)
-                    numbers.append(num)
-                except (ValueError, IndexError):
-                    continue
-            
-            # Generate next number
-            next_num = max(numbers) + 1 if numbers else 1
-            
-            # Return formatted ID
+            entity_type = model_class.__name__
+            if entity_type not in ID_PREFIXES:
+                raise ValueError(f"Unsupported model class: {entity_type}")
+            prefix = ID_PREFIXES[entity_type]
+
+            next_num = self._atomic_next_id(session, entity_type, model_class)
+
+            if close_session:
+                session.commit()
+            else:
+                session.flush()
+
             return f"{prefix}{next_num}"
-            
+        except Exception:
+            if close_session:
+                session.rollback()
+            raise
         finally:
             if close_session:
                 session.close()
+
+    def _atomic_next_id(self, session: Session, entity_type: str, model_class: Type[model_types]) -> int:
+        """Get-and-increment on id_counter_table; seeds the row on first use."""
+        exists = session.execute(
+            select(id_counter_table.c.entity_type).where(id_counter_table.c.entity_type == entity_type)
+        ).first()
+
+        if exists is None:
+            seed = self._legacy_max_id(session, model_class) + 1
+            insert_fn = postgresql_insert if session.bind.dialect.name == "postgresql" else sqlite_insert
+            # on_conflict_do_nothing: if a concurrent caller seeds first, this is a no-op and
+            # the UPDATE below still runs atomically against whichever row won.
+            stmt = insert_fn(id_counter_table).values(entity_type=entity_type, next_value=seed)
+            stmt = stmt.on_conflict_do_nothing(index_elements=["entity_type"])
+            session.execute(stmt)
+
+        result = session.execute(
+            update(id_counter_table)
+            .where(id_counter_table.c.entity_type == entity_type)
+            .values(next_value=id_counter_table.c.next_value + 1)
+            .returning(id_counter_table.c.next_value)
+        )
+        return result.scalar_one() - 1
+
+    def _legacy_max_id(self, session: Session, model_class: Type[model_types]) -> int:
+        """One-time scan for the highest numeric suffix among existing IDs (e.g. "voc_V42" -> 42)."""
+        existing_ids = session.scalars(select(model_class.id)).all()
+        numbers = []
+        for id_str in existing_ids:
+            try:
+                numbers.append(int(id_str.split("_")[-1][1:]))
+            except (ValueError, IndexError):
+                continue
+        return max(numbers) if numbers else 0
 
     def search_elements(self, user_id: str, query: str) -> list[dict[str, Any]]:
         """
