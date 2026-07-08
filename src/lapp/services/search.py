@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from ..core.database import db_manager
+from ..core.database import db_manager, transactional
 from ..models.components import Character, Passage, Word
 from ..models.containers import Language, Lesson
 from ..models.features import Calligraphy, Exercise, Grammar, Vocabulary
@@ -167,41 +167,29 @@ class SearchService:
         )
         return lesson.language_id if lesson else None
 
+    @transactional
     def search_elements(
         self,
         user_id: str,
         query: str,
         session: Optional[Session] = None,
     ) -> list[dict[str, Any]]:
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
+        normalized_query = (query or "").strip()
+        if len(normalized_query) < 2:
+            return []
 
-        try:
-            normalized_query = (query or "").strip()
-            if len(normalized_query) < 2:
-                return []
+        query_pattern = f"%{normalized_query}%"
 
-            query_pattern = f"%{normalized_query}%"
+        buckets: dict[str, list[dict[str, Any]]] = {
+            "language": self._search_languages(user_id, query_pattern, session),
+            "lesson": self._search_lessons(user_id, query_pattern, session),
+            "vocabulary": self._search_vocabulary(user_id, query_pattern, session),
+            "grammar": self._search_grammar(user_id, query_pattern, session),
+            "calligraphy": self._search_calligraphy(user_id, query_pattern, session),
+            "exercise": self._search_exercise(user_id, query_pattern, session),
+            "character": self._search_character(user_id, query_pattern, session),
+            "word": self._search_word(user_id, query_pattern, session),
+            "passage": self._search_passage(user_id, query_pattern, session),
+        }
 
-            buckets: dict[str, list[dict[str, Any]]] = {
-                "language": self._search_languages(user_id, query_pattern, session),
-                "lesson": self._search_lessons(user_id, query_pattern, session),
-                "vocabulary": self._search_vocabulary(user_id, query_pattern, session),
-                "grammar": self._search_grammar(user_id, query_pattern, session),
-                "calligraphy": self._search_calligraphy(user_id, query_pattern, session),
-                "exercise": self._search_exercise(user_id, query_pattern, session),
-                "character": self._search_character(user_id, query_pattern, session),
-                "word": self._search_word(user_id, query_pattern, session),
-                "passage": self._search_passage(user_id, query_pattern, session),
-            }
-
-            return self._round_robin(buckets, limit=20)
-        except Exception as error:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to search elements for user {user_id}: {error}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        return self._round_robin(buckets, limit=20)

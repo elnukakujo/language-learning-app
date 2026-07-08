@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
-from ...core.database import db_manager
+from ...core.database import db_manager, transactional
 from ...models.data_collection import CommitmentLog, DailyStats, ProgressTracking
 
 class CommitmentLogService:
@@ -29,6 +29,7 @@ class CommitmentLogService:
             return entries
         return [entry.to_dict(include_relations=include_relations) for entry in entries]
 
+    @transactional
     def get_by_id(
         self,
         commitment_log_id: str,
@@ -36,26 +37,14 @@ class CommitmentLogService:
         as_dict: bool = False,
         include_relations: bool = True,
     ) -> CommitmentLog | dict | None:
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
+        entry = db_manager.find_by_attr(
+            model_class=CommitmentLog,
+            attr_values={"id": commitment_log_id},
+            session=session,
+        )
+        return self._serialize(entry, as_dict, include_relations)
 
-        try:
-            entry = db_manager.find_by_attr(
-                model_class=CommitmentLog,
-                attr_values={"id": commitment_log_id},
-                session=session,
-            )
-            return self._serialize(entry, as_dict, include_relations)
-        except Exception as error:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get commitment log by id: {error}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def get_for_user(
         self,
         user_id: str,
@@ -65,30 +54,18 @@ class CommitmentLogService:
         include_relations: bool = True,
     ) -> CommitmentLog | dict | None:
         """Return single CommitmentLog for (user_id, language_id) or None."""
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-
-        try:
-            entry = (
-                session.query(CommitmentLog)
-                .filter(
-                    CommitmentLog.user_id == user_id,
-                    CommitmentLog.language_id == language_id,
-                )
-                .order_by(CommitmentLog.created_at.desc())
-                .first()
+        entry = (
+            session.query(CommitmentLog)
+            .filter(
+                CommitmentLog.user_id == user_id,
+                CommitmentLog.language_id == language_id,
             )
-            return self._serialize(entry, as_dict, include_relations)
-        except Exception as error:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get commitment log for user/language: {error}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+            .order_by(CommitmentLog.created_at.desc())
+            .first()
+        )
+        return self._serialize(entry, as_dict, include_relations)
 
+    @transactional
     def get_all_for_user(
         self,
         user_id: str,
@@ -96,26 +73,13 @@ class CommitmentLogService:
         as_dict: bool = False,
         include_relations: bool = True,
     ) -> list[CommitmentLog] | list[dict]:
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-
-        try:
-            entries = (
-                session.query(CommitmentLog)
-                .filter(CommitmentLog.user_id == user_id)
-                .order_by(CommitmentLog.language_id)
-                .all()
-            )
-            return self._serialize_list(entries, as_dict, include_relations)
-        except Exception as error:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all commitment logs for user: {error}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        entries = (
+            session.query(CommitmentLog)
+            .filter(CommitmentLog.user_id == user_id)
+            .order_by(CommitmentLog.language_id)
+            .all()
+        )
+        return self._serialize_list(entries, as_dict, include_relations)
 
     def create(
         self,
@@ -133,7 +97,7 @@ class CommitmentLogService:
             longest_streak_ever=0,
             streak_last_computed_at="",
         )
-        result = db_manager.insert(obj=entry, session=session)
+        result = db_manager.insert(obj=entry, session=session, commit=False)
         if result is None:
             raise RuntimeError("Failed to create commitment log entry")
         return result
@@ -181,7 +145,7 @@ class CommitmentLogService:
             commitment_log.total_items_reviewed += 1
             commitment_log.total_time_ms += int(progress_tracking.duration_ms)
 
-            result = db_manager.modify(obj=commitment_log, session=session)
+            result = db_manager.modify(obj=commitment_log, session=session, commit=False)
             if result is None:
                 raise RuntimeError("Failed to persist commitment log update")
             return result
@@ -230,7 +194,7 @@ class CommitmentLogService:
                 commitment_log.longest_streak_ever = int(daily_stats.current_streak_length)
             commitment_log.streak_last_computed_at = datetime.now().isoformat()
 
-            result = db_manager.modify(obj=commitment_log, session=session)
+            result = db_manager.modify(obj=commitment_log, session=session, commit=False)
             if result is None:
                 raise RuntimeError("Failed to persist commitment log update")
             return result

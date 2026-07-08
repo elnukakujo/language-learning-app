@@ -9,7 +9,7 @@ import math
 import logging
 logger = logging.getLogger(__name__)
 
-from ..core.database import db_manager
+from ..core.database import db_manager, transactional
 from ..utils import (
     detect_text_language,
     get_language_by_iso2t,
@@ -79,66 +79,40 @@ class EvaluatorService:
             logger.warning(f"Could not resolve language codes from exercise context: {err}")
             return None, None
 
-    def _get_correct_text_and_type(self, ex_id: str, session: Optional[Session]) -> tuple[Optional[str], Optional[str]]:
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            exercise = exercise_service.get_by_id(ex_id, session=session)
-            
-            if not exercise:
-                logger.warning(f"Exercise item not found: {ex_id}")
-                return False, None
-            
-            if not exercise.exercise_type in ['translate', 'essay', 'organize', 'answering', 'type_in_the_blank']:
-                logger.warning(f"Exercise item {ex_id} is not a translation exercise")
-                return False, None
-            
-            return exercise.answer, exercise.exercise_type
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to retrieve correct text for Exercise {ex_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+    def _get_correct_text_and_type(self, ex_id: str, session: Optional[Session] = None) -> tuple[Optional[str], Optional[str]]:
+        exercise = exercise_service.get_by_id(ex_id, session=session)
 
-    def _get_correct_audio_path_and_type(self, ex_id: str, correct_audio_index: int, session: Optional[Session]) -> tuple[Optional[str], Optional[str]]:
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            exercise = exercise_service.get_by_id(ex_id, session=session)
-            
-            if not exercise:
-                logger.warning(f"Exercise item not found: {ex_id}")
-                return False, None
-            
-            if not exercise.exercise_type in ['speaking', 'conversation']:
-                logger.warning(f"Exercise item {ex_id} is not a speaking exercise")
-                return False, None
-            
-            if not exercise.audio_files:
-                logger.warning(f"Exercise item {ex_id} has no audio files")
-                return False, None
+        if not exercise:
+            logger.warning(f"Exercise item not found: {ex_id}")
+            return False, None
 
-            from .media import MediaService
-            media_service = MediaService()
+        if not exercise.exercise_type in ['translate', 'essay', 'organize', 'answering', 'type_in_the_blank']:
+            logger.warning(f"Exercise item {ex_id} is not a translation exercise")
+            return False, None
 
-            _, correct_speaking_path = media_service.get_file_path("/".join(exercise.audio_files[correct_audio_index].split("/")[2:]))
+        return exercise.answer, exercise.exercise_type
 
-            return correct_speaking_path, exercise.exercise_type
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to retrieve correct audio path for Exercise {ex_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+    def _get_correct_audio_path_and_type(self, ex_id: str, correct_audio_index: int, session: Optional[Session] = None) -> tuple[Optional[str], Optional[str]]:
+        exercise = exercise_service.get_by_id(ex_id, session=session)
+
+        if not exercise:
+            logger.warning(f"Exercise item not found: {ex_id}")
+            return False, None
+
+        if not exercise.exercise_type in ['speaking', 'conversation']:
+            logger.warning(f"Exercise item {ex_id} is not a speaking exercise")
+            return False, None
+
+        if not exercise.audio_files:
+            logger.warning(f"Exercise item {ex_id} has no audio files")
+            return False, None
+
+        from .media import MediaService
+        media_service = MediaService()
+
+        _, correct_speaking_path = media_service.get_file_path("/".join(exercise.audio_files[correct_audio_index].split("/")[2:]))
+
+        return correct_speaking_path, exercise.exercise_type
 
     def _extract_waveform_from_path(self, audio_path: str) -> np.ndarray:
         waveform, sr = torchaudio.load(audio_path)
@@ -346,8 +320,7 @@ class EvaluatorService:
                 - 'score': The computed score for the user's answer.
                 - 'feedback': A string with feedback for the user (currently empty, to be implemented).      
         """
-        session = db_manager.get_session()
-        try:
+        with db_manager.session_scope() as session:
             exercise = exercise_service.get_by_id(ex_id, session=session)
             if not exercise:
                 raise ValueError(f"Exercise {ex_id} not found.")
@@ -394,5 +367,3 @@ class EvaluatorService:
                 "score": results["score"],
                 "feedback": feedback,
             }
-        finally:
-            session.close()

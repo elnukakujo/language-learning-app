@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 from ...schemas.system_data import SourceDict
 from ...models.system_data import Source
-from ...core.database import db_manager
+from ...core.database import db_manager, transactional
 from ...utils import resolve_element_model
 
 
@@ -29,6 +29,7 @@ class SourceService:
         return source_obj.to_dict(include_relations=include_relations)
     
 
+    @transactional
     def get_by_id(
             self, 
             source_id: str,
@@ -40,22 +41,10 @@ class SourceService:
 
         Returns the `SourceDict` if found, otherwise `None`.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        
-        try:
-            source_obj = db_manager.get_by_id(Source, source_id)
-            return self._serialize(source_obj, as_dict, include_relations)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to get source by ID {source_id}: {e}")
-            raise
-        finally:
-            if own_session:
-                session.close()
+        source_obj = db_manager.get_by_id(Source, source_id, session=session)
+        return self._serialize(source_obj, as_dict, include_relations)
 
+    @transactional
     def get_by_user_id(
             self,
             user_id: str,
@@ -67,21 +56,10 @@ class SourceService:
 
         Returns an empty list when no sources are found.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        try:
-            objs = db_manager.find_all(Source, filters={"user_id": user_id})
-            return [self._serialize(obj, as_dict, include_relations) for obj in objs]
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to get sources by user ID {user_id}: {e}")
-            raise
-        finally:            
-            if own_session:
-                session.close()
+        objs = db_manager.find_all(Source, filters={"user_id": user_id}, session=session)
+        return [self._serialize(obj, as_dict, include_relations) for obj in objs]
 
+    @transactional
     def create(
             self,
             source_data: SourceDict,
@@ -95,41 +73,26 @@ class SourceService:
         using `db_manager.generate_new_id(Source)`. Returns the created
         `SourceDict` on success or `None` on failure.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        try:
-            # Ensure we have an ORM object to insert
-            source_id = getattr(source_data, "id", None) or db_manager.generate_new_id(Source)
-            source_obj = Source(
-                id=source_id,
-                user_id=source_data.user_id,
-                title=source_data.title,
-                date=source_data.date,
-                description=source_data.description,
-                source_type=source_data.source_type,
-            )
+        source_id = getattr(source_data, "id", None) or db_manager.generate_new_id(Source, session=session)
+        source_obj = Source(
+            id=source_id,
+            user_id=source_data.user_id,
+            title=source_data.title,
+            date=source_data.date,
+            description=source_data.description,
+            source_type=source_data.source_type,
+        )
 
-            result = db_manager.insert(
-                obj=source_obj,
-                session=session
-            )
+        result = db_manager.insert(obj=source_obj, session=session, commit=False)
 
-            if result:
-                logger.info(f"Created new Source item with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new Source item: {source_obj.title}")
+        if result:
+            logger.info(f"Created new Source item with ID: {result.id}")
+        else:
+            logger.error(f"Failed to create new Source item: {source_obj.title}")
 
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to create source: {e}")
-            raise
-        finally:            
-            if own_session:
-                session.close()
+        return self._serialize(result, as_dict, include_relations)
 
+    @transactional
     def update(
             self, 
             source_id: str, 
@@ -143,33 +106,21 @@ class SourceService:
         Returns the updated `SourceDict` on success or `None` if the source does not
         exist or the update fails.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
+        existing = db_manager.get_by_id(Source, source_id, session=session)
+        if not existing:
+            return None
 
-        try:
-            existing = db_manager.get_by_id(Source, source_id)
-            if not existing:
-                return None
+        # Update fields
+        existing.user_id = source_data.user_id
+        existing.title = source_data.title
+        existing.date = source_data.date
+        existing.description = source_data.description
+        existing.source_type = source_data.source_type
 
-            # Update fields
-            existing.user_id = source_data.user_id
-            existing.title = source_data.title
-            existing.date = source_data.date
-            existing.description = source_data.description
-            existing.source_type = source_data.source_type
+        modified = db_manager.modify(existing, session=session, commit=False)
+        return self._serialize(modified, as_dict, include_relations)
 
-            modified = db_manager.modify(existing)
-            return self._serialize(modified, as_dict, include_relations)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to update source with ID {source_id}: {e}")
-            raise
-        finally:
-            if own_session:
-                session.close()
-
+    @transactional
     def delete(
         self, 
         source_id: str,
@@ -179,25 +130,13 @@ class SourceService:
 
         Returns `True` when deletion succeeds, `False` otherwise.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
+        existing = db_manager.get_by_id(Source, source_id, session=session)
+        if not existing:
+            return False
 
-        try:
-            existing = db_manager.get_by_id(Source, source_id)
-            if not existing:
-                return False
+        return db_manager.delete(existing, session=session, commit=False)
 
-            return db_manager.delete(existing)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to delete source with ID {source_id}: {e}")
-            raise
-        finally:
-            if own_session:
-                session.close()
-
+    @transactional
     def add_source_to_element(
         self,
         source_id: str,
@@ -209,39 +148,27 @@ class SourceService:
         Uses ORM relationships through `db_manager` rather than raw SQL.
         A source can be associated with any element type regardless of source_type.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        
-        try:
-            source_obj = db_manager.get_by_id(Source, source_id)
-            if not source_obj:
-                return False
+        source_obj = db_manager.get_by_id(Source, source_id, session=session)
+        if not source_obj:
+            return False
 
-            element_type = resolve_element_model(element_id)
-            if not element_type:
-                return False
+        element_type = resolve_element_model(element_id)
+        if not element_type:
+            return False
 
-            element_obj = db_manager.get_by_id(element_type, element_id)
-            if not element_obj:
-                return False
+        element_obj = db_manager.get_by_id(element_type, element_id, session=session)
+        if not element_obj:
+            return False
 
-            # avoid duplicates
-            if any(s.id == source_id for s in element_obj.sources):
-                return True
+        # avoid duplicates
+        if any(s.id == source_id for s in element_obj.sources):
+            return True
 
-            element_obj.sources.append(source_obj)
-            modified = db_manager.modify(element_obj)
-            return bool(modified)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to add source {source_id} to element {element_id}: {e}")
-            raise
-        finally:
-            if own_session:
-                session.close()
+        element_obj.sources.append(source_obj)
+        modified = db_manager.modify(element_obj, session=session, commit=False)
+        return bool(modified)
 
+    @transactional
     def remove_source_from_element(
         self,
         source_id: str,
@@ -253,34 +180,21 @@ class SourceService:
         Uses ORM relationships through `db_manager` rather than raw SQL.
         Returns `True` if association was removed, `False` if not found.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
+        source_obj = db_manager.get_by_id(Source, source_id, session=session)
+        if not source_obj:
+            return False
 
-        try:
-            source_obj = db_manager.get_by_id(Source, source_id)
-            if not source_obj:
-                return False
+        element_type = resolve_element_model(element_id)
+        if not element_type:
+            return False
 
-            element_type = resolve_element_model(element_id)
-            if not element_type:
-                return False
+        element_obj = db_manager.get_by_id(element_type, element_id, session=session)
+        if not element_obj:
+            return False
 
-            element_obj = db_manager.get_by_id(element_type, element_id)
-            if not element_obj:
-                return False
+        if not any(s.id == source_id for s in element_obj.sources):
+            return False
 
-            if not any(s.id == source_id for s in element_obj.sources):
-                return False
-
-            element_obj.sources = [source for source in element_obj.sources if source.id != source_id]
-            modified = db_manager.modify(element_obj)
-            return bool(modified)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to remove source {source_id} from element {element_id}: {e}")
-            raise
-        finally:
-            if own_session:
-                session.close()
+        element_obj.sources = [source for source in element_obj.sources if source.id != source_id]
+        modified = db_manager.modify(element_obj, session=session, commit=False)
+        return bool(modified)

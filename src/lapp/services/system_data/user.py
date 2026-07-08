@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 from ...models.system_data import User
 from ...schemas.system_data import UserDict, UserPreferencesDict
-from ...core.database import db_manager
+from ...core.database import db_manager, transactional
 from .user_preferences import UserPreferencesService
 user_preferences_service = UserPreferencesService()
 
@@ -20,7 +20,8 @@ class UserService:
         if not as_dict or user_obj is None:
             return user_obj
         return user_obj.to_dict(include_relations=include_relations)
-    
+
+    @transactional
     def get_all(
             self,
             session: Session | None = None,
@@ -37,22 +38,10 @@ class UserService:
         Returns:
             list[UserDict] | list[User]: A list of users in the requested format.
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            users = db_manager.find_all(User)
-            return [self._serialize(user, as_dict, include_relations) for user in users]
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all users: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        users = db_manager.find_all(User, session=session)
+        return [self._serialize(user, as_dict, include_relations) for user in users]
 
+    @transactional
     def get_by_id(
         self,
         user_id: str,
@@ -69,26 +58,14 @@ class UserService:
         Returns:
             User object if found, else None
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            user = db_manager.find_by_attr(
-                model_class=User,
-                attr_values={'id': user_id},
-                session=session
-            )
-            return self._serialize(user, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get user {user_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        user = db_manager.find_by_attr(
+            model_class=User,
+            attr_values={'id': user_id},
+            session=session
+        )
+        return self._serialize(user, as_dict, include_relations)
 
+    @transactional
     def create(
         self,
         user_data: UserDict,
@@ -107,48 +84,33 @@ class UserService:
         Returns:
             The created User object or UserDict, depending on the as_dict flag.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        try:
-            # Ensure we have an ORM object to insert
-            user_id = getattr(user_data, "id", None) or db_manager.generate_new_id(User)
-            user_obj = User(
-                id=user_id,
-                username=user_data.username,
-            )
+        user_id = getattr(user_data, "id", None) or db_manager.generate_new_id(User, session=session)
+        user_obj = User(
+            id=user_id,
+            username=user_data.username,
+        )
 
-            user_obj.preferences = user_preferences_service.create(
-                data=UserPreferencesDict(
-                    user_id=user_id,
-                    native_language_iso639_2=user_data.preferences.native_language_iso639_2 if user_data.preferences else [],
-                    learning_goals=user_data.preferences.learning_goals if user_data.preferences else "",
-                    preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else [],
-                    daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20
-                ),
-            )
+        user_obj.preferences = user_preferences_service.create(
+            data=UserPreferencesDict(
+                user_id=user_id,
+                native_language_iso639_2=user_data.preferences.native_language_iso639_2 if user_data.preferences else [],
+                learning_goals=user_data.preferences.learning_goals if user_data.preferences else "",
+                preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else [],
+                daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20
+            ),
+            session=session,
+        )
 
-            result = db_manager.insert(
-                obj=user_obj,
-                session=session
-            )
+        result = db_manager.insert(obj=user_obj, session=session, commit=False)
 
-            if result:
-                logger.info(f"Created new User item with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new User item: {result.username}")
+        if result:
+            logger.info(f"Created new User item with ID: {result.id}")
+        else:
+            logger.error(f"Failed to create new User item: {result.username}")
 
+        return self._serialize(result, as_dict, include_relations)
 
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to create user: {e}")
-            raise
-        finally:            
-            if own_session:
-                session.close()
-    
+    @transactional
     def update(
         self,
         user_id: str,
@@ -169,55 +131,40 @@ class UserService:
         Returns:
             The updated User object or UserDict, depending on the as_dict flag, or None if the user was not found.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        try:
-            # Find existing user
-            user = db_manager.find_by_attr(
-                model_class=User,
-                attr_values={'id': user_id},
-                session=session
-            )
-            if not user:
-                logger.warning(f"User with ID {user_id} not found for update.")
-                return None
-            
-            # Update fields
-            user.preferences = user_preferences_service.create(
-                data=UserPreferencesDict(
-                    user_id=user_id,
-                    native_language_iso639_2=update_data.preferences.native_language_iso639_2 if update_data.preferences else [],
-                    learning_goals=update_data.preferences.learning_goals if update_data.preferences else "",
-                    preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else [],
-                    daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20
-                ),
-            )
+        user = db_manager.find_by_attr(
+            model_class=User,
+            attr_values={'id': user_id},
+            session=session
+        )
+        if not user:
+            logger.warning(f"User with ID {user_id} not found for update.")
+            return None
 
-            for field, value in update_data.model_dump(exclude={"id", "preferences"}, exclude_unset=True).items():
-                setattr(user, field, value)
-            
-            result = db_manager.modify(
-                obj=user,
-                session=session
-            )
+        # Update fields
+        user.preferences = user_preferences_service.create(
+            data=UserPreferencesDict(
+                user_id=user_id,
+                native_language_iso639_2=update_data.preferences.native_language_iso639_2 if update_data.preferences else [],
+                learning_goals=update_data.preferences.learning_goals if update_data.preferences else "",
+                preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else [],
+                daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20
+            ),
+            session=session,
+        )
 
-            if result:
-                logger.info(f"Updated User item with ID: {result.id}")
-            else:
-                logger.error(f"Failed to update User item with ID: {user_id}")
+        for field, value in update_data.model_dump(exclude={"id", "preferences"}, exclude_unset=True).items():
+            setattr(user, field, value)
 
+        result = db_manager.modify(obj=user, session=session, commit=False)
 
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to update user {user_id}: {e}")
-            raise
-        finally:            
-            if own_session:
-                session.close()
+        if result:
+            logger.info(f"Updated User item with ID: {result.id}")
+        else:
+            logger.error(f"Failed to update User item with ID: {user_id}")
 
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def delete(
         self,
         user_id: str,
@@ -231,35 +178,17 @@ class UserService:
         Returns:
             True if the user was deleted, False if the user was not found.
         """
-        own_session = session is None
-        if own_session:
-            session = db_manager.get_session()
-        try:
-            # Find existing user
-            user = db_manager.find_by_attr(
-                model_class=User,
-                attr_values={'id': user_id},
-                session=session
-            )
+        user = db_manager.find_by_attr(
+            model_class=User,
+            attr_values={'id': user_id},
+            session=session
+        )
 
-            result = db_manager.delete(
-                user,
-                session=session
-            )
-            if result:
-                logger.info(f"Deleted User item with ID: {user_id}")
-            else:
-                logger.warning(f"User with ID {user_id} not found for deletion.")
-            
-            user_preferences_service.delete(
-                pref_id=user.preferences_id,
-            )
-            return result
-        except Exception as e:
-            if own_session:
-                session.rollback()
-            logger.error(f"Failed to delete user {user_id}: {e}")
-            raise
-        finally:            
-            if own_session:
-                session.close()
+        result = db_manager.delete(user, session=session, commit=False)
+        if result:
+            logger.info(f"Deleted User item with ID: {user_id}")
+        else:
+            logger.warning(f"User with ID {user_id} not found for deletion.")
+
+        user_preferences_service.delete(pref_id=user.preferences_id, session=session)
+        return result

@@ -4,7 +4,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from ..core.database import db_manager
+from ..core.database import db_manager, transactional
 from ..utils import get_text_gen_model, get_text_gen_tokenizer
 from .features import ExerciseService
 
@@ -161,13 +161,8 @@ class FeedbackService:
 		session: Optional[Session] = None,
 		exercise=None,
 	) -> str:
-		owns_session = session is None and exercise is None
-		if owns_session:
-			session = db_manager.get_session()
-
-		try:
-			if exercise is None:
-				exercise = exercise_service.get_by_id(ex_id, session=session)
+		if exercise is None:
+			exercise = exercise_service.get_by_id(ex_id, session=session)
 			if not exercise:
 				logger.warning(f"Exercise item not found when generating feedback: {ex_id}")
 				return self._fallback_feedback({
@@ -176,38 +171,26 @@ class FeedbackService:
 					"exercise_type": input_type,
 				})
 
-			context: dict[str, object] = {
-				"exercise_id": ex_id,
-				"exercise_type": exercise.exercise_type,
-				"question": exercise.question,
-				"input_type": input_type,
-				"score": round(float(results.get("score", 0.0) or 0.0), 3),
-				"threshold": threshold,
-				"correct": bool(results.get("score", 0.0) > threshold),
-				"user_input": results.get("user_transcription", user_input) if input_type == "speech" else results.get("user_answer", user_input),
-				"reference_answer": results.get("correct_transcription", exercise.answer) if input_type == "speech" else results.get("correct_answer", exercise.answer),
-				"target_lang_code": target_lang_code,
-				"source_lang_code": source_lang_code,
-				"metrics": {
-					key: value
-					for key, value in results.items()
-					if key not in {"score", "correct", "feedback"}
-				},
-			}
+		context: dict[str, object] = {
+			"exercise_id": ex_id,
+			"exercise_type": exercise.exercise_type,
+			"question": exercise.question,
+			"input_type": input_type,
+			"score": round(float(results.get("score", 0.0) or 0.0), 3),
+			"threshold": threshold,
+			"correct": bool(results.get("score", 0.0) > threshold),
+			"user_input": results.get("user_transcription", user_input) if input_type == "speech" else results.get("user_answer", user_input),
+			"reference_answer": results.get("correct_transcription", exercise.answer) if input_type == "speech" else results.get("correct_answer", exercise.answer),
+			"target_lang_code": target_lang_code,
+			"source_lang_code": source_lang_code,
+			"metrics": {
+				key: value
+				for key, value in results.items()
+				if key not in {"score", "correct", "feedback"}
+			},
+		}
 
-			if input_type == "speech":
-				context["correct_audio_index"] = correct_audio_index
+		if input_type == "speech":
+			context["correct_audio_index"] = correct_audio_index
 
-			return self._generate_with_model(context)
-		except Exception as err:
-			logger.error(f"Failed to generate feedback for Exercise {ex_id}: {err}")
-			return self._fallback_feedback({
-				"score": results.get("score", 0.0),
-				"correct": results.get("score", 0.0) > threshold,
-				"exercise_type": input_type,
-				"target_lang_code": target_lang_code,
-				"source_lang_code": source_lang_code,
-			})
-		finally:
-			if owns_session:
-				session.close()
+		return self._generate_with_model(context)
