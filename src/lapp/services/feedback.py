@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..core.database import db_manager
-from ..utils import text_gen_model, text_gen_tokenizer
+from ..utils import get_text_gen_model, get_text_gen_tokenizer
 from .features import ExerciseService
 
 logger = logging.getLogger(__name__)
@@ -14,8 +14,14 @@ exercise_service = ExerciseService()
 
 
 class FeedbackService:
-	tokenizer = text_gen_tokenizer
-	model = text_gen_model
+	# ponytail: lazy — model loads on first feedback request, not at import.
+	@property
+	def tokenizer(self):
+		return get_text_gen_tokenizer()
+
+	@property
+	def model(self):
+		return get_text_gen_model()
 
 	feedback_instruct = (
 		"You are a supportive language-learning tutor.\n"

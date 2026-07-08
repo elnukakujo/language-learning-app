@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import logging
 from typing import Optional
 from sqlalchemy.orm import Session

@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-import datetime
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)

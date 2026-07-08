@@ -67,7 +67,13 @@ def get_language_by_iso1(iso1: str) -> Language:
     normalized = iso1.strip().lower()
     return _LANGUAGES.get(normalized, _UNKNOWN)
 
-audio_detection_model = whisper.load_model("base")
+from functools import cache
+
+
+@cache
+def _get_detection_model():
+    # ponytail: lazy so importing utils doesn't load a Whisper model.
+    return whisper.load_model("base")
 
 def detect_text_language(text: str) -> Language:
     """
@@ -110,10 +116,10 @@ def detect_audio_language(audio_file_path: str) -> tuple[Language, float]:
         audio = whisper.load_audio(audio_file_path)
         audio = whisper.pad_or_trim(audio)
         mel = whisper.log_mel_spectrogram(
-            audio, n_mels=audio_detection_model.dims.n_mels
-        ).to(audio_detection_model.device)
+            audio, n_mels=_get_detection_model().dims.n_mels
+        ).to(_get_detection_model().device)
 
-        _, probs = audio_detection_model.detect_language(mel)
+        _, probs = _get_detection_model().detect_language(mel)
         iso1 = max(probs, key=probs.get)
         confidence = probs[iso1]
 

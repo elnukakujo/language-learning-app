@@ -221,10 +221,10 @@ class DailyStatsService:
                 .first()
             )
 
-            if previous_daily_stats.streak_day is True:
+            if previous_daily_stats is not None:
                 daily_stats.current_streak_length = previous_daily_stats.current_streak_length + 1
             else:
-                daily_stats.current_streak_length = 0
+                daily_stats.current_streak_length = 1
 
         result = db_manager.modify(obj=daily_stats, session=session)
         if result is None:

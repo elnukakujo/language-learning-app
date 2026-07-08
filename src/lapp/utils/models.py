@@ -22,78 +22,95 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
 
     return str(snapshots[-1])
 
-import torch
-import whisper
-from sentence_transformers import SentenceTransformer
-from transformers import (
-    AutoModelForCausalLM,
-    AutoModelForSpeechSeq2Seq,
-    AutoProcessor,
-    AutoTokenizer,
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2Model,
-    pipeline,
-)
-from qwen_tts import Qwen3TTSModel
+from functools import cache
 
-# Text-to-representation model (for clustering, retrieval, etc.)
-text_embedding_model = SentenceTransformer(
-    "all-MiniLM-L6-v2",
-    local_files_only=OFFLINE,
-)
+# ponytail: every model is a @cache'd getter — nothing loads at import.
+# Importing this module is now cheap; each model loads on first actual use and
+# is reused thereafter. Heavy libs are imported inside the getters for the same
+# reason. Idle RAM went from ~6-8GB to ~0.
 
-# Audio-to-representation model (for clustering, retrieval, etc.)
-audio_embedding_model = Wav2Vec2Model.from_pretrained(
-    "facebook/wav2vec2-large-xlsr-53",
-    local_files_only=OFFLINE,
-)
-audio_embedding_processor = Wav2Vec2FeatureExtractor.from_pretrained(
-    "facebook/wav2vec2-large-xlsr-53",
-    local_files_only=OFFLINE,
-)
 
-# Speech-to-text model
-stt_model = AutoModelForSpeechSeq2Seq.from_pretrained(
-    "openai/whisper-medium",
-    dtype=torch.float16,
-    use_safetensors=True,
-    local_files_only=OFFLINE,
-)
-stt_processor = AutoProcessor.from_pretrained(
-    "openai/whisper-medium",
-    local_files_only=OFFLINE,
-)
-stt_pipe = pipeline(
-    "automatic-speech-recognition",
-    model=stt_model,
-    tokenizer=stt_processor.tokenizer,
-    feature_extractor=stt_processor.feature_extractor,
-    dtype=torch.float16,
-)
+@cache
+def get_text_embedding_model():
+    """Text-to-representation model (clustering, retrieval, similarity)."""
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer("all-MiniLM-L6-v2", local_files_only=OFFLINE)
 
-# Text-to-speech model
-qwen_tts_model_path = _resolve_local_hf_snapshot("Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
-qwen_tts_model = Qwen3TTSModel.from_pretrained(
-    qwen_tts_model_path or "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
-    device_map="cpu",
-    dtype=torch.bfloat16,
-    local_files_only=OFFLINE,
-)
 
-# Language detection model
-audio_detection_model = whisper.load_model(
-    "base",
-)
+@cache
+def get_audio_embedding_model():
+    from transformers import Wav2Vec2Model
+    return Wav2Vec2Model.from_pretrained(
+        "facebook/wav2vec2-large-xlsr-53", local_files_only=OFFLINE
+    )
 
-# Text generation model
-qwen2_5_model_path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
-text_gen_tokenizer = AutoTokenizer.from_pretrained(
-    qwen2_5_model_path or "Qwen/Qwen2.5-1.5B-Instruct",
-    local_files_only=OFFLINE,
-)
-text_gen_model = AutoModelForCausalLM.from_pretrained(
-    qwen2_5_model_path or "Qwen/Qwen2.5-1.5B-Instruct",
-    device_map="auto",
-    dtype="auto",
-    local_files_only=OFFLINE,
-)
+
+@cache
+def get_audio_embedding_processor():
+    from transformers import Wav2Vec2FeatureExtractor
+    return Wav2Vec2FeatureExtractor.from_pretrained(
+        "facebook/wav2vec2-large-xlsr-53", local_files_only=OFFLINE
+    )
+
+
+@cache
+def get_stt_pipe():
+    """Speech-to-text pipeline (Whisper-medium)."""
+    import torch
+    from transformers import (
+        AutoModelForSpeechSeq2Seq,
+        AutoProcessor,
+        pipeline,
+    )
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        "openai/whisper-medium",
+        dtype=torch.float16,
+        use_safetensors=True,
+        local_files_only=OFFLINE,
+    )
+    processor = AutoProcessor.from_pretrained(
+        "openai/whisper-medium", local_files_only=OFFLINE
+    )
+    return pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        dtype=torch.float16,
+    )
+
+
+@cache
+def get_qwen_tts_model():
+    """Text-to-speech model (Qwen3-TTS)."""
+    import torch
+    from qwen_tts import Qwen3TTSModel
+    path = _resolve_local_hf_snapshot("Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+    return Qwen3TTSModel.from_pretrained(
+        path or "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+        device_map="cpu",
+        dtype=torch.bfloat16,
+        local_files_only=OFFLINE,
+    )
+
+
+@cache
+def get_text_gen_tokenizer():
+    from transformers import AutoTokenizer
+    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
+    return AutoTokenizer.from_pretrained(
+        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=OFFLINE
+    )
+
+
+@cache
+def get_text_gen_model():
+    """Text generation model (Qwen2.5-1.5B-Instruct)."""
+    from transformers import AutoModelForCausalLM
+    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
+    return AutoModelForCausalLM.from_pretrained(
+        path or "Qwen/Qwen2.5-1.5B-Instruct",
+        device_map="auto",
+        dtype="auto",
+        local_files_only=OFFLINE,
+    )

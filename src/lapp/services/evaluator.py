@@ -14,10 +14,10 @@ from ..utils import (
     detect_text_language,
     get_language_by_iso2t,
     load_spacy_model,
-    text_embedding_model,
-    audio_embedding_model,
-    audio_embedding_processor,
-    stt_pipe
+    get_text_embedding_model,
+    get_audio_embedding_model,
+    get_audio_embedding_processor,
+    get_stt_pipe,
 )
 from .features import ExerciseService
 from .feedback import FeedbackService
@@ -26,12 +26,22 @@ exercise_service = ExerciseService()
 feedback_service = FeedbackService()
 
 class EvaluatorService:
-    text_embedding_model = text_embedding_model
-    
-    audio_embedding_model = audio_embedding_model
-    audio_embedding_processor = audio_embedding_processor
+    # ponytail: properties so the models load on first use, not at import.
+    @property
+    def text_embedding_model(self):
+        return get_text_embedding_model()
 
-    stt_pipe = stt_pipe
+    @property
+    def audio_embedding_model(self):
+        return get_audio_embedding_model()
+
+    @property
+    def audio_embedding_processor(self):
+        return get_audio_embedding_processor()
+
+    @property
+    def stt_pipe(self):
+        return get_stt_pipe()
 
     exercises_scales = {
         "translate": (0.6, 0.2, 0.2),

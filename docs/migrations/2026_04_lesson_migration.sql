@@ -149,7 +149,7 @@ CREATE TABLE word (
         ELSE 'mastered'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- word-specific
     word TEXT NOT NULL,
     translation TEXT,
@@ -178,7 +178,7 @@ CREATE TABLE character (
         ELSE 'mastered'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- character-specific
     character TEXT NOT NULL,
     phonetic TEXT,
@@ -207,7 +207,7 @@ CREATE TABLE passage (
         ELSE 'mastered'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- passage-specific
     text TEXT NOT NULL,
     translation TEXT,
@@ -233,7 +233,7 @@ CREATE TABLE vocabulary (
         ELSE 'completed'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- relations
     lesson_id TEXT NOT NULL,
     word_id TEXT NOT NULL,
@@ -255,7 +255,7 @@ CREATE TABLE grammar (
         ELSE 'completed'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- grammar-specific
     title TEXT,
     explanation TEXT,
@@ -278,7 +278,7 @@ CREATE TABLE calligraphy (
         ELSE 'completed'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- relations
     lesson_id TEXT NOT NULL,
     character_id TEXT NOT NULL,
@@ -300,7 +300,7 @@ CREATE TABLE exercise (
         ELSE 'completed'
     END) VIRTUAL,
     score INTEGER NOT NULL DEFAULT 0,
-    difficulty INTEGER NOT NULL DEFAULT 0.5,
+    difficulty FLOAT NOT NULL DEFAULT 0.5,
     -- exercise-specific
     exercise_type TEXT NOT NULL,
     question TEXT NOT NULL,

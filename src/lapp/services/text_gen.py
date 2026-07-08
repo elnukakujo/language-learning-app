@@ -2,13 +2,19 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from ..utils import text_gen_model, text_gen_tokenizer
+from ..utils import get_text_gen_model, get_text_gen_tokenizer
 from .containers import LanguageService
 language_service = LanguageService()
 
 class TextGeneratorService:
-    tokenizer = text_gen_tokenizer
-    model = text_gen_model
+    # ponytail: lazy — model loads on first generation, not at import.
+    @property
+    def tokenizer(self):
+        return get_text_gen_tokenizer()
+
+    @property
+    def model(self):
+        return get_text_gen_model()
     
     grammar_instruct = (
         "You generate exactly one short language-learning sentence.\n"

@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 import soundfile as sf
 
-from ..utils import detect_text_language, qwen_tts_model
+from ..utils import detect_text_language, get_qwen_tts_model
 from ..utils.detect_language import _LANGUAGES
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,11 @@ class TTSService:
         self.media_root = Path(media_root if media_root else MediaService().media_root)
         self.audio_dir = self.media_root / 'audio'
         self.audio_dir.mkdir(parents=True, exist_ok=True)
-        self.model = qwen_tts_model
+
+    # ponytail: lazy — TTS model loads on first synth, not when the service is built.
+    @property
+    def model(self):
+        return get_qwen_tts_model()
     
     def _get_filename(self) -> str:
         """
