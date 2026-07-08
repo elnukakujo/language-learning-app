@@ -1,63 +1,95 @@
 "use client";
 
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import ConflictError from "@/api/conflictError";
+
+// Fields that are combined automatically (not shown for manual decision) —
+// media isn't something a user picks one version of, both sets are kept.
+const STACKED_FIELDS = new Set(["image_files", "audio_files"]);
 
 // Reuses the fixed-overlay createPortal pattern from buttons/deleteButton.tsx.
 export default function ConflictDialog({
     error,
-    onResolve,
+    onKeep,
+    onOverwrite,
+    onManualResolve,
     onCancel,
 }: {
     error: ConflictError;
-    onResolve: (choice: "keep" | "overwrite" | "merge") => void;
+    onKeep: () => void;
+    onOverwrite: () => void;
+    onManualResolve: (resolvedFields: Record<string, string>) => void;
     onCancel: () => void;
 }) {
+    const editableFields = error.diff.filter((field) => !STACKED_FIELDS.has(field));
+    const stackedFields = error.diff.filter((field) => STACKED_FIELDS.has(field));
+
+    const [values, setValues] = useState<Record<string, string>>(() => {
+        const initial: Record<string, string> = {};
+        for (const field of editableFields) {
+            initial[field] = String(error.incoming[field] ?? error.existing[field] ?? "");
+        }
+        return initial;
+    });
+
     return createPortal(
         <div className="fixed inset-0 z-50 flex flex-col gap-4 items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-lg p-6 max-w-lg w-full flex flex-col gap-4">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
                 <h3 className="text-lg font-semibold">
                     This {error.entityType} already exists
                 </h3>
                 <p className="text-sm text-gray-600">
                     A {error.entityType} with this value already exists for this language.
-                    Choose how to resolve the conflict.
+                    Review each conflicting field below and decide what to keep.
                 </p>
 
-                {error.diff.length > 0 && (
-                    <table className="text-sm border-collapse w-full">
-                        <thead>
-                            <tr className="text-left border-b">
-                                <th className="pr-4 py-1">Field</th>
-                                <th className="pr-4 py-1">Existing</th>
-                                <th className="py-1">Incoming</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {error.diff.map((field) => (
-                                <tr key={field} className="border-b last:border-0">
-                                    <td className="pr-4 py-1 font-medium">{field}</td>
-                                    <td className="pr-4 py-1 text-gray-500">
-                                        {String(error.existing[field] ?? "—")}
-                                    </td>
-                                    <td className="py-1">{String(error.incoming[field] ?? "—")}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                {editableFields.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                        {editableFields.map((field) => (
+                            <div key={field} className="flex flex-col gap-1 border-b pb-3 last:border-0">
+                                <span className="font-medium text-sm">{field}</span>
+                                <div className="flex flex-row gap-2 text-xs text-gray-500">
+                                    <button
+                                        type="button"
+                                        className="border rounded px-2 py-1 hover:bg-gray-100"
+                                        onClick={() => setValues(v => ({ ...v, [field]: String(error.existing[field] ?? "") }))}
+                                    >
+                                        Use existing: &quot;{String(error.existing[field] ?? "—")}&quot;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="border rounded px-2 py-1 hover:bg-gray-100"
+                                        onClick={() => setValues(v => ({ ...v, [field]: String(error.incoming[field] ?? "") }))}
+                                    >
+                                        Use incoming: &quot;{String(error.incoming[field] ?? "—")}&quot;
+                                    </button>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="border border-gray-300 rounded px-2 py-1"
+                                    value={values[field] ?? ""}
+                                    onChange={(e) => setValues(v => ({ ...v, [field]: e.target.value }))}
+                                    placeholder={`Type a value for ${field}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 )}
 
-                <div className="flex flex-row gap-2 justify-end flex-wrap">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="border-2 rounded px-4 py-2"
-                    >
+                {stackedFields.length > 0 && (
+                    <p className="text-xs text-gray-500">
+                        {stackedFields.join(", ")} will be combined automatically (both versions kept).
+                    </p>
+                )}
+
+                <div className="flex flex-row gap-2 justify-end flex-wrap pt-2">
+                    <button type="button" onClick={onCancel} className="border-2 rounded px-4 py-2">
                         Cancel
                     </button>
                     <button
                         type="button"
-                        onClick={() => onResolve("keep")}
+                        onClick={onKeep}
                         className="border-2 rounded px-4 py-2"
                         title="Discard what you entered, keep the existing entry as-is"
                     >
@@ -65,20 +97,22 @@ export default function ConflictDialog({
                     </button>
                     <button
                         type="button"
-                        onClick={() => onResolve("merge")}
-                        className="border-2 rounded px-4 py-2"
-                        title="Fill in only what's missing on the existing entry"
-                    >
-                        Merge
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onResolve("overwrite")}
+                        onClick={onOverwrite}
                         className="border-2 rounded px-4 py-2 bg-red-500 text-white"
                         title="Replace the existing entry with what you entered"
                     >
                         Overwrite
                     </button>
+                    {editableFields.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => onManualResolve(values)}
+                            className="border-2 rounded px-4 py-2 bg-blue-500 text-white"
+                            title="Apply the values chosen/typed above"
+                        >
+                            Apply Chosen Values
+                        </button>
+                    )}
                 </div>
             </div>
         </div>,

@@ -99,14 +99,22 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
         }
     };
 
-    const handleConflictResolve = async (choice: "keep" | "overwrite" | "merge") => {
+    const resolveConflict = async (element: Partial<Vocabulary>, onConflict: "keep" | "overwrite" | "merge") => {
         setConflict(null);
         try {
-            await submit(buildElement(), choice);
+            await submit(element, onConflict);
         } catch (error) {
             console.error("Failed to resolve vocabulary conflict:", error);
             alert("Failed to resolve conflict. Check console for details.");
         }
+    };
+
+    const handleKeepExisting = () => resolveConflict(buildElement(), "keep");
+    const handleOverwrite = () => resolveConflict(buildElement(), "overwrite");
+    const handleManualResolve = (resolvedFields: Record<string, string>) => {
+        const element = buildElement();
+        Object.assign(element.word!, resolvedFields);
+        resolveConflict(element, "merge");
     };
 
     const handleExampleSentenceChange = (index: number, field: "text" | "translation" | "image_files" | "audio_files", value: string | string[]) => {
@@ -130,7 +138,9 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
         {conflict && (
             <ConflictDialog
                 error={conflict}
-                onResolve={handleConflictResolve}
+                onKeep={handleKeepExisting}
+                onOverwrite={handleOverwrite}
+                onManualResolve={handleManualResolve}
                 onCancel={() => setConflict(null)}
             />
         )}

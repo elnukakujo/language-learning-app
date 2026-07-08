@@ -1,5 +1,5 @@
 from .file_handler import MediaFileHandler
-from .helpers import update_score, update_difficulty
+from .helpers import update_score, update_difficulty, stack_lists
 from .detect_language import detect_audio_language, detect_text_language, get_language_by_iso2t, get_language_by_iso1
 from .spacy_model import load_spacy_model
 from .offline import is_offline
@@ -23,6 +23,7 @@ __all__ = [
     MediaFileHandler,
     update_score,
     update_difficulty,
+    stack_lists,
     detect_text_language,
     detect_audio_language,
     get_language_by_iso2t,

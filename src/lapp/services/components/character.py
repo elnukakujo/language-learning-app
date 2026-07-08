@@ -11,7 +11,7 @@ from ...models.containers import Language
 from ...core.database import db_manager, transactional
 from ...core.exceptions import DuplicateEntityError
 from ...models.system_data import Tag, Source
-from ...utils import enrich_character, get_language_by_iso2t
+from ...utils import enrich_character, get_language_by_iso2t, stack_lists
 
 
 # ponytail: @transactional injects a managed session and owns commit/rollback,
@@ -71,7 +71,10 @@ class CharacterService:
                 raise ValueError(f"Invalid on_conflict value: {on_conflict}")
 
             logger.info(f"Character already exists: {data.character} with ID: {existing.id}; resolving as {on_conflict}")
-            return self.update(character_id=existing.id, data=data, session=session, force=(on_conflict == "overwrite"))
+            return self.update(
+                character_id=existing.id, data=data, session=session,
+                force=(on_conflict == "overwrite"), stack_media=True,
+            )
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
 
@@ -105,6 +108,7 @@ class CharacterService:
         data: CharacterDict,
         session: Optional[Session] = None,
         force: bool = False,
+        stack_media: bool = False,
     ) -> Character | None:
         """Update an existing character.
 
@@ -114,6 +118,10 @@ class CharacterService:
                 if given, else freshly re-enriched. If False (default), a
                 missing field falls back to the existing value first, then
                 to enrichment — a "merge", not a replace.
+            stack_media: If True (resolving a create() conflict), image_files/
+                audio_files are the UNION of existing + incoming rather than
+                incoming replacing existing outright — media isn't something
+                the user picks one version of, both sets are kept.
         """
         existing = self.get_by_id(character_id, session=session)
 
@@ -148,8 +156,12 @@ class CharacterService:
         existing.radical = resolve('radical', existing.radical)
         existing.meaning = resolve('meaning', existing.meaning)
         existing.strokes = update_data.get('strokes', existing.strokes)
-        existing.audio_files = update_data.get('audio_files', existing.audio_files)
-        existing.image_files = update_data.get('image_files', existing.image_files)
+        if stack_media:
+            existing.audio_files = stack_lists(existing.audio_files, update_data.get('audio_files'))
+            existing.image_files = stack_lists(existing.image_files, update_data.get('image_files'))
+        else:
+            existing.audio_files = update_data.get('audio_files', existing.audio_files)
+            existing.image_files = update_data.get('image_files', existing.image_files)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

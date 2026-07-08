@@ -9,7 +9,7 @@ from ...models.components import Word, Character
 from ...models.system_data import Tag, Source
 from ...models.containers import Language
 from ...schemas.components import WordDict
-from ...utils import enrich_word, get_language_by_iso2t
+from ...utils import enrich_word, get_language_by_iso2t, stack_lists
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,10 @@ class WordService:
                 raise ValueError(f"Invalid on_conflict value: {on_conflict}")
 
             logger.info(f"Word already exists: {data.word} with ID: {existing.id}; resolving as {on_conflict}")
-            return self.update(word_id=existing.id, data=data, session=session, force=(on_conflict == "overwrite"))
+            return self.update(
+                word_id=existing.id, data=data, session=session,
+                force=(on_conflict == "overwrite"), stack_media=True,
+            )
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
 
@@ -133,6 +136,7 @@ class WordService:
         data: WordDict,
         session: Optional[Session] = None,
         force: bool = False,
+        stack_media: bool = False,
     ) -> Word | None:
         """Update an existing word.
 
@@ -142,6 +146,10 @@ class WordService:
                 if given, else freshly re-enriched. If False (default), a
                 missing field falls back to the existing value first, then
                 to enrichment — a "merge", not a replace.
+            stack_media: If True (resolving a create() conflict), image_files/
+                audio_files are the UNION of existing + incoming rather than
+                incoming replacing existing outright — media isn't something
+                the user picks one version of, both sets are kept.
         """
         existing: Word = self.get_by_id(word_id, session=session)
         if not existing:
@@ -200,8 +208,12 @@ class WordService:
         existing.translation = resolve('translation', existing.translation)
         existing.word_type = resolve('word_type', existing.word_type)
         existing.word_gender = resolve('word_gender', existing.word_gender)
-        existing.audio_files = update_data.get('audio_files', existing.audio_files)
-        existing.image_files = update_data.get('image_files', existing.image_files)
+        if stack_media:
+            existing.audio_files = stack_lists(existing.audio_files, update_data.get('audio_files'))
+            existing.image_files = stack_lists(existing.image_files, update_data.get('image_files'))
+        else:
+            existing.audio_files = update_data.get('audio_files', existing.audio_files)
+            existing.image_files = update_data.get('image_files', existing.image_files)
         existing.characters = list(characters.values())
 
         return db_manager.modify(existing, session=session, commit=False)

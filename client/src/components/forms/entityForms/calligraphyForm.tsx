@@ -100,14 +100,22 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
         }
     };
 
-    const handleConflictResolve = async (choice: "keep" | "overwrite" | "merge") => {
+    const resolveConflict = async (element: Partial<Calligraphy>, onConflict: "keep" | "overwrite" | "merge") => {
         setConflict(null);
         try {
-            await submit(buildElement(), choice);
+            await submit(element, onConflict);
         } catch (error) {
             console.error("Failed to resolve calligraphy conflict:", error);
             alert("Failed to resolve conflict. Check console for details.");
         }
+    };
+
+    const handleKeepExisting = () => resolveConflict(buildElement(), "keep");
+    const handleOverwrite = () => resolveConflict(buildElement(), "overwrite");
+    const handleManualResolve = (resolvedFields: Record<string, string>) => {
+        const element = buildElement();
+        Object.assign(element.character!, resolvedFields);
+        resolveConflict(element, "merge");
     };
     const handleExampleWordChange = (index: number, field: "word" | "translation" | "word_type" | "word_gender" | "image_files" | "audio_files", value: string | string[]) => {
         setExampleWords(prevWords => {
@@ -146,7 +154,9 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
         {conflict && (
             <ConflictDialog
                 error={conflict}
-                onResolve={handleConflictResolve}
+                onKeep={handleKeepExisting}
+                onOverwrite={handleOverwrite}
+                onManualResolve={handleManualResolve}
                 onCancel={() => setConflict(null)}
             />
         )}

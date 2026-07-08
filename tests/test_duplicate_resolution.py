@@ -7,6 +7,8 @@ language raises DuplicateEntityError by default (was: silent upsert), and
 out of a passage, calligraphy/grammar example words) must keep the old
 silent-merge behavior — those aren't the user's top-level create action.
 """
+from pathlib import Path
+
 import pytest
 
 from lapp.core.exceptions import DuplicateEntityError
@@ -16,9 +18,19 @@ from lapp.models.containers import Language
 from lapp.services.components.word import WordService
 from lapp.services.components.character import CharacterService
 from lapp.schemas.components import WordDict, CharacterDict
+from config import TestingConfig
 
 word_service = WordService()
 character_service = CharacterService()
+
+
+def _touch_media(*relative_paths):
+    """The media validator (BaseModelWithMediaFiles) only keeps paths that
+    actually exist under MEDIA_ROOT — create real empty files for it to find."""
+    for rel in relative_paths:
+        path = Path(TestingConfig.MEDIA_ROOT) / rel.lstrip("/").removeprefix("media_test/")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
 
 
 def _seed_language(db, target="fra", source="eng"):
@@ -87,6 +99,40 @@ def test_word_create_merge_fills_blanks_from_existing(db):
     assert merged.id == first.id
     assert merged.translation == "hi there"       # incoming non-blank wins
     assert merged.word_type == "interjection"      # incoming blank falls back to existing
+
+
+def test_word_create_merge_stacks_media_instead_of_replacing(db):
+    # Media validator only keeps paths that exist under MEDIA_ROOT.
+    _touch_media("images/a.jpg", "images/b.jpg", "audio/a.mp3")
+    _seed_language(db)
+    word_service.create(WordDict(
+        word="bonjour", language_id="lang_D1",
+        image_files=["/media_test/images/a.jpg"], audio_files=["/media_test/audio/a.mp3"],
+    ))
+
+    merged = word_service.create(
+        WordDict(
+            word="bonjour", language_id="lang_D1",
+            image_files=["/media_test/images/b.jpg"], audio_files=["/media_test/audio/a.mp3"],
+        ),
+        on_conflict="merge",
+    )
+
+    assert sorted(merged.image_files) == ["/media_test/images/a.jpg", "/media_test/images/b.jpg"]  # union, not replace
+    assert merged.audio_files == ["/media_test/audio/a.mp3"]  # duplicate not repeated
+
+
+def test_word_create_overwrite_also_stacks_media(db):
+    _touch_media("images/a.jpg", "images/b.jpg")
+    _seed_language(db)
+    word_service.create(WordDict(word="bonjour", language_id="lang_D1", image_files=["/media_test/images/a.jpg"]))
+
+    overwritten = word_service.create(
+        WordDict(word="bonjour", language_id="lang_D1", image_files=["/media_test/images/b.jpg"]),
+        on_conflict="overwrite",
+    )
+
+    assert sorted(overwritten.image_files) == ["/media_test/images/a.jpg", "/media_test/images/b.jpg"]
 
 
 def test_character_create_raises_on_conflict_by_default(db):

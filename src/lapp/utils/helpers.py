@@ -8,6 +8,21 @@ def _as_date(value: date | datetime) -> date:
     return value
 
 
+def stack_lists(existing: list | None, incoming: list | None) -> list:
+    """Union two lists, preserving order and dropping duplicates.
+
+    Used to combine media (image_files/audio_files) when resolving a
+    create() duplicate — media isn't something to pick one version of.
+    """
+    result = list(existing or [])
+    seen = set(result)
+    for item in (incoming or []):
+        if item not in seen:
+            result.append(item)
+            seen.add(item)
+    return result
+
+
 def compute_recency_weight(
     created_at: date | datetime,
     last_seen_at: date | datetime
