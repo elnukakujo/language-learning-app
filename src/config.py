@@ -34,8 +34,10 @@ class Config:
     # Media settings
     MAX_AUDIO_SIZE = 10 * 1024 * 1024  # 10MB
     MAX_IMAGE_SIZE = 5 * 1024 * 1024   # 5MB
+    MAX_OCR_UPLOAD_SIZE = 20 * 1024 * 1024  # 20MB, course scans/PDFs run larger than a single image
     ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'm4a'}
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+    ALLOWED_OCR_EXTENSIONS = {'jpg', 'jpeg', 'png', 'pdf'}
     
     # Backup settings
     BACKUP_INTERVAL_MINUTES = 20  # Every 20 minutes

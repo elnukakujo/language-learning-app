@@ -59,6 +59,8 @@ dependencies = [
     "hanzipy>=1.0.4",
     "alembic>=1.18.5",
     "psycopg[binary]>=3.3.4",
+    "pytesseract>=0.3.13",
+    "pypdfium2>=5.11.0",
 ]
 [build-system]
 requires = ["hatchling"]
