@@ -1,5 +1,6 @@
 import Vocabulary from "@/interface/features/Vocabulary";
 import { BASE_URL } from "..";
+import { throwIfConflict } from "../conflictError";
 
 export async function getVocabularyById(vocabularyId: string) {
   const res = await fetch(`${BASE_URL}/api/vocabulary/${vocabularyId}`);
@@ -19,15 +20,19 @@ export async function getVocabularyByLesson(lessonId: string) {
   return res.json();
 }
 
-export async function createVocabulary(data: Partial<Vocabulary>) {
+export async function createVocabulary(
+  data: Partial<Vocabulary>,
+  onConflict?: "keep" | "overwrite" | "merge"
+) {
   if (data.id) {
     data.id = undefined;
   }
   const res = await fetch(`${BASE_URL}/api/vocabulary/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, on_conflict: onConflict }),
   });
+  await throwIfConflict(res);
   if (!res.ok) throw new Error("Failed to create vocabulary");
   return res.json();
 }

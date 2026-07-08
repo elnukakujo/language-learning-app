@@ -13,6 +13,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAdd, faTrash } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
 import SourceSelector from "@/components/selectMenu/sourceSelector";
+import ConflictError from "@/api/conflictError";
+import ConflictDialog from "@/components/dialogs/conflictDialog";
 
 export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vocabulary | Partial<Vocabulary>; lesson_id: string}) {
     const router = useRouter();
@@ -50,47 +52,60 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
     const [exampleSentences, setExampleSentences] = useState<Partial<Passage>[]>(vocabularyData.example_sentences!);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(vocabularyData.tags ? vocabularyData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(vocabularyData.sources ? vocabularyData.sources.map(source => source.id!) : []);
+    const [conflict, setConflict] = useState<ConflictError | null>(null);
+
+    const buildElement = (): Partial<Vocabulary> => ({
+        word: {
+            word: word,
+            translation: translation,
+            word_type: type,
+            word_gender: gender,
+            phonetic: phonetic,
+            image_files: wordImageUrl,
+            audio_files: wordAudioUrl
+        },
+        example_sentences: exampleSentences,
+        lesson_id: lesson_id,
+        tags: selectedTagIds.map(tagId => ({ id: tagId })),
+        sources: selectedSourceIds.map(sourceId => ({ id: sourceId }))
+    });
+
+    // Extract language_id from current URL
+    const languageIdFromPath = () => window.location.pathname.split('/')[2]; // From /languages/LANG_ID/...
+
+    const submit = async (element: Partial<Vocabulary>, onConflict?: "keep" | "overwrite" | "merge") => {
+        if (isUpdate) {
+            await updateVocabulary(vocabularyData.id!, element);
+        } else {
+            await createVocabulary(element, onConflict);
+        }
+        router.push(`/languages/${languageIdFromPath()}/lesson/${lesson_id}`);
+        router.refresh();
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        // Extract language_id from current URL
-        const currentPath = window.location.pathname;
-        const pathParts = currentPath.split('/');
-        const languageId = pathParts[2]; // From /languages/LANG_ID/...
-        
-        const element: Partial<Vocabulary> = {
-            word: {
-                word: word,
-                translation: translation,
-                word_type: type,
-                word_gender: gender,
-                phonetic: phonetic,
-                image_files: wordImageUrl,
-                audio_files: wordAudioUrl
-            },
-            example_sentences: exampleSentences,          
-            lesson_id: lesson_id,
-            tags: selectedTagIds.map(tagId => ({ id: tagId })),
-            sources: selectedSourceIds.map(sourceId => ({ id: sourceId }))
-        };
-        console.log("Creating vocabulary with data:", element);
-        
-        try {
-            let vocabularyId: string;
-            if (isUpdate) {
-                await updateVocabulary(vocabularyData.id!, element);
-                vocabularyId = vocabularyData.id!;
-            } else {
-                const response = await createVocabulary(element);
-                vocabularyId = response.id;
-            }
+        const element = buildElement();
 
-            router.push(`/languages/${languageId}/lesson/${lesson_id}`);
-            router.refresh();
+        try {
+            await submit(element);
         } catch (error) {
+            if (error instanceof ConflictError) {
+                setConflict(error);
+                return;
+            }
             console.error(`Failed to ${isUpdate ? "update" : "create"} vocabulary:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} vocabulary. Check console for details.`);
+        }
+    };
+
+    const handleConflictResolve = async (choice: "keep" | "overwrite" | "merge") => {
+        setConflict(null);
+        try {
+            await submit(buildElement(), choice);
+        } catch (error) {
+            console.error("Failed to resolve vocabulary conflict:", error);
+            alert("Failed to resolve conflict. Check console for details.");
         }
     };
 
@@ -111,8 +126,16 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
     };
 
     return (
-        <form 
-            className="flex flex-col space-y-12" 
+        <>
+        {conflict && (
+            <ConflictDialog
+                error={conflict}
+                onResolve={handleConflictResolve}
+                onCancel={() => setConflict(null)}
+            />
+        )}
+        <form
+            className="flex flex-col space-y-12"
             onSubmit={handleSubmit}
         >
             <article className="flex flex-col space-y-2 items-center">
@@ -209,5 +232,6 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
             </article>
             {isUpdate ? <UpdateButton>Update Vocabulary</UpdateButton> : <NewElementButton>Add Vocabulary</NewElementButton>}
         </form>
+        </>
     );
 }

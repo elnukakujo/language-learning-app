@@ -14,6 +14,8 @@ import Passage from "@/interface/components/Passage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faAdd } from "@fortawesome/free-solid-svg-icons";
 import UpdateButton from "@/components/buttons/updateButton";
+import ConflictError from "@/api/conflictError";
+import ConflictDialog from "@/components/dialogs/conflictDialog";
 
 export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?: Partial<Calligraphy>; lesson_id: string}) {
     const router = useRouter();
@@ -50,47 +52,61 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
     const [exampleSentences, setExampleSentences] = useState<Partial<Passage>[]>(calligraphyData.example_sentences ? calligraphyData.example_sentences : []);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(calligraphyData.tags ? calligraphyData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(calligraphyData.sources ? calligraphyData.sources.map(source => source.id!) : []);
+    const [conflict, setConflict] = useState<ConflictError | null>(null);
+
+    const buildElement = (): Partial<Calligraphy> => ({
+        character: {
+            character: character,
+            phonetic: phonetic,
+            meaning: meaning,
+            radical: radical,
+            strokes: strokes,
+            image_files: imageUrl,
+            audio_files: audioUrl
+        },
+        example_words: exampleWords,
+        example_sentences: exampleSentences,
+        lesson_id: lesson_id,
+        tags: selectedTagIds.map(id => ({ id })),
+        sources: selectedSourceIds.map(id => ({ id }))
+    });
+
+    // Extract language_id from current URL
+    const languageIdFromPath = () => window.location.pathname.split('/')[2]; // From /languages/LANG_ID/...
+
+    const submit = async (element: Partial<Calligraphy>, onConflict?: "keep" | "overwrite" | "merge") => {
+        if (isUpdate) {
+            await updateCalligraphy(calligraphyData.id!, element);
+        } else {
+            await createCalligraphy(element, onConflict);
+        }
+        router.push(`/languages/${languageIdFromPath()}/lesson/${lesson_id}`);
+        router.refresh();
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        // Extract language_id from current URL
-        const currentPath = window.location.pathname;
-        const pathParts = currentPath.split('/');
-        const languageId = pathParts[2]; // From /languages/LANG_ID/...
-        
-        const element: Partial<Calligraphy> = {
-            character: {
-                character: character,
-                phonetic: phonetic,
-                meaning: meaning,
-                radical: radical,
-                strokes: strokes,
-                image_files: imageUrl,
-                audio_files: audioUrl
-            },
-            example_words: exampleWords,
-            example_sentences: exampleSentences,
-            lesson_id: lesson_id,
-            tags: selectedTagIds.map(id => ({ id })),
-            sources: selectedSourceIds.map(id => ({ id }))
-        };
-        
-        try {
-            let calligraphyId: string;
-            if (isUpdate) {
-                await updateCalligraphy(calligraphyData.id!, element);
-                calligraphyId = calligraphyData.id!;
-            } else {
-                const response = await createCalligraphy(element);
-                calligraphyId = response.id;
-            }
+        const element = buildElement();
 
-            router.push(`/languages/${languageId}/lesson/${lesson_id}`);
-            router.refresh();
+        try {
+            await submit(element);
         } catch (error) {
+            if (error instanceof ConflictError) {
+                setConflict(error);
+                return;
+            }
             console.error(`Failed to ${isUpdate ? "update" : "create"} calligraphy:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} calligraphy. Check console for details.`);
+        }
+    };
+
+    const handleConflictResolve = async (choice: "keep" | "overwrite" | "merge") => {
+        setConflict(null);
+        try {
+            await submit(buildElement(), choice);
+        } catch (error) {
+            console.error("Failed to resolve calligraphy conflict:", error);
+            alert("Failed to resolve conflict. Check console for details.");
         }
     };
     const handleExampleWordChange = (index: number, field: "word" | "translation" | "word_type" | "word_gender" | "image_files" | "audio_files", value: string | string[]) => {
@@ -126,6 +142,14 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
     };
 
     return (
+        <>
+        {conflict && (
+            <ConflictDialog
+                error={conflict}
+                onResolve={handleConflictResolve}
+                onCancel={() => setConflict(null)}
+            />
+        )}
         <form className="flex flex-col space-y-12" onSubmit={handleSubmit}>
             <article className="flex flex-col space-y-2 items-center">
                 <h3>Character Informations</h3>
@@ -280,5 +304,6 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
             </article>
             {isUpdate ? <UpdateButton>Update Calligraphy</UpdateButton> : <NewElementButton>Add Calligraphy</NewElementButton>}
         </form>
+        </>
     );
 }

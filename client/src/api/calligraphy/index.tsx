@@ -1,5 +1,6 @@
 import { BASE_URL } from "..";
 import Calligraphy from "@/interface/features/Calligraphy";
+import { throwIfConflict } from "../conflictError";
 
 export async function getCalligraphyById(calligraphyId: string) {
   const res = await fetch(`${BASE_URL}/api/calligraphy/${calligraphyId}`);
@@ -19,15 +20,19 @@ export async function getCalligraphyByLesson(lessonId: string) {
   return res.json();
 }
 
-export async function createCalligraphy(data: Partial<Calligraphy>) {
+export async function createCalligraphy(
+  data: Partial<Calligraphy>,
+  onConflict?: "keep" | "overwrite" | "merge"
+) {
   if (data.id !== undefined) {
     delete data.id;
   }
   const res = await fetch(`${BASE_URL}/api/calligraphy/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, on_conflict: onConflict }),
   });
+  await throwIfConflict(res);
   if (!res.ok) throw new Error("Failed to create calligraphy");
   return res.json();
 }
