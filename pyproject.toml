@@ -91,5 +91,10 @@ sl-core-news-md = { path = "wheels/sl_core_news_md-3.8.0-py3-none-any.whl" }
 sv-core-news-md = { path = "wheels/sv_core_news_md-3.8.0-py3-none-any.whl" }
 uk-core-news-md = { path = "wheels/uk_core_news_md-3.8.0-py3-none-any.whl" }
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
 [project.scripts]
 server = "lapp.__main__:main"

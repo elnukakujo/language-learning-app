@@ -1,5 +1,6 @@
 # src/lapp/core/database.py
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional, Type, TypeVar, Any
 
@@ -51,7 +52,10 @@ class DatabaseManager:
         self.SessionLocal = sessionmaker(
             bind=self.engine,
             autocommit=False,
-            autoflush=False
+            autoflush=False,
+            # Keep attributes readable after commit/close — routes serialize
+            # returned ORM objects via to_dict() once the session is gone.
+            expire_on_commit=False,
         )
         self._scoped_session = scoped_session(self.SessionLocal)
     
@@ -116,7 +120,25 @@ class DatabaseManager:
         """Close the current scoped session."""
         if self._scoped_session:
             self._scoped_session.remove()
-    
+
+    @contextmanager
+    def session_scope(self):
+        """One unit of work: commit on success, rollback on error, always close.
+
+        Pass the yielded session to CRUD calls with `commit=False` so the whole
+        cascade commits once here instead of once per call. Replaces the repeated
+        `owns_session = session is None` boilerplate in services.
+        """
+        session = self.get_session()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def _load_relationships(self, query, model_class: Type[model_types], load_relationships: bool = True):
         """
         Helper method to add relationship loading to a query.
@@ -165,7 +187,7 @@ class DatabaseManager:
     
     # ==================== CRUD Operations ====================
     
-    def insert(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True) -> Optional[model_types]:
+    def insert(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True, commit: bool = True) -> Optional[model_types]:
         """
         Insert a single object into the database.
         
@@ -184,20 +206,22 @@ class DatabaseManager:
         
         try:
             session.add(obj)
-            session.commit()
+            # commit=False defers to the enclosing session_scope; flush still
+            # populates generated IDs and surfaces IntegrityError here.
+            session.commit() if commit else session.flush()
             session.refresh(obj)  # Refresh to get generated IDs
-            
+
             # Load all relationships before closing the session
             if load_relationships:
                 self._eager_load_object_relationships(obj, session)
-            
+
             logger.info(f"Inserted {type(obj).__name__} with id: {obj.id}")
             return obj
         except IntegrityError as e:
             session.rollback()
             logger.warning(f"Insert failed due to integrity error: {e}")
             # Attempt to modify existing record
-            return self.modify(obj, session, load_relationships)
+            return self.modify(obj, session, load_relationships, commit=commit)
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"Insert failed: {e}")
@@ -206,7 +230,7 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def insert_many(self, objs: list[model_types], session: Optional[Session] = None, load_relationships: bool = True) -> bool:
+    def insert_many(self, objs: list[model_types], session: Optional[Session] = None, load_relationships: bool = True, commit: bool = True) -> bool:
         """
         Insert multiple objects into the database.
         
@@ -225,7 +249,7 @@ class DatabaseManager:
         
         try:
             session.add_all(objs)
-            session.commit()
+            session.commit() if commit else session.flush()
             for obj in objs:
                 session.refresh(obj)
                 # Load all relationships before closing the session
@@ -241,7 +265,7 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def modify(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True) -> Optional[model_types]:
+    def modify(self, obj: model_types, session: Optional[Session] = None, load_relationships: bool = True, commit: bool = True) -> Optional[model_types]:
         """
         Update an existing record or insert if not found.
         
@@ -262,7 +286,7 @@ class DatabaseManager:
         
         try:
             merged_obj = session.merge(obj)
-            session.commit()
+            session.commit() if commit else session.flush()
             session.refresh(merged_obj)
             
             # Load all relationships before closing the session
@@ -279,7 +303,7 @@ class DatabaseManager:
             if close_session:
                 session.close()
     
-    def delete(self, obj: model_types, session: Optional[Session] = None) -> bool:
+    def delete(self, obj: model_types, session: Optional[Session] = None, commit: bool = True) -> bool:
         """
         Delete a record from the database.
         
@@ -304,7 +328,7 @@ class DatabaseManager:
                 return False
             
             session.delete(existing)
-            session.commit()
+            session.commit() if commit else session.flush()
             logger.info(f"Deleted {type(obj).__name__} with id: {obj.id}")
             return True
         except SQLAlchemyError as e:
@@ -727,6 +751,29 @@ class DatabaseManager:
 
 # Global instance
 db_manager = DatabaseManager()
+
+
+def transactional(method):
+    """Give a service method a managed `session` without the owns_session boilerplate.
+
+    - Called with `session=None` (the outermost caller): opens a `session_scope`,
+      injects it, and commits/rolls back once around the whole method.
+    - Called with a caller-supplied `session`: runs inside it and lets that outer
+      caller own commit/rollback — so a cascade of services commits exactly once.
+
+    Wrapped methods should pass `commit=False` to db_manager CRUD calls; the scope
+    (opened here or by an outer caller) is what commits.
+    """
+    import functools
+
+    @functools.wraps(method)
+    def wrapper(self, *args, session: Optional[Session] = None, **kwargs):
+        if session is not None:
+            return method(self, *args, session=session, **kwargs)
+        with db_manager.session_scope() as owned:
+            return method(self, *args, session=owned, **kwargs)
+
+    return wrapper
 
 # Convenience function for Flask initialization
 def init_db(app: Flask) -> DatabaseManager:
