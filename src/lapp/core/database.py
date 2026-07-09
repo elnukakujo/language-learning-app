@@ -683,6 +683,21 @@ def transactional(method):
 
     return wrapper
 
+
+def stack_related(existing_items, incoming_refs, model_class, session: Session):
+    """Union existing ORM objects with incoming {id: ...}-like refs, by id.
+
+    Used to combine tags/sources when resolving a create() duplicate — like
+    media, they're not something the user picks one version of.
+    """
+    existing_items = list(existing_items or [])
+    existing_ids = {item.id for item in existing_items}
+    new_ids = [ref.id for ref in (incoming_refs or []) if getattr(ref, "id", None) and ref.id not in existing_ids]
+    if not new_ids:
+        return existing_items
+    new_items = session.query(model_class).filter(model_class.id.in_(new_ids)).all()
+    return existing_items + new_items
+
 # Convenience function for Flask initialization
 def init_db(app: Flask) -> DatabaseManager:
     """

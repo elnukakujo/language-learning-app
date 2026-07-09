@@ -4,9 +4,10 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import ConflictError from "@/api/conflictError";
 
-// Fields that are combined automatically (not shown for manual decision) —
-// media isn't something a user picks one version of, both sets are kept.
-const STACKED_FIELDS = new Set(["image_files", "audio_files"]);
+// error.diff never includes score/difficulty/dates (always keep the existing
+// value) or tags/sources/media (combined automatically) — see
+// DuplicateEntityError.EXCLUDED_FROM_DIFF server-side. Whatever's left is a
+// real per-field decision for the user.
 
 // Reuses the fixed-overlay createPortal pattern from buttons/deleteButton.tsx.
 export default function ConflictDialog({
@@ -22,8 +23,7 @@ export default function ConflictDialog({
     onManualResolve: (resolvedFields: Record<string, string>) => void;
     onCancel: () => void;
 }) {
-    const editableFields = error.diff.filter((field) => !STACKED_FIELDS.has(field));
-    const stackedFields = error.diff.filter((field) => STACKED_FIELDS.has(field));
+    const editableFields = error.diff;
 
     const [values, setValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -77,11 +77,10 @@ export default function ConflictDialog({
                     </div>
                 )}
 
-                {stackedFields.length > 0 && (
-                    <p className="text-xs text-gray-500">
-                        {stackedFields.join(", ")} will be combined automatically (both versions kept).
-                    </p>
-                )}
+                <p className="text-xs text-gray-500">
+                    Media, tags, and sources from both versions are combined automatically.
+                    Score, difficulty, and dates keep the existing entry&apos;s values.
+                </p>
 
                 <div className="flex flex-row gap-2 justify-end flex-wrap pt-2">
                     <button type="button" onClick={onCancel} className="border-2 rounded px-4 py-2">

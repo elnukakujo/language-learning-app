@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, stack_related
 from ...core.exceptions import DuplicateEntityError
 from ...models.components import Word, Character
 from ...models.system_data import Tag, Source
@@ -76,7 +76,7 @@ class WordService:
             logger.info(f"Word already exists: {data.word} with ID: {existing.id}; resolving as {on_conflict}")
             return self.update(
                 word_id=existing.id, data=data, session=session,
-                force=(on_conflict == "overwrite"), stack_media=True,
+                force=(on_conflict == "overwrite"), resolving_conflict=True,
             )
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
@@ -136,7 +136,7 @@ class WordService:
         data: WordDict,
         session: Optional[Session] = None,
         force: bool = False,
-        stack_media: bool = False,
+        resolving_conflict: bool = False,
     ) -> Word | None:
         """Update an existing word.
 
@@ -146,10 +146,14 @@ class WordService:
                 if given, else freshly re-enriched. If False (default), a
                 missing field falls back to the existing value first, then
                 to enrichment — a "merge", not a replace.
-            stack_media: If True (resolving a create() conflict), image_files/
-                audio_files are the UNION of existing + incoming rather than
-                incoming replacing existing outright — media isn't something
-                the user picks one version of, both sets are kept.
+            resolving_conflict: If True (resolving a create() duplicate),
+                image_files/audio_files/tags/sources are the UNION of
+                existing + incoming rather than incoming replacing existing
+                outright — none of those are something the user picks one
+                version of, both sets are kept. score/difficulty/created_at/
+                last_seen_at are never touched here regardless (see
+                update_data's exclude below) — they always keep the
+                existing value.
         """
         existing: Word = self.get_by_id(word_id, session=session)
         if not existing:
@@ -208,9 +212,11 @@ class WordService:
         existing.translation = resolve('translation', existing.translation)
         existing.word_type = resolve('word_type', existing.word_type)
         existing.word_gender = resolve('word_gender', existing.word_gender)
-        if stack_media:
+        if resolving_conflict:
             existing.audio_files = stack_lists(existing.audio_files, update_data.get('audio_files'))
             existing.image_files = stack_lists(existing.image_files, update_data.get('image_files'))
+            existing.tags = stack_related(existing.tags, data.tags, Tag, session)
+            existing.sources = stack_related(existing.sources, data.sources, Source, session)
         else:
             existing.audio_files = update_data.get('audio_files', existing.audio_files)
             existing.image_files = update_data.get('image_files', existing.image_files)

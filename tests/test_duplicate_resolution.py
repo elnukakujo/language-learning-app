@@ -13,7 +13,7 @@ import pytest
 
 from lapp.core.exceptions import DuplicateEntityError
 from lapp.core.database import db_manager
-from lapp.models.system_data import User
+from lapp.models.system_data import User, Tag, Source
 from lapp.models.containers import Language
 from lapp.services.components.word import WordService
 from lapp.services.components.character import CharacterService
@@ -133,6 +133,48 @@ def test_word_create_overwrite_also_stacks_media(db):
     )
 
     assert sorted(overwritten.image_files) == ["/media_test/images/a.jpg", "/media_test/images/b.jpg"]
+
+
+def test_word_create_merge_stacks_tags_and_sources(db):
+    _seed_language(db)
+    with db.session_scope() as s:
+        db.insert(Tag(id="tag_1", user_id="user_D1", name="idiom"), session=s, commit=False)
+        db.insert(Tag(id="tag_2", user_id="user_D1", name="greeting"), session=s, commit=False)
+        db.insert(Source(id="src_1", user_id="user_D1", title="Book A", source_type="textbook"), session=s, commit=False)
+        db.insert(Source(id="src_2", user_id="user_D1", title="Book B", source_type="textbook"), session=s, commit=False)
+
+    word_service.create(WordDict(word="bonjour", language_id="lang_D1", tags=[{"id": "tag_1"}], sources=[{"id": "src_1"}]))
+
+    merged = word_service.create(
+        WordDict(word="bonjour", language_id="lang_D1", tags=[{"id": "tag_2"}], sources=[{"id": "src_2"}]),
+        on_conflict="merge",
+    )
+
+    assert sorted(t.id for t in merged.tags) == ["tag_1", "tag_2"]        # union, not replace
+    assert sorted(s.id for s in merged.sources) == ["src_1", "src_2"]
+
+
+def test_score_difficulty_and_dates_excluded_from_conflict_diff(db):
+    """These always keep the existing value and never show up as a decision."""
+    _seed_language(db)
+    first = word_service.create(WordDict(word="bonjour", language_id="lang_D1", translation="hello"))
+    with db.session_scope() as s:
+        w = db.find_by_attr(model_class=type(first), attr_values={"id": first.id}, session=s)
+        w.score = 42
+        w.difficulty = 0.9
+        db.modify(w, session=s, commit=False)
+
+    with pytest.raises(DuplicateEntityError) as exc_info:
+        word_service.create(WordDict(word="bonjour", language_id="lang_D1", translation="hi there"))
+
+    diff = exc_info.value.diff
+    assert "score" not in diff
+    assert "difficulty" not in diff
+    assert "created_at" not in diff
+    assert "last_seen_at" not in diff
+    assert "tags" not in diff
+    assert "sources" not in diff
+    assert "translation" in diff  # the real conflict is still reported
 
 
 def test_character_create_raises_on_conflict_by_default(db):

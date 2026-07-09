@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.components import CharacterDict
 from ...models.components import Character
 from ...models.containers import Language
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, stack_related
 from ...core.exceptions import DuplicateEntityError
 from ...models.system_data import Tag, Source
 from ...utils import enrich_character, get_language_by_iso2t, stack_lists
@@ -73,7 +73,7 @@ class CharacterService:
             logger.info(f"Character already exists: {data.character} with ID: {existing.id}; resolving as {on_conflict}")
             return self.update(
                 character_id=existing.id, data=data, session=session,
-                force=(on_conflict == "overwrite"), stack_media=True,
+                force=(on_conflict == "overwrite"), resolving_conflict=True,
             )
 
         language = db_manager.find_by_attr(model_class=Language, attr_values={"id": data.language_id}, session=session)
@@ -108,7 +108,7 @@ class CharacterService:
         data: CharacterDict,
         session: Optional[Session] = None,
         force: bool = False,
-        stack_media: bool = False,
+        resolving_conflict: bool = False,
     ) -> Character | None:
         """Update an existing character.
 
@@ -118,10 +118,14 @@ class CharacterService:
                 if given, else freshly re-enriched. If False (default), a
                 missing field falls back to the existing value first, then
                 to enrichment — a "merge", not a replace.
-            stack_media: If True (resolving a create() conflict), image_files/
-                audio_files are the UNION of existing + incoming rather than
-                incoming replacing existing outright — media isn't something
-                the user picks one version of, both sets are kept.
+            resolving_conflict: If True (resolving a create() duplicate),
+                image_files/audio_files/tags/sources are the UNION of
+                existing + incoming rather than incoming replacing existing
+                outright — none of those are something the user picks one
+                version of, both sets are kept. score/difficulty/created_at/
+                last_seen_at are never touched here regardless (see
+                update_data's exclude below) — they always keep the
+                existing value.
         """
         existing = self.get_by_id(character_id, session=session)
 
@@ -156,9 +160,11 @@ class CharacterService:
         existing.radical = resolve('radical', existing.radical)
         existing.meaning = resolve('meaning', existing.meaning)
         existing.strokes = update_data.get('strokes', existing.strokes)
-        if stack_media:
+        if resolving_conflict:
             existing.audio_files = stack_lists(existing.audio_files, update_data.get('audio_files'))
             existing.image_files = stack_lists(existing.image_files, update_data.get('image_files'))
+            existing.tags = stack_related(existing.tags, data.tags, Tag, session)
+            existing.sources = stack_related(existing.sources, data.sources, Source, session)
         else:
             existing.audio_files = update_data.get('audio_files', existing.audio_files)
             existing.image_files = update_data.get('image_files', existing.image_files)
