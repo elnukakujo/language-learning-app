@@ -1,12 +1,12 @@
-import DeleteButton from "@/components/buttons/deleteButton";
-import NavButton from "@/components/buttons/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import NavButton from "@/components/layout/navButton";
 import type Vocabulary from "@/interface/features/Vocabulary";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
-import WordCard from "@/components/cards/componentCards/wordCard";
-import SentenceCard from "@/components/cards/componentCards/sentenceCard";
-import RelatedCard from "@/components/cards/relatedCard";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import WordCard from "@/components/elements/wordCard";
+import SentenceCard from "@/components/elements/sentenceCard";
+import RelatedCard from "@/components/elements/relatedCard";
 import { getVocabularyById } from "@/api/vocabulary";
 
 export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {

@@ -2,12 +2,12 @@ import { getPassageById } from "@/api/passage";
 import type Passage from "@/interface/components/Passage";
 import type Word from "@/interface/components/Word";
 import type Character from "@/interface/components/Character";
-import SentenceCard from "@/components/cards/componentCards/sentenceCard";
-import RelatedCard from "@/components/cards/relatedCard";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
-import DeleteButton from "@/components/buttons/deleteButton";
+import SentenceCard from "@/components/elements/sentenceCard";
+import RelatedCard from "@/components/elements/relatedCard";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
 
 export default async function PassagePage({
   params,

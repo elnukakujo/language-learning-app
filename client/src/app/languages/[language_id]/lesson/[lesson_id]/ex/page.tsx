@@ -1,6 +1,6 @@
 import { getExercisesByLesson } from "@/api/exercise";
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,7 +27,7 @@ export default async function ExercisesPage({ params }: { params: { language_id:
                         <h3>{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
                         <ul>
                             {exercises.map((exercise, index) => (
-                                <li key={index} className="flex flex-col gap-2">
+                                <li key={index} className="card flex flex-col gap-2">
                                     {!['type_in_the_blank', 'select_in_the_blank', 'conversation'].includes(exercise.exercise_type!) && (
                                         <Markdown remarkPlugins={[remarkGfm]}>{exercise.question}</Markdown>
                                     )}

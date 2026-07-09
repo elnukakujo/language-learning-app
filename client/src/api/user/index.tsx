@@ -2,7 +2,7 @@ import { BASE_URL } from "..";
 import User from "@/interface/systemData/User";
 
 export async function getAllUsers() {
-  const res = await fetch(`${BASE_URL}/api/user`, {
+  const res = await fetch(`${BASE_URL}/api/user/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });

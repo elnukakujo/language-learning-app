@@ -1,21 +1,21 @@
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
 import Exercise from "@/interface/features/Exercise";
 
-import TypeInTheBlankExercise from "@/components/forms/exerciseForms/typeInTheBlankExercise";
-import SelectInTheBlankExercise from "@/components/forms/exerciseForms/selectInTheBlankExercise";
-import TranslateExercise from "@/components/forms/exerciseForms/translateExercise";
-import EssayExercise from "@/components/forms/exerciseForms/essayExercise";
-import TrueFalseExercise from "@/components/forms/exerciseForms/trueFalseExercise";
-import OrganizeExercise from "@/components/forms/exerciseForms/organizeExercise";
-import AnsweringExercise from "@/components/forms/exerciseForms/answeringExercise";
-import MatchingExercise from "@/components/forms/exerciseForms/matchingExercise";
-import SpeakingExercise from "@/components/forms/exerciseForms/speakingExercise";
-import BackButton from "@/components/buttons/backButton";
-import ConversationExercise from "@/components/forms/exerciseForms/conversationExercise";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
+import TypeInTheBlankExercise from "@/components/exercises/typeInTheBlankExercise";
+import SelectInTheBlankExercise from "@/components/exercises/selectInTheBlankExercise";
+import TranslateExercise from "@/components/exercises/translateExercise";
+import EssayExercise from "@/components/exercises/essayExercise";
+import TrueFalseExercise from "@/components/exercises/trueFalseExercise";
+import OrganizeExercise from "@/components/exercises/organizeExercise";
+import AnsweringExercise from "@/components/exercises/answeringExercise";
+import MatchingExercise from "@/components/exercises/matchingExercise";
+import SpeakingExercise from "@/components/exercises/speakingExercise";
+import BackButton from "@/components/ui/buttons/backButton";
+import ConversationExercise from "@/components/exercises/conversationExercise";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
 import { getExerciseById } from "@/api/exercise";
 
 export default async function ExercisePage( { params } : { params: { language_id: string; lesson_id: string; ex_id: string }}) {

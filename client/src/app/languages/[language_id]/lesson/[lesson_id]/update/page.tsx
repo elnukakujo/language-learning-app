@@ -1,6 +1,6 @@
 import Lesson from "@/interface/containers/Lesson";
 import { getLessonById } from "@/api/lesson";
-import LessonForm from "@/components/forms/entityForms/lessonForm";
+import LessonForm from "@/components/language/lessonForm";
 
 export default async function UpdateLessonPage({ params }: { params: { language_id: string, lesson_id: string } }) {
     const { language_id, lesson_id } = await params;

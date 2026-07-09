@@ -1,13 +1,13 @@
 import type Character from "@/interface/features/Calligraphy";
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
-import WordCard from "@/components/cards/componentCards/wordCard";
-import SentenceCard from "@/components/cards/componentCards/sentenceCard";
-import CharacterCard from "@/components/cards/componentCards/characterCard";
-import RelatedCard from "@/components/cards/relatedCard";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import WordCard from "@/components/elements/wordCard";
+import SentenceCard from "@/components/elements/sentenceCard";
+import CharacterCard from "@/components/elements/characterCard";
+import RelatedCard from "@/components/elements/relatedCard";
 import { getCalligraphyById } from "@/api/calligraphy";
 
 type paramsType = {

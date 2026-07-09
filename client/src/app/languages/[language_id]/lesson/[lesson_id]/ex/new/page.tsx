@@ -1,7 +1,7 @@
 import { getCalligraphyByLesson } from "@/api/calligraphy";
 import { getGrammarByLesson } from "@/api/grammar";
 import { getVocabularyByLesson } from "@/api/vocabulary";
-import ExerciseForm from "@/components/forms/entityForms/exerciseForm";
+import ExerciseForm from "@/components/exercises/exerciseForm";
 import Calligraphy from "@/interface/features/Calligraphy";
 import Grammar from "@/interface/features/Grammar";
 import Vocabulary from "@/interface/features/Vocabulary";
@@ -26,9 +26,9 @@ export default async function createExercisePage({ params }: { params: { lesson_
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full">
-            <h1 className="text-2xl font-bold mb-4">Create New Exercise</h1>
+        <main className="flex flex-col items-center justify-center">
+            <h1 className="mb-4">Create New Exercise</h1>
             <ExerciseForm lesson_id={lesson_id} lessonElements={lessonElements} />
-        </div>
+        </main>
     );
 }

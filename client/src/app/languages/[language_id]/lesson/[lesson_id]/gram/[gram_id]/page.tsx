@@ -1,12 +1,12 @@
 import type Grammar from "@/interface/features/Grammar";
 
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
-import SentenceCard from "@/components/cards/componentCards/sentenceCard";
-import GrammarCard from "@/components/cards/grammarCard";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import SentenceCard from "@/components/elements/sentenceCard";
+import GrammarCard from "@/components/elements/grammarCard";
 import { getGrammarById } from "@/api/grammar";
 
 type paramsType = {

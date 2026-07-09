@@ -1,5 +1,5 @@
 import type Grammar from "@/interface/features/Grammar";
-import GrammarForm from "@/components/forms/entityForms/grammarForm";
+import GrammarForm from "@/components/elements/grammarForm";
 import { getGrammarById } from "@/api/grammar";
 
 type paramsType = {
@@ -13,8 +13,8 @@ export default async function UpdateGrammarPage({ params }: { params: paramsType
     const grammar: Grammar = await getGrammarById(gram_id);
 
     return (
-        <main className="flex flex-col items-center">
-            <h1 className="text-2xl font-semibold mb-4">Update Grammar</h1>
+        <main className="flex flex-col gap-4">
+            <h1>Update Grammar</h1>
             <GrammarForm grammar={grammar} lesson_id={params.lesson_id} />
         </main>
     );

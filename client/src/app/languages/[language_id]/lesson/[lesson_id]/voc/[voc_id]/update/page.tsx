@@ -1,5 +1,5 @@
 import type Vocabulary from "@/interface/features/Vocabulary";
-import VocabularyForm from "@/components/forms/entityForms/vocabularyForm";
+import VocabularyForm from "@/components/elements/vocabularyForm";
 import { getVocabularyById } from "@/api/vocabulary";
 
 type paramsType = {
@@ -13,8 +13,8 @@ export default async function UpdateVocabularyPage({ params }: { params: paramsT
     const vocabulary: Vocabulary = await getVocabularyById(voc_id);
 
     return (
-        <main className="p-4">
-            <h1 className="text-2xl font-semibold mb-4">Update Vocabulary</h1>
+        <main className="flex flex-col gap-4">
+            <h1>Update Vocabulary</h1>
             <VocabularyForm vocabulary={vocabulary} lesson_id={lesson_id} />
         </main>
     );

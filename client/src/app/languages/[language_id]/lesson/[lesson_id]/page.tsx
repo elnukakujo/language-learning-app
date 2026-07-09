@@ -1,10 +1,10 @@
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import VocabularyList from "@/components/lists/vocabularyList";
-import GrammarList from "@/components/lists/grammarList";
-import CalligraphyList from "@/components/lists/characterList";
-import ExerciseList from "@/components/lists/exerciseList";
+import VocabularyList from "@/components/elements/vocabularyList";
+import GrammarList from "@/components/elements/grammarList";
+import CalligraphyList from "@/components/elements/characterList";
+import ExerciseList from "@/components/exercises/exerciseList";
 
 import type Lesson from "@/interface/containers/Lesson";
 import type Vocabulary from "@/interface/features/Vocabulary";
@@ -12,11 +12,11 @@ import type Grammar from "@/interface/features/Grammar";
 import type Calligraphy from "@/interface/features/Calligraphy";
 import type Exercise from "@/interface/features/Exercise";
 
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
-import ElementPerformanceCard from "@/components/cards/elementCards/elementPerformanceCard";
-import ElementTagsCard from "@/components/cards/elementCards/elementTagsCard";
-import ElementSourcesCard from "@/components/cards/elementCards/elementSourcesCard";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
 import { getLessonById } from "@/api/lesson";
 import { getVocabularyByLesson } from "@/api/vocabulary";
 import { getGrammarByLesson } from "@/api/grammar";

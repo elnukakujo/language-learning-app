@@ -1,4 +1,4 @@
-import GrammarFlashCard from "@/components/cards/flashCards/grammarFlashCard";
+import GrammarFlashCard from "@/components/elements/grammarFlashCard";
 import type Grammar from "@/interface/features/Grammar";
 import { getGrammarByLesson } from "@/api/grammar";
 

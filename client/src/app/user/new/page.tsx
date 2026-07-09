@@ -1,8 +1,8 @@
-import UserForm from "@/components/forms/entityForms/userForm"
+import UserForm from "@/components/user/userForm"
 
 export default function NewUserPage() {
     return (
-        <main>
+        <main className="flex flex-col gap-4">
             <h1>New User</h1>
             <UserForm />
         </main>

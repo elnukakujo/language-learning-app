@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
@@ -9,6 +10,10 @@ from ..models.containers import Language, Lesson
 from ..models.features import Calligraphy, Exercise, Grammar, Vocabulary
 
 logger = logging.getLogger(__name__)
+
+# CJK Unified Ideographs, Hiragana, Katakana, Hangul syllables — a single
+# character in these scripts is a complete, searchable term on its own.
+_CJK_PATTERN = re.compile(r"[一-鿿぀-ヿ가-힣]")
 
 
 class SearchService:
@@ -175,7 +180,8 @@ class SearchService:
         session: Optional[Session] = None,
     ) -> list[dict[str, Any]]:
         normalized_query = (query or "").strip()
-        if len(normalized_query) < 2:
+        min_length = 1 if _CJK_PATTERN.search(normalized_query) else 2
+        if len(normalized_query) < min_length:
             return []
 
         query_pattern = f"%{normalized_query}%"

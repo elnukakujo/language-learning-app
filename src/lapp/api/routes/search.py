@@ -9,8 +9,8 @@ search_service = SearchService()
 @bp.route("", methods=["GET"])
 def search_elements():
     query = (request.args.get("q") or "").strip()
-    if len(query) < 2:
-        return jsonify({"error": "Query must be at least 2 characters long"}), 400
+    if len(query) < 1:
+        return jsonify({"error": "Query must be at least 1 character long"}), 400
 
     user_id = request.headers.get("X-User-Id") or request.cookies.get("selected_user_id")
     if not user_id:

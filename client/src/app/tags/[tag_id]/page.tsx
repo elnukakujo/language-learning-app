@@ -1,7 +1,7 @@
 import { getTagById } from "@/api/tag";
-import DeleteButton from "@/components/buttons/deleteButton";
-import NavButton from "@/components/buttons/navButton";
-import TagCard from "@/components/cards/tagCard";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import NavButton from "@/components/layout/navButton";
+import TagCard from "@/components/tags/tagCard";
 
 export default async function TagDetailPage({ params }: { params: { tag_id: string } }) {
     const { tag_id } = await params;
@@ -11,7 +11,7 @@ export default async function TagDetailPage({ params }: { params: { tag_id: stri
         <main>
             <h1>Tag Detail</h1>
             <TagCard tag={tag} />
-            <span className="flex flex-row gap-4">
+            <span className="flex flex-row gap-4 mt-4">
                 <NavButton path={`/tags/${tag_id}/update`}>
                     Edit Tag Informations
                 </NavButton>
