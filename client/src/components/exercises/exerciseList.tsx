@@ -3,6 +3,8 @@
 import { useParams } from "next/navigation";
 import NavButton from "@/components/layout/navButton";
 import Exercise from "@/interface/features/Exercise";
+import DifficultyDisplay from "@/components/ui/displays/difficultyDisplay";
+import ScoreDisplay from "@/components/ui/displays/scoreDisplay";
 
 export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
     const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
@@ -11,33 +13,36 @@ export default function ExerciseList({ exProps}: { exProps: Exercise[]}) {
     const averageDifficulty = exProps.reduce((acc, item) => acc + item.difficulty!, 0) / exProps.length;
 
     return (
-        <section className="card flex flex-col gap-4 w-[14rem]">
+        <section className="card flex flex-col gap-4 w-[14rem] h-fit">
             <header>
                 <h2>Exercises</h2>
                 {exProps.length > 0 ? (
-                    <>
-                        <p>Total: {exProps.length}</p>
-                        <p>Average Score: {averageScore.toFixed(2)}/100</p>
-                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
-                    </>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-sm text-muted">Total: {exProps.length}</span>
+                        <ScoreDisplay score={averageScore} />
+                        <DifficultyDisplay difficulty={averageDifficulty} />
+                    </div>
                 ) : (
                     <p>Empty</p>
                 )}
             </header>
-            <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/ex`}>
-                <span>See Exercises</span>
-            </NavButton>
-            <NavButton
-                path = {`/languages/${language_id}/lesson/${lesson_id}/ex/new`}
-            >
-                <span>Add New Exercise</span>
-            </NavButton>
-            {exProps.length > 0 && (
+            <nav className="index-divider flex flex-col gap-2">
+                <NavButton path={`/languages/${language_id}/lesson/${lesson_id}/ex`}>
+                    <span>See Exercises</span>
+                </NavButton>
                 <NavButton
-                    path={`/languages/${language_id}/lesson/${lesson_id}/ex/practice`}
+                    path = {`/languages/${language_id}/lesson/${lesson_id}/ex/new`}
                 >
-                    <p>Exercise Practice</p>
-                </NavButton>)}
+                    <span>Add New Exercise</span>
+                </NavButton>
+                {exProps.length > 0 && (
+                    <NavButton
+                        path={`/languages/${language_id}/lesson/${lesson_id}/ex/practice`}
+                    >
+                        <p>Exercise Practice</p>
+                    </NavButton>)}
+
+            </nav>
         </section>
     );
 }

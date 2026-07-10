@@ -3,6 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import NavButton from "@/components/layout/navButton";
 import Grammar from "@/interface/features/Grammar";
+import DifficultyDisplay from "@/components/ui/displays/difficultyDisplay";
+import ScoreDisplay from "@/components/ui/displays/scoreDisplay";
 
 export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
     const { language_id, lesson_id } = useParams<{ language_id: string, lesson_id: string }>();
@@ -18,22 +20,24 @@ export default function GrammarList({ gramProps}: { gramProps: Grammar[]}) {
     gramProps.sort((a, b) => (a.score || 0) - (b.score || 0));
 
     return (
-        <section className="card flex flex-col gap-4 w-[14rem]">
+        <section className="card flex flex-col gap-4 w-[14rem] h-fit">
             <header>
                 <h2>Grammar</h2>
                 {gramProps.length > 0 && (
-                    <>
-                        <p>Total: {gramProps.length}</p>
-                        <p>Average Score: {averageScore.toFixed(2)}/100</p>
-                        <p>Average Difficulty: {averageDifficulty.toFixed(1)}</p>
-                    </>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-sm text-muted">Total: {gramProps.length}</span>
+                        <ScoreDisplay score={averageScore} />
+                        <DifficultyDisplay difficulty={averageDifficulty} />
+                    </div>
                 )}
             </header>
             {gramProps.length === 0 ? <p>Empty</p> :
-                <ul className="list-item pl-5 space-y-1 list-none">
+                <ul className="index-divider list-item pl-5 space-y-1 list-none">
                     {gramProps.map((item, index) => (
                         <li key={index}>
-                            <button onClick={() => handleClick(item.id!)}>
+                            <button 
+                                onClick={() => handleClick(item.id!)} 
+                                className="text-left link">
                                 {item.title}
                             </button>
                         </li>

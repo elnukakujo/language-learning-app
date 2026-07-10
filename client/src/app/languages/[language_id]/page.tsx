@@ -1,4 +1,4 @@
-import LessonOverviewCard from "@/components/language/lessonOverviewCard";
+import LessonOverviewCard from "@/components/lesson/lessonOverviewCard";
 import type Lesson from "@/interface/containers/Lesson";
 import NavButton from "@/components/layout/navButton";
 import DeleteButton from "@/components/ui/buttons/deleteButton";
@@ -10,6 +10,7 @@ import LanguageStatsPanel from "@/components/language/LanguageStatsPanel";
 import { ISO639_2T_to_LANGUAGE } from "@/utils/language_iso639";
 import { getLanguageData } from "@/api/language";
 import { getTodayDailyStats } from "@/api/dailyStats";
+import LanguageHeaderCard from "@/components/language/languageHeaderCard";
 
 export default async function Language({ params }: { params: { language_id: string } }) {
     const { language_id } = await params;
@@ -22,12 +23,7 @@ export default async function Language({ params }: { params: { language_id: stri
     return (
         <main className="flex flex-col space-y-4">
             <header className="flex flex-col gap-4">
-                <h1>{language.flag} {language.name} ({language.alias})</h1>
-                <span>
-                    {language.source_iso639_2t && <p>From: {ISO639_2T_to_LANGUAGE[language.source_iso639_2t]}</p>}
-                    {language.target_iso639_2t && <p>To: {ISO639_2T_to_LANGUAGE[language.target_iso639_2t]}</p>}
-                </span>
-                {language.description && <p>{language.description}</p>}
+                <LanguageHeaderCard language={language} />
                 <ElementPerformanceCard element={language} />
                 <ElementTagsCard element={language} />
                 <ElementSourcesCard element={language} />
@@ -48,10 +44,10 @@ export default async function Language({ params }: { params: { language_id: stri
                     (
                         <section>
                             <h2>Lessons</h2>
-                            <ul className="flex flex-col space-y-2">
+                            <ul className="flex flex-row flex-wrap gap-2 ">
                                 {lessons.map((lesson: Lesson) => (
                                     <li key={lesson.id}>
-                                        <LessonOverviewCard lesson={lesson} />
+                                        <LessonOverviewCard language_code={language.target_iso639_2t || ""} lesson={lesson} />
                                     </li>
                                 ))}
                             </ul>

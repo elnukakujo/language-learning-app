@@ -100,6 +100,16 @@
   a {
     color: var(--color-accent);
   }
+
+  .link {
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+    text-decoration-color: transparent;
+  }
+  .link:hover {
+    color: var(--color-accent);
+  }
 }
 
 @layer components {

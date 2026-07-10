@@ -1,9 +1,6 @@
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-
 import VocabularyList from "@/components/elements/vocabularyList";
 import GrammarList from "@/components/elements/grammarList";
-import CalligraphyList from "@/components/elements/characterList";
+import CalligraphyList from "@/components/elements/calligraphyList";
 import ExerciseList from "@/components/exercises/exerciseList";
 
 import type Lesson from "@/interface/containers/Lesson";
@@ -22,6 +19,7 @@ import { getVocabularyByLesson } from "@/api/vocabulary";
 import { getGrammarByLesson } from "@/api/grammar";
 import { getCalligraphyByLesson } from "@/api/calligraphy";
 import { getExercisesByLesson } from "@/api/exercise";
+import LessonHeaderCard from "@/components/lesson/lessonHeaderCard";
 
 
 export default async function Lesson({ params }: { params: { language_id: string, lesson_id: string } }) {
@@ -35,9 +33,8 @@ export default async function Lesson({ params }: { params: { language_id: string
 
     return (
         <main className="flex flex-col gap-8">
-            <header>
-                <h1>{lesson.title}</h1>
-                <Markdown remarkPlugins={[remarkGfm]}>{lesson.description}</Markdown>
+            <header className="flex flex-col gap-4">
+                <LessonHeaderCard lesson={lesson} />
                 <ElementPerformanceCard element={lesson} />
                 <ElementTagsCard element={lesson} />
                 <ElementSourcesCard element={lesson} />

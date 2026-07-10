@@ -1,4 +1,4 @@
-import LessonForm from "@/components/language/lessonForm";
+import LessonForm from "@/components/lesson/lessonForm";
 
 export default async function NewLessonPage({ params }: {params: { language_id: string } }) {
     const { language_id } = await params;

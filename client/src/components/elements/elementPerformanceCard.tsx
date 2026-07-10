@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { BaseElement } from "@/interface/base";
 import { getLanguageById } from "@/api/language";
 import { languageProficiencySystems } from "@/utils/language_iso639";
+import DifficultyDisplay from "@/components/ui/displays/difficultyDisplay";
+import ScoreDisplay from "../ui/displays/scoreDisplay";
 
 export default function ElementPerformanceCard({ element }: { element: BaseElement }) {
   const params = useParams();
@@ -27,13 +29,10 @@ export default function ElementPerformanceCard({ element }: { element: BaseEleme
           <p>Level: {languageProficiencySystems[language_iso639_1]?.levels[element.level as number].code}</p>
         )}
         {'score' in element && (element as any).score != null && (
-          <p>Score: <span className="stat-value">{(element as any).score.toFixed(2)}</span>/100</p>
+            <ScoreDisplay score={(element as any).score} />
         )}
         {'difficulty' in element && (element as any).difficulty != null && (
-          <p>Difficulty: <span className="stat-value">{(element as any).difficulty.toFixed(2)}</span></p>
-        )}
-        {'status' in element && (element as any).status != null && (
-          <p>Status: {(element as any).status}</p>
+            <DifficultyDisplay difficulty={(element as any).difficulty} />
         )}
         {'created_at' in element && (element as any).created_at != null && (
           <p>Created at: {new Date((element as any).created_at).toLocaleDateString()}</p>
