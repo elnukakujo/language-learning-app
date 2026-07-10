@@ -9,7 +9,7 @@ class Word(BaseComponentModel):
     __table_args__ = (UniqueConstraint('language_id', 'word', name='uq_word_language_word'),)
     
     word = Column(String(255), nullable=False, index=True)
-    translation = Column(String(500), nullable=False)
+    translation = Column(String(500), nullable=True)
     phonetic = Column(String(255), nullable=True)
     word_type = Column(String(100), nullable=True)
     word_gender = Column(String(50), nullable=True)

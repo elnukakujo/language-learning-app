@@ -9,7 +9,7 @@ class Passage(BaseComponentModel):
     __table_args__ = (UniqueConstraint('language_id', 'text', name='uq_passage_language_text'),)
     
     text = Column(Text, nullable=False)
-    translation = Column(Text, nullable=False)
+    translation = Column(Text, nullable=True)
 
     # Relationship
     vocabulary = relationship(

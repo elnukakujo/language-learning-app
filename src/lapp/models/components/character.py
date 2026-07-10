@@ -9,7 +9,7 @@ class Character(BaseComponentModel):
     __table_args__ = (UniqueConstraint('language_id', 'character', name='uq_character_language_character'),)
     
     character = Column(String, nullable=False, index=True)
-    phonetic = Column(String, nullable=False)
+    phonetic = Column(String, nullable=True)
     meaning = Column(String, nullable=True)
     radical = Column(String, nullable=True)
     strokes = Column(Integer, nullable=True)

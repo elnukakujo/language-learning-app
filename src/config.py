@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-INSTANCE_DIR = BASE_DIR / 'instance'
 MEDIA_DIR = BASE_DIR / 'media'
 BACKUP_DIR = BASE_DIR / 'backups'
 
@@ -21,6 +20,24 @@ def _normalize_database_url(url: str) -> str:
     if url.startswith("postgresql://"):
         url = "postgresql+psycopg://" + url[len("postgresql://"):]
     return url
+
+
+def _schema_scoped_url(base_url: str, schema: str) -> str:
+    """Pin every connection from this URL to one Postgres schema via libpq's
+    `options` param, so a single DATABASE_URL (one server) serves all three
+    configs isolated into fluence_dev/fluence_test/fluence_prod schemas.
+    """
+    sep = '&' if '?' in base_url else '?'
+    return f"{base_url}{sep}options=-csearch_path%3D{schema}"
+
+
+_DATABASE_URL = os.environ.get('DATABASE_URL')
+if not _DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is required (Postgres only - no SQLite fallback). "
+        "e.g. postgresql://fluence:fluence@localhost:5432/fluence"
+    )
+_BASE_DATABASE_URL = _normalize_database_url(_DATABASE_URL)
 
 class Config:
     """Base configuration for personal use"""
@@ -57,7 +74,8 @@ class DevelopmentConfig(Config):
     DEBUG = True
     MEDIA_ROOT = str(BASE_DIR / 'media_dev')
     BACKUP_ROOT = str(BASE_DIR / 'backups_dev')
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/dev_languages.db'
+    DB_SCHEMA = 'fluence_dev'
+    SQLALCHEMY_DATABASE_URI = _schema_scoped_url(_BASE_DATABASE_URL, DB_SCHEMA)
     ENV = 'development'
 
 class TestingConfig(Config):
@@ -65,15 +83,15 @@ class TestingConfig(Config):
     TESTING = True
     MEDIA_ROOT = str(BASE_DIR / 'media_test')
     BACKUP_ROOT = str(BASE_DIR / 'backups_test')
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR}/test_languages.db'
+    DB_SCHEMA = 'fluence_test'
+    SQLALCHEMY_DATABASE_URI = _schema_scoped_url(_BASE_DATABASE_URL, DB_SCHEMA)
     ENV = 'testing'
 
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = _normalize_database_url(
-        os.getenv('DATABASE_URL', f'sqlite:///{INSTANCE_DIR}/languages.db')
-    )
+    DB_SCHEMA = 'fluence_prod'
+    SQLALCHEMY_DATABASE_URI = _schema_scoped_url(_BASE_DATABASE_URL, DB_SCHEMA)
     ENV = 'production'
 
 # Default to development

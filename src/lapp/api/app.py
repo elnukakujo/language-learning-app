@@ -72,6 +72,16 @@ def initialize_extensions(app: Flask) -> None:
     # Initialize database
     init_db(app)
 
+    # Attach the backup manager so CLI commands and /api/backup routes can use it
+    from pathlib import Path
+    from ..services.backup import BackupService
+    app.backup_manager = BackupService(
+        database_url=app.config['SQLALCHEMY_DATABASE_URI'],
+        schema=app.config['DB_SCHEMA'],
+        backup_dir=Path(app.config['BACKUP_ROOT']),
+        max_backups=app.config['MAX_BACKUPS']
+    )
+
     # Initialize centralized scheduler (handles ALL background tasks including backups)
     from ..core.scheduler import init_scheduler
     scheduler = init_scheduler(app)
@@ -180,16 +190,16 @@ def register_commands(app: Flask) -> None:
     @app.cli.command()
     def backup_now():
         """Create a manual backup."""
-        backup_path = app.backup_manager.backup()
+        backup_path = app.backup_manager.create_backup()
         if backup_path:
             print(f"✅ Backup created: {backup_path}")
         else:
             print("❌ Backup failed")
-    
+
     @app.cli.command()
     def restore_backup():
         """Restore from latest backup."""
-        success = app.backup_manager.restore()
+        success = app.backup_manager.restore_backup()
         if success:
             print("✅ Database restored")
         else:

@@ -1,7 +1,6 @@
 """Minimal self-check for the pure SRS helpers.
 
 Run: `uv run python tests/test_helpers.py` (no pytest needed).
-ponytail: assert-based smoke test; promote to pytest + DB harness when Phase 0.4 lands.
 """
 from datetime import date, timedelta
 

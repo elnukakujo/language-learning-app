@@ -90,7 +90,7 @@ class DailyStatsService:
             .filter(
                 DailyStats.user_id == user_id,
                 DailyStats.language_id == language_id,
-                func.date(DailyStats.created_at) == today.isoformat(),
+                func.date(DailyStats.created_at) == today,
             )
             .first()
         )
@@ -167,7 +167,7 @@ class DailyStatsService:
             daily_stats.streak_day = True
             logger.info(f"User {progress_tracking.user_id} just achieved a streak day for language {progress_tracking.language_id}!")
 
-            yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
+            yesterday = (datetime.now() - timedelta(days=1)).date()
             previous_daily_stats = (
                 session.query(DailyStats)
                 .filter(

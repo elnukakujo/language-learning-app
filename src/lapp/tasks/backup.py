@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
@@ -37,19 +36,15 @@ def create_automatic_backup(app: Flask):
     """
     with app.app_context():
         try:
+            from pathlib import Path
             from lapp.services.backup import BackupService
 
             # Get config values from app (inside app context)
-            db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-            db_path = Path(db_uri.replace('sqlite:///', ''))
-            backup_dir = Path(app.config['BACKUP_ROOT'])
-            max_backups = app.config['MAX_BACKUPS']
-
-            # Create backup service (no app context dependency)
             backup_service = BackupService(
-                db_path=db_path,
-                backup_dir=backup_dir,
-                max_backups=max_backups
+                database_url=app.config['SQLALCHEMY_DATABASE_URI'],
+                schema=app.config['DB_SCHEMA'],
+                backup_dir=Path(app.config['BACKUP_ROOT']),
+                max_backups=app.config['MAX_BACKUPS']
             )
 
             # Create backup

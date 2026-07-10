@@ -10,7 +10,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload
 from sqlalchemy.inspection import inspect
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from flask import Flask
 
@@ -81,6 +80,8 @@ class DatabaseManager:
             database_uri,
             echo=False,  # Set to True for SQL debugging
             pool_pre_ping=True,  # Verify connections before using
+            pool_size=10,
+            max_overflow=20,
         )
         self.SessionLocal = sessionmaker(
             bind=self.engine,
@@ -100,23 +101,24 @@ class DatabaseManager:
             app: Flask application instance
         """
         database_uri = app.config.get('SQLALCHEMY_DATABASE_URI')
-        
+
         if not database_uri:
             raise ValueError("SQLALCHEMY_DATABASE_URI not found in app config")
-        
-        # Ensure database directory exists
-        if database_uri.startswith('sqlite:///'):
-            db_path = Path(database_uri.replace('sqlite:///', ''))
-            db_path.parent.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Database path: {db_path}")
-        
+
         self._create_engine(database_uri)
-        
+
+        db_schema = app.config.get('DB_SCHEMA')
+        if db_schema:
+            with self.engine.connect() as connection:
+                connection.execute(sqlalchemy.text(f'CREATE SCHEMA IF NOT EXISTS "{db_schema}"'))
+                connection.commit()
+            logger.info(f"Ensured schema exists: {db_schema}")
+
         # Register teardown to close sessions
         @app.teardown_appcontext
         def shutdown_session(exception=None):
             self.close_session()
-        
+
         logger.info("DatabaseManager initialized with Flask app")
     
     def create_tables(self) -> None:
@@ -150,7 +152,9 @@ class DatabaseManager:
         repo_root = Path(__file__).resolve().parents[3]
         alembic_cfg = AlembicConfig(str(repo_root / "alembic.ini"))
         alembic_cfg.set_main_option("script_location", str(repo_root / "alembic"))
-        alembic_cfg.set_main_option("sqlalchemy.url", str(self.engine.url))
+        # Escape "%" for ConfigParser's interpolation - our URLs contain "%3D"
+        # (percent-encoded "=" from the search_path query param).
+        alembic_cfg.set_main_option("sqlalchemy.url", str(self.engine.url).replace("%", "%%"))
 
         with self.engine.connect() as connection:
             is_fresh = MigrationContext.configure(connection).get_current_revision() is None
@@ -630,10 +634,9 @@ class DatabaseManager:
 
         if exists is None:
             seed = self._legacy_max_id(session, model_class) + 1
-            insert_fn = postgresql_insert if session.bind.dialect.name == "postgresql" else sqlite_insert
             # on_conflict_do_nothing: if a concurrent caller seeds first, this is a no-op and
             # the UPDATE below still runs atomically against whichever row won.
-            stmt = insert_fn(id_counter_table).values(entity_type=entity_type, next_value=seed)
+            stmt = postgresql_insert(id_counter_table).values(entity_type=entity_type, next_value=seed)
             stmt = stmt.on_conflict_do_nothing(index_elements=["entity_type"])
             session.execute(stmt)
 

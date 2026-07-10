@@ -14,9 +14,6 @@ from ...models.system_data import Tag, Source
 from ...utils import enrich_character, get_language_by_iso2t, stack_lists
 
 
-# ponytail: @transactional injects a managed session and owns commit/rollback,
-# so every method dropped its ~15-line owns_session block. Mutating CRUD calls
-# pass commit=False; the scope commits once (atomic even across a cascade).
 class CharacterService:
     @transactional
     def get_all(self, session: Optional[Session] = None) -> list[Character]:

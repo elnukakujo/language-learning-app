@@ -72,7 +72,6 @@ from functools import cache
 
 @cache
 def _get_detection_model():
-    # ponytail: lazy so importing utils doesn't load a Whisper model.
     return whisper.load_model("base")
 
 def detect_text_language(text: str) -> Language:

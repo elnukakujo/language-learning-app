@@ -1,6 +1,5 @@
 """Shared test fixtures: a Flask app on a throwaway SQLite DB with fresh tables.
 
-ponytail: one app fixture on the 'test' config; tables reset per test for isolation.
 """
 import pytest
 

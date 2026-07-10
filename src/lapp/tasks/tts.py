@@ -1,4 +1,6 @@
 import logging
+from sqlalchemy import func, cast
+from sqlalchemy.dialects.postgresql import JSONB
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
@@ -64,14 +66,15 @@ def generate_missing_component_audio(app: Flask):
             tts_service = TTSService(media_root=media_root)
             
             # Query Characters without audio_files or with empty audio_files list
+            # ponytail: JSON column has no `=` operator in postgres, compare array length instead
             characters_without_audio = session.query(Character).filter(
-                (Character.audio_files == None) | (Character.audio_files == [])
+                (Character.audio_files == None) | (func.jsonb_array_length(cast(Character.audio_files, JSONB)) == 0)
             ).all()
             words_without_audio = session.query(Word).filter(
-                (Word.audio_files == None) | (Word.audio_files == [])
+                (Word.audio_files == None) | (func.jsonb_array_length(cast(Word.audio_files, JSONB)) == 0)
             ).all()
             passages_without_audio = session.query(Passage).filter(
-                (Passage.audio_files == None) | (Passage.audio_files == [])
+                (Passage.audio_files == None) | (func.jsonb_array_length(cast(Passage.audio_files, JSONB)) == 0)
             ).all()
 
             components_without_audio = characters_without_audio + words_without_audio + passages_without_audio

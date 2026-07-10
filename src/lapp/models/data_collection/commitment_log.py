@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, String
+from sqlalchemy import Column, Integer, Boolean, String, Float
 
 from ..base import BaseDataCollectionModel
 
@@ -7,7 +7,7 @@ class CommitmentLog(BaseDataCollectionModel):
 
     days_active = Column(Integer, nullable=False)
     total_items_reviewed = Column(Integer, nullable=False)
-    total_time_ms = Column(Integer, nullable=False)
+    total_time_ms = Column(Float, nullable=False)
     longest_streak_ever = Column(Integer, nullable=False)
     streak_last_computed_at = Column(String, nullable=False)  # ISO datetime string
 

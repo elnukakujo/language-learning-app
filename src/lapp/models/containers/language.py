@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped
 
 from ..base import BaseContainerModel
@@ -7,16 +7,25 @@ from .lesson import Lesson
 class Language(BaseContainerModel):
     __tablename__ = 'language'
     __mapper_args__ = {"polymorphic_identity": "language"}
+    __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_language_user_name'),)
 
-    name = Column(String, index=True)
+    name = Column(String, nullable=False, index=True)
     alias = Column(String)
     flag = Column(String, default="")
 
-    source_iso639_2t = Column(String, nullable=True)
+    source_iso639_2t = Column(String, nullable=True, default="eng")
     target_iso639_2t = Column(String, nullable=True)
 
     # Foreign keys
-    current_lesson_id = Column(String, ForeignKey('lesson.id'), nullable=True)
+    # use_alter=True breaks the language<->lesson circular FK dependency
+    # (lesson.language_id -> language.id) into two DDL passes, so Postgres's
+    # create_all()/drop_all() can topologically sort the tables. SQLite
+    # tolerates the cycle silently; Postgres doesn't.
+    current_lesson_id = Column(
+        String,
+        ForeignKey('lesson.id', use_alter=True, name='fk_language_current_lesson_id'),
+        nullable=True
+    )
 
     # One-to-many: all lessons belonging to this language
     lessons: Mapped[list["Lesson"]] = relationship(

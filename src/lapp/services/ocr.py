@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 # Chinese is the one exception (tesseract splits simplified/traditional).
 TESSERACT_LANG_OVERRIDES = {"zho": "chi_sim"}
 
-# ponytail: flat cap on distinct candidates enriched per upload — each one calls
-# translate()/phonetics (argos/hanzipy), so an unbounded course scan could take
-# minutes. Raise this (or move enrichment to a background job) if real course
-# scans routinely exceed it; logs a warning when the cap is hit so it's visible.
 MAX_CANDIDATES_PER_KIND = 200
 
 

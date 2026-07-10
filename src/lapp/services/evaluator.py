@@ -26,7 +26,6 @@ exercise_service = ExerciseService()
 feedback_service = FeedbackService()
 
 class EvaluatorService:
-    # ponytail: properties so the models load on first use, not at import.
     @property
     def text_embedding_model(self):
         return get_text_embedding_model()

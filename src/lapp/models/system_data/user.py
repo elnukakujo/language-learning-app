@@ -10,8 +10,8 @@ class User(Base):
 
     id = Column(String, primary_key=True, index=True)
     username = Column(String, nullable=False, unique=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.now())
-    last_review = Column(DateTime, nullable=False, default=datetime.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    last_review = Column(DateTime, nullable=False, default=datetime.now)
 
     # One-to-one relationship with UserPreferences
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)

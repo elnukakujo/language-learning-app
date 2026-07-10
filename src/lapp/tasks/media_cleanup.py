@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from pathlib import Path
 from tqdm import tqdm
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -10,6 +11,10 @@ from ..core.database import db_manager
 from ..models import Vocabulary, Grammar, Calligraphy, Exercise, Character, Word, Passage
 
 logger = logging.getLogger(__name__)
+
+# Files younger than this are skipped even if unreferenced: a freshly-uploaded
+# file may not be linked to its DB record yet (upload-then-create is two requests).
+MEDIA_GRACE_PERIOD_SECONDS = 15 * 60
 
 def register_media_cleanup_tasks(scheduler: BackgroundScheduler, app: Flask):
     """
@@ -89,6 +94,8 @@ def cleanup_orphaned_media(app: Flask):
                     scanned += 1
                     if str(path.resolve()) in referenced:
                         continue
+                    if time.time() - path.stat().st_mtime < MEDIA_GRACE_PERIOD_SECONDS:
+                        continue
 
                     orphaned += 1
                     try:
@@ -117,7 +124,7 @@ def cleanup_temporary_files(app: Flask):
                 return
 
             for file in tqdm(temp_dir.iterdir(), desc="Deleting temporary files"):
-                if file.is_file():
+                if file.is_file() and time.time() - file.stat().st_mtime >= MEDIA_GRACE_PERIOD_SECONDS:
                     try:
                         file.unlink()
                         logger.info(f"✅ Deleted temporary file: {file.name}")

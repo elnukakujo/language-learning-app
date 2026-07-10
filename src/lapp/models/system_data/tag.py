@@ -1,6 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.sql import select
+from sqlalchemy import Column, String, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy.sql import select, func
 from collections import defaultdict
 
 from ...core.database import Base, db_manager
@@ -9,14 +8,15 @@ from ..base import tag_element_link
 
 class Tag(Base):
     __tablename__ = 'tag'
+    __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_tag_user_name'),)
 
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey('user.id'), nullable=False)
     name = Column(String, nullable=False)
     color = Column(String)
     description = Column(String)
-    created_at = Column(String, nullable=False, default=datetime.now())
-    updated_at = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True)
 
     def get_elements(self) -> dict:
         # Reuse self's own session rather than leaking an unclosed one from
@@ -49,8 +49,8 @@ class Tag(Base):
             "name": self.name,
             "color": self.color,
             "description": self.description,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
         if include_relations:
             base["elements"] = self.get_elements()

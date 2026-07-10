@@ -200,8 +200,8 @@ class BaseModelWithMediaFiles(Base):
     """
     __abstract__ = True
 
-    image_files = Column(JSON, default=list)
-    audio_files = Column(JSON, default=list)
+    image_files = Column(JSON, default=list, nullable=False)
+    audio_files = Column(JSON, default=list, nullable=False)
 
     def to_dict(self, include_relations: bool = True) -> dict:
         return {
@@ -262,12 +262,12 @@ class BaseContainerModel(BaseElementModel):
     This includes: Lesson, Language
     """
     __abstract__ = True
-    
-    level = Column(Integer, default=0)
+
+    level = Column(Integer, default=0, nullable=False)
     description = Column(String, default="")
 
     # Foreign key
-    user_id = Column(String, ForeignKey('user.id'), default="user_U0")
+    user_id = Column(String, ForeignKey('user.id'), default="user_U0", nullable=False)
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {
@@ -290,11 +290,17 @@ class BaseFeatureModel(BaseElementModel, BaseModelWithMediaFiles):
     """
     __abstract__ = True
 
-    difficulty = Column(Float, default=0.5)
-    
+    difficulty = Column(Float, default=0.5, nullable=False)
+
+    status = Column(
+        String,
+        Computed("CASE WHEN score = 0 THEN 'unstarted' WHEN score < 75 THEN 'inprogress' WHEN score < 100 THEN 'revisiting' ELSE 'completed' END"),
+        nullable=False
+    )
+
     # Foreign keys - shared by all components
     lesson_id: Mapped[str] = mapped_column("lesson_id", ForeignKey("lesson.id"))
-    
+
     # Relationships - use declared_attr to dynamically create for each subclass
     @declared_attr
     def lesson(cls) -> Mapped["Lesson"]:
@@ -324,9 +330,15 @@ class BaseComponentModel(BaseElementModel, BaseModelWithMediaFiles):
     """
     __abstract__ = True
 
-    difficulty = Column(Float, default=0.5)
+    difficulty = Column(Float, default=0.5, nullable=False)
 
-    # Foreign keys 
+    status = Column(
+        String,
+        Computed("CASE WHEN score = 0 THEN 'unseen' WHEN score <= 10 THEN 'introduced' WHEN score <= 50 THEN 'learning' WHEN score <= 75 THEN 'practicing' WHEN score <= 90 THEN 'review' ELSE 'mastered' END"),
+        nullable=False
+    )
+
+    # Foreign keys
     language_id: Mapped[str] = mapped_column(ForeignKey("language.id"), nullable=False)
 
     def to_dict(self, include_relations: bool = True) -> dict:
@@ -350,8 +362,8 @@ class BaseDataCollectionModel(Base):
     __abstract__ = True
 
     id = Column(String, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
-    updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now, nullable=True)
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
 
     # Foreign keys - commonly used in data collection models
     user_id = Column(String, ForeignKey('user.id'), nullable=False)

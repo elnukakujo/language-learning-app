@@ -24,11 +24,6 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
 
 from functools import cache
 
-# ponytail: every model is a @cache'd getter — nothing loads at import.
-# Importing this module is now cheap; each model loads on first actual use and
-# is reused thereafter. Heavy libs are imported inside the getters for the same
-# reason. Idle RAM went from ~6-8GB to ~0.
-
 
 @cache
 def get_text_embedding_model():

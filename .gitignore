@@ -1,6 +1,7 @@
 *.db
 *.sqlite
 *.sqlite3
+*.dump
 
 # Media files
 media/images/*

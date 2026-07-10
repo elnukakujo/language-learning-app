@@ -3,11 +3,15 @@ from flask import Blueprint, jsonify, request
 import logging
 
 from ...services.data_collection import DailyStatsService
+from ...services.system_data import UserService
+from ...services.containers import LanguageService
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint('daily_stats', __name__, url_prefix='/api/daily-stats')
 daily_stats_service = DailyStatsService()
+user_service = UserService()
+language_service = LanguageService()
 
 @bp.route('/me/today', methods=['GET'])
 def get_daily_stats_today():
@@ -33,6 +37,11 @@ def get_daily_stats_today():
 
     if not user_id or not language_id:
         return jsonify({'error': 'user_id and language_id are required'}), 400
+
+    if user_service.get_by_id(user_id=user_id) is None:
+        return jsonify({'error': 'User not found'}), 404
+    if language_service.get_by_id(language_id=language_id) is None:
+        return jsonify({'error': 'Language not found'}), 404
 
     daily_stats = daily_stats_service.get_today_for_user(
         user_id=user_id,

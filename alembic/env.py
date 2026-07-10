@@ -1,10 +1,12 @@
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
+from sqlalchemy import create_engine, inspect
 from sqlalchemy import pool
 
 from alembic import context
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
 
 # Import all models so they register on Base.metadata before autogenerate diffs it.
 import lapp.models  # noqa: F401
@@ -21,19 +23,25 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Resolve the DB URL. Precedence: whatever the caller already configured
-# (e.g. DatabaseManager.run_migrations() sets sqlalchemy.url from the live
-# engine) > -x db_url=... on the alembic CLI > LAPP_ENV-selected app Config.
-# Never silently override a URL the caller already provided — this file is
+# Resolve the DB URL/schema. Precedence: whatever the caller already
+# configured (e.g. DatabaseManager.run_migrations() sets sqlalchemy.url from
+# the live engine - already schema-scoped via its search_path query param)
+# > -x db_url=... on the alembic CLI > LAPP_ENV-selected app Config.
+# Never silently override a URL the caller already provided - this file is
 # re-executed by command.stamp()/upgrade() inside the running app process.
-if not config.get_main_option("sqlalchemy.url"):
-    env_name = os.environ.get("LAPP_ENV", "dev")
-    db_url = context.get_x_argument(as_dictionary=True).get("db_url") or app_config[env_name].SQLALCHEMY_DATABASE_URI
-    config.set_main_option("sqlalchemy.url", db_url)
+# If NONE of those are given (a bare `alembic upgrade head` from the CLI),
+# fall through to applying every config's schema in one invocation.
+_explicit_url = config.get_main_option("sqlalchemy.url")
+_db_url_arg = context.get_x_argument(as_dictionary=True).get("db_url")
+_env_arg = os.environ.get("LAPP_ENV")
+
+_single_target_url = _explicit_url or _db_url_arg or (
+    app_config[_env_arg].SQLALCHEMY_DATABASE_URI if _env_arg else None
+)
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = _single_target_url or app_config["dev"].SQLALCHEMY_DATABASE_URI
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -45,20 +53,47 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def _run_migrations_against(url: str, bootstrap_if_fresh: bool) -> None:
+    # NullPool: this connection is used once then discarded, no need to pool it.
+    connectable = create_engine(url, poolclass=pool.NullPool)
+    try:
+        with connectable.connect() as connection:
+            # Mirrors DatabaseManager.run_migrations()'s bootstrap check: a
+            # schema that already has tables but no alembic_version (e.g.
+            # TESTING's create_tables()-only path, or a pre-Alembic schema)
+            # must be stamped at head, not replayed from scratch - replaying
+            # would try to CREATE TABLEs that already exist.
+            if bootstrap_if_fresh:
+                migration_ctx = MigrationContext.configure(connection)
+                is_fresh = migration_ctx.get_current_revision() is None
+                has_tables = inspect(connectable).has_table("user")
+                if is_fresh and has_tables:
+                    # Stamp directly via MigrationContext rather than
+                    # command.stamp() - the latter re-execs this very env.py
+                    # script through the command layer, which we're already
+                    # mid-execution of.
+                    migration_ctx.stamp(ScriptDirectory.from_config(config), "head")
+                    connection.commit()
+                    return
+
+            context.configure(connection=connection, target_metadata=target_metadata)
+            with context.begin_transaction():
+                context.run_migrations()
+    finally:
+        connectable.dispose()
+
+
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    if _single_target_url:
+        # Single-schema path (DatabaseManager.run_migrations() or an explicit
+        # -x db_url=/LAPP_ENV=) already did its own fresh-DB bootstrap check
+        # before invoking Alembic; just run migrations normally here.
+        _run_migrations_against(_single_target_url, bootstrap_if_fresh=False)
+        return
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
-        with context.begin_transaction():
-            context.run_migrations()
+    # Bare CLI invocation: bring every config's schema up to head.
+    for env_name in ("dev", "test", "prod"):
+        _run_migrations_against(app_config[env_name].SQLALCHEMY_DATABASE_URI, bootstrap_if_fresh=True)
 
 
 if context.is_offline_mode():

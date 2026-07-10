@@ -14,7 +14,6 @@ exercise_service = ExerciseService()
 
 
 class FeedbackService:
-	# ponytail: lazy — model loads on first feedback request, not at import.
 	@property
 	def tokenizer(self):
 		return get_text_gen_tokenizer()

@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Column, Enum, String, Date, ForeignKey, select
+from sqlalchemy import Column, Enum, String, Date, DateTime, ForeignKey, select
+from sqlalchemy.sql import func
 from sqlalchemy.util import defaultdict
 
 from ...core.database import Base, db_manager
@@ -13,9 +13,9 @@ class Source(Base):
     title = Column(String, nullable=False)
     date = Column(Date)
     description = Column(String)
-    source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai"), nullable=False)
-    created_at = Column(String, nullable=False, default=datetime.now())
-    updated_at = Column(String, nullable=True)
+    source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai", name="source_type_enum"), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True)
 
     def get_elements(self) -> dict:
         # Reuse self's own session rather than leaking an unclosed one from
@@ -49,8 +49,8 @@ class Source(Base):
             "date": self.date.isoformat() if self.date else None,
             "description": self.description,
             "source_type": self.source_type,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
         if include_relations:
             base["elements"] = self.get_elements()

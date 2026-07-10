@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
+from datetime import date
+from sqlalchemy import Column, Integer, String, Date, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 
 from ...core.database import Base
@@ -9,11 +9,11 @@ class UserPreferences(Base):
     __tablename__ = 'user_preferences'
 
     id = Column(String, primary_key=True, index=True)
-    native_language_iso639_2 = Column(JSON, nullable=False, default=list)
+    native_language_iso639_2 = Column(JSON, nullable=False, default=lambda: ["eng"])
     learning_goals = Column(String, default='')
     preferred_exercise_types = Column(JSON, default=list)
-    daily_goal_minutes = Column(Integer, default=20)
-    last_updated = Column(DateTime, default=datetime.now())
+    daily_goal_minutes = Column(Integer, default=20, nullable=False)
+    last_updated = Column(Date, default=date.today)
     
     # Foreign keys
     user_id = Column(String, ForeignKey('user.id'), nullable=False, unique=True)

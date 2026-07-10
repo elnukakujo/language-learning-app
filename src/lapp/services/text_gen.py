@@ -7,7 +7,6 @@ from .containers import LanguageService
 language_service = LanguageService()
 
 class TextGeneratorService:
-    # ponytail: lazy — model loads on first generation, not at import.
     @property
     def tokenizer(self):
         return get_text_gen_tokenizer()
@@ -74,6 +73,10 @@ class TextGeneratorService:
         input_label: str,
         input_value: str
     ) -> str:
+        if not source_lang_code or not target_lang_code:
+            raise ValueError(
+                f"Missing language code(s): source_lang_code={source_lang_code!r}, target_lang_code={target_lang_code!r}"
+            )
         return (
             f"TASK: {task}\n"
             f"SOURCE_LANG_CODE: {source_lang_code.strip().lower()}\n"

@@ -24,7 +24,6 @@ class TTSService:
         self.audio_dir = self.media_root / 'audio'
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
-    # ponytail: lazy — TTS model loads on first synth, not when the service is built.
     @property
     def model(self):
         return get_qwen_tts_model()

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { searchElements, type SearchCategory, type SearchResult } from "@/api/search";
 
-// ponytail: category badges keep distinct hues for scannability; shared .badge is accent-only so these stay bespoke
 const BADGE_COLORS: Record<SearchCategory, string> = {
   container: "bg-pink-100 text-pink-800",
   feature: "bg-yellow-100 text-yellow-800",

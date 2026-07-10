@@ -7,9 +7,9 @@ class Exercise(BaseFeatureModel):
     __tablename__ = 'exercise'
     __mapper_args__ = {"polymorphic_identity": "exercise"}
 
-    exercise_type = Column(String, index=True)  # e.g., multiple choice, fill
-    question = Column(String, index=True)
-    answer = Column(String)
+    exercise_type = Column(String, nullable=False, index=True)  # e.g., multiple choice, fill
+    question = Column(String, nullable=False, index=True)
+    answer = Column(String, nullable=False)
     text_support = Column(String, default="")   # e.g., additional text information
     
     related_vocabulary = relationship('Vocabulary', secondary=exercise_vocabulary_link)
