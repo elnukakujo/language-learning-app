@@ -5,6 +5,7 @@ import Markdown from "react-markdown";
 import remarkGfm from 'remark-gfm';
 import type Lesson from "@/interface/containers/Lesson";
 import { languageProficiencySystems } from '@/utils/language_iso639';
+import ScoreDisplay from '../ui/displays/scoreDisplay';
 
 export default function LessonOverviewCard({ language_code, lesson }: { language_code: string; lesson: Lesson }) {
     const { language_id } = useParams();
@@ -27,7 +28,7 @@ export default function LessonOverviewCard({ language_code, lesson }: { language
             <div className="line-clamp-4 flex-1 text-sm text-muted prose-sm">
                 <Markdown remarkPlugins={[remarkGfm]}>{lesson.description}</Markdown>
             </div>
-            <p className="stat-value text-base">Score: {lesson.score?.toFixed()}%</p>
+            <ScoreDisplay score={lesson.score} />
         </button>
     );
 }

@@ -56,7 +56,6 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
                             onClick={reveal}
                             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); reveal(); } }}
                         >
-                            <h3 className="font-serif">Word</h3>
                             <WordCard word={vocabulary.word} hiddenTranslation={true} hiddenAdditionalInformations={true} />
                             <p className="text-sm opacity-60">Click to reveal</p>
                         </div>

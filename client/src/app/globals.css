@@ -273,4 +273,106 @@
   .level-3 { color: #c49a3c; }                      /* warm amber: confident */
   .level-4 { color: #d4703a; }                      /* bright terracotta: strong */
   .level-5 { color: #7a3e1e; }                      /* deep sienna: mastery */
+  /* Tape reel ornament */
+  .ap-reel {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .ap-reel.spinning {
+    animation: reel-spin 2s linear infinite;
+  }
+  .ap-reel-reverse.spinning {
+    animation: reel-spin 2s linear infinite reverse;
+  }
+  @keyframes reel-spin {
+    to { transform: rotate(360deg); }
+  }
+  .ap-reel-hub {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    border: 2px solid var(--accent);
+  }
+  .ap-reel::before {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+    border-radius: 1px;
+    top: 4px;
+  }
+  .ap-reel::after {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+    border-radius: 1px;
+    top: 4px;
+    transform: rotate(60deg);
+  }
+  
+  /* Seek bar */
+  .ap-seek {
+    position: relative;
+    height: 5px;
+    border-radius: 9999px;
+    background: var(--border);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .ap-seek-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--accent);
+    transform-origin: left;
+    transition: transform 0.1s linear;
+    pointer-events: none;
+  }
+  
+  /* Play button */
+  .ap-play-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 14px rgb(75 93 69 / 0.3);
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    flex-shrink: 0;
+  }
+  .ap-play-btn:hover {
+    background: var(--primary-hover);
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgb(75 93 69 / 0.4);
+  }
+  .ap-play-btn:active {
+    transform: scale(0.97);
+  }
+  
+  /* Transcript drawer */
+  .ap-transcript {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
+  }
+  .ap-transcript.open {
+    max-height: 200px;
+    opacity: 1;
+  }
 }

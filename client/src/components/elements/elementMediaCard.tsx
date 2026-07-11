@@ -1,6 +1,7 @@
 import { BaseMediaFiles } from "@/interface/base";
 import { BASE_URL } from "@/api";
 import Image from "next/image";
+import AudioPlayer from "../media/audioPlayer";
 
 export default function ElementMediaCard({element}: { element: BaseMediaFiles }) {
     const hasImages = !!element.image_files?.length;
@@ -19,7 +20,7 @@ export default function ElementMediaCard({element}: { element: BaseMediaFiles })
                 />
             ))}
             {element.audio_files && element.audio_files.map((url, idx) => (
-                <audio key={idx} src={BASE_URL + url} controls />
+                <AudioPlayer key={idx} src={BASE_URL + url} />
             ))}
         </section>
     );
