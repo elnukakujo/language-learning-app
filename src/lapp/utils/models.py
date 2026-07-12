@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 from .offline import configure_offline_environment
@@ -6,6 +7,29 @@ from .offline import configure_offline_environment
 logger = logging.getLogger(__name__)
 
 OFFLINE = configure_offline_environment()
+
+# torch defaults to using every CPU core for inference, which starves the rest
+# of the machine (including this same process's own request handling) during
+# generation. Cap it, leaving a couple cores free.
+try:
+    import torch
+    torch.set_num_threads(max(1, (os.cpu_count() or 4) - 2))
+except ImportError:
+    pass
+
+
+def get_device() -> str:
+    """Pick the compute device: LAPP_DEVICE env var overrides, else the best
+    available (cuda > mps > cpu)."""
+    override = os.environ.get("LAPP_DEVICE")
+    if override:
+        return override
+    import torch
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
 
 
 def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
@@ -29,7 +53,9 @@ from functools import cache
 def get_text_embedding_model():
     """Text-to-representation model (clustering, retrieval, similarity)."""
     from sentence_transformers import SentenceTransformer
-    return SentenceTransformer("all-MiniLM-L6-v2", local_files_only=OFFLINE)
+    return SentenceTransformer(
+        "all-MiniLM-L6-v2", device=get_device(), local_files_only=OFFLINE
+    )
 
 
 @cache
@@ -37,7 +63,7 @@ def get_audio_embedding_model():
     from transformers import Wav2Vec2Model
     return Wav2Vec2Model.from_pretrained(
         "facebook/wav2vec2-large-xlsr-53", local_files_only=OFFLINE
-    )
+    ).to(get_device())
 
 
 @cache
@@ -57,12 +83,16 @@ def get_stt_pipe():
         AutoProcessor,
         pipeline,
     )
+    device = get_device()
+    # float16 has no native CPU arithmetic support and falls back to slow
+    # scalar emulation; only use it on a real GPU.
+    dtype = torch.float16 if device in ("cuda", "mps") else torch.float32
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
         "openai/whisper-medium",
-        dtype=torch.float16,
+        dtype=dtype,
         use_safetensors=True,
         local_files_only=OFFLINE,
-    )
+    ).to(device)
     processor = AutoProcessor.from_pretrained(
         "openai/whisper-medium", local_files_only=OFFLINE
     )
@@ -71,7 +101,8 @@ def get_stt_pipe():
         model=model,
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
-        dtype=torch.float16,
+        dtype=dtype,
+        device=device,
     )
 
 
@@ -81,10 +112,15 @@ def get_qwen_tts_model():
     import torch
     from qwen_tts import Qwen3TTSModel
     path = _resolve_local_hf_snapshot("Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+    device = get_device()
+    # bfloat16 has no native CPU arithmetic support (esp. on Apple Silicon) and
+    # falls back to slow scalar emulation, making generation 10-50x slower.
+    # Real GPUs (cuda) have hardware bf16, so use it there.
+    dtype = torch.bfloat16 if device == "cuda" else torch.float32
     return Qwen3TTSModel.from_pretrained(
         path or "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
-        device_map="cpu",
-        dtype=torch.bfloat16,
+        device_map=device,
+        dtype=dtype,
         local_files_only=OFFLINE,
     )
 
@@ -105,7 +141,10 @@ def get_text_gen_model():
     path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
     return AutoModelForCausalLM.from_pretrained(
         path or "Qwen/Qwen2.5-1.5B-Instruct",
-        device_map="auto",
+        # device_map="auto" is for multi-GPU orchestration; on a single-device
+        # box its memory heuristic can misfire and leave layers stranded on
+        # the meta device (uninitialized). Pick one device explicitly instead.
+        device_map=get_device(),
         dtype="auto",
         local_files_only=OFFLINE,
     )

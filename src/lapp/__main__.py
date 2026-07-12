@@ -1,6 +1,41 @@
 import argparse
+import atexit
 import os
+import signal
+import tempfile
 from .api.app import create_app
+
+PID_FILE = os.path.join(tempfile.gettempdir(), "lapp_server.pid")
+
+
+def _kill_stale_instance():
+    """Kill any previous server instance left running from an earlier start."""
+    if not os.path.exists(PID_FILE):
+        return
+    try:
+        old_pid = int(open(PID_FILE).read().strip())
+        os.kill(old_pid, signal.SIGTERM)
+        print(f"🧹 Killed stale server instance (pid {old_pid})")
+    except (ValueError, ProcessLookupError, PermissionError):
+        pass
+
+
+def _register_pid_file():
+    with open(PID_FILE, "w") as f:
+        f.write(str(os.getpid()))
+    atexit.register(lambda: os.path.exists(PID_FILE) and os.remove(PID_FILE))
+
+
+def _force_exit_on_signal(signum, frame):
+    """A stuck background job (e.g. a hung model.generate() call) runs on a
+    non-daemon thread pool thread, which Python's normal shutdown would wait
+    on forever. os._exit bypasses atexit/thread-join entirely so Ctrl+C
+    actually kills the process instead of hanging."""
+    if os.path.exists(PID_FILE):
+        os.remove(PID_FILE)
+    print(f"\n🛑 Received signal {signum}, force-exiting immediately")
+    os._exit(0)
+
 
 def parse_args():
     """Parse command line arguments. Each flag falls back to an env var, then a default."""
@@ -33,7 +68,12 @@ def parse_args():
 
 def main():
     args = parse_args()
-    
+
+    _kill_stale_instance()
+    _register_pid_file()
+    signal.signal(signal.SIGINT, _force_exit_on_signal)
+    signal.signal(signal.SIGTERM, _force_exit_on_signal)
+
     # Create app with specified environment
     app = create_app(config_name=args.env)
     

@@ -120,8 +120,9 @@ class EvaluatorService:
         return waveform.mean(dim=0).numpy()
     
     def _speech_to_embeddings(self, waveform: np.ndarray) -> list[float]:
-        input_processed = self.audio_embedding_processor(waveform, sampling_rate=16000, return_tensors="pt", padding=True)
-        return self.audio_embedding_model(**input_processed, output_hidden_states=True).hidden_states[-1].squeeze(0).mean(dim=0).detach().numpy()
+        device = next(self.audio_embedding_model.parameters()).device
+        input_processed = self.audio_embedding_processor(waveform, sampling_rate=16000, return_tensors="pt", padding=True).to(device)
+        return self.audio_embedding_model(**input_processed, output_hidden_states=True).hidden_states[-1].squeeze(0).mean(dim=0).detach().cpu().numpy()
     
     def _speech_to_text(self, waveform: np.ndarray) -> str:
         return self.stt_pipe(waveform, return_timestamps=False)["text"]

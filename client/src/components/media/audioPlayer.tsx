@@ -129,18 +129,15 @@ export default function AudioPlayer({
     };
   }, [onComplete]);
 
-  // ── rAF loop for smooth progress ─────────────────────────────────────────
+  // ── progress updates via the audio element's own timeupdate event ────────
+  // (avoids an rAF loop forcing a React re-render every frame while playing)
   useEffect(() => {
-    if (!playing) return;
-    let rafId: number;
-    const tick = () => {
-      const audio = audioRef.current;
-      if (audio) setCurrentTime(audio.currentTime);
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [playing]);
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    return () => audio.removeEventListener("timeupdate", onTimeUpdate);
+  }, []);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = SPEED_STEPS[speedIdx];

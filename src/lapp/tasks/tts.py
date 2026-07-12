@@ -1,9 +1,11 @@
 import logging
+import os
 from sqlalchemy import func, cast
 from sqlalchemy.dialects.postgresql import JSONB
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
+from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 from ..core.database import db_manager
@@ -28,15 +30,17 @@ def register_tts_tasks(scheduler: BackgroundScheduler, app: Flask):
     # Get TTS interval from config (default: 120 minutes = 2 hours)
     tts_interval = app.config.get('TTS_INTERVAL_MINUTES', 120)
     
-    # Run TTS generation immediately on startup
-    scheduler.add_job(
-        func=generate_missing_component_audio,
-        id='generate_missing_component_audio_startup',
-        name='Generate missing audio for Components (startup)',
-        replace_existing=True,
-        args=[app]  # Pass app context to the task function
-    )
-    
+    # Run TTS generation immediately on startup (skip with LAPP_SKIP_STARTUP_TASKS=1,
+    # e.g. during dev when the app gets restarted often and this is CPU-heavy)
+    if os.environ.get('LAPP_SKIP_STARTUP_TASKS', '').lower() not in ('1', 'true', 'yes'):
+        scheduler.add_job(
+            func=generate_missing_component_audio,
+            id='generate_missing_component_audio_startup',
+            name='Generate missing audio for Components (startup)',
+            replace_existing=True,
+            args=[app]  # Pass app context to the task function
+        )
+
     # Interval-based TTS generation
     scheduler.add_job(
         func=generate_missing_component_audio,
@@ -93,10 +97,13 @@ def generate_missing_component_audio(app: Flask):
             success_count = 0
             error_count = 0
             
-            for component in components_without_audio:
+            progress = tqdm(components_without_audio, desc="Generating missing audio")
+            for component in progress:
+                progress.set_postfix_str(f"{type(component).__name__} {component.id}")
                 try:
                     # Generate audio using TTS service
-                    language_name = db_manager.find_by_pk(Language(id=component.language_id), session=session).name
+                    language = db_manager.find_by_pk(Language(id=component.language_id), session=session)
+                    language_name = language.name
 
                     if isinstance(component, Character):
                         text = getattr(component, 'character', None)
@@ -108,6 +115,8 @@ def generate_missing_component_audio(app: Flask):
                     if not text:
                         logger.warning(f"⚠️  Component ID {component.id} has no text to generate audio from")
                         continue
+
+                    progress.set_postfix_str(f"{type(component).__name__} {component.id} [{language.target_iso639_2t}]: {text[:40]!r}")
 
                     relative_path = tts_service.generate_audio(text=text, language_name=language_name)
                     component_id = component.id
@@ -125,16 +134,23 @@ def generate_missing_component_audio(app: Flask):
                         result = passage_service.update(passage_id=component_id, data=PassageDict(**updated_component), session=session)
                     
                     if not result:
+                        session.rollback()
                         logger.warning(f"⚠️  Failed to update component '{text}' (ID: {component.id})")
                         continue
 
                     if result.audio_files != [relative_path]:
+                        session.rollback()
                         logger.warning(f"⚠️  Audio path mismatch for component '{text}' (ID: {component.id}) - expected: {relative_path}, got: {result.audio_files}")
                         continue
 
+                    # *_service.update() above was called with session=session and
+                    # commit=False internally (per the @transactional contract) — this
+                    # caller owns the commit. Without it, session.close() below would
+                    # roll everything back and the backlog would never actually shrink.
+                    session.commit()
                     success_count += 1
                     logger.info(f"✅ Generated audio for component '{text}' (ID: {component.id})")
-                    
+
                 except Exception as e:
                     error_count += 1
                     session.rollback()

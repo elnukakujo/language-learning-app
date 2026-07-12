@@ -1,8 +1,10 @@
 import logging
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
 from sqlalchemy import exists
+from tqdm import tqdm
 
 from ..core.database import db_manager
 from ..models import Grammar, Vocabulary, Calligraphy, Language
@@ -30,15 +32,17 @@ def register_text_gen_tasks(scheduler: BackgroundScheduler, app: Flask):
     # Get Text Generation interval from config (default: 120 minutes = 2 hours)
     text_gen_interval = app.config.get('TEXT_GEN_INTERVAL_MINUTES', 120)
     
-    # Run Text Generation immediately on startup
-    scheduler.add_job(
-        func=generate_missing_texts,
-        id='generate_missing_texts_startup',
-        name='Generate missing texts (startup)',
-        replace_existing=True,
-        args=[app]
-    )
-    
+    # Run Text Generation immediately on startup (skip with LAPP_SKIP_STARTUP_TASKS=1,
+    # e.g. during dev when the app gets restarted often and this is CPU-heavy)
+    if os.environ.get('LAPP_SKIP_STARTUP_TASKS', '').lower() not in ('1', 'true', 'yes'):
+        scheduler.add_job(
+            func=generate_missing_texts,
+            id='generate_missing_texts_startup',
+            name='Generate missing texts (startup)',
+            replace_existing=True,
+            args=[app]
+        )
+
     # Interval-based Text Generation
     scheduler.add_job(
         func=generate_missing_texts,
@@ -108,13 +112,17 @@ def generate_missing_texts(app: Flask):
             success_count = 0
             error_count = 0
             
-            for feature in features_without_texts:
+            progress = tqdm(features_without_texts, desc="Generating missing texts")
+            for feature in progress:
+                progress.set_postfix_str(f"{type(feature).__name__} {feature.id}")
                 language: Language = db_manager.find_by_pk(Language(id=feature.lesson.language_id), session=session)
+                lang_codes = f"{language.source_iso639_2t}->{language.target_iso639_2t}"
                 logger.info(f"Generating text for feature ID {feature.id} with language {language.source_iso639_2t} -> {language.target_iso639_2t}")
                 try:
                     # Generate audio using TTS service
                     if isinstance(feature, Calligraphy):
                         text = feature.character.character
+                        progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_example_word(
                             text,
                             source_lang_code=language.source_iso639_2t,
@@ -122,6 +130,7 @@ def generate_missing_texts(app: Flask):
                         )
                     elif isinstance(feature, Vocabulary):
                         text = feature.word.word
+                        progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_example_sentence(
                             text,
                             source_lang_code=language.source_iso639_2t,
@@ -129,6 +138,7 @@ def generate_missing_texts(app: Flask):
                         )
                     elif isinstance(feature, Grammar):
                         text = f" #{feature.title}\n\n{feature.explanation}"
+                        progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_learnable_sentence(
                             text,
                             source_lang_code=language.source_iso639_2t,
@@ -137,6 +147,8 @@ def generate_missing_texts(app: Flask):
                     else:
                         logger.warning(f"⚠️  Unknown feature type for ID {feature.id}, skipping")
                         continue
+
+                    progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r} -> {(generated_text or '')[:40]!r}")
 
                     if generated_text is None or not generated_text.strip():
                         logger.error(f"❌ Failed to generate text for Feature ID {feature.id}: empty or null result")
@@ -182,10 +194,16 @@ def generate_missing_texts(app: Flask):
                             session=session
                         )
                     
+                    # Each service.update() above was called with session=session and
+                    # commit=False internally (per the @transactional contract) — this
+                    # caller owns the commit. Without it, session.close() below would
+                    # roll everything back and the backlog would never actually shrink.
+                    session.commit()
                     success_count += 1
                     logger.info(f"✅ Generated text for Feature ID {feature.id}: '{generated_text}'")
-                    
+
                 except Exception as e:
+                    session.rollback()
                     error_count += 1
                     logger.error(f"❌ Failed to generate text for Feature ID {feature.id}: {e}")
                     continue
