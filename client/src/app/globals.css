@@ -101,8 +101,41 @@
     font-size: 1.1rem;
   }
 
+  h4, h5, h6 {
+    font-weight: 600;
+  }
+
+  h4 {
+    font-size: 1rem;
+  }
+
+  h5, h6 {
+    font-size: 0.9rem;
+  }
+
   ol {
     list-style-type: decimal;
+    padding-left: 1.5rem;
+  }
+
+  ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid var(--color-border);
+    padding: 0.4rem 0.75rem;
+    text-align: left;
+  }
+
+  th {
+    font-weight: 600;
   }
 
   a {

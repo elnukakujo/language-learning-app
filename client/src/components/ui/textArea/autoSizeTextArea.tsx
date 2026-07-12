@@ -46,6 +46,11 @@ export default function AutoSizeTextArea({
         const originalWhiteSpace = textarea.style.whiteSpace;
         const originalOverflow = textarea.style.overflow;
 
+        // Mutating width/height on the focused textarea below makes the
+        // browser scroll it back into view; restore scroll position after.
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+
         // Convert rem to pixels for calculations
         const minWidthPx = remToPx(minWidth);
         const minHeightPx = remToPx(minHeight);
@@ -90,10 +95,12 @@ export default function AutoSizeTextArea({
         textarea.style.overflow = originalOverflow;
 
         // Convert back to rem for state
-        setDimensions({ 
-        width: pxToRem(newWidthPx), 
-        height: pxToRem(newHeightPx) 
+        setDimensions({
+        width: pxToRem(newWidthPx),
+        height: pxToRem(newHeightPx)
         });
+
+        window.scrollTo(scrollX, scrollY);
     }, [minWidth, minHeight, maxWidth, maxHeight]);
 
     useEffect(() => {
