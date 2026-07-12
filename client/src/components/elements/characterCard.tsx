@@ -38,7 +38,7 @@ export default function CharacterCard({ character, hiddenTranslation, hiddenAddi
                 </div>
                 )}
 
-                {showExtras && hasMedia && <ElementMediaCard element={character} />}
+                {hasMedia && <ElementMediaCard element={character} />}
             </div>
         </section>
     );

@@ -37,10 +37,10 @@ export default function ElementPerformanceCard({ element }: { element: BaseEleme
                     <DifficultyDisplay difficulty={(element as any).difficulty} />
                 )}
                 {'created_at' in element && (element as any).created_at != null && (
-                    <DateDisplay date={(element as any).created_at} message="Created at" />
+                    <DateDisplay date={(element as any).created_at} message="Created on" />
                 )}
                 {'last_seen_at' in element && (element as any).last_seen_at != null && (
-                    <DateDisplay date={(element as any).last_seen_at} message="Last seen at" />
+                    <DateDisplay date={(element as any).last_seen_at} message="Last seen on" />
                 )}
             </div>
         </section>

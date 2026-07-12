@@ -105,7 +105,11 @@ export default function MediaLoader({
   };
 
   return (
-    <div className="space-y-6">
+    <div 
+      className="space-y-6"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <div>
         <h3 className="text-sm font-medium mb-2">Image</h3>
         <input

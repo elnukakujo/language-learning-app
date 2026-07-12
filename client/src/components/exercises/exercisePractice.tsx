@@ -14,6 +14,7 @@ import TrueFalseExercise from "./trueFalseExercise";
 import SpeakingExercise from "./speakingExercise";
 import ConversationExercise from "./conversationExercise";
 import SelectInTheBlankExercise from "./selectInTheBlankExercise";
+import ProgressBar from "../ui/progressBar";
 
 export default function ExercisePractice( { exercise_lists } : { exercise_lists: Exercise[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -25,7 +26,10 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
 
     return (
         <div>
-            <h3>{currentIndex + 1} / {exercise_lists.length}</h3>
+            <ProgressBar
+                current={currentIndex}
+                total={exercise_lists.length}
+            />
             {currentExercise.exercise_type === 'essay' && <EssayExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'answering' && <AnsweringExercise exercise={currentExercise} />}
             {currentExercise.exercise_type === 'type_in_the_blank' && <TypeInTheBlankExercise exercise={currentExercise} />}

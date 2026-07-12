@@ -50,7 +50,7 @@ export default function WordCard({
         )}
 
         {/* ── Media ─────────────────────────────────────────────────── */}
-        {showExtras && hasMedia && <ElementMediaCard element={word} />}
+        {hasMedia && <ElementMediaCard element={word} />}
 
       </div>
     </section>

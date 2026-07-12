@@ -4,12 +4,12 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, FileText } from "lucide-react";
 
 interface AudioPlayerProps {
-  src: string;
-  title?: string;
-  subtitle?: string;
-  level?: 0 | 1 | 2 | 3 | 4 | 5;
-  transcript?: string;
-  onComplete?: () => void;
+    src: string;
+    title?: string;
+    subtitle?: string;
+    level?: 0 | 1 | 2 | 3 | 4 | 5;
+    transcript?: string;
+    onComplete?: () => void;
 }
 
 const LEVEL_LABELS  = ["Beginner", "Elementary", "Intermediate", "Upper-Int.", "Advanced", "Mastery"];
@@ -17,62 +17,62 @@ const SPEED_STEPS   = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const WAVEFORM_BARS = 38;
 
 const BAR_HEIGHTS = Array.from({ length: WAVEFORM_BARS }, (_, i) =>
-  0.2 + Math.abs(Math.sin(i * 0.8) * 0.3 + Math.sin(i * 0.3) * 0.4 + Math.sin(i * 1.7) * 0.3) * 0.8
+    0.2 + Math.abs(Math.sin(i * 0.8) * 0.3 + Math.sin(i * 0.3) * 0.4 + Math.sin(i * 1.7) * 0.3) * 0.8
 );
 
 function fmt(secs: number) {
-  if (!isFinite(secs)) return "0:00";
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+    if (!isFinite(secs)) return "0:00";
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
 
 function Waveform({ progress, onSeek }: {
-  progress: number;
-  onSeek: (ratio: number) => void;
+    progress: number;
+    onSeek: (ratio: number) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    onSeek(ratio);
-  };
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const el = ref.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        onSeek(ratio);
+    };
 
-  return (
-    <div
-      ref={ref}
-      className="flex items-center gap-[2px] h-12 w-full cursor-pointer select-none"
-      onClick={handleClick}
-      role="slider"
-      aria-label="Seek audio"
-      aria-valuenow={Math.round(progress * 100)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-    >
-      {BAR_HEIGHTS.map((h, i) => {
-        const barCenter = (i + 0.5) / WAVEFORM_BARS;
-        const filled    = barCenter <= progress;
-        return (
-          <div
-            key={i}
-            className="flex-1 rounded-full pointer-events-none"
-            style={{
-              height:     `${Math.round(h * 100)}%`,
-              // Use foreground-derived colours that work in both light and dark
-              background: filled ? "var(--accent)" : "var(--foreground)",
-              opacity:    filled ? 1 : 0.15,
-              transition: "background 0.06s, opacity 0.06s",
-            }}
-          />
-        );
-      })}
-    </div>
-  );
+    return (
+        <div
+            ref={ref}
+            className="flex items-center gap-[2px] h-12 w-full cursor-pointer select-none"
+            onClick={handleClick}
+            role="slider"
+            aria-label="Seek audio"
+            aria-valuenow={Math.round(progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+        >
+            {BAR_HEIGHTS.map((h, i) => {
+                const barCenter = (i + 0.5) / WAVEFORM_BARS;
+                const filled    = barCenter <= progress;
+                return (
+                <div
+                    key={i}
+                    className="flex-1 rounded-full pointer-events-none"
+                    style={{
+                        height:     `${Math.round(h * 100)}%`,
+                        // Use foreground-derived colours that work in both light and dark
+                        background: filled ? "var(--accent)" : "var(--foreground)",
+                        opacity:    filled ? 1 : 0.15,
+                        transition: "background 0.06s, opacity 0.06s",
+                    }}
+                />
+                );
+            })}
+        </div>
+    );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -181,7 +181,11 @@ export default function AudioPlayer({
   };
 
   return (
-    <div className="w-full min-w-[8rem] max-w-[32rem] bg-accent-soft rounded-lg p-3 flex flex-col">
+    <div
+        className="w-full min-w-[8rem] max-w-[32rem] bg-accent-soft rounded-lg p-3 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+    >
 
       {hasHeader && (
         <>

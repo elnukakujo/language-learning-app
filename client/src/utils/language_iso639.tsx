@@ -51,6 +51,8 @@ export interface ProficiencyLevel {
 export interface LanguageProficiencySystem {
   /** ISO 639-3 language code */
   isoCode: string;
+  /** Official name of the language (in English) */
+  englishName?: string;
   /** Official name of the proficiency test */
   testName: string;
   /** Short abbreviation (e.g. "JLPT", "DELF") */
@@ -83,6 +85,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   cat: {
     isoCode: "cat",
+    englishName: "Catalan",
     testName: "Certificats de Català (DIEC / Consorci per a la Normalització Lingüística)",
     testAbbreviation: "CNLC",
     cefrBased: true,
@@ -101,6 +104,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   dan: {
     isoCode: "dan",
+    englishName: "Danish",
     testName: "Prøve i Dansk + Studieprøven",
     testAbbreviation: "PD",
     cefrBased: true,
@@ -117,6 +121,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   nld: {
     isoCode: "nld",
+    englishName: "Dutch",
     testName: "Certificaat Nederlands als Vreemde Taal / NT2",
     testAbbreviation: "CNaVT",
     cefrBased: true,
@@ -135,6 +140,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   eng: {
     isoCode: "eng",
+    englishName: "English",
     testName: "Cambridge English Qualifications (CEFR-aligned)",
     testAbbreviation: "Cambridge",
     cefrBased: true,
@@ -153,6 +159,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   nob: {
     isoCode: "nob",
+    englishName: "Norwegian Bokmål",
     testName: "Norskprøven (A1–B2) + Bergenstesten (B2/C1)",
     testAbbreviation: "Norskprøven",
     cefrBased: true,
@@ -170,6 +177,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   nor: {
     isoCode: "nor",
+    englishName: "Norwegian",
     testName: "Norskprøven + Bergenstesten",
     testAbbreviation: "Norskprøven",
     cefrBased: true,
@@ -206,6 +214,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   deu: {
     isoCode: "deu",
+    englishName: "German",
     testName: "Goethe-Zertifikat / Österreichisches Sprachdiplom Deutsch",
     testAbbreviation: "Goethe",
     cefrBased: true,
@@ -226,6 +235,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   fra: {
     isoCode: "fra",
+    englishName: "French",
     testName: "Diplôme d'Études en Langue Française / Diplôme Approfondi de Langue Française",
     testAbbreviation: "DELF/DALF",
     cefrBased: true,
@@ -244,6 +254,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   ell: {
     isoCode: "ell",
+    englishName: "Greek",
     testName: "Κρατικό Πιστοποιητικό Γλωσσομάθειας (State Certificate of Language Proficiency)",
     testAbbreviation: "KPG",
     cefrBased: true,
@@ -262,6 +273,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   ita: {
     isoCode: "ita",
+    englishName: "Italian",
     testName: "Certificazione di Italiano come Lingua Straniera / Certificato di Conoscenza della Lingua Italiana",
     testAbbreviation: "CILS/CELI",
     cefrBased: true,
@@ -280,6 +292,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   fin: {
     isoCode: "fin",
+    englishName: "Finnish",
     testName: "Yleinen kielitutkinto (General Language Examination)",
     testAbbreviation: "YKI",
     cefrBased: true,
@@ -298,6 +311,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   pol: {
     isoCode: "pol",
+    englishName: "Polish",
     testName: "Certyfikat Znajomości Języka Polskiego",
     testAbbreviation: "Certyfikat",
     cefrBased: true,
@@ -316,6 +330,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   por: {
     isoCode: "por",
+    englishName: "Portuguese",
     testName: "Centro de Avaliação de Português Língua Estrangeira",
     testAbbreviation: "CAPLE",
     cefrBased: true,
@@ -334,6 +349,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   ron: {
     isoCode: "ron",
+    englishName: "Romanian",
     testName: "CEFR-aligned state examinations (no single dominant body)",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -352,6 +368,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   rus: {
     isoCode: "rus",
+    englishName: "Russian",
     testName: "Test of Russian as a Foreign Language / Тест по русскому языку как иностранному",
     testAbbreviation: "TORFL/ТРКИ",
     cefrBased: true,
@@ -370,6 +387,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   spa: {
     isoCode: "spa",
+    englishName: "Spanish",
     testName: "Diplomas de Español como Lengua Extranjera",
     testAbbreviation: "DELE",
     cefrBased: true,
@@ -388,6 +406,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   ukr: {
     isoCode: "ukr",
+    englishName: "Ukrainian",
     testName: "CEFR-aligned state examinations (no single dominant body)",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -408,6 +427,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   hrv: {
     isoCode: "hrv",
+    englishName: "Croatian",
     testName: "CEFR-aligned examinations (no single dominant body)",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -426,6 +446,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   lit: {
     isoCode: "lit",
+    englishName: "Lithuanian",
     testName: "CEFR-aligned state examinations",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -444,6 +465,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   mkd: {
     isoCode: "mkd",
+    englishName: "Macedonian",
     testName: "CEFR-aligned examinations (no single dominant body)",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -462,6 +484,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   slv: {
     isoCode: "slv",
+    englishName: "Slovenian",
     testName: "CEFR-aligned state examinations",
     testAbbreviation: "CEFR",
     cefrBased: true,
@@ -482,6 +505,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   jpn: {
     isoCode: "jpn",
+    englishName: "Japanese",
     testName: "Japanese Language Proficiency Test / 日本語能力試験",
     testAbbreviation: "JLPT",
     cefrBased: false,
@@ -524,6 +548,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   kor: {
     isoCode: "kor",
+    englishName: "Korean",
     testName: "Test of Proficiency in Korean / 한국어능력시험",
     testAbbreviation: "TOPIK",
     cefrBased: false,
@@ -572,6 +597,7 @@ export const languageProficiencySystems: Record<string, LanguageProficiencySyste
 
   zho: {
     isoCode: "zho",
+    englishName: "Mandarin Chinese",
     testName: "Hanyu Shuiping Kaoshi / 汉语水平考试",
     testAbbreviation: "HSK",
     cefrBased: false,

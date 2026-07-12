@@ -10,6 +10,8 @@ import SentenceCard from "./sentenceCard";
 import ElementTagsCard from "./elementTagsCard";
 import ElementSourcesCard from "./elementSourcesCard";
 import ElementPerformanceCard from "./elementPerformanceCard";
+import ProgressBar from "@/components/ui/progressBar";
+import RecallGradeButtons from "@/components/ui/buttons/recallGradeButtons";
 
 export default function CalligraphyFlashCard({ calligraphies }: { calligraphies: Calligraphy[] }) {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -27,10 +29,10 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
         setGraded(false);
     }, [currentIndex]);
 
-    const handleGrade = (isCorrect: boolean) => {
+    const handleGrade = (score: number) => {
         setGraded(true);
         const duration_ms = Math.round(performance.now() - startTimeRef.current);
-        updateScoreById(calligraphy.id!, isCorrect ? 1 : 0, duration_ms, hintUsed);
+        updateScoreById(calligraphy.id!, score, duration_ms, hintUsed);
     };
 
     const reveal = () => {
@@ -44,8 +46,11 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
     }
 
     return (
-        <article>
-            <h3>{currentIndex + 1} / {calligraphies.length}</h3>
+        <article className="flex flex-col space-y-6">
+            <ProgressBar
+                current={currentIndex + (graded ? 1 : 0)}
+                total={calligraphies.length}
+            />
             <section className="flex flex-col space-y-4">
                 <h1>Calligraphy Sheet</h1>
                 <div className="flashcard">
@@ -66,49 +71,44 @@ export default function CalligraphyFlashCard({ calligraphies }: { calligraphies:
                                 <h3 className="font-serif">Meaning</h3>
                                 <CharacterCard character={calligraphy.character} hiddenTranslation={false} hiddenAdditionalInformations={false} />
                             </div>
-                            {calligraphy.example_words && (
-                                <section className="flex flex-col space-y-4 items-baseline">
-                                    <h3 className="font-serif">Example Words</h3>
-                                    {calligraphy.example_words.map((word, index) => (
-                                        <WordCard key={index} word={word} hiddenTranslation={false} hiddenAdditionalInformations={true} />
-                                    ))}
-                                </section>
-                            )}
-                            {calligraphy.example_sentences && (
-                                <section className="flex flex-col space-y-4 items-baseline">
-                                    <h3 className="font-serif">Example Sentences</h3>
-                                    {calligraphy.example_sentences.map((sentence, index) => (
-                                        <SentenceCard key={index} sentence={sentence} hiddenTranslation={false} />
-                                    ))}
-                                </section>
-                            )}
-                            <ElementTagsCard element={calligraphy} />
-                            <ElementSourcesCard element={calligraphy} />
-                            <ElementPerformanceCard element={calligraphy} />
                         </div>
                     </div>
                 </div>
             </section>
             {!hiddenTranslation && !graded && (
-                <section className="flex flex-row space-x-4">
-                    <button className="btn btn-primary" onClick={() => handleGrade(true)}>
-                        Correct?
-                    </button>
-                    <button className="btn btn-danger" onClick={() => handleGrade(false)}>
-                        Wrong?
-                    </button>
-                </section>
+                <RecallGradeButtons onGrade={handleGrade} />
             )}
             {graded && (
-                currentIndex < calligraphies.length - 1 ? (
-                    <button className="btn btn-primary" onClick={() => handleGoNext()}>
-                        <p>Next Calligraphy</p>
-                    </button>
-                ) : (
-                    <BackButton>
-                        <p>Back to Lesson</p>
-                    </BackButton>
-                )
+                <>
+                    {calligraphy.example_words && (
+                        <section className="flex flex-col space-y-4 items-baseline">
+                            <h3 className="font-serif">Example Words</h3>
+                            {calligraphy.example_words.map((word, index) => (
+                                <WordCard key={index} word={word} hiddenTranslation={false} hiddenAdditionalInformations={true} />
+                            ))}
+                        </section>
+                    )}
+                    {calligraphy.example_sentences && (
+                        <section className="flex flex-col space-y-4 items-baseline">
+                            <h3 className="font-serif">Example Sentences</h3>
+                            {calligraphy.example_sentences.map((sentence, index) => (
+                                <SentenceCard key={index} sentence={sentence} hiddenTranslation={false} />
+                            ))}
+                        </section>
+                    )}
+                    <ElementTagsCard element={calligraphy} />
+                    <ElementSourcesCard element={calligraphy} />
+                    <ElementPerformanceCard element={calligraphy} />
+                    {currentIndex < calligraphies.length - 1 ? (
+                        <button className="btn btn-primary" onClick={() => handleGoNext()}>
+                            <p>Next Calligraphy</p>
+                        </button>
+                    ) : (
+                        <BackButton>
+                            <p>Back to Lesson</p>
+                        </BackButton>
+                    )}
+                </>
             )}
         </article>
     );

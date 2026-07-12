@@ -109,7 +109,11 @@ export default function AudioRecorder({ onUploadSuccess, onUploadError }: AudioR
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col gap-2">
+        <div 
+            className="flex flex-col gap-2"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+        >
             <div className="flex gap-3 items-center">
 
                 {!isRecording ? (
