@@ -326,9 +326,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
     };
 
     return (
-        <form className="flex flex-col gap-4">
-            <h2>Conversation Exercise</h2>
-
+        <form className="card flex flex-col gap-4">
             {textSupport.trim() !== "" && (
                 <section>
                     <h3>Support</h3>
@@ -344,7 +342,7 @@ export default function ConversationExercise({ exercise }: { exercise: Exercise 
                 </section>
             )}
 
-            <section className="flex flex-col gap-3">
+            <section className="index-divider flex flex-col gap-3">
                 {conversation.lines.map((line, idx) => {
                     if (idx > visibleLineIndex) return;
                     const speaker = conversation.speakers.find((s) => s.id === line.speakerId);

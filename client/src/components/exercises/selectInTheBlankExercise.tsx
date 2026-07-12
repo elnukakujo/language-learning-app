@@ -10,24 +10,25 @@ import shuffle from 'lodash/shuffle';
 import ElementMediaCard from "@/components/elements/elementMediaCard";
 
 export default function SelectInTheBlankExercise({ exercise }: { exercise: Exercise }) {
-    const question = exercise.question || "";
-    const answer = exercise.answer || "";
+    const content = exercise.content as { segments: string[]; blanks: { options?: string[]; answer: string }[] };
     const text_support = exercise.text_support || "";
-
-    const correctAnswers = answer.split('__').map(ans => ans.trim()).filter(Boolean);
-
-    const lines = question.split('\n').filter(line => line.trim());
-    const totalBlanks = (question.match(/__/g) || []).length;
+    const segments = content.segments;
+    const blanks = content.blanks;
+    const correctAnswers = blanks.map(b => b.answer);
+    // Word bank: union of all options across blanks, falling back to the correct answers
+    const allOptions = blanks.some(b => b.options && b.options.length > 0)
+        ? blanks.flatMap(b => b.options ?? [b.answer])
+        : correctAnswers;
 
     const [wordBank, setWordBank] = useState<string[]>([]);
-    const [filledAnswers, setFilledAnswers] = useState<(string | null)[]>(Array(totalBlanks).fill(null));
+    const [filledAnswers, setFilledAnswers] = useState<(string | null)[]>(Array(blanks.length).fill(null));
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
     const [attempts, setAttempts] = useState(0);
     const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
-        setWordBank(shuffle(correctAnswers));
-        setFilledAnswers(Array(totalBlanks).fill(null));
+        setWordBank(shuffle(allOptions));
+        setFilledAnswers(Array(blanks.length).fill(null));
         setIsCorrect(false);
         setAttempts(0);
         startTimeRef.current = performance.now();
@@ -77,34 +78,30 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
         }
     };
 
-    // Render a line with filled blanks or empty slots
-    let blankCounter = 0;
-    const renderLine = (line: string) => {
-        const parts = line.split('__');
-        return parts.flatMap((part, i, arr) => {
-        if (i === arr.length - 1) return [<span key={`t-${i}`}>{part}</span>];
-        const idx = blankCounter++;
-        const filled = filledAnswers[idx];
-        return [
-            <span key={`t-${i}`}>{part}</span>,
-            <button
-                type="button"
-                key={`blank-${idx}`}
-                onClick={() => handleBlankClick(idx)}
-                className={`inline-block min-w-12 mx-1 px-2 border-b-2 text-center ${isCorrect
-                    ? 'border-success text-success'
-                    : 'border-border'
-                } ${filled ? 'cursor-pointer' : 'cursor-default'}`}
-            >
-                {filled ?? '\u00A0\u00A0\u00A0\u00A0'}
-            </button>
-        ];
+    const renderSegments = () => {
+        return segments.flatMap((part, i) => {
+            if (i === segments.length - 1) return [<span key={`t-${i}`}>{part}</span>];
+            const idx = i;
+            const filled = filledAnswers[idx];
+            return [
+                <span key={`t-${i}`}>{part}</span>,
+                <button
+                    type="button"
+                    key={`blank-${idx}`}
+                    onClick={() => handleBlankClick(idx)}
+                    className={`inline-block min-w-12 mx-1 px-2 border-b-2 text-center ${isCorrect
+                        ? 'border-success text-success'
+                        : 'border-border'
+                    } ${filled ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                    {filled ?? '    '}
+                </button>
+            ];
         });
     };
 
     return (
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h2>Select in the Blanks Exercise</h2>
+        <form className="card flex flex-col space-y-4" onSubmit={handleSubmit}>
             {text_support.trim() !== "" && (
                 <section>
                     <h3>Text Support:</h3>
@@ -113,7 +110,7 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
             )}
             <ElementMediaCard element={exercise}/>
 
-            {wordBank && <section>
+            {wordBank && <section className="index-divider">
                 <h3>Word Bank:</h3>
                 <div className="flex flex-wrap gap-2">
                     {wordBank.map((word, i) => (
@@ -121,7 +118,7 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
                             type="button"
                             key={i}
                             onClick={() => handleWordClick(word, i)}
-                            className="btn btn-secondary"
+                            className="chip"
                         >
                             {word}
                         </button>
@@ -130,11 +127,7 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
             </section>}
 
             <div className="flex flex-col space-y-2">
-                {lines.map((line, lineIdx) => (
-                <div key={lineIdx} className="flex flex-row flex-wrap items-center">
-                    {renderLine(line)}
-                </div>
-                ))}
+                {renderSegments()}
             </div>
 
             {!isCorrect && attempts < 3 && (

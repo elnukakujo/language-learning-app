@@ -44,7 +44,7 @@ export default function VocabularyFlashCard({ vocabularies }: { vocabularies: Vo
     };
 
     return (
-        <article className="flex flex-col space-y-6">
+        <article className="flex flex-col space-y-6 max-w-2xl mx-auto">
 
             <ProgressBar
                 current={currentIndex + (graded ? 1 : 0)}

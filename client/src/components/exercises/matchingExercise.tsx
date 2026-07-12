@@ -15,16 +15,12 @@ type Item = {
 };
 
 export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
-    const answer = exercise.answer || "";
+    const content = exercise.content as { pairs: [string, string][] };
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
 
-    const pairs: Item[][] = answer.split("\n")
-        .map(pair => pair.split("__"))
-        .map(row =>
-            row.map((value, colIndex) => ({ value, column: colIndex }))
-        );
+    const pairs: Item[][] = content.pairs.map(row =>
+        row.map((value, colIndex) => ({ value, column: colIndex }))
+    );
 
     const [remainingPairs, setRemainingPairs] = useState<Item[][]>(pairs);
 
@@ -49,12 +45,17 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         setRemainingPairs(pairs);
         setAttempts(3);
         setSelection([]);
+        setMatchOrder(new Map());
         setIsSuccess(false);
         startTimeRef.current = performance.now();
     }, [exercise]);
 
     const [attempts, setAttempts] = useState<number>(3);
     const [selection, setSelection] = useState<Array<Item>>([]);
+    const [matchOrder, setMatchOrder] = useState<Map<string, number>>(new Map());
+    const [shake, setShake] = useState<boolean>(false);
+
+    const itemKey = (item: Item) => `${item.column}:${item.value}`;
 
     const handleClick = (item: Item) => {
         // Remove old selection from the same column
@@ -66,14 +67,15 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
         const newSelectionString = newSelection.map(sel => sel.value).join('');
 
         // Check against full pairs and partial prefixes
-        const isFullMatch = remainingPairs.some(pair =>
+        const matchedPair = remainingPairs.find(pair =>
             pair.map(p => p.value).join('') === newSelectionString
         );
+        const isFullMatch = !!matchedPair;
 
         const isPartialMatch = remainingPairs.some(pair =>
             pair.map(p => p.value).join('').startsWith(newSelectionString)
         );
-        if (isFullMatch) {
+        if (isFullMatch && matchedPair) {
             if (remainingPairs.length === 1) {
                 setIsSuccess(true);
             }
@@ -81,12 +83,20 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
             setRemainingPairs(prevRemaining =>
                 prevRemaining.filter(pair => pair.map(p => p.value).join('') !== newSelectionString)
             );
+            setMatchOrder(prev => {
+                const next = new Map(prev);
+                const order = next.size;
+                matchedPair.forEach(p => next.set(itemKey(p), order));
+                return next;
+            });
             setSelection([]);
         } else if (isPartialMatch) {
             setSelection(newSelection);
         } else {
             setAttempts(prev => prev - 1);
             setSelection([]);
+            setShake(true);
+            setTimeout(() => setShake(false), 300);
         }
     };
 
@@ -100,34 +110,45 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
     }, [isSuccess, exercise]);
 
     return (
-        <form className="flex flex-col space-y-4">
-            <h2>Matching Exercise</h2>
+        <form className="card flex flex-col space-y-4">
             {text_support.trim() !== "" && (
                 <section>
-                    <h3>Text Support: </h3> 
+                    <h3>Text Support: </h3>
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
             <ElementMediaCard element={exercise}/>
 
-            {(!isSuccess && attempts > 0) && 
-                <section className="w-[32rem] mx-auto flex flex-row space-x-5">
+            {(!isSuccess && attempts > 0) &&
+                <section className={`index-divider w-full max-w-[32rem] mx-auto flex flex-row space-x-5 ${shake ? 'animate-shake' : ''}`}>
                     {Array.from({ length: numColumns }, (_, colIndex) => (
-                        <div key={colIndex} className="flex flex-col space-y-2 justify-around mb-2">
+                        <div key={colIndex} className="flex flex-col space-y-2 justify-around mb-2 flex-1">
                             {shuffledPairs.map((row, rowIndex) => {
                                 const item = row[colIndex];
+                                const isSelected = selection.includes(item);
+                                const order = matchOrder.get(itemKey(item));
+                                const isMatched = order !== undefined;
                                 return (
                                     <button
                                         type="button"
                                         key={rowIndex}
                                         onClick={() => handleClick(item)}
-                                        className={`btn w-fit ${selection.includes(item) ? 'border-accent bg-accent-soft text-accent' : 'btn-secondary'}`}
+                                        className={`chip w-fit transition-transform duration-150 ${
+                                            isMatched
+                                                ? 'border border-success/40 bg-success/10 text-success cursor-default'
+                                                : isSelected
+                                                    ? 'bg-accent text-primary-foreground scale-105'
+                                                    : ''
+                                        }`}
                                         disabled={
-                                            !remainingPairs.some(pair => pair.some(p => p.value === item.value && p.column === item.column)) ||
+                                            isMatched ||
                                             selection.map(sel => sel.column).includes(colIndex) ||
                                             attempts < 0
                                         }
                                     >
+                                        {isMatched && (
+                                            <span className="badge bg-success/20 text-success">{order! + 1}</span>
+                                        )}
                                         {item.value}
                                     </button>
                                 );

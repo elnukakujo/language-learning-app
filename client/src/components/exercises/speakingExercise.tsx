@@ -16,8 +16,6 @@ const AudioRecorder = dynamic(() => import('@/components/media/audioRecorder'), 
 export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     const question = exercise.question || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -82,8 +80,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
     };
 
     return (
-        <div className="flex flex-col space-y-4">
-            <h2>Speaking Exercise</h2>
+        <div className="card flex flex-col space-y-4">
             <h3>{question}</h3>
 
             {text_support.trim() !== "" && (
@@ -96,7 +93,7 @@ export default function SpeakingExercise({ exercise }: { exercise: Exercise }) {
             <ElementMediaCard element={exercise}/>
 
             {!isCorrect && attempts < 3 && (
-                <section className="flex flex-col space-y-4">
+                <section className="index-divider flex flex-col space-y-4">
                     <div className="flex flex-row space-x-2">
                         <button
                             type="button"

@@ -16,13 +16,11 @@ import { getLevelForScore } from "@/utils/speech_levels";
 import ElementMediaCard from "@/components/elements/elementMediaCard";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const normalize = (str: string) => str.toLowerCase();
-
-    const question = exercise.question.split('__').map(word => normalize(word));
-    const answer = exercise.answer;
+    const content = exercise.content as { items: string[]; answer_order: number[] };
+    const items = content.items;
+    const correctOrder = content.answer_order.map(i => items[i]);
+    const answer = correctOrder.join(' ');
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
 
     const [attempts, setAttempts] = useState<number>(0);
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -38,7 +36,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     const startTimeRef = useRef<number>(performance.now());
 
     useEffect(() => {
-        setWordsToOrganize(shuffle(question));
+        setWordsToOrganize(shuffle(items));
         setAttempts(0);
         setIsCorrect(false);
         setUserAnswer([]);
@@ -74,52 +72,49 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
     };
 
     return (
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h2>Organizing Exercise</h2>
+        <form className="card flex flex-col space-y-4" onSubmit={handleSubmit}>
             {(!isCorrect && attempts < 3) && (
                 <>
                     {text_support.trim() !== "" && (
                         <section>
-                            <h3>Text Support: </h3> 
+                            <h3>Text Support: </h3>
                             <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                         </section>
                     )}
                     <ElementMediaCard element={exercise}/>
-                    <section>
+                    <section className="index-divider">
                         <h3>Words to Organize:</h3>
-                        <div className="flex flex-wrap space-x-2">
-                            {wordsToOrganize.map((word, index) => (
-                                (() => {
-                                    const isSelected = userAnswer.some(item => item.sourceIndex === index);
-                                    return (
-                                        <button
-                                            type="button"
-                                            key={index}
-                                            onClick={() => {
-                                                if (isSelected) {
-                                                    setUserAnswer(prev => prev.filter(item => item.sourceIndex !== index));
-                                                } else {
-                                                    setUserAnswer(prev => [...prev, { word, sourceIndex: index }]);
-                                                }
-                                            }}
-                                            className={`btn ${isSelected ? 'btn-secondary opacity-50' : 'btn-secondary'}`}
-                                            aria-pressed={isSelected}
-                                        >
-                                            {word.trim()}
-                                        </button>
-                                    );
-                                })()
-                            ))}
+                        <div className="flex flex-wrap gap-2">
+                            {wordsToOrganize.map((word, index) => {
+                                const isSelected = userAnswer.some(item => item.sourceIndex === index);
+                                return (
+                                    <button
+                                        type="button"
+                                        key={index}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setUserAnswer(prev => prev.filter(item => item.sourceIndex !== index));
+                                            } else {
+                                                setUserAnswer(prev => [...prev, { word, sourceIndex: index }]);
+                                            }
+                                        }}
+                                        className={`chip transition-transform duration-350 ${isSelected ? 'opacity-40' : ''}`}
+                                        aria-pressed={isSelected}
+                                    >
+                                        {word.trim()}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </section>
                     <section>
                         <h3>Your answer: </h3>
-                        <div className="flex flex-wrap space-x-2">
+                        <div className="flex flex-wrap gap-2">
                             {userAnswer.map((item, index) => (
                                 <button
                                     type="button"
                                     key={index}
-                                    className="btn btn-secondary"
+                                    className="chip bg-accent text-primary-foreground"
                                     onClick={() => setUserAnswer(prev => prev.filter((_, i) => i !== index))}
                                 >
                                     {item.word}
@@ -139,7 +134,7 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                                     stroke="2"
                                     bgOpacity="0"
                                     speed="3"
-                                    color="white" 
+                                    color="white"
                                 />
                             )
                             : (
@@ -157,9 +152,6 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                             <p>
                                 ✓ Correct!
                             </p>
-                            <p>
-                                {`The correct answer is:${answer}`}
-                            </p>
                         </>
                     ) : <p>✗ Some answers are incorrect (Attempt {attempts}/3)</p>}
                     <p>
@@ -169,13 +161,12 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
                         {feedbackMessage}
                     </p>
                     <p>
-                        
                         {`Level:${currentLevel!.label} (${currentLevel!.stars})`}
                     </p>
                     {attempts >= 3 && !isCorrect && (
                         <div className="mt-2">
                             <p className="font-medium">Correct answer was: {answer}</p>
-                        </div>  
+                        </div>
                     )}
                 </div>
             )}

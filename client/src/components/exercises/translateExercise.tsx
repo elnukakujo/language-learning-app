@@ -5,7 +5,6 @@ import { useRef } from "react";
 import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -66,19 +65,19 @@ export default function TranslateExercise({ exercise }: {exercise: Exercise}){
     };
 
     return (
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h2>Translate Exercise</h2>
+        <form className="card flex flex-col space-y-4" onSubmit={handleSubmit}>
             <section>
                 <h3>Text to translate: </h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
             </section>
             {text_support.trim() !== "" && (
                 <section>
-                    <h3>Text Support: </h3> 
+                    <h3>Text Support: </h3>
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
             <ElementMediaCard element={exercise}/>
+            <div className="index-divider" />
             <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}

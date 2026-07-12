@@ -67,19 +67,19 @@ export default function AnsweringExercise({ exercise }: { exercise: Exercise }) 
     };
 
     return (
-        <form className="flex flex-col space-y-2" onSubmit={handleSubmit}>
-            <h2>Answering Exercise</h2>
+        <form className="card flex flex-col space-y-2" onSubmit={handleSubmit}>
             <section>
                 <h3>Question:</h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
             </section>
             {text_support.trim() !== "" && (
                 <section>
-                    <h3>Text Support: </h3> 
+                    <h3>Text Support: </h3>
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
             <ElementMediaCard element={exercise}/>
+            <div className="index-divider" />
             <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}

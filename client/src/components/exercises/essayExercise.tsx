@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRef } from "react";
-import Image from 'next/image';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Ring } from "ldrs/react";
@@ -19,8 +18,6 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
     const question = exercise.question || "";
     const answer = exercise.answer || "";
     const text_support = exercise.text_support || "";
-    const image_support = exercise.image_files || "";
-    const audio_support = exercise.audio_files || "";
     
     const [userAnswer, setUserAnswer] = useState<string>('');
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -68,19 +65,19 @@ export default function EssayExercise({ exercise }: { exercise: Exercise }) {
     };
 
     return (
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <h2>Essay Exercise</h2>
+        <form className="card flex flex-col space-y-4" onSubmit={handleSubmit}>
             <section>
                 <h3>Question:</h3>
                 <Markdown remarkPlugins={[remarkGfm]}>{question}</Markdown>
             </section>
             {text_support.trim() !== "" && (
                 <section>
-                    <h3>Text Support: </h3> 
+                    <h3>Text Support: </h3>
                     <Markdown remarkPlugins={[remarkGfm]}>{text_support}</Markdown>
                 </section>
             )}
             <ElementMediaCard element={exercise}/>
+            <div className="index-divider" />
             <AutoSizeTextArea
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
