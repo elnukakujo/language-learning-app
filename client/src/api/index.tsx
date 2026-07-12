@@ -7,7 +7,8 @@ import { deleteVocabulary } from "@/api/vocabulary";
 import { deleteTag } from "@/api/tag";
 import { deleteSource } from "@/api/source";
 
-export const BASE_URL = process.env.LAPP_URL || "http://127.0.0.1:5000";
+// NEXT_PUBLIC_ prefix required: this runs in the browser, not just the Next.js server.
+export const BASE_URL = `http://${process.env.NEXT_PUBLIC_LAPP_HOST || "127.0.0.1"}:${process.env.NEXT_PUBLIC_LAPP_PORT || 5000}`;
 
 // ============= Legacy/Compatibility Functions =============
 // These functions provide backward compatibility with existing code

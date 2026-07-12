@@ -1,30 +1,32 @@
 import argparse
+import os
 from .api.app import create_app
 
 def parse_args():
-    """Parse command line arguments."""
+    """Parse command line arguments. Each flag falls back to an env var, then a default."""
     parser = argparse.ArgumentParser(description='Run the Flask application')
     parser.add_argument(
         '--env',
         choices=['dev', 'test', 'prod'],
-        default='dev',
-        help='Environment to run in (default: dev)'
+        default=os.environ.get('LAPP_ENV', 'dev'),
+        help='Environment to run in (default: dev, env: LAPP_ENV)'
     )
     parser.add_argument(
         '--host',
-        default='127.0.0.1',
-        help='Host to run on (default: 127.0.0.1)'
+        default=os.environ.get('LAPP_HOST', '127.0.0.1'),
+        help='Host to run on (default: 127.0.0.1, env: LAPP_HOST)'
     )
     parser.add_argument(
         '--port',
         type=int,
-        default=5000,
-        help='Port to run on (default: 5000)'
+        default=int(os.environ.get('LAPP_PORT', 5000)),
+        help='Port to run on (default: 5000, env: LAPP_PORT)'
     )
     parser.add_argument(
         '--debug',
         action='store_true',
-        help='Enable debug mode (overrides environment setting)'
+        default=os.environ.get('LAPP_DEBUG', '').lower() in ('1', 'true', 'yes'),
+        help='Enable debug mode (overrides environment setting, env: LAPP_DEBUG)'
     )
     return parser.parse_args()
 
