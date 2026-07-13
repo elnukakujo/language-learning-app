@@ -8,7 +8,6 @@ from .text_gen import TextGeneratorService
 from .feedback import FeedbackService
 from .evaluator import EvaluatorService
 from .search import SearchService
-from .ocr import OcrService
 
 __all__ = [
     "LanguageService",
@@ -26,7 +25,6 @@ __all__ = [
     "FeedbackService",
     "EvaluatorService",
     "SearchService",
-    "OcrService",
     "TagService",
     "SourceService",
     "UserService",
