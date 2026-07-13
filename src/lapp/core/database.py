@@ -154,7 +154,7 @@ class DatabaseManager:
         alembic_cfg.set_main_option("script_location", str(repo_root / "alembic"))
         # Escape "%" for ConfigParser's interpolation - our URLs contain "%3D"
         # (percent-encoded "=" from the search_path query param).
-        alembic_cfg.set_main_option("sqlalchemy.url", str(self.engine.url).replace("%", "%%"))
+        alembic_cfg.set_main_option("sqlalchemy.url", self.engine.url.render_as_string(hide_password=False).replace("%", "%%"))
 
         with self.engine.connect() as connection:
             is_fresh = MigrationContext.configure(connection).get_current_revision() is None
