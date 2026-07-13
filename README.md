@@ -142,13 +142,17 @@ npm install
 cd ..
 ```
 
-### 4. Start the backend
+### 4. Start the backend and frontend together
 
 ```bash
-uv run server --env prod --host 127.0.0.1 --port 5000
+./scripts/run.sh --env prod --host 127.0.0.1 --port 5000
 ```
 
-The API will be available at `http://127.0.0.1:5000`.
+This starts the Flask API and the Next.js client in one command (arguments are forwarded to
+`uv run server`), and stops both together on Ctrl+C. In `--env prod` (or `LAPP_ENV=prod`), the
+client is built and served with `next start`; otherwise it runs `next dev`.
+
+The API will be available at `http://127.0.0.1:5000` and the client at `http://localhost:3000`.
 
 Useful endpoints:
 
@@ -156,14 +160,16 @@ Useful endpoints:
 - `GET /api/languages/`
 - Swagger UI via Flasgger when the server is running
 
-### 5. Start the frontend
+To run either process on its own instead:
+
+```bash
+uv run server --env prod --host 127.0.0.1 --port 5000
+```
 
 ```bash
 cd client
 LAPP_URL=http://127.0.0.1:5000 npm run dev
 ```
-
-The frontend will be available at `http://localhost:3000`.
 
 The client reads the backend URL from `LAPP_URL` and falls back to `http://127.0.0.1:5000` if it is not set.
 
