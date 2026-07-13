@@ -91,6 +91,8 @@ class ProductionConfig(Config):
     DB_SCHEMA = 'fluence_prod'
     SQLALCHEMY_DATABASE_URI = _schema_scoped_url(_BASE_DATABASE_URL, DB_SCHEMA)
     ENV = 'production'
+    MEDIA_ROOT = os.environ.get('PROD_MEDIA_ROOT', Config.MEDIA_ROOT)
+    BACKUP_ROOT = os.environ.get('PROD_BACKUP_ROOT', Config.BACKUP_ROOT)
 
 # Default to development
 config = {
