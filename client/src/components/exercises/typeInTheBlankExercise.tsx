@@ -12,12 +12,13 @@ import { Ring } from 'ldrs/react';
 //@ts-ignore
 import 'ldrs/react/Ring.css';
 import ElementMediaCard from "@/components/elements/elementMediaCard";
+import MissingContentNotice from "./missingContentNotice";
 
 export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercise }) {
-    const content = exercise.content as { segments: string[]; blanks: { options?: string[]; answer: string }[] };
+    const content = exercise.content as { segments: string[]; blanks: { options?: string[]; answer: string }[] } | null;
     const text_support = exercise.text_support || "";
-    const segments = content.segments;
-    const blanks = content.blanks;
+    const segments = content?.segments ?? [];
+    const blanks = content?.blanks ?? [];
     const correctAnswers = blanks.map(b => b.answer);
 
     const [filledAnswers, setFilledAnswers] = useState<(string | null)[]>(Array(blanks.length).fill(null));
@@ -38,6 +39,8 @@ export default function TypeInTheBlankExercise({ exercise }: { exercise: Exercis
         setFeedbackMessage(null);
         startTimeRef.current = performance.now();
     }, [exercise]);
+
+    if (!content) return <MissingContentNotice />;
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

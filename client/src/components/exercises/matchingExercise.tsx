@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { updateScoreById } from "@/api/process";
 import shuffle from 'lodash/shuffle';
 import ElementMediaCard from "@/components/elements/elementMediaCard";
+import MissingContentNotice from "./missingContentNotice";
 
 type Item = {
     value: string;
@@ -15,10 +16,10 @@ type Item = {
 };
 
 export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
-    const content = exercise.content as { pairs: [string, string][] };
+    const content = exercise.content as { pairs: [string, string][] } | null;
     const text_support = exercise.text_support || "";
 
-    const pairs: Item[][] = content.pairs.map(row =>
+    const pairs: Item[][] = (content?.pairs ?? [["", ""]]).map(row =>
         row.map((value, colIndex) => ({ value, column: colIndex }))
     );
 
@@ -54,6 +55,8 @@ export default function MatchingExercise({ exercise }: { exercise: Exercise }) {
     const [selection, setSelection] = useState<Array<Item>>([]);
     const [matchOrder, setMatchOrder] = useState<Map<string, number>>(new Map());
     const [shake, setShake] = useState<boolean>(false);
+
+    if (!content) return <MissingContentNotice />;
 
     const itemKey = (item: Item) => `${item.column}:${item.value}`;
 

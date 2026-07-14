@@ -8,12 +8,13 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import shuffle from 'lodash/shuffle';
 import ElementMediaCard from "@/components/elements/elementMediaCard";
+import MissingContentNotice from "./missingContentNotice";
 
 export default function SelectInTheBlankExercise({ exercise }: { exercise: Exercise }) {
-    const content = exercise.content as { segments: string[]; blanks: { options?: string[]; answer: string }[] };
+    const content = exercise.content as { segments: string[]; blanks: { options?: string[]; answer: string }[] } | null;
     const text_support = exercise.text_support || "";
-    const segments = content.segments;
-    const blanks = content.blanks;
+    const segments = content?.segments ?? [];
+    const blanks = content?.blanks ?? [];
     const correctAnswers = blanks.map(b => b.answer);
     // Word bank: union of all options across blanks, falling back to the correct answers
     const allOptions = blanks.some(b => b.options && b.options.length > 0)
@@ -33,6 +34,8 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
         setAttempts(0);
         startTimeRef.current = performance.now();
     }, [exercise]);
+
+    if (!content) return <MissingContentNotice />;
 
     // Next unfilled blank index
     const nextBlank = filledAnswers.findIndex(a => a === null);

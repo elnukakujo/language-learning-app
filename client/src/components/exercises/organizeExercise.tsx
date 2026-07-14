@@ -14,11 +14,12 @@ import Exercise from "@/interface/features/Exercise";
 import { updateScoreById, evaluateText } from "@/api/process";
 import { getLevelForScore } from "@/utils/speech_levels";
 import ElementMediaCard from "@/components/elements/elementMediaCard";
+import MissingContentNotice from "./missingContentNotice";
 
 export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
-    const content = exercise.content as { items: string[]; answer_order: number[] };
-    const items = content.items;
-    const correctOrder = content.answer_order.map(i => items[i]);
+    const content = exercise.content as { items: string[]; answer_order: number[] } | null;
+    const items = content?.items ?? [];
+    const correctOrder = (content?.answer_order ?? []).map(i => items[i]);
     const answer = correctOrder.join(' ');
     const text_support = exercise.text_support || "";
 
@@ -43,6 +44,8 @@ export default function OrganizeExercise({ exercise }: { exercise: Exercise }) {
         setFeedbackMessage(null);
         startTimeRef.current = performance.now();
     }, [exercise]);
+
+    if (!content) return <MissingContentNotice />;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

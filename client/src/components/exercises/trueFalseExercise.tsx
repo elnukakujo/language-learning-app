@@ -8,9 +8,10 @@ import remarkGfm from "remark-gfm";
 import Exercise from "@/interface/features/Exercise";
 import { updateScoreById } from "@/api/process";
 import ElementMediaCard from "@/components/elements/elementMediaCard";
+import MissingContentNotice from "./missingContentNotice";
 
 export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
-    const content = exercise.content as { statement: string; answer: boolean };
+    const content = exercise.content as { statement: string; answer: boolean } | null;
     const text_support = exercise.text_support || "";
 
     const [isCorrect, setIsCorrect] = useState<boolean>(false);
@@ -25,6 +26,8 @@ export default function TrueFalseExercise({ exercise }: {exercise: Exercise}){
         setUserAnswer(true);
         startTimeRef.current = performance.now();
     }, [exercise]);
+
+    if (!content) return <MissingContentNotice />;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

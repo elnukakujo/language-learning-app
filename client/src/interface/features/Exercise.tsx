@@ -17,7 +17,7 @@ export default interface Exercise extends BaseFeature {
     text_support?: string;
     content?: ExerciseContent;
 
-    related_vocabularies?: Partial<Vocabulary>[];
-    related_calligraphies?: Partial<Calligraphy>[];
-    related_grammars?: Partial<Grammar>[];
+    related_vocabulary?: Partial<Vocabulary>[];
+    related_calligraphy?: Partial<Calligraphy>[];
+    related_grammar?: Partial<Grammar>[];
 };

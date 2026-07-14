@@ -157,9 +157,9 @@ export default function ExerciseForm({
             text_support: "",
             image_files: [],
             audio_files: [],
-            related_vocabularies: [],
-            related_grammars: [],
-            related_calligraphies: [],
+            related_vocabulary: [],
+            related_grammar: [],
+            related_calligraphy: [],
             lesson_id,
         };
     } else {
@@ -171,12 +171,12 @@ export default function ExerciseForm({
     const [answer, setAnswer] = useState<string>(exerciseData.answer || "");
     const [supportText, setSupportText] = useState<string>(exerciseData.text_support || "");
 
-    const [imageUrl, setImageUrl] = useState<string[]>(exerciseData.image_files!);
-    const [audioUrl, setAudioUrl] = useState<string[]>(exerciseData.audio_files!);
+    const [imageUrl, setImageUrl] = useState<string[]>(exerciseData.image_files ?? []);
+    const [audioUrl, setAudioUrl] = useState<string[]>(exerciseData.audio_files ?? []);
 
-    const [relatedVocabularies, setRelatedVocabularies] = useState<Partial<Vocabulary>[]>(exerciseData.related_vocabularies!);
-    const [relatedCalligraphies, setRelatedCalligraphies] = useState<Partial<Calligraphy>[]>(exerciseData.related_calligraphies!);
-    const [relatedGrammars, setRelatedGrammars] = useState<Partial<Grammar>[]>(exerciseData.related_grammars!);
+    const [relatedVocabularies, setRelatedVocabularies] = useState<Partial<Vocabulary>[]>(exerciseData.related_vocabulary ?? []);
+    const [relatedCalligraphies, setRelatedCalligraphies] = useState<Partial<Calligraphy>[]>(exerciseData.related_calligraphy ?? []);
+    const [relatedGrammars, setRelatedGrammars] = useState<Partial<Grammar>[]>(exerciseData.related_grammar ?? []);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(exerciseData.tags ? exerciseData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(exerciseData.sources ? exerciseData.sources.map(source => source.id!) : []);
 
@@ -317,9 +317,9 @@ export default function ExerciseForm({
             answer: normalizedAnswer,
             content,
             lesson_id,
-            related_vocabularies: relatedVocabularies,
-            related_grammars: relatedGrammars,
-            related_calligraphies: relatedCalligraphies,
+            related_vocabulary: relatedVocabularies,
+            related_grammar: relatedGrammars,
+            related_calligraphy: relatedCalligraphies,
             tags: selectedTagIds.map(id => ({ id })),
             sources: selectedSourceIds.map(id => ({ id }))
         };
