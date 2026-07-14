@@ -1,8 +1,9 @@
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy import pool
+from sqlalchemy.engine import make_url
 
 from alembic import context
 from alembic.runtime.migration import MigrationContext
@@ -58,6 +59,16 @@ def _run_migrations_against(url: str, bootstrap_if_fresh: bool) -> None:
     connectable = create_engine(url, poolclass=pool.NullPool)
     try:
         with connectable.connect() as connection:
+            # Mirrors DatabaseManager.init_app(): the search_path schema must
+            # exist before anything (including alembic_version) can be
+            # created in it - a bare `alembic upgrade head` bypasses
+            # DatabaseManager entirely, so this is the only place left to do it.
+            options = make_url(url).query.get("options", "")
+            if "-csearch_path=" in options:
+                schema = options.split("-csearch_path=", 1)[1]
+                connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
+                connection.commit()
+
             # Mirrors DatabaseManager.run_migrations()'s bootstrap check: a
             # schema that already has tables but no alembic_version (e.g.
             # TESTING's create_tables()-only path, or a pre-Alembic schema)
