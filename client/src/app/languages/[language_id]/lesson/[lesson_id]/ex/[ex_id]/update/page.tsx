@@ -20,7 +20,7 @@ interface LessonElements {
     calligraphies: Calligraphy[];
 }
 
-export default async function UpdateExercisePage({ params }: { params: paramsType }) {
+export default async function UpdateExercisePage({ params }: { params: Promise<paramsType> }) {
     const { lesson_id, ex_id } = await params;
     const exercise: Exercise = await getExerciseById(ex_id);
 

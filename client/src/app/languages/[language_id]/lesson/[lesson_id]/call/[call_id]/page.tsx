@@ -16,7 +16,7 @@ type paramsType = {
     call_id: string;
 };
 
-export default async function CalligraphyPage({ params }: { params: paramsType }) {
+export default async function CalligraphyPage({ params }: { params: Promise<paramsType> }) {
     const { call_id, language_id, lesson_id } = await params;
     const calligraphy: Character = await getCalligraphyById(call_id);
 

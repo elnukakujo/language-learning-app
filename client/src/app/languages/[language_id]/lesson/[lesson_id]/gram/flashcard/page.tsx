@@ -7,7 +7,7 @@ type paramsType = {
     lesson_id: string;
 };
 
-export default async function GrammarFlashCardPage({ params }: { params: paramsType }) {
+export default async function GrammarFlashCardPage({ params }: { params: Promise<paramsType> }) {
     const { lesson_id } = await params;
     
     const grammars: Grammar[] = await getGrammarByLesson(lesson_id);

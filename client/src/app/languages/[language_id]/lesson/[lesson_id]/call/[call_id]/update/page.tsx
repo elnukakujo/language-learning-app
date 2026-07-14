@@ -8,7 +8,7 @@ type paramsType = {
     call_id: string;
 };
 
-export default async function UpdateCalligraphyPage({ params }: { params: paramsType }) {
+export default async function UpdateCalligraphyPage({ params }: { params: Promise<paramsType> }) {
     const { call_id } = await params;
     const calligraphy: Calligraphy = await getCalligraphyById(call_id);
 

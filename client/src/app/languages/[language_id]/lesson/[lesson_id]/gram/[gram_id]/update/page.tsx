@@ -8,7 +8,7 @@ type paramsType = {
     gram_id: string;
 };
 
-export default async function UpdateGrammarPage({ params }: { params: paramsType }) {
+export default async function UpdateGrammarPage({ params }: { params: Promise<paramsType> }) {
     const { gram_id } = await params;
     const grammar: Grammar = await getGrammarById(gram_id);
 

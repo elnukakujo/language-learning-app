@@ -8,7 +8,7 @@ type paramsType = {
     voc_id: string;
 };
 
-export default async function UpdateVocabularyPage({ params }: { params: paramsType }) {
+export default async function UpdateVocabularyPage({ params }: { params: Promise<paramsType> }) {
     const { lesson_id, voc_id } = await params;
     const vocabulary: Vocabulary = await getVocabularyById(voc_id);
 
