@@ -16,7 +16,7 @@ COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY docker/entrypoint.sh /entrypoint.sh
-COPY docker/restore_latest_backup.py ./docker/restore_latest_backup.py
+COPY docker/restore_latest_backup.py docker/migrate.py ./docker/
 RUN chmod +x /entrypoint.sh
 
 ENV LAPP_HOST=0.0.0.0
