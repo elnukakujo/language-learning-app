@@ -51,6 +51,7 @@ services:
       args:
         LAPP_PUBLIC_HOST: ${LAPP_PUBLIC_HOST:-localhost}
         LAPP_PUBLIC_PORT: ${LAPP_PUBLIC_PORT:-5000}
+        LAPP_EXTRA_MEDIA_HOSTS: ${LAPP_EXTRA_MEDIA_HOSTS:-}
     restart: unless-stopped
     environment:
       PORT: 3000

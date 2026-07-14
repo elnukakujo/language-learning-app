@@ -5,6 +5,19 @@ import type { NextConfig } from "next";
 const publicHost = process.env.LAPP_PUBLIC_HOST || process.env.LAPP_HOST;
 const publicPort = process.env.LAPP_PUBLIC_PORT || process.env.LAPP_PORT;
 
+// Extra hostnames media can be served from besides LAPP_PUBLIC_HOST/PORT (e.g. a reverse-proxy
+// domain like "fluence.home" or "fluence.home:443"), comma-separated: LAPP_EXTRA_MEDIA_HOSTS=fluence.home,192.168.1.93
+const extraHosts = (process.env.LAPP_EXTRA_MEDIA_HOSTS || '')
+  .split(',')
+  .map((h) => h.trim())
+  .filter(Boolean)
+  .map((h) => {
+    const [hostname, port] = h.split(':');
+    return { hostname, port };
+  });
+
+const mediaHosts = [{ hostname: publicHost || '127.0.0.1', port: publicPort || '5000' }, ...extraHosts];
+
 const nextConfig = {
   eslint: {
     // ponytail: pre-existing lint errors block `next build`; not a Docker concern. Fix the
@@ -16,13 +29,13 @@ const nextConfig = {
     NEXT_PUBLIC_LAPP_PORT: publicPort,
   },
   images: {
-    remotePatterns: ['/media/images/**', '/media_dev/images/**', '/media_test/images/**'].map(
-      (pathname) => ({
+    remotePatterns: mediaHosts.flatMap(({ hostname, port }) =>
+      ['/media/images/**', '/media_dev/images/**', '/media_test/images/**'].map((pathname) => ({
         protocol: 'http' as const,
-        hostname: publicHost || '127.0.0.1',
-        port: publicPort || '5000',
+        hostname,
+        ...(port ? { port } : {}),
         pathname,
-      })
+      }))
     ),
   },
 } as NextConfig;
