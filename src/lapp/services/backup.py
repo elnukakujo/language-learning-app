@@ -77,16 +77,23 @@ class BackupService:
         args += ["-d", self.url.database]
         return args
 
-    def create_backup(self) -> Optional[Path]:
+    def create_backup(self, name: Optional[str] = None) -> Optional[Path]:
         """
         Create a backup of this schema via pg_dump.
+
+        Args:
+            name: Exact filename to use instead of the timestamped
+                `backup_{schema}_<timestamp>.dump` pattern. Use this for a
+                fixed, non-rotating save slot (e.g. an exit save) - a fixed
+                name falls outside list_backups()'s glob, so it's never
+                touched by cleanup_old_backups() or picked up as "latest".
 
         Returns:
             Path to the backup file, or None if failed
         """
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = self.backup_dir / f"backup_{self.schema}_{timestamp}.dump"
+            filename = name or f"backup_{self.schema}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.dump"
+            backup_path = self.backup_dir / filename
 
             result = subprocess.run(
                 ["pg_dump", *self._connection_args(), "-n", self.schema, "--format=custom", "-f", str(backup_path)],
@@ -99,7 +106,8 @@ class BackupService:
                 return None
 
             logger.info(f"✅ Backup created: {backup_path.name}")
-            self.cleanup_old_backups()
+            if name is None:
+                self.cleanup_old_backups()
             return backup_path
 
         except Exception as e:

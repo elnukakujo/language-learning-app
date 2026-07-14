@@ -25,4 +25,4 @@ RUN chmod +x /entrypoint.sh
 ENV LAPP_HOST=0.0.0.0
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uv", "run", "server"]
+CMD ["uv", "run", "--frozen", "--no-dev", "server"]
