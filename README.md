@@ -173,6 +173,20 @@ LAPP_URL=http://127.0.0.1:5000 npm run dev
 
 The client reads the backend URL from `LAPP_URL` and falls back to `http://127.0.0.1:5000` if it is not set.
 
+### Running with Docker
+
+As an alternative to the native setup above, the full stack (Postgres, backend, frontend) can run in Docker:
+
+```bash
+cp .env.example .env   # fill in DATABASE_URL, POSTGRES_*, etc. if not already done
+docker compose up --build
+```
+
+- Database migrations (`alembic upgrade head`) run automatically on backend startup.
+- The same root `.env` is used for both native and Docker runs; `docker-compose.yml` only overrides the database host to `db` internally, everything else comes from `.env` as-is.
+- The API is available at `http://localhost:${LAPP_PORT:-5000}` and the client at `http://localhost:${PORT:-8080}`.
+- `PROD_MEDIA_ROOT`/`PROD_BACKUP_ROOT` (if set) are bind-mounted into the backend container, so media/backups land at whatever host path you choose.
+
 ## Development notes
 
 - Development uses a local SQLite database at `instance/dev_languages.db`.
