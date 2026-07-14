@@ -91,34 +91,57 @@ def _resolve_local_hf_snapshot(model_repo_name: str, require_tokenizer: bool = F
 from functools import cache
 
 
+# Repo IDs are configurable per task via env vars so a different checkpoint
+# can be swapped in without touching code; default to the models this file
+# has always used.
+TEXT_EMBEDDING_MODEL = os.environ.get("LAPP_TEXT_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+AUDIO_EMBEDDING_MODEL = os.environ.get("LAPP_AUDIO_EMBEDDING_MODEL", "facebook/wav2vec2-large-xlsr-53")
+STT_MODEL = os.environ.get("LAPP_STT_MODEL", "openai/whisper-medium")
+TTS_MODEL = os.environ.get("LAPP_TTS_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+TEXT_GEN_MODEL = os.environ.get("LAPP_TEXT_GEN_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
+
+
+def _local_files_only(repo_id: str, require_tokenizer: bool = False) -> tuple[str | None, bool]:
+    """Resolve a repo to a local snapshot path if fully cached, and whether
+    from_pretrained should be told to stay offline. A fully cached snapshot
+    means offline mode regardless of network reachability; otherwise fall
+    back to the network-reachability check so a missing/partial cache still
+    triggers a download when online."""
+    path = _resolve_local_hf_snapshot(repo_id, require_tokenizer=require_tokenizer)
+    return path, bool(path) or configure_offline_environment()
+
+
 @cache
 def get_text_embedding_model():
     """Text-to-representation model (clustering, retrieval, similarity)."""
     from sentence_transformers import SentenceTransformer
+    path, offline = _local_files_only(TEXT_EMBEDDING_MODEL)
     return SentenceTransformer(
-        "all-MiniLM-L6-v2", device=get_device(), local_files_only=configure_offline_environment()
+        path or TEXT_EMBEDDING_MODEL, device=get_device(), local_files_only=offline
     )
 
 
 @cache
 def get_audio_embedding_model():
     from transformers import Wav2Vec2Model
+    path, offline = _local_files_only(AUDIO_EMBEDDING_MODEL)
     return Wav2Vec2Model.from_pretrained(
-        "facebook/wav2vec2-large-xlsr-53", local_files_only=configure_offline_environment()
+        path or AUDIO_EMBEDDING_MODEL, local_files_only=offline
     ).to(get_device())
 
 
 @cache
 def get_audio_embedding_processor():
     from transformers import Wav2Vec2FeatureExtractor
+    path, offline = _local_files_only(AUDIO_EMBEDDING_MODEL, require_tokenizer=True)
     return Wav2Vec2FeatureExtractor.from_pretrained(
-        "facebook/wav2vec2-large-xlsr-53", local_files_only=configure_offline_environment()
+        path or AUDIO_EMBEDDING_MODEL, local_files_only=offline
     )
 
 
 @cache
 def get_stt_pipe():
-    """Speech-to-text pipeline (Whisper-medium)."""
+    """Speech-to-text pipeline (Whisper-medium by default)."""
     import torch
     from transformers import (
         AutoModelForSpeechSeq2Seq,
@@ -129,15 +152,14 @@ def get_stt_pipe():
     # float16 has no native CPU arithmetic support and falls back to slow
     # scalar emulation; only use it on a real GPU.
     dtype = torch.float16 if device in ("cuda", "mps") else torch.float32
+    path, offline = _local_files_only(STT_MODEL, require_tokenizer=True)
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        "openai/whisper-medium",
+        path or STT_MODEL,
         dtype=dtype,
         use_safetensors=True,
-        local_files_only=configure_offline_environment(),
+        local_files_only=offline,
     ).to(device)
-    processor = AutoProcessor.from_pretrained(
-        "openai/whisper-medium", local_files_only=configure_offline_environment()
-    )
+    processor = AutoProcessor.from_pretrained(path or STT_MODEL, local_files_only=offline)
     return pipeline(
         "automatic-speech-recognition",
         model=model,
@@ -150,45 +172,42 @@ def get_stt_pipe():
 
 @cache
 def get_qwen_tts_model():
-    """Text-to-speech model (Qwen3-TTS)."""
+    """Text-to-speech model (Qwen3-TTS by default)."""
     import torch
     from qwen_tts import Qwen3TTSModel
-    path = _resolve_local_hf_snapshot("Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
+    path, offline = _local_files_only(TTS_MODEL)
     device = get_device()
     # bfloat16 has no native CPU arithmetic support (esp. on Apple Silicon) and
     # falls back to slow scalar emulation, making generation 10-50x slower.
     # Real GPUs (cuda) have hardware bf16, so use it there.
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
     return Qwen3TTSModel.from_pretrained(
-        path or "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+        path or TTS_MODEL,
         device_map=device,
         dtype=dtype,
-        local_files_only=configure_offline_environment(),
+        local_files_only=offline,
     )
 
 
 @cache
 def get_text_gen_tokenizer():
     from transformers import AutoTokenizer
-    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct", require_tokenizer=True)
-    offline = configure_offline_environment()
+    path, offline = _local_files_only(TEXT_GEN_MODEL, require_tokenizer=True)
     logger.info(f"[text-gen-tokenizer] path={path!r} offline={offline}")
-    return AutoTokenizer.from_pretrained(
-        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=offline
-    )
+    return AutoTokenizer.from_pretrained(path or TEXT_GEN_MODEL, local_files_only=offline)
 
 
 @cache
 def get_text_gen_model():
-    """Text generation model (Qwen2.5-1.5B-Instruct)."""
+    """Text generation model (Qwen2.5-1.5B-Instruct by default)."""
     from transformers import AutoModelForCausalLM
-    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
+    path, offline = _local_files_only(TEXT_GEN_MODEL)
     return AutoModelForCausalLM.from_pretrained(
-        path or "Qwen/Qwen2.5-1.5B-Instruct",
+        path or TEXT_GEN_MODEL,
         # device_map="auto" is for multi-GPU orchestration; on a single-device
         # box its memory heuristic can misfire and leave layers stranded on
         # the meta device (uninitialized). Pick one device explicitly instead.
         device_map=get_device(),
         dtype="auto",
-        local_files_only=configure_offline_environment(),
+        local_files_only=offline,
     )
