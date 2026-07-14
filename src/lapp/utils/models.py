@@ -30,7 +30,19 @@ def get_device() -> str:
     return "cpu"
 
 
-def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
+def _resolve_local_hf_snapshot(model_repo_name: str, require_tokenizer: bool = False) -> str | None:
+    """
+    Find the latest cached HF snapshot for a repo, or None if it's missing/
+    incomplete. `from_pretrained` treats a local directory path as fully
+    offline (it never fetches missing files from the hub for a literal
+    path), so handing it a snapshot that's missing files it needs is worse
+    than not resolving a path at all - it fails instead of downloading.
+
+    require_tokenizer=True is for tokenizer loads: model and tokenizer
+    downloads are separate from_pretrained calls sharing the same cache dir,
+    so weights can be fully cached while tokenizer files were never fetched.
+    require_tokenizer=False (weights/audio models) only checks weight files.
+    """
     cache_root = Path.home() / ".cache" / "huggingface" / "hub"
     repo_dir = cache_root / f"models--{model_repo_name.replace('/', '--')}"
     snapshots_dir = repo_dir / "snapshots"
@@ -46,25 +58,16 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
 
     # Weight files in the HF cache are symlinks into blobs/; an interrupted
     # download leaves the snapshot dir present but its symlinks dangling.
-    # Treat that as "not cached" so callers fall back to a fresh download
-    # instead of a hard local_files_only failure.
     latest = snapshots[-1]
     entries = sorted(p.name for p in latest.iterdir())
     weight_patterns = ("*.safetensors", "*.bin", "*.h5", "*.msgpack", "*.ckpt.index")
     weight_matches = [f for pattern in weight_patterns for f in latest.rglob(pattern)]
     has_weights = any(f.resolve().exists() for f in weight_matches)
-    logger.info(
-        f"[hf-snapshot] {model_repo_name}: latest={latest} entries={entries} "
-        f"weight_matches={[(str(f), f.is_symlink(), f.resolve().exists()) for f in weight_matches]}"
-    )
+    logger.info(f"[hf-snapshot] {model_repo_name}: latest={latest} entries={entries}")
     if not has_weights:
         logger.info(f"[hf-snapshot] {model_repo_name}: rejected, no resolvable weight files")
         return None
 
-    # Same dangling-symlink risk applies to tokenizer files: weights can
-    # download fully while vocab.json/tokenizer.json are still missing.
-    # Only treat a *present-but-broken* tokenizer symlink as incomplete;
-    # a model with no tokenizer files at all (e.g. a pure audio model) is fine.
     tokenizer_names = ("tokenizer.json", "vocab.json", "merges.txt", "vocab.txt")
     tokenizer_status = {
         name: ((latest / name).is_symlink(), (latest / name).resolve().exists())
@@ -77,6 +80,9 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     )
     if has_dangling_tokenizer_file:
         logger.info(f"[hf-snapshot] {model_repo_name}: rejected, dangling tokenizer symlink")
+        return None
+    if require_tokenizer and not tokenizer_status:
+        logger.info(f"[hf-snapshot] {model_repo_name}: rejected, tokenizer files were never downloaded")
         return None
 
     logger.info(f"[hf-snapshot] {model_repo_name}: accepted -> {latest}")
@@ -164,7 +170,7 @@ def get_qwen_tts_model():
 @cache
 def get_text_gen_tokenizer():
     from transformers import AutoTokenizer
-    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
+    path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct", require_tokenizer=True)
     offline = configure_offline_environment()
     logger.info(f"[text-gen-tokenizer] path={path!r} offline={offline}")
     return AutoTokenizer.from_pretrained(
