@@ -11,7 +11,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fluence_app}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fluence_app} -d ${POSTGRES_DB:-fluence}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      provenance: false
+      sbom: false
     env_file: .env
     environment:
       LAPP_HOST: 0.0.0.0
@@ -40,6 +42,8 @@ services:
     build:
       context: .
       dockerfile: client/Dockerfile
+      provenance: false
+      sbom: false
       args:
         LAPP_PUBLIC_HOST: ${LAPP_PUBLIC_HOST:-localhost}
         LAPP_PUBLIC_PORT: ${LAPP_PUBLIC_PORT:-5000}
