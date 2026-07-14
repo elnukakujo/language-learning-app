@@ -3,7 +3,7 @@ import DeleteButton from "@/components/ui/buttons/deleteButton";
 import NavButton from "@/components/layout/navButton";
 import TagCard from "@/components/tags/tagCard";
 
-export default async function TagDetailPage({ params }: { params: { tag_id: string } }) {
+export default async function TagDetailPage({ params }: { params: Promise<{ tag_id: string }> }) {
     const { tag_id } = await params;
     const tag = await getTagById(tag_id);
     console.log("Tag details:", tag);

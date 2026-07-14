@@ -3,7 +3,7 @@ import UserForm from "@/components/user/userForm"
 import BackupSection from "@/components/user/backupSection";
 import User from "@/interface/systemData/User";
 
-export default async function UpdateUserPage({ params }: { params: { user_id: string } }) {
+export default async function UpdateUserPage({ params }: { params: Promise<{ user_id: string }> }) {
     const { user_id } = await params;
     const user: User = await getUserById(user_id);
     return (

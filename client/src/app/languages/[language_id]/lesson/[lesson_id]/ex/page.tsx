@@ -5,7 +5,7 @@ import Exercise from "@/interface/features/Exercise";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export default async function ExercisesPage({ params }: { params: { language_id: string, lesson_id: string } }){
+export default async function ExercisesPage({ params }: { params: Promise<{ language_id: string, lesson_id: string }> }){
     const { language_id, lesson_id } = await params;
 
     const exercises: Exercise[] = await getExercisesByLesson(lesson_id)

@@ -9,7 +9,7 @@ import { getTodayDailyStats } from "@/api/dailyStats";
 import LanguageHeaderCard from "@/components/language/languageHeaderCard";
 import LessonsSection from "@/components/language/lessonsSection";
 
-export default async function Language({ params }: { params: { language_id: string } }) {
+export default async function Language({ params }: { params: Promise<{ language_id: string }> }) {
     const { language_id } = await params;
     const { language, lessons } = await getLanguageData(language_id);
     const dailyStats = language.user_id ? await getTodayDailyStats(language.user_id, language_id) : null;

@@ -2,7 +2,7 @@ import Calligraphy from "@/interface/features/Calligraphy";
 import { getCalligraphyByLesson } from "@/api/calligraphy";
 import CalligraphyFlashCard from "@/components/elements/calligraphyFlashCard";
 
-export default async function CalligraphyFlashCardPage({ params }: { params: { language_id: string; lesson_id: string; }}) {
+export default async function CalligraphyFlashCardPage({ params }: { params: Promise<{ language_id: string; lesson_id: string; }>}) {
     const { lesson_id } = await params;
 
     const calligraphies: Calligraphy[] = await getCalligraphyByLesson(lesson_id);

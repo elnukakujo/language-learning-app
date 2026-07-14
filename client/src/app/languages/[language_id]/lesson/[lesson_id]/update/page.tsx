@@ -2,7 +2,7 @@ import Lesson from "@/interface/containers/Lesson";
 import { getLessonById } from "@/api/lesson";
 import LessonForm from "@/components/lesson/lessonForm";
 
-export default async function UpdateLessonPage({ params }: { params: { language_id: string, lesson_id: string } }) {
+export default async function UpdateLessonPage({ params }: { params: Promise<{ language_id: string, lesson_id: string }> }) {
     const { language_id, lesson_id } = await params;
 
     const lesson: Lesson = await getLessonById(lesson_id);

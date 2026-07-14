@@ -1,7 +1,7 @@
 import TagForm from "@/components/tags/tagForm";
 import { getTagById } from "@/api/tag";
 
-export default async function UpdateTagPage({ params }: { params: { tag_id: string } }) {
+export default async function UpdateTagPage({ params }: { params: Promise<{ tag_id: string }> }) {
     const { tag_id } = await params;
     const tag = await getTagById(tag_id);
     return (

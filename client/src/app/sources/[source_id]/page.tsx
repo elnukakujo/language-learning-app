@@ -3,7 +3,7 @@ import DeleteButton from "@/components/ui/buttons/deleteButton";
 import NavButton from "@/components/layout/navButton";
 import SourceCard from "@/components/sources/sourceCard";
 
-export default async function SourceDetailPage({ params }: { params: { source_id: string } }) {
+export default async function SourceDetailPage({ params }: { params: Promise<{ source_id: string }> }) {
     const { source_id } = await params;
     const source = await getSourceById(source_id);
     return (

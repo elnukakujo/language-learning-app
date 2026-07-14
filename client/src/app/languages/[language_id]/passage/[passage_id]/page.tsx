@@ -12,7 +12,7 @@ import DeleteButton from "@/components/ui/buttons/deleteButton";
 export default async function PassagePage({
   params,
 }: {
-  params: { language_id: string; passage_id: string };
+  params: Promise<{ language_id: string; passage_id: string }>;
 }) {
   const { passage_id, language_id } = await params;
   const passage = (await getPassageById(passage_id)) as Passage & {

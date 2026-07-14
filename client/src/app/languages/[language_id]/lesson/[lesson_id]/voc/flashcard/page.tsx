@@ -2,7 +2,7 @@ import Vocabulary from "@/interface/features/Vocabulary";
 import { getVocabularyByLesson } from "@/api/vocabulary";
 import VocabularyFlashCard from "@/components/elements/vocabularyFlashCard";
 
-export default async function VocabularyFlashCardPage({ params }: { params: { language_id: string; lesson_id: string; voc_id: string }}) {
+export default async function VocabularyFlashCardPage({ params }: { params: Promise<{ language_id: string; lesson_id: string; voc_id: string }>}) {
     const { lesson_id } = await params;
 
     const vocabularies: Vocabulary[] = await getVocabularyByLesson(lesson_id);

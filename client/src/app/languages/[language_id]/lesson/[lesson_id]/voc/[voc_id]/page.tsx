@@ -9,7 +9,7 @@ import SentenceCard from "@/components/elements/sentenceCard";
 import RelatedCard from "@/components/elements/relatedCard";
 import { getVocabularyById } from "@/api/vocabulary";
 
-export default async function VocabularyPage({ params }: { params: { language_id: string, lesson_id: string, voc_id: string } }) {
+export default async function VocabularyPage({ params }: { params: Promise<{ language_id: string, lesson_id: string, voc_id: string }> }) {
     const { voc_id, lesson_id, language_id } = await params;
     const vocabulary: Vocabulary = await getVocabularyById(voc_id);
     return (

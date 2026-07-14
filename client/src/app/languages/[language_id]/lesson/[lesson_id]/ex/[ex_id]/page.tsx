@@ -18,7 +18,7 @@ import ElementSourcesCard from "@/components/elements/elementSourcesCard";
 import ElementTagsCard from "@/components/elements/elementTagsCard";
 import { getExerciseById } from "@/api/exercise";
 
-export default async function ExercisePage( { params } : { params: { language_id: string; lesson_id: string; ex_id: string }}) {
+export default async function ExercisePage( { params } : { params: Promise<{ language_id: string; lesson_id: string; ex_id: string }>}) {
     const { language_id, lesson_id, ex_id } = await params;
 
     const exercise: Exercise = await getExerciseById(ex_id);

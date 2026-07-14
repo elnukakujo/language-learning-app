@@ -12,7 +12,7 @@ interface LessonElements {
     calligraphies: Calligraphy[];
 }
 
-export default async function createExercisePage({ params }: { params: { lesson_id: string } }) {
+export default async function createExercisePage({ params }: { params: Promise<{ lesson_id: string }> }) {
     const { lesson_id } = await params;
 
     const calligraphies: Calligraphy[] = await getCalligraphyByLesson(lesson_id);

@@ -22,7 +22,7 @@ import { getExercisesByLesson } from "@/api/exercise";
 import LessonHeaderCard from "@/components/lesson/lessonHeaderCard";
 
 
-export default async function Lesson({ params }: { params: { language_id: string, lesson_id: string } }) {
+export default async function Lesson({ params }: { params: Promise<{ language_id: string, lesson_id: string }> }) {
     const { language_id, lesson_id } = await params;
     const lesson: Lesson = await getLessonById(lesson_id);
 

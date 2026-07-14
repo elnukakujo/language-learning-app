@@ -1,6 +1,6 @@
 import VocabularyForm from "@/components/elements/vocabularyForm";
 
-export default async function createVocabularyPage({ params }: { params: { lesson_id: string } }) {
+export default async function createVocabularyPage({ params }: { params: Promise<{ lesson_id: string }> }) {
     const { lesson_id } = await params;
 
     return (

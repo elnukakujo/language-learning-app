@@ -1,6 +1,6 @@
 import CalligraphyForm from "@/components/elements/calligraphyForm";
 
-export default async function createCalligraphyPage({ params }: { params: { lesson_id: string } }) {
+export default async function createCalligraphyPage({ params }: { params: Promise<{ lesson_id: string }> }) {
     const { lesson_id } = await params;
 
     return (

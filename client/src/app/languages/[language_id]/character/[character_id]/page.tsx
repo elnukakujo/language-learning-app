@@ -12,7 +12,7 @@ import DeleteButton from "@/components/ui/buttons/deleteButton";
 export default async function CharacterPage({
   params,
 }: {
-  params: { language_id: string; character_id: string };
+  params: Promise<{ language_id: string; character_id: string }>;
 }) {
   const { character_id, language_id } = await params;
   const character = (await getCharacterById(character_id)) as Character & {

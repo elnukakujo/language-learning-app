@@ -12,7 +12,7 @@ import DeleteButton from "@/components/ui/buttons/deleteButton";
 export default async function WordPage({
   params,
 }: {
-  params: { language_id: string; word_id: string };
+  params: Promise<{ language_id: string; word_id: string }>;
 }) {
   const { word_id, language_id } = await params;
   const word = (await getWordById(word_id)) as Word & {
