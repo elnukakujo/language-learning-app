@@ -3,10 +3,10 @@ interface DifficultyScoreProps {
 }
 
 const LEVELS = [
-  { max: 0.25, label: "Easy",    pip: "bg-success",  text: "text-success"  },
-  { max: 0.5,  label: "Medium",  pip: "bg-warning",  text: "text-warning"  },
-  { max: 0.75, label: "Hard",    pip: "bg-accent",   text: "text-accent"   },
-  { max: 1.0,  label: "Expert",  pip: "bg-danger",   text: "text-danger"   },
+  { max: 0.25, label: "Hard",    pip: "bg-danger",  text: "text-danger"  },
+  { max: 0.5,  label: "Medium",  pip: "bg-accent",  text: "text-accent"  },
+  { max: 0.75, label: "Easy",    pip: "bg-warning",   text: "text-warning"   },
+  { max: 1.0,  label: "Trivial",  pip: "bg-success",   text: "text-success"   },
 ] as const;
 
 const PIPS = 5;
