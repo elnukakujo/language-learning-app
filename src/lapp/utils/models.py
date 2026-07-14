@@ -36,10 +36,12 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     snapshots_dir = repo_dir / "snapshots"
 
     if not snapshots_dir.exists():
+        logger.info(f"[hf-snapshot] {model_repo_name}: no snapshots dir at {snapshots_dir}")
         return None
 
     snapshots = sorted(p for p in snapshots_dir.iterdir() if p.is_dir())
     if not snapshots:
+        logger.info(f"[hf-snapshot] {model_repo_name}: snapshots dir empty at {snapshots_dir}")
         return None
 
     # Weight files in the HF cache are symlinks into blobs/; an interrupted
@@ -47,13 +49,16 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     # Treat that as "not cached" so callers fall back to a fresh download
     # instead of a hard local_files_only failure.
     latest = snapshots[-1]
+    entries = sorted(p.name for p in latest.iterdir())
     weight_patterns = ("*.safetensors", "*.bin", "*.h5", "*.msgpack", "*.ckpt.index")
-    has_weights = any(
-        f.resolve().exists()
-        for pattern in weight_patterns
-        for f in latest.rglob(pattern)
+    weight_matches = [f for pattern in weight_patterns for f in latest.rglob(pattern)]
+    has_weights = any(f.resolve().exists() for f in weight_matches)
+    logger.info(
+        f"[hf-snapshot] {model_repo_name}: latest={latest} entries={entries} "
+        f"weight_matches={[(str(f), f.is_symlink(), f.resolve().exists()) for f in weight_matches]}"
     )
     if not has_weights:
+        logger.info(f"[hf-snapshot] {model_repo_name}: rejected, no resolvable weight files")
         return None
 
     # Same dangling-symlink risk applies to tokenizer files: weights can
@@ -61,13 +66,20 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     # Only treat a *present-but-broken* tokenizer symlink as incomplete;
     # a model with no tokenizer files at all (e.g. a pure audio model) is fine.
     tokenizer_names = ("tokenizer.json", "vocab.json", "merges.txt", "vocab.txt")
-    has_dangling_tokenizer_file = any(
-        (latest / name).is_symlink() and not (latest / name).resolve().exists()
+    tokenizer_status = {
+        name: ((latest / name).is_symlink(), (latest / name).resolve().exists())
         for name in tokenizer_names
+        if (latest / name).exists() or (latest / name).is_symlink()
+    }
+    logger.info(f"[hf-snapshot] {model_repo_name}: tokenizer_status={tokenizer_status}")
+    has_dangling_tokenizer_file = any(
+        is_symlink and not resolves for is_symlink, resolves in tokenizer_status.values()
     )
     if has_dangling_tokenizer_file:
+        logger.info(f"[hf-snapshot] {model_repo_name}: rejected, dangling tokenizer symlink")
         return None
 
+    logger.info(f"[hf-snapshot] {model_repo_name}: accepted -> {latest}")
     return str(latest)
 
 from functools import cache
@@ -153,8 +165,10 @@ def get_qwen_tts_model():
 def get_text_gen_tokenizer():
     from transformers import AutoTokenizer
     path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
+    offline = configure_offline_environment()
+    logger.info(f"[text-gen-tokenizer] path={path!r} offline={offline}")
     return AutoTokenizer.from_pretrained(
-        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=configure_offline_environment()
+        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=offline
     )
 
 
