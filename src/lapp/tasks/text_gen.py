@@ -205,7 +205,7 @@ def generate_missing_texts(app: Flask):
                 except Exception as e:
                     session.rollback()
                     error_count += 1
-                    logger.error(f"❌ Failed to generate text for Feature ID {feature.id}: {e}")
+                    logger.error(f"❌ Failed to generate text for Feature ID {feature.id}: {e}", exc_info=True)
                     continue
             
             logger.info(f"✅ Text Generation task completed: {success_count} texts generated, {error_count} errors")
