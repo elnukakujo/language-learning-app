@@ -50,6 +50,19 @@ class BackupService:
 
         logger.info(f"BackupService initialized: schema={self.schema} dir={self.backup_dir}")
 
+    def backup_timestamp(self, backup_path: Path) -> datetime:
+        """
+        Creation time of a backup, parsed from its filename
+        (backup_{schema}_%Y%m%d_%H%M%S.dump). st_ctime is unreliable here -
+        it's inode metadata-change time, reset by chmod/rsync/restore, so a
+        bulk file op can make every backup show the same timestamp.
+        """
+        try:
+            stamp = backup_path.stem.rsplit("_", 2)[-2:]
+            return datetime.strptime("_".join(stamp), "%Y%m%d_%H%M%S")
+        except (ValueError, IndexError):
+            return datetime.fromtimestamp(backup_path.stat().st_ctime)
+
     def _pg_env(self) -> dict:
         """Env for pg_dump/pg_restore: password via PGPASSWORD, never as a CLI arg."""
         env = os.environ.copy()
@@ -159,7 +172,7 @@ class BackupService:
             return []
 
         backup_files = list(self.backup_dir.glob(f"backup_{self.schema}_*.dump"))
-        return sorted(backup_files, key=lambda f: f.stat().st_ctime, reverse=True)
+        return sorted(backup_files, key=self.backup_timestamp, reverse=True)
 
     def cleanup_old_backups(self) -> int:
         """

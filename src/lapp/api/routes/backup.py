@@ -203,8 +203,7 @@ def list_backups():
         backup_list = []
         for backup_path in backups:
             stat = backup_path.stat()
-            created_timestamp = stat.st_ctime
-            created_dt = datetime.fromtimestamp(created_timestamp)
+            created_dt = backup_mgr.backup_timestamp(backup_path)
             age_days = (datetime.now() - created_dt).days
             
             backup_list.append({
@@ -274,8 +273,7 @@ def backup_info():
         # Add latest backup age
         latest = backup_mgr.get_latest_backup()
         if latest:
-            created_timestamp = latest.stat().st_ctime
-            created_dt = datetime.fromtimestamp(created_timestamp)
+            created_dt = backup_mgr.backup_timestamp(latest)
             age_hours = (datetime.now() - created_dt).total_seconds() / 3600
             info['latest_backup_age_hours'] = round(age_hours, 1)
         else:

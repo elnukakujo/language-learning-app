@@ -215,7 +215,14 @@ class BaseModelWithMediaFiles(Base):
         if info is None or not isinstance(info, list):
             return []
 
-        media_root = Path(current_app.config['MEDIA_ROOT']).resolve()
+        media_root_config = current_app.config.get('MEDIA_ROOT')
+        if not media_root_config:
+            raise RuntimeError(
+                "MEDIA_ROOT is not configured for this app (current_app.config['MEDIA_ROOT'] "
+                f"is {media_root_config!r}). Check PROD_MEDIA_ROOT in .env and that it's being "
+                "loaded by the process actually running this code."
+            )
+        media_root = Path(media_root_config).resolve()
         valid_files = []
 
         for file_path in info:

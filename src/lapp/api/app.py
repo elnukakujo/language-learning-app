@@ -22,9 +22,11 @@ def create_app(config_name: str = 'default') -> Flask:
     
     # Load configuration
     app.config.from_object(config[config_name])
-    
+
     # Configure logging
     configure_logging(app)
+
+    logger.info(f"📁 MEDIA_ROOT={app.config.get('MEDIA_ROOT')!r} BACKUP_ROOT={app.config.get('BACKUP_ROOT')!r}")
     
     # Enable CORS for frontend
     CORS(app, resources={

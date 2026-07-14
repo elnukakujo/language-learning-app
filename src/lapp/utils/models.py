@@ -6,8 +6,6 @@ from .offline import configure_offline_environment
 
 logger = logging.getLogger(__name__)
 
-OFFLINE = configure_offline_environment()
-
 # torch defaults to using every CPU core for inference, which starves the rest
 # of the machine (including this same process's own request handling) during
 # generation. Cap it, leaving a couple cores free.
@@ -54,7 +52,7 @@ def get_text_embedding_model():
     """Text-to-representation model (clustering, retrieval, similarity)."""
     from sentence_transformers import SentenceTransformer
     return SentenceTransformer(
-        "all-MiniLM-L6-v2", device=get_device(), local_files_only=OFFLINE
+        "all-MiniLM-L6-v2", device=get_device(), local_files_only=configure_offline_environment()
     )
 
 
@@ -62,7 +60,7 @@ def get_text_embedding_model():
 def get_audio_embedding_model():
     from transformers import Wav2Vec2Model
     return Wav2Vec2Model.from_pretrained(
-        "facebook/wav2vec2-large-xlsr-53", local_files_only=OFFLINE
+        "facebook/wav2vec2-large-xlsr-53", local_files_only=configure_offline_environment()
     ).to(get_device())
 
 
@@ -70,7 +68,7 @@ def get_audio_embedding_model():
 def get_audio_embedding_processor():
     from transformers import Wav2Vec2FeatureExtractor
     return Wav2Vec2FeatureExtractor.from_pretrained(
-        "facebook/wav2vec2-large-xlsr-53", local_files_only=OFFLINE
+        "facebook/wav2vec2-large-xlsr-53", local_files_only=configure_offline_environment()
     )
 
 
@@ -91,10 +89,10 @@ def get_stt_pipe():
         "openai/whisper-medium",
         dtype=dtype,
         use_safetensors=True,
-        local_files_only=OFFLINE,
+        local_files_only=configure_offline_environment(),
     ).to(device)
     processor = AutoProcessor.from_pretrained(
-        "openai/whisper-medium", local_files_only=OFFLINE
+        "openai/whisper-medium", local_files_only=configure_offline_environment()
     )
     return pipeline(
         "automatic-speech-recognition",
@@ -121,7 +119,7 @@ def get_qwen_tts_model():
         path or "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
         device_map=device,
         dtype=dtype,
-        local_files_only=OFFLINE,
+        local_files_only=configure_offline_environment(),
     )
 
 
@@ -130,7 +128,7 @@ def get_text_gen_tokenizer():
     from transformers import AutoTokenizer
     path = _resolve_local_hf_snapshot("Qwen/Qwen2.5-1.5B-Instruct")
     return AutoTokenizer.from_pretrained(
-        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=OFFLINE
+        path or "Qwen/Qwen2.5-1.5B-Instruct", local_files_only=configure_offline_environment()
     )
 
 
@@ -146,5 +144,5 @@ def get_text_gen_model():
         # the meta device (uninitialized). Pick one device explicitly instead.
         device_map=get_device(),
         dtype="auto",
-        local_files_only=OFFLINE,
+        local_files_only=configure_offline_environment(),
     )
