@@ -42,7 +42,21 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     if not snapshots:
         return None
 
-    return str(snapshots[-1])
+    # Weight files in the HF cache are symlinks into blobs/; an interrupted
+    # download leaves the snapshot dir present but its symlinks dangling.
+    # Treat that as "not cached" so callers fall back to a fresh download
+    # instead of a hard local_files_only failure.
+    latest = snapshots[-1]
+    weight_patterns = ("*.safetensors", "*.bin", "*.h5", "*.msgpack", "*.ckpt.index")
+    has_weights = any(
+        f.resolve().exists()
+        for pattern in weight_patterns
+        for f in latest.rglob(pattern)
+    )
+    if not has_weights:
+        return None
+
+    return str(latest)
 
 from functools import cache
 
