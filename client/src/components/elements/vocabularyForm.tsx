@@ -44,7 +44,7 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
     const [type, setType] = useState<'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'article' | 
         'preposition' | 'conjunction' | 'particle' | 'interjection' | 'numeral' | 
         'classifier' | 'auxiliary' | 'modal'>(vocabularyData.word!.word_type!);
-    const [gender, setGender] = useState<'m' | 'f' | 'n' | undefined>(vocabularyData.word?.word_gender);
+    const [gender, setGender] = useState<'m' | 'f' | 'n' | 'c' | '' | undefined>(vocabularyData.word?.word_gender);
     const [wordImageUrl, setWordImageUrl] = useState<string[]>(vocabularyData.word?.image_files || []);
     const [wordAudioUrl, setWordAudioUrl] = useState<string[]>(vocabularyData.word?.audio_files || []);
 

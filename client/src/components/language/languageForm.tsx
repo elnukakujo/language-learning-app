@@ -120,8 +120,9 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
                 options={Object.keys(LANGUAGE_to_ISO639_2T)}
                 selectedOption={name}
                 onChange={(value) => {
-                    setName(value);
-                    setTargetIso639_2t(LANGUAGE_to_ISO639_2T[value] || "");
+                    const selected = value as string;
+                    setName(selected);
+                    setTargetIso639_2t(LANGUAGE_to_ISO639_2T[selected] || "");
                 }}
                 required
             />
@@ -171,7 +172,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
                 label="Language Used to Study"
                 options={knownLanguageISO639_2T.map(iso => ISO639_2T_to_LANGUAGE[iso] || iso)}
                 selectedOption={ISO639_2T_to_LANGUAGE[sourceIso639_2t || ""] || ""}
-                onChange={(value) => setSourceIso639_2t(LANGUAGE_to_ISO639_2T[value] || "")}
+                onChange={(value) => setSourceIso639_2t(LANGUAGE_to_ISO639_2T[value as string] || "")}
                 required
             />
 

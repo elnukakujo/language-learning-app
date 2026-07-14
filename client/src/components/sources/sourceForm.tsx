@@ -71,7 +71,7 @@ export default function SourceForm({ source, navDisabled = false, onSuccess }: {
             label="Source Type"
             options={[ "original", "textbook", "class", "online", "media", "social", "other" ]}
             selectedOption={sourceType}
-            onChange={(e) => setSourceType(e)}
+            onChange={(e) => setSourceType(e as string)}
             required
         />
 

@@ -1,4 +1,4 @@
-import Passage from "@/interface/components/Word";
+import Passage from "@/interface/components/Passage";
 import ElementMediaCard from "./elementMediaCard";
 
 export default function SentenceCard({ sentence, hiddenTranslation }: { sentence: Passage | Partial<Passage>; hiddenTranslation?: boolean }) {
