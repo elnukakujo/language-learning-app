@@ -9,13 +9,13 @@ type paramsType = {
 };
 
 export default async function UpdateCalligraphyPage({ params }: { params: Promise<paramsType> }) {
-    const { call_id } = await params;
+    const { call_id, lesson_id } = await params;
     const calligraphy: Calligraphy = await getCalligraphyById(call_id);
 
     return (
         <main className="flex flex-col gap-4">
             <h1>Update Calligraphy</h1>
-            <CalligraphyForm calligraphy={calligraphy} lesson_id={params.lesson_id} />
+            <CalligraphyForm calligraphy={calligraphy} lesson_id={lesson_id} />
         </main>
     );
 }

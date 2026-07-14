@@ -9,13 +9,13 @@ type paramsType = {
 };
 
 export default async function UpdateGrammarPage({ params }: { params: Promise<paramsType> }) {
-    const { gram_id } = await params;
+    const { gram_id, lesson_id } = await params;
     const grammar: Grammar = await getGrammarById(gram_id);
 
     return (
         <main className="flex flex-col gap-4">
             <h1>Update Grammar</h1>
-            <GrammarForm grammar={grammar} lesson_id={params.lesson_id} />
+            <GrammarForm grammar={grammar} lesson_id={lesson_id} />
         </main>
     );
 }
