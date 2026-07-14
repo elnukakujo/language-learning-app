@@ -56,6 +56,18 @@ def _resolve_local_hf_snapshot(model_repo_name: str) -> str | None:
     if not has_weights:
         return None
 
+    # Same dangling-symlink risk applies to tokenizer files: weights can
+    # download fully while vocab.json/tokenizer.json are still missing.
+    # Only treat a *present-but-broken* tokenizer symlink as incomplete;
+    # a model with no tokenizer files at all (e.g. a pure audio model) is fine.
+    tokenizer_names = ("tokenizer.json", "vocab.json", "merges.txt", "vocab.txt")
+    has_dangling_tokenizer_file = any(
+        (latest / name).is_symlink() and not (latest / name).resolve().exists()
+        for name in tokenizer_names
+    )
+    if has_dangling_tokenizer_file:
+        return None
+
     return str(latest)
 
 from functools import cache
