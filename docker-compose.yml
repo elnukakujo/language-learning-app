@@ -24,13 +24,14 @@ services:
       provenance: false
       sbom: false
     restart: unless-stopped
+    stop_grace_period: 30s
     env_file: .env
     environment:
       LAPP_HOST: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER:-fluence_app}:${POSTGRES_PASSWORD:-fluence_dev_pass}@db:5432/${POSTGRES_DB:-fluence}
       PROD_MEDIA_ROOT: /app/media
       PROD_BACKUP_ROOT: /app/backups
-      RESTORE_LATEST_BACKUP: ${RESTORE_LATEST_BACKUP:-false}
+      RESTORE_LATEST_BACKUP: ${RESTORE_LATEST_BACKUP:-true}
     depends_on:
       db:
         condition: service_healthy
