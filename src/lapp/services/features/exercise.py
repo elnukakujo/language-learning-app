@@ -166,6 +166,7 @@ class ExerciseService:
             question=exercise_data.get("question"),
             answer=exercise_data.get("answer"),
             text_support=exercise_data.get("text_support", ""),
+            content=exercise_data.get("content"),
             image_files=data.image_files or [],
             audio_files=data.audio_files or [],
             tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
