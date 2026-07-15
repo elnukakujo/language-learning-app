@@ -24,7 +24,7 @@ export default function CommitmentLogCard({ commitmentLog }: { commitmentLog: Co
         <section className="flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between gap-4">
                 <h4 className="font-serif text-base text-ink">Commitment</h4>
-                <span className="text-xs text-muted">Last updated {new Date(commitmentLog.streak_last_computed_at).toLocaleString()}</span>
+                <span className="text-xs text-muted">Last updated {new Date(commitmentLog.updated_at ?? commitmentLog.created_at).toLocaleString()}</span>
             </div>
 
             <div className="flex flex-row gap-3 overflow-x-auto">
@@ -51,7 +51,7 @@ export default function CommitmentLogCard({ commitmentLog }: { commitmentLog: Co
                 <div className="card flex flex-1 min-w-[7rem] flex-col gap-2">
                     <p className="text-xs uppercase tracking-wide text-muted">Last Updated</p>
                     <div className="index-divider" />
-                    <p className="text-sm font-medium">{new Date(commitmentLog.streak_last_computed_at).toLocaleString()}</p>
+                    <p className="text-sm font-medium">{new Date(commitmentLog.updated_at ?? commitmentLog.created_at).toLocaleString()}</p>
                 </div>
             </div>
         </section>

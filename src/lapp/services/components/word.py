@@ -166,15 +166,21 @@ class WordService:
             logger.warning(f"Word with value '{update_data['word']}' already exists.")
             raise ValueError(f"Word with value '{update_data['word']}' already exists.")
 
-        language = db_manager.find_by_attr(model_class=Language, attr_values={"id": existing.language_id}, session=session)
+        if data.word != existing.word:
+            language = db_manager.find_by_attr(model_class=Language, attr_values={"id": existing.language_id}, session=session)
 
-        target_language_info = get_language_by_iso2t(language.target_iso639_2t) if language else None
-        target_iso1 = target_language_info.iso1 if target_language_info else None
-        target_spacy_model = target_language_info.spacy_model if target_language_info else None
+            target_language_info = get_language_by_iso2t(language.target_iso639_2t) if language else None
+            target_iso1 = target_language_info.iso1 if target_language_info else None
+            target_spacy_model = target_language_info.spacy_model if target_language_info else None
 
-        source_iso1 = get_language_by_iso2t(language.source_iso639_2t).iso1 if language else None
+            source_iso1 = get_language_by_iso2t(language.source_iso639_2t).iso1 if language else None
 
-        enriched_data = enrich_word(word_text=data.word, target_iso1=target_iso1, source_iso1=source_iso1, target_spacy_model=target_spacy_model)
+            enriched_data = enrich_word(word_text=data.word, target_iso1=target_iso1, source_iso1=source_iso1, target_spacy_model=target_spacy_model)
+        else:
+            # word text unchanged — skip re-enrichment (translation/character
+            # derivation), it's a slow synchronous NMT call and there's
+            # nothing new to derive.
+            enriched_data = {"characters": []}
 
         characters: dict[str, Character] = {
             c.id: session.merge(c) for c in existing.characters
