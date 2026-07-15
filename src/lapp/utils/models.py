@@ -94,11 +94,11 @@ from functools import cache
 # Repo IDs are configurable per task via env vars so a different checkpoint
 # can be swapped in without touching code; default to the models this file
 # has always used.
-TEXT_EMBEDDING_MODEL = os.environ.get("LAPP_TEXT_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-AUDIO_EMBEDDING_MODEL = os.environ.get("LAPP_AUDIO_EMBEDDING_MODEL", "facebook/wav2vec2-large-xlsr-53")
-STT_MODEL = os.environ.get("LAPP_STT_MODEL", "openai/whisper-medium")
+TEXT_EMBEDDING_MODEL = os.environ.get("LAPP_TEXT_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+AUDIO_EMBEDDING_MODEL = os.environ.get("LAPP_AUDIO_EMBEDDING_MODEL", "facebook/mms-300m")
+STT_MODEL = os.environ.get("LAPP_STT_MODEL", "openai/whisper-large-v3-turbo")
 TTS_MODEL = os.environ.get("LAPP_TTS_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
-TEXT_GEN_MODEL = os.environ.get("LAPP_TEXT_GEN_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
+TEXT_GEN_MODEL = os.environ.get("LAPP_TEXT_GEN_MODEL", "Qwen/Qwen3-1.7B")
 
 
 def _local_files_only(repo_id: str, require_tokenizer: bool = False) -> tuple[str | None, bool]:
@@ -141,7 +141,7 @@ def get_audio_embedding_processor():
 
 @cache
 def get_stt_pipe():
-    """Speech-to-text pipeline (Whisper-medium by default)."""
+    """Speech-to-text pipeline (Whisper-large-v3-turbo by default)."""
     import torch
     from transformers import (
         AutoModelForSpeechSeq2Seq,
@@ -199,7 +199,7 @@ def get_text_gen_tokenizer():
 
 @cache
 def get_text_gen_model():
-    """Text generation model (Qwen2.5-1.5B-Instruct by default)."""
+    """Text generation model (Qwen3-1.7B by default)."""
     from transformers import AutoModelForCausalLM
     path, offline = _local_files_only(TEXT_GEN_MODEL)
     return AutoModelForCausalLM.from_pretrained(
