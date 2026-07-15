@@ -13,6 +13,7 @@ import MatchingExercise from "@/components/exercises/matchingExercise";
 import SpeakingExercise from "@/components/exercises/speakingExercise";
 import BackButton from "@/components/ui/buttons/backButton";
 import ConversationExercise from "@/components/exercises/conversationExercise";
+import QuizzExercise from "@/components/exercises/quizzExercise";
 import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
 import ElementSourcesCard from "@/components/elements/elementSourcesCard";
 import ElementTagsCard from "@/components/elements/elementTagsCard";
@@ -53,7 +54,8 @@ export default async function ExercisePage( { params } : { params: Promise<{ lan
                 <SpeakingExercise exercise={ exercise } />
             )}
             {exercise.exercise_type === 'conversation' && <ConversationExercise exercise={exercise} />}
-            
+            {exercise.exercise_type === 'quizz' && <QuizzExercise exercise={exercise} />}
+
             <ElementTagsCard element={exercise} />
             <ElementSourcesCard element={exercise} />    
             <ElementPerformanceCard element={exercise}/>

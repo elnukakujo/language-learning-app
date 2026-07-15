@@ -81,13 +81,20 @@ export default function SelectInTheBlankExercise({ exercise }: { exercise: Exerc
         }
     };
 
+    const renderSegmentText = (part: string, key: string) => {
+        return part.split("\n").flatMap((piece, j) => j === 0
+            ? [<span key={`${key}-${j}`}>{piece}</span>]
+            : [<hr key={`${key}-${j}-hr`} className="index-divider w-full my-2" />, <span key={`${key}-${j}`}>{piece}</span>]
+        );
+    };
+
     const renderSegments = () => {
         return segments.flatMap((part, i) => {
-            if (i === segments.length - 1) return [<span key={`t-${i}`}>{part}</span>];
+            if (i === segments.length - 1) return renderSegmentText(part, `t-${i}`);
             const idx = i;
             const filled = filledAnswers[idx];
             return [
-                <span key={`t-${i}`}>{part}</span>,
+                ...renderSegmentText(part, `t-${i}`),
                 <button
                     type="button"
                     key={`blank-${idx}`}
