@@ -69,8 +69,15 @@ def parse_args():
 def main():
     args = parse_args()
 
-    _kill_stale_instance()
-    _register_pid_file()
+    # In debug mode, Werkzeug's reloader re-runs main() in a child process
+    # (marked via WERKZEUG_RUN_MAIN) that does the actual serving, while the
+    # parent just watches for file changes. Only the top-level launch should
+    # kill a leftover instance and claim the PID file - otherwise the
+    # reloader's own child mistakes its just-started parent for a stale
+    # instance and kills it, tearing down the whole process tree.
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        _kill_stale_instance()
+        _register_pid_file()
     signal.signal(signal.SIGINT, _force_exit_on_signal)
     signal.signal(signal.SIGTERM, _force_exit_on_signal)
 

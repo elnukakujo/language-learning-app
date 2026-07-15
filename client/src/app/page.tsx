@@ -44,7 +44,7 @@ export default async function Home() {
     <main className="flex flex-col gap-8">
       <header className="flex flex-col gap-4">
         <h1>Fluence</h1>
-        <h2>Hey {user.username}! What do you want to study today?</h2>
+        <h2>Hey {user.display_name || user.username}! What do you want to study today?</h2>
       </header>
       <PracticeHeatmap history={history} />
       <AvailableLanguages />

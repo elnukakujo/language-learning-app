@@ -713,6 +713,25 @@
   .heatmap-cell-empty {
     background: transparent;
   }
+  /* position: fixed, positioned via JS from the mouse event - see practiceHeatmap.tsx
+     for why this can't be a CSS ::after tooltip anchored to the cell itself. */
+  .heatmap-tooltip {
+    position: fixed;
+    transform: translate(-50%, calc(-100% - 0.5rem));
+    background: var(--color-foreground);
+    color: var(--color-background);
+    padding: 0.35rem 0.55rem;
+    border-radius: calc(var(--radius) / 2);
+    font-size: 0.7rem;
+    line-height: 1.3;
+    white-space: pre-line;
+    text-align: left;
+    width: max-content;
+    max-width: 14rem;
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: var(--shadow-card);
+  }
   .heatmap-level-0 { background: var(--color-border); }
   .heatmap-level-1 { background: var(--color-accent-soft); }
   .heatmap-level-2 { background: color-mix(in srgb, var(--color-accent) 45%, var(--color-accent-soft)); }

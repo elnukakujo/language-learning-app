@@ -1,9 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import type DailyStats from "@/interface/dataCollection/DailyStats";
 
 function toDateKey(iso: string): string {
     return iso.slice(0, 10);
+}
+
+// Builds the same "YYYY-MM-DD" key from a Date's LOCAL calendar fields — never
+// via toISOString()/Date("YYYY-MM-DD"), both of which round-trip through UTC
+// and can shift the date by one day depending on the browser's UTC offset.
+function localDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(key: string): Date {
+    const [year, month, day] = key.split("-").map(Number);
+    return new Date(year, month - 1, day);
 }
 
 function intensityLevel(itemsReviewed: number): 0 | 1 | 2 | 3 | 4 {
@@ -25,6 +41,14 @@ function formatDuration(ms: number): string {
 type DayTotals = { items_reviewed: number; items_correct: number; time_studied_ms: number };
 
 export default function PracticeHeatmap({ history }: { history: DailyStats[] }) {
+    // Rendered via position: fixed (not a CSS ::after tooltip) because the
+    // heatmap's ancestor scroll container sets overflow-x: auto, which per
+    // the CSS overflow spec forces overflow-y to also compute as auto (an
+    // axis can't stay "visible" while the other isn't) — any absolutely
+    // positioned tooltip inside it gets clipped vertically. position: fixed
+    // escapes that ancestor clipping entirely.
+    const [hovered, setHovered] = useState<{ x: number; y: number; text: string } | null>(null);
+
     const byDate = new Map<string, DayTotals>();
     for (const entry of history) {
         const key = toDateKey(entry.created_at);
@@ -37,7 +61,7 @@ export default function PracticeHeatmap({ history }: { history: DailyStats[] }) 
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const start = history.length > 0 ? new Date(toDateKey(history[0].created_at)) : today;
+    const start = history.length > 0 ? parseDateKey(toDateKey(history[0].created_at)) : today;
 
     // Align to the Sunday on/before `start` so weeks line up into full columns.
     const gridStart = new Date(start);
@@ -63,7 +87,7 @@ export default function PracticeHeatmap({ history }: { history: DailyStats[] }) 
                     {weeks.map((week, weekIdx) => (
                         <div key={weekIdx} className="heatmap-week">
                             {week.map((day) => {
-                                const key = day.toISOString().slice(0, 10);
+                                const key = localDateKey(day);
                                 const entry = byDate.get(key);
                                 const level = day > today ? undefined : intensityLevel(entry?.items_reviewed ?? 0);
                                 const dayLabel = day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
@@ -74,7 +98,9 @@ export default function PracticeHeatmap({ history }: { history: DailyStats[] }) 
                                     <div
                                         key={key}
                                         className={level !== undefined ? `heatmap-cell heatmap-level-${level}` : "heatmap-cell heatmap-cell-empty"}
-                                        title={title}
+                                        onMouseEnter={(e) => setHovered({ x: e.clientX, y: e.clientY, text: title })}
+                                        onMouseMove={(e) => setHovered({ x: e.clientX, y: e.clientY, text: title })}
+                                        onMouseLeave={() => setHovered(null)}
                                     />
                                 );
                             })}
@@ -82,6 +108,14 @@ export default function PracticeHeatmap({ history }: { history: DailyStats[] }) 
                     ))}
                 </div>
             </div>
+            {hovered && (
+                <div
+                    className="heatmap-tooltip"
+                    style={{ left: hovered.x, top: hovered.y }}
+                >
+                    {hovered.text}
+                </div>
+            )}
         </section>
     );
 }
