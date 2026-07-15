@@ -1,7 +1,9 @@
 import { getUserById } from "@/api/user";
+import { getDailyStatsHistory } from "@/api/dailyStats";
 import AvailableLanguages from "@/components/language/availableLanguages";
 import NavButton from "@/components/layout/navButton";
 import UserPicker from "@/components/user/userPicker";
+import PracticeHeatmap from "@/components/language/practiceHeatmap";
 import User from "@/interface/systemData/User";
 import { getCurrentUserId } from "@/utils/user_cookie";
 
@@ -36,12 +38,15 @@ export default async function Home() {
     );
   }
 
+  const history = await getDailyStatsHistory(userId);
+
   return (
     <main className="flex flex-col gap-8">
       <header className="flex flex-col gap-4">
         <h1>Fluence</h1>
         <h2>Hey {user.username}! What do you want to study today?</h2>
       </header>
+      <PracticeHeatmap history={history} />
       <AvailableLanguages />
       <NavButton path="/languages/new">
         <p>Create New Language</p>

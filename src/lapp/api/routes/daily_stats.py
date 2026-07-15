@@ -68,7 +68,8 @@ def get_daily_stats_history():
       - name: language_id
         in: query
         type: string
-        required: true
+        required: false
+        description: Restrict to a single language; omit for stats across all of the user's languages
       - name: start_date
         in: query
         type: string
@@ -88,13 +89,13 @@ def get_daily_stats_history():
     user_id = request.args.get('user_id')
     language_id = request.args.get('language_id')
 
-    if not user_id or not language_id:
-        return jsonify({'error': 'user_id and language_id are required'}), 400
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
 
     user = user_service.get_by_id(user_id=user_id)
     if user is None:
         return jsonify({'error': 'User not found'}), 404
-    if language_service.get_by_id(language_id=language_id) is None:
+    if language_id and language_service.get_by_id(language_id=language_id) is None:
         return jsonify({'error': 'Language not found'}), 404
 
     start_date_param = request.args.get('start_date')

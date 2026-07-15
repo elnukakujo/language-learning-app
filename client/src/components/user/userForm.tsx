@@ -19,6 +19,9 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
     };
 
     const [username, setUsername] = useState<string>(userData.username || "");
+    const [displayName, setDisplayName] = useState<string>(userData.display_name || "");
+    const [email, setEmail] = useState<string>(userData.email || "");
+    const [password, setPassword] = useState<string>("");
     const [native_language_iso639_2, setNativeLanguageIso639_2] = useState<string[]>(userData.preferences?.native_language_iso639_2 || []);
     const [learning_goals, setLearningGoals] = useState<string>(userData.preferences?.learning_goals || "");
     const [preferred_exercise_types, setPreferredExerciseTypes] = useState<string[]>(userData.preferences?.preferred_exercise_types || []);
@@ -29,6 +32,9 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
         const element: Partial<User> = {
             id: userData.id,
             username: username,
+            display_name: displayName || undefined,
+            email: email,
+            ...(password ? { password } : {}),
             last_review: userData.last_review,
             created_at: userData.created_at,
             preferences: {
@@ -65,6 +71,31 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username"
                 required
+            />
+
+            <AutoWidthInput
+                label="Display Name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Shown instead of username, optional"
+            />
+
+            <AutoWidthInput
+                type="email"
+                label="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email"
+                required={!isUpdate}
+            />
+
+            <AutoWidthInput
+                type="password"
+                label={isUpdate ? "New Password (leave blank to keep current)" : "Password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isUpdate ? "Leave blank to keep current password" : "Enter password"}
+                required={!isUpdate}
             />
 
             <article className="flex flex-col space-y-2 items-center">

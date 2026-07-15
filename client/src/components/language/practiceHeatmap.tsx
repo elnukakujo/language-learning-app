@@ -14,8 +14,26 @@ function intensityLevel(itemsReviewed: number): 0 | 1 | 2 | 3 | 4 {
     return 4;
 }
 
+function formatDuration(ms: number): string {
+    const totalMinutes = Math.round(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
+
+// A user can have one DailyStats row per language per day — sum them into one bucket per date.
+type DayTotals = { items_reviewed: number; items_correct: number; time_studied_ms: number };
+
 export default function PracticeHeatmap({ history }: { history: DailyStats[] }) {
-    const byDate = new Map(history.map((entry) => [toDateKey(entry.created_at), entry]));
+    const byDate = new Map<string, DayTotals>();
+    for (const entry of history) {
+        const key = toDateKey(entry.created_at);
+        const totals = byDate.get(key) ?? { items_reviewed: 0, items_correct: 0, time_studied_ms: 0 };
+        totals.items_reviewed += entry.items_reviewed;
+        totals.items_correct += entry.items_correct;
+        totals.time_studied_ms += entry.time_studied_ms;
+        byDate.set(key, totals);
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -48,11 +66,15 @@ export default function PracticeHeatmap({ history }: { history: DailyStats[] }) 
                                 const key = day.toISOString().slice(0, 10);
                                 const entry = byDate.get(key);
                                 const level = day > today ? undefined : intensityLevel(entry?.items_reviewed ?? 0);
+                                const dayLabel = day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+                                const title = entry
+                                    ? `${dayLabel}\n${entry.items_reviewed} reviewed (${entry.items_correct} correct)\n${formatDuration(entry.time_studied_ms)} studied`
+                                    : `${dayLabel}\nNo practice`;
                                 return (
                                     <div
                                         key={key}
                                         className={level !== undefined ? `heatmap-cell heatmap-level-${level}` : "heatmap-cell heatmap-cell-empty"}
-                                        title={`${key}: ${entry?.items_reviewed ?? 0} reviewed`}
+                                        title={title}
                                     />
                                 );
                             })}

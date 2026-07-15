@@ -80,22 +80,25 @@ class DailyStatsService:
     def get_range_for_user(
         self,
         user_id: str,
-        language_id: str,
         start_date,
         end_date,
+        language_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True,
     ) -> list[DailyStats] | list[dict]:
-        """Get all DailyStats entries for a user/language between start_date and end_date (inclusive)."""
+        """Get all DailyStats entries for a user between start_date and end_date (inclusive),
+        optionally restricted to a single language; otherwise across all of the user's languages."""
+        filters = [
+            DailyStats.user_id == user_id,
+            func.date(DailyStats.created_at) >= start_date,
+            func.date(DailyStats.created_at) <= end_date,
+        ]
+        if language_id:
+            filters.append(DailyStats.language_id == language_id)
         entries = (
             session.query(DailyStats)
-            .filter(
-                DailyStats.user_id == user_id,
-                DailyStats.language_id == language_id,
-                func.date(DailyStats.created_at) >= start_date,
-                func.date(DailyStats.created_at) <= end_date,
-            )
+            .filter(*filters)
             .order_by(DailyStats.created_at.asc())
             .all()
         )

@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlalchemy.orm import Session
+from werkzeug.security import generate_password_hash
 import logging
 logger = logging.getLogger(__name__)
 
@@ -84,10 +85,19 @@ class UserService:
         Returns:
             The created User object or UserDict, depending on the as_dict flag.
         """
+        if not user_data.email or not user_data.password:
+            raise ValueError("email and password are required to create a user.")
+
+        if db_manager.find_by_attr(model_class=User, attr_values={"email": user_data.email}, session=session):
+            raise ValueError(f"Email already in use: {user_data.email}")
+
         user_id = getattr(user_data, "id", None) or db_manager.generate_new_id(User, session=session)
         user_obj = User(
             id=user_id,
             username=user_data.username,
+            display_name=user_data.display_name,
+            email=user_data.email,
+            password_hash=generate_password_hash(user_data.password),
         )
 
         user_obj.preferences = user_preferences_service.create(
@@ -152,8 +162,19 @@ class UserService:
             session=session,
         )
 
-        for field, value in update_data.model_dump(exclude={"id", "preferences"}, exclude_unset=True).items():
+        fields = update_data.model_dump(exclude={"id", "preferences"}, exclude_unset=True)
+        password = fields.pop("password", None)
+
+        if "email" in fields and fields["email"] != user.email:
+            existing = db_manager.find_by_attr(model_class=User, attr_values={"email": fields["email"]}, session=session)
+            if existing and existing.id != user_id:
+                raise ValueError(f"Email already in use: {fields['email']}")
+
+        for field, value in fields.items():
             setattr(user, field, value)
+
+        if password:
+            user.password_hash = generate_password_hash(password)
 
         result = db_manager.modify(obj=user, session=session, commit=False)
 
