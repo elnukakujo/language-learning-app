@@ -12,7 +12,7 @@ from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import PassageService, WordService
 from ..data_collection import ProgressTrackingService
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related
 from ...utils import update_score, update_difficulty
 
 lesson_service = LessonService()
@@ -187,6 +187,11 @@ class GrammarService:
 
         for key, value in update_data.items():
             setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

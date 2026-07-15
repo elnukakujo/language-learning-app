@@ -21,7 +21,7 @@ export default function LanguageOverviewCard({ language }: { language: Language 
 
     return (
         <button
-            className="card flex h-48 w-48 shrink-0 flex-col gap-2 overflow-hidden text-left cursor-pointer transition hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-md"
+            className="card overview-card flex flex-col gap-2 overflow-hidden text-left cursor-pointer transition hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-md"
             onClick={handleCardClick}
         >
             <header className="flex flex-col">

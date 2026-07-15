@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 import logging
 
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related
 from ...models.features import Exercise
 from ...schemas.features import ExerciseDict
 from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
@@ -211,6 +211,11 @@ class ExerciseService:
                 grammar=related_grammar,
                 session=session,
             )
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
         return self._serialize(result, as_dict, include_relations)

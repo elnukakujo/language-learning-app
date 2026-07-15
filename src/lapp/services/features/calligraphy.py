@@ -11,7 +11,7 @@ from ...schemas.features import CalligraphyDict
 from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Calligraphy
 from ...models.system_data import Source, Tag
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related, stack_related
 from ..containers import LessonService, LanguageService
 from ..components import CharacterService, WordService, PassageService
 from ..data_collection import ProgressTrackingService
@@ -201,6 +201,32 @@ class CalligraphyService:
                 if sentence:
                     example_sentences.append(sentence)
 
+        existing_calligraphy = (
+            session.query(Calligraphy)
+            .filter(Calligraphy.character_id == character.id, Calligraphy.lesson_id == lesson.id)
+            .first()
+            if on_conflict else None
+        )
+
+        if existing_calligraphy:
+            if on_conflict == "merge":
+                existing_calligraphy.tags = stack_related(existing_calligraphy.tags, data.tags, Tag, session)
+                existing_calligraphy.sources = stack_related(existing_calligraphy.sources, data.sources, Source, session)
+            elif on_conflict == "overwrite":
+                existing_calligraphy.tags = resolve_related(data.tags, Tag, session)
+                existing_calligraphy.sources = resolve_related(data.sources, Source, session)
+            # "keep": leave existing_calligraphy's lists untouched
+            existing_calligraphy.example_words = example_words or existing_calligraphy.example_words
+            existing_calligraphy.example_sentences = example_sentences or existing_calligraphy.example_sentences
+            result = db_manager.modify(existing_calligraphy, session=session, commit=False)
+
+            if result:
+                logger.info(f"Merged into existing Calligraphy item: {result.id}")
+            else:
+                logger.error(f"Failed to merge Calligraphy item: {existing_calligraphy.id}")
+
+            return self._serialize(result, as_dict, include_relations)
+
         calligraphy = Calligraphy(
             id=db_manager.generate_new_id(
                 model_class=Calligraphy,
@@ -211,8 +237,8 @@ class CalligraphyService:
             character=character,
             example_words=example_words,
             example_sentences=example_sentences,
-            tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
-            sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
+            tags=resolve_related(data.tags, Tag, session),
+            sources=resolve_related(data.sources, Source, session),
         )
 
         result = db_manager.insert(obj=calligraphy, session=session, commit=False)
@@ -277,6 +303,11 @@ class CalligraphyService:
 
         for key, value in update_data.items():
             setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

@@ -36,13 +36,15 @@ class DailyStatsService:
         return [entry.to_dict(include_relations=include_relations) for entry in entries]
 
     @transactional
-    def is_session_complete(
+    def has_reached_daily_goal_today(
         self,
         user_id: str,
         language_id: str,
         session: Optional[Session] = None
     ) -> bool:
-        """Check if the current session has any progress tracking entries that haven't been applied to daily stats."""
+        """Whether today's streak goal was already hit before this call (used to
+        stamp a ProgressTracking row with the state at write time — NOT whether
+        this specific review session/answer is "complete")."""
         today: datetime.date = datetime.now().date()
         language_stats = db_manager.find_by_attr(
             model_class=DailyStats,
@@ -73,6 +75,31 @@ class DailyStatsService:
             session=session,
         )
         return self._serialize(entry, as_dict, include_relations)
+
+    @transactional
+    def get_range_for_user(
+        self,
+        user_id: str,
+        language_id: str,
+        start_date,
+        end_date,
+        session: Optional[Session] = None,
+        as_dict: bool = False,
+        include_relations: bool = True,
+    ) -> list[DailyStats] | list[dict]:
+        """Get all DailyStats entries for a user/language between start_date and end_date (inclusive)."""
+        entries = (
+            session.query(DailyStats)
+            .filter(
+                DailyStats.user_id == user_id,
+                DailyStats.language_id == language_id,
+                func.date(DailyStats.created_at) >= start_date,
+                func.date(DailyStats.created_at) <= end_date,
+            )
+            .order_by(DailyStats.created_at.asc())
+            .all()
+        )
+        return self._serialize_list(entries, as_dict, include_relations)
 
     @transactional
     def get_today_for_user(

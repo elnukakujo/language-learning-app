@@ -72,7 +72,7 @@ class ProgressTrackingService:
             duration_ms=data.duration_ms,
             hint_used=data.hint_used,
             attempt_number=data.attempt_number,
-            session_completed=daily_stats_service.is_session_complete(user_id=data.user_id, language_id=data.language_id, session=session),
+            session_completed=daily_stats_service.has_reached_daily_goal_today(user_id=data.user_id, language_id=data.language_id, session=session),
         )
 
         result = db_manager.insert(obj=entry, session=session, commit=False)

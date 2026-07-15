@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from ...core.database import db_manager, transactional, stack_related
+from ...core.database import db_manager, transactional, stack_related, resolve_related
 from ...core.exceptions import DuplicateEntityError
 from ...models.components import Word, Character
 from ...models.system_data import Tag, Source
@@ -220,6 +220,10 @@ class WordService:
         else:
             existing.audio_files = update_data.get('audio_files', existing.audio_files)
             existing.image_files = update_data.get('image_files', existing.image_files)
+            if data.tags is not None:
+                existing.tags = resolve_related(data.tags, Tag, session)
+            if data.sources is not None:
+                existing.sources = resolve_related(data.sources, Source, session)
         existing.characters = list(characters.values())
 
         return db_manager.modify(existing, session=session, commit=False)

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 from ...schemas.containers import LanguageDict
 from ...models.system_data import Source, Tag
 from ...models.containers import Language, Lesson
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related
 
 class LanguageService:
     def _serialize(self, language: Language | None, as_dict: bool, include_relations: bool) -> Language | dict | None:
@@ -248,6 +248,11 @@ class LanguageService:
             current_lesson_id=existing.current_lesson_id,
             session=session
         )
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

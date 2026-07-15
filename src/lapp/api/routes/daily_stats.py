@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Blueprint, jsonify, request
 
 import logging
@@ -50,6 +52,65 @@ def get_daily_stats_today():
         include_relations=False,
     )
     return jsonify(daily_stats)
+
+
+@bp.route('/me/history', methods=['GET'])
+def get_daily_stats_history():
+    """Get daily stats for a date range (defaults to since account creation) — for a GitHub-style practice heatmap.
+    ---
+    tags:
+      - daily-stats
+    parameters:
+      - name: user_id
+        in: query
+        type: string
+        required: true
+      - name: language_id
+        in: query
+        type: string
+        required: true
+      - name: start_date
+        in: query
+        type: string
+        required: false
+        description: ISO date, defaults to the user's account creation date
+      - name: end_date
+        in: query
+        type: string
+        required: false
+        description: ISO date, defaults to today
+    responses:
+      200:
+        description: List of daily stats entries
+      404:
+        description: User or language not found
+    """
+    user_id = request.args.get('user_id')
+    language_id = request.args.get('language_id')
+
+    if not user_id or not language_id:
+        return jsonify({'error': 'user_id and language_id are required'}), 400
+
+    user = user_service.get_by_id(user_id=user_id)
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    if language_service.get_by_id(language_id=language_id) is None:
+        return jsonify({'error': 'Language not found'}), 404
+
+    start_date_param = request.args.get('start_date')
+    end_date_param = request.args.get('end_date')
+    start_date = date.fromisoformat(start_date_param) if start_date_param else user.created_at.date()
+    end_date = date.fromisoformat(end_date_param) if end_date_param else date.today()
+
+    history = daily_stats_service.get_range_for_user(
+        user_id=user_id,
+        language_id=language_id,
+        start_date=start_date,
+        end_date=end_date,
+        as_dict=True,
+        include_relations=False,
+    )
+    return jsonify(history)
 
 
 @bp.route('/<daily_stats_id>', methods=['GET'])

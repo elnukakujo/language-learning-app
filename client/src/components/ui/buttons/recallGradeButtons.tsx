@@ -24,7 +24,7 @@ export default function RecallGradeButtons({ onGrade }: RecallGradeButtonsProps)
             <p className="text-xs" style={{ color: "var(--color-muted)" }}>
                 How well did you remember?
             </p>
-            <div className="flex gap-2">
+            <div className="btn-row flex-wrap">
                 {GRADES.map(({ value, label, hint, score }) => (
                     <button
                         key={value}

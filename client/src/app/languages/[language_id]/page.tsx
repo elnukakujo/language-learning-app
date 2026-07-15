@@ -5,7 +5,7 @@ import ElementTagsCard from "@/components/elements/elementTagsCard";
 import ElementSourcesCard from "@/components/elements/elementSourcesCard";
 import LanguageStatsPanel from "@/components/language/LanguageStatsPanel";
 import { getLanguageData } from "@/api/language";
-import { getTodayDailyStats } from "@/api/dailyStats";
+import { getTodayDailyStats, getDailyStatsHistory } from "@/api/dailyStats";
 import LanguageHeaderCard from "@/components/language/languageHeaderCard";
 import LessonsSection from "@/components/language/lessonsSection";
 
@@ -14,6 +14,7 @@ export default async function Language({ params }: { params: Promise<{ language_
     const { language, lessons } = await getLanguageData(language_id);
     const dailyStats = language.user_id ? await getTodayDailyStats(language.user_id, language_id) : null;
     const commitmentLog = language.user_id ? await (await import("@/api/commitmentLog")).getCommitmentLogForUserLanguage(language.user_id, language_id) : null;
+    const history = language.user_id ? await getDailyStatsHistory(language.user_id, language_id) : [];
     const hasLessons = lessons && lessons.length > 0;
 
     return (
@@ -32,7 +33,7 @@ export default async function Language({ params }: { params: Promise<{ language_
                     </NavButton>
                     <DeleteButton element_id={language_id}/>
                 </nav>
-                <LanguageStatsPanel dailyStats={dailyStats} commitmentLog={commitmentLog} />
+                <LanguageStatsPanel dailyStats={dailyStats} commitmentLog={commitmentLog} history={history} />
             </header>
             <article className="flex flex-col space-y-4">
                 {hasLessons && (

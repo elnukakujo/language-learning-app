@@ -10,7 +10,7 @@ from ...schemas.containers import LessonDict
 from ...models.containers import Lesson
 from ...models.system_data import Tag, Source
 from ...models.features import Calligraphy, Vocabulary, Grammar, Exercise
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related
 from .language import LanguageService
 
 language_service = LanguageService()
@@ -172,6 +172,11 @@ class LessonService:
 
         for key, value in update_data.items():
             setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

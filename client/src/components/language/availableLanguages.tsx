@@ -8,7 +8,7 @@ export default async function AvailableLanguages() {
     const languages: Language[] = await getAvailableLanguages(userId!);
 
     return (
-        <article className="flex flex-row gap-4 items-center">
+        <article className="flex flex-row flex-wrap gap-4 items-center">
             {languages.length === 0 && (
                 <p className="text-sm text-muted">No available languages found. Please add some.</p>
             )}

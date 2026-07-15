@@ -96,6 +96,7 @@ class CommitmentLogService:
             total_time_ms=0,
             longest_streak_ever=0,
             streak_last_computed_at="",
+            days_active_last_counted_at="",
         )
         result = db_manager.insert(obj=entry, session=session, commit=False)
         if result is None:
@@ -139,8 +140,10 @@ class CommitmentLogService:
                 )
 
             # Apply append-only aggregation
-            if commitment_log.streak_last_computed_at.split("T")[0] != datetime.utcnow().isoformat().split("T")[0]: # Only count a new day if the last computed streak date is not today
+            today = datetime.now().isoformat().split("T")[0]
+            if commitment_log.days_active_last_counted_at.split("T")[0] != today: # Only count a new day once
                 commitment_log.days_active += 1
+                commitment_log.days_active_last_counted_at = today
 
             commitment_log.total_items_reviewed += 1
             commitment_log.total_time_ms += int(progress_tracking.duration_ms)
