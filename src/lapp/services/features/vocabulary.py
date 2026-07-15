@@ -213,10 +213,17 @@ class VocabularyService:
 
         if data.word is not None:
             data.word.language_id = existing.lesson.language_id
-            # merge: updating a vocabulary's word isn't the "am I creating a
-            # duplicate" moment the dialog is for — preserve the old silent-merge
-            # behavior here rather than surfacing a conflict on every edit.
-            word = word_service.create(data.word, session=session, on_conflict="merge")
+            if existing.word and data.word.word == existing.word.word:
+                # same word, no text change — a plain edit of the linked
+                # word, not a duplicate to resolve, so replace (not union)
+                # its media/tags/sources.
+                word = word_service.update(existing.word_id, data.word, session=session)
+            else:
+                # merge: changing the word's text could collide with a
+                # different existing word — preserve the old silent-merge
+                # behavior for that case rather than surfacing a conflict
+                # on every text edit.
+                word = word_service.create(data.word, session=session, on_conflict="merge")
             if word:
                 existing.word = word
                 existing.word_id = word.id
