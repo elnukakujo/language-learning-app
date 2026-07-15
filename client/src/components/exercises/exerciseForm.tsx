@@ -19,10 +19,37 @@ import type { ExerciseContent } from "@/interface/features/Exercise";
 import SourceSelector from "@/components/sources/sourceSelector";
 
 const STRUCTURED_TYPES: NonNullable<Exercise["exercise_type"]>[] = [
-    "type_in_the_blank", "select_in_the_blank", "matching", "organize", "true_false",
+    "type_in_the_blank", "select_in_the_blank", "matching", "organize", "true_false", "quizz",
 ];
 
 type BlankRow = { answer: string; options: string }; // options: comma-separated
+
+// Appends/strips a trailing "\n" on a segment, rendered as a horizontal divider in the practice card.
+function toggleLineBreak(value: string): string {
+    return value.endsWith("\n") ? value.slice(0, -1) : value + "\n";
+}
+
+function SegmentInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+    const hasBreak = value.endsWith("\n");
+    return (
+        <div className="flex items-center gap-2">
+            <input
+                className="input flex-1"
+                placeholder={placeholder}
+                value={hasBreak ? value.slice(0, -1) : value}
+                onChange={(e) => onChange(hasBreak ? e.target.value + "\n" : e.target.value)}
+            />
+            <button
+                type="button"
+                className={`chip ${hasBreak ? 'bg-accent text-primary-foreground' : ''}`}
+                title="Insert a line-break separator after this segment"
+                onClick={() => onChange(toggleLineBreak(value))}
+            >
+                ⏎
+            </button>
+        </div>
+    );
+}
 
 // Builds the content object + a human-readable question/answer pair for the structured types.
 function BlankContentEditor({
@@ -45,11 +72,10 @@ function BlankContentEditor({
     return (
         <fieldset className="card flex flex-col gap-3 w-full">
             <legend className="text-sm font-medium px-1 w-fit">Sentence with blanks</legend>
-            <input
-                className="input"
+            <SegmentInput
                 placeholder="Text before first blank"
                 value={segments[0] ?? ""}
-                onChange={(e) => setSegments([e.target.value, ...segments.slice(1)])}
+                onChange={(v) => setSegments([v, ...segments.slice(1)])}
             />
             {blanks.map((blank, i) => (
                 <div key={i} className="flex flex-col gap-2 border-t border-dashed border-border pt-2">
@@ -72,15 +98,53 @@ function BlankContentEditor({
                         )}
                         <button type="button" className="chip-remove" onClick={() => removeBlank(i)}>x</button>
                     </div>
-                    <input
-                        className="input"
+                    <SegmentInput
                         placeholder="Text after this blank"
                         value={segments[i + 1] ?? ""}
-                        onChange={(e) => setSegments(segments.map((s, idx) => idx === i + 1 ? e.target.value : s))}
+                        onChange={(v) => setSegments(segments.map((s, idx) => idx === i + 1 ? v : s))}
                     />
                 </div>
             ))}
             <button type="button" className="btn btn-secondary w-fit" onClick={addBlank}>+ Add blank</button>
+        </fieldset>
+    );
+}
+
+function QuizzContentEditor({
+    options, setOptions,
+    correct, setCorrect,
+}: {
+    options: string[]; setOptions: (v: string[]) => void;
+    correct: number[]; setCorrect: (v: number[]) => void;
+}) {
+    const toggleCorrect = (i: number) => {
+        setCorrect(correct.includes(i) ? correct.filter(c => c !== i) : [...correct, i]);
+    };
+    const removeOption = (i: number) => {
+        setOptions(options.filter((_, idx) => idx !== i));
+        setCorrect(correct.filter(c => c !== i).map(c => c > i ? c - 1 : c));
+    };
+    return (
+        <fieldset className="card flex flex-col gap-2 w-full">
+            <legend className="text-sm font-medium px-1 w-fit">Options (check all valid answers)</legend>
+            {options.map((option, i) => (
+                <div key={i} className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={correct.includes(i)}
+                        onChange={() => toggleCorrect(i)}
+                    />
+                    <input
+                        className="input"
+                        placeholder="Option text"
+                        value={option}
+                        onChange={(e) => setOptions(options.map((o, idx) => idx === i ? e.target.value : o))}
+                        required
+                    />
+                    {options.length > 1 && <button type="button" className="chip-remove" onClick={() => removeOption(i)}>x</button>}
+                </div>
+            ))}
+            <button type="button" className="btn btn-secondary w-fit" onClick={() => setOptions([...options, ""])}>+ Add option</button>
         </fieldset>
     );
 }
@@ -134,6 +198,7 @@ const EXERCISE_TYPE_OPTIONS: NonNullable<Exercise["exercise_type"]>[] = [
     "matching",
     "speaking",
     "conversation",
+    "quizz",
 ];
 
 export default function ExerciseForm({
@@ -174,9 +239,9 @@ export default function ExerciseForm({
     const [imageUrl, setImageUrl] = useState<string[]>(exerciseData.image_files ?? []);
     const [audioUrl, setAudioUrl] = useState<string[]>(exerciseData.audio_files ?? []);
 
-    const [relatedVocabularies, setRelatedVocabularies] = useState<Partial<Vocabulary>[]>(exerciseData.related_vocabulary ?? []);
-    const [relatedCalligraphies, setRelatedCalligraphies] = useState<Partial<Calligraphy>[]>(exerciseData.related_calligraphy ?? []);
-    const [relatedGrammars, setRelatedGrammars] = useState<Partial<Grammar>[]>(exerciseData.related_grammar ?? []);
+    const [relatedVocabularies, setRelatedVocabularies] = useState<string[]>(exerciseData.related_vocabulary ?? []);
+    const [relatedCalligraphies, setRelatedCalligraphies] = useState<string[]>(exerciseData.related_calligraphy ?? []);
+    const [relatedGrammars, setRelatedGrammars] = useState<string[]>(exerciseData.related_grammar ?? []);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(exerciseData.tags ? exerciseData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(exerciseData.sources ? exerciseData.sources.map(source => source.id!) : []);
 
@@ -201,6 +266,12 @@ export default function ExerciseForm({
     );
     const [tfAnswer, setTfAnswer] = useState<boolean>(
         existingContent && "answer" in existingContent && typeof existingContent.answer === "boolean" ? existingContent.answer : true
+    );
+    const [quizOptions, setQuizOptions] = useState<string[]>(
+        existingContent && "options" in existingContent ? existingContent.options : ["", ""]
+    );
+    const [quizCorrect, setQuizCorrect] = useState<number[]>(
+        existingContent && "correct" in existingContent ? existingContent.correct : []
     );
 
     useEffect(() => {
@@ -251,6 +322,12 @@ export default function ExerciseForm({
                 setQuestion("A statement to evaluate");
                 setSupportText("");
                 setAnswer("true");
+                break;
+            case "quizz":
+                if (isUpdate) break;
+                setQuestion("A question with one or more correct options");
+                setSupportText("");
+                setAnswer("");
                 break;
             case "answering":
                 if (isUpdate) break;
@@ -306,6 +383,9 @@ export default function ExerciseForm({
             content = { statement: tfStatement, answer: tfAnswer };
             normalizedQuestion = tfStatement;
             normalizedAnswer = String(tfAnswer);
+        } else if (exerciseType === "quizz") {
+            content = { options: quizOptions, correct: quizCorrect };
+            normalizedAnswer = quizCorrect.map(i => quizOptions[i]).join(", ");
         }
 
         const element: Partial<Exercise> = {
@@ -360,7 +440,7 @@ export default function ExerciseForm({
 
             {exerciseType !== undefined && (
                 <>
-                    {!["matching", "organize", "conversation", ...STRUCTURED_TYPES].includes(exerciseType) && (
+                    {!["matching", "organize", "conversation", ...STRUCTURED_TYPES.filter(t => t !== "quizz")].includes(exerciseType) && (
                         <AutoSizeTextArea
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
@@ -425,7 +505,11 @@ export default function ExerciseForm({
                         <OrganizeContentEditor items={organizeItems} setItems={setOrganizeItems} />
                     )}
 
-                    {!["true_false", "matching", "organize", "speaking", "type_in_the_blank", "select_in_the_blank", "conversation"].includes(exerciseType) && (
+                    {exerciseType === "quizz" && (
+                        <QuizzContentEditor options={quizOptions} setOptions={setQuizOptions} correct={quizCorrect} setCorrect={setQuizCorrect} />
+                    )}
+
+                    {!["true_false", "matching", "organize", "speaking", "type_in_the_blank", "select_in_the_blank", "conversation", "quizz"].includes(exerciseType) && (
                         <AutoSizeTextArea
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}
@@ -440,14 +524,14 @@ export default function ExerciseForm({
                                 id: item.id!,
                                 value: item.word.word + " - " + item.word.translation,
                             }))}
-                            selectedElements={relatedVocabularies.map(voc => voc.id!)}
-                            setSelectedElements={(selected) => setRelatedVocabularies(selected.map((id: string) => lessonElements.vocabularies.find((voc) => voc.id === id)!))}
+                            selectedElements={relatedVocabularies}
+                            setSelectedElements={setRelatedVocabularies}
                             label="Associated Vocabulary"
                         />
                         <OpenCloseMenu
                             elements={lessonElements.grammars.map((item) => ({ id: item.id!, value: item.title }))}
-                            selectedElements={relatedGrammars.map(gram => gram.id!)}
-                            setSelectedElements={(selected) => setRelatedGrammars(selected.map((id: string) => lessonElements.grammars.find((gram) => gram.id === id)!))}
+                            selectedElements={relatedGrammars}
+                            setSelectedElements={setRelatedGrammars}
                             label="Associated Grammar"
                         />
                         <OpenCloseMenu
@@ -455,8 +539,8 @@ export default function ExerciseForm({
                                 id: item.id!,
                                 value: item.character.character + " - " + item.character.phonetic,
                             }))}
-                            selectedElements={relatedCalligraphies.map(call => call.id!)}
-                            setSelectedElements={(selected) => setRelatedCalligraphies(selected.map((id: string) => lessonElements.calligraphies.find((call) => call.id === id)!))}
+                            selectedElements={relatedCalligraphies}
+                            setSelectedElements={setRelatedCalligraphies}
                             label="Associated Calligraphies"
                         />
                     </section>

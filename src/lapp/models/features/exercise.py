@@ -11,7 +11,7 @@ class Exercise(BaseFeatureModel):
     question = Column(String, nullable=False, index=True)
     answer = Column(String, nullable=False)
     text_support = Column(String, default="")   # e.g., additional text information
-    content = Column(JSON, nullable=True)  # structured data for type_in_the_blank/select_in_the_blank/matching/organize/true_false
+    content = Column(JSON, nullable=True)  # structured data for type_in_the_blank/select_in_the_blank/matching/organize/true_false/quizz
     
     related_vocabulary = relationship('Vocabulary', secondary=exercise_vocabulary_link)
     related_calligraphy = relationship('Calligraphy', secondary=exercise_calligraphy_link)

@@ -1,23 +1,21 @@
 import { BaseFeature } from "../base";
-import Calligraphy from "./Calligraphy";
-import Grammar from "./Grammar";
-import Vocabulary from "./Vocabulary";
 
 export type ExerciseContent =
     | { segments: string[]; blanks: { options?: string[]; answer: string }[] } // type_in_the_blank / select_in_the_blank
     | { pairs: [string, string][] } // matching
     | { items: string[]; answer_order: number[] } // organize
-    | { statement: string; answer: boolean }; // true_false
+    | { statement: string; answer: boolean } // true_false
+    | { options: string[]; correct: number[] }; // quizz
 
 export default interface Exercise extends BaseFeature {
     exercise_type?: 'essay' | 'answering' | 'translate' | 'organize' | 'conversation' |
-                    'type_in_the_blank' | 'select_in_the_blank' | 'matching' | 'true_false' | 'speaking';
+                    'type_in_the_blank' | 'select_in_the_blank' | 'matching' | 'true_false' | 'speaking' | 'quizz';
     question: string;
     answer: string;
     text_support?: string;
     content?: ExerciseContent;
 
-    related_vocabulary?: Partial<Vocabulary>[];
-    related_calligraphy?: Partial<Calligraphy>[];
-    related_grammar?: Partial<Grammar>[];
+    related_vocabulary?: string[];
+    related_calligraphy?: string[];
+    related_grammar?: string[];
 };

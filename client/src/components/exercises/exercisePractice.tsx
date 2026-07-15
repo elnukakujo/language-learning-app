@@ -14,6 +14,7 @@ import TrueFalseExercise from "./trueFalseExercise";
 import SpeakingExercise from "./speakingExercise";
 import ConversationExercise from "./conversationExercise";
 import SelectInTheBlankExercise from "./selectInTheBlankExercise";
+import QuizzExercise from "./quizzExercise";
 import ProgressBar from "../ui/progressBar";
 
 const EXERCISE_TYPE_LABELS: Record<string, string> = {
@@ -27,6 +28,7 @@ const EXERCISE_TYPE_LABELS: Record<string, string> = {
     true_false: "True / False",
     speaking: "Speaking",
     conversation: "Conversation",
+    quizz: "Quizz",
 };
 
 export default function ExercisePractice( { exercise_lists } : { exercise_lists: Exercise[] }) {
@@ -58,6 +60,7 @@ export default function ExercisePractice( { exercise_lists } : { exercise_lists:
                 {currentExercise.exercise_type === 'true_false' && <TrueFalseExercise exercise={currentExercise} />}
                 {currentExercise.exercise_type === 'speaking' && <SpeakingExercise exercise={currentExercise} />}
                 {currentExercise.exercise_type === 'conversation' && <ConversationExercise exercise={currentExercise} />}
+                {currentExercise.exercise_type === 'quizz' && <QuizzExercise exercise={currentExercise} />}
             </div>
             {!isLastExercise ? (
                 <button

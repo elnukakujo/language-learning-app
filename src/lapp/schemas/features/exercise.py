@@ -2,20 +2,17 @@ from typing import Optional
 from pydantic import model_validator
 
 from ..base import BaseFeatureDict
-from .vocabulary import VocabularyDict
-from .calligraphy import CalligraphyDict
-from .grammar import GrammarDict
 
 class ExerciseDict(BaseFeatureDict):
     exercise_type: Optional[str] = None         # e.g., "type_in_the_blank", "multiple_choice"
     question: str
     answer: str
     text_support: Optional[str] = None          # e.g., additional text information
-    content: Optional[dict] = None              # structured data for the 5 types below
+    content: Optional[dict] = None              # structured data for the structured types below
 
-    related_vocabulary: Optional[list[VocabularyDict]] = None # e.g., ["voc_V1"]
-    related_calligraphy: Optional[list[CalligraphyDict]] = None  # e.g., ["call_C1"]
-    related_grammar: Optional[list[GrammarDict]] = None    # e.g., ["gram_G1"]
+    related_vocabulary: Optional[list[str]] = None # e.g., ["voc_V1"]
+    related_calligraphy: Optional[list[str]] = None  # e.g., ["call_C1"]
+    related_grammar: Optional[list[str]] = None    # e.g., ["gram_G1"]
 
     @model_validator(mode='after')
     def _validate(self):
@@ -30,6 +27,7 @@ class ExerciseDict(BaseFeatureDict):
             "true_false",
             "speaking",
             "conversation",
+            "quizz",
         ]
         if self.exercise_type not in valid_exercise_types:
             raise ValueError(f"Invalid exercise_type: {self.exercise_type}. Must be one of {valid_exercise_types}.")
@@ -40,6 +38,7 @@ class ExerciseDict(BaseFeatureDict):
             "matching": {"pairs"},
             "organize": {"items", "answer_order"},
             "true_false": {"statement", "answer"},
+            "quizz": {"options", "correct"},
         }
         required_keys = structured_required_keys.get(self.exercise_type)
         if required_keys:
