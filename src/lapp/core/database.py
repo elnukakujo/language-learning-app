@@ -701,6 +701,12 @@ def stack_related(existing_items, incoming_refs, model_class, session: Session):
     new_items = session.query(model_class).filter(model_class.id.in_(new_ids)).all()
     return existing_items + new_items
 
+
+def resolve_related(refs, model_class, session: Session):
+    """Query and return the ORM objects matching incoming {id: ...}-like refs, by id."""
+    ids = [ref.id for ref in (refs or []) if getattr(ref, "id", None)]
+    return session.query(model_class).filter(model_class.id.in_(ids)).all() if ids else []
+
 # Convenience function for Flask initialization
 def init_db(app: Flask) -> DatabaseManager:
     """

@@ -10,6 +10,7 @@ class CommitmentLog(BaseDataCollectionModel):
     total_time_ms = Column(Float, nullable=False)
     longest_streak_ever = Column(Integer, nullable=False)
     streak_last_computed_at = Column(String, nullable=False)  # ISO datetime string
+    days_active_last_counted_at = Column(String, nullable=False)  # ISO date string, last day days_active was incremented
 
     def to_dict(self, include_relations: bool = False) -> dict:
         return {
@@ -19,4 +20,5 @@ class CommitmentLog(BaseDataCollectionModel):
             "total_time_ms": self.total_time_ms,
             "longest_streak_ever": self.longest_streak_ever,
             "streak_last_computed_at": self.streak_last_computed_at,
+            "days_active_last_counted_at": self.days_active_last_counted_at,
         }

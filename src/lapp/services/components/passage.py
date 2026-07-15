@@ -9,7 +9,7 @@ from ...schemas.components import PassageDict
 from ...models.components import Passage, Word, Character
 from ...models.system_data import Tag, Source
 from ...models.containers import Language
-from ...core.database import db_manager, transactional
+from ...core.database import db_manager, transactional, resolve_related
 from ...utils import enrich_passage, get_language_by_iso2t
 
 
@@ -263,6 +263,10 @@ class PassageService:
         existing.image_files = update_data.get('image_files', existing.image_files)
         existing.words = list(words.values())
         existing.characters = list(characters.values())
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

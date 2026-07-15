@@ -25,7 +25,7 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 
 	return (
 		<header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-md">
-			<div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+			<div className="nav-row mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
 				<div className="flex items-center gap-3">
 					<div className={pathname === "/" ? "invisible pointer-events-none" : "visible"}>
 						<BackButton />
@@ -60,7 +60,7 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 						);
 					})}
 				</nav>
-				<div className="min-w-0 flex-1">
+				<div className="nav-search">
 					<SearchBar currentUserId={currentUserId} />
 				</div>
                 <div className={`flex items-center gap-2 ${currentUserId ? "visible" : "invisible pointer-events-none"}`}>

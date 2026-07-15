@@ -12,8 +12,8 @@ from ...models.system_data import Tag, Source
 from ..containers import LessonService, LanguageService
 from ..components import WordService, PassageService
 from ..data_collection import ProgressTrackingService
-from ...core.database import db_manager, transactional
-from ...utils import update_score, update_difficulty
+from ...core.database import db_manager, transactional, resolve_related, stack_related
+from ...utils import update_score, update_difficulty, stack_lists
 
 lesson_service = LessonService()
 language_service = LanguageService()
@@ -148,6 +148,35 @@ class VocabularyService:
             if passage:
                 example_sentences.append(passage)
 
+        existing_vocabulary = (
+            session.query(Vocabulary)
+            .filter(Vocabulary.word_id == word.id, Vocabulary.lesson_id == data.lesson_id)
+            .first()
+            if on_conflict else None
+        )
+
+        if existing_vocabulary:
+            if on_conflict == "merge":
+                existing_vocabulary.image_files = stack_lists(existing_vocabulary.image_files, data.image_files)
+                existing_vocabulary.audio_files = stack_lists(existing_vocabulary.audio_files, data.audio_files)
+                existing_vocabulary.tags = stack_related(existing_vocabulary.tags, data.tags, Tag, session)
+                existing_vocabulary.sources = stack_related(existing_vocabulary.sources, data.sources, Source, session)
+            elif on_conflict == "overwrite":
+                existing_vocabulary.image_files = data.image_files or []
+                existing_vocabulary.audio_files = data.audio_files or []
+                existing_vocabulary.tags = resolve_related(data.tags, Tag, session)
+                existing_vocabulary.sources = resolve_related(data.sources, Source, session)
+            # "keep": leave existing_vocabulary's lists untouched
+            existing_vocabulary.example_sentences = example_sentences or existing_vocabulary.example_sentences
+            result = db_manager.modify(existing_vocabulary, session=session, commit=False)
+
+            if result:
+                logger.info(f"Merged into existing VocabularyFeature item: {result.id}")
+            else:
+                logger.error(f"Failed to merge VocabularyFeature item: {existing_vocabulary.id}")
+
+            return self._serialize(result, as_dict, include_relations)
+
         vocabulary = Vocabulary(
             id=db_manager.generate_new_id(model_class=Vocabulary, session=session),
             word_id=word.id,
@@ -155,8 +184,8 @@ class VocabularyService:
             image_files=data.image_files or [],
             audio_files=data.audio_files or [],
             example_sentences=example_sentences,
-            tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
-            sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
+            tags=resolve_related(data.tags, Tag, session),
+            sources=resolve_related(data.sources, Source, session),
         )
 
         result = db_manager.insert(obj=vocabulary, session=session, commit=False)
@@ -204,6 +233,11 @@ class VocabularyService:
 
         for key, value in update_data.items():
             setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
 
         result = db_manager.modify(existing, session=session, commit=False)
 

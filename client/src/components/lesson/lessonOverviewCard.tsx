@@ -17,7 +17,7 @@ export default function LessonOverviewCard({ language_code, lesson }: { language
     const levelLabel = system?.levels[lesson.level]?.code ?? `Level ${lesson.level}`;
     return (
         <button
-            className="card flex h-48 w-48 shrink-0 flex-col gap-2 overflow-hidden text-left cursor-pointer transition hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-md"
+            className="card overview-card flex flex-col gap-2 overflow-hidden text-left cursor-pointer transition hover:-translate-y-0.5 hover:bg-accent-soft hover:shadow-md"
             onClick={handleClick}
         >
             <header className="flex flex-col">
