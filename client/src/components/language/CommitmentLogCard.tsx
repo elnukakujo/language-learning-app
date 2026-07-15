@@ -9,6 +9,15 @@ export default function CommitmentLogCard({ commitmentLog }: { commitmentLog: Co
         return `${hours}h ${minutes}m`
     }
 
+    function formatLastUpdated(iso: string) {
+        const date = new Date(iso)
+        const today = new Date()
+        const isToday = date.toDateString() === today.toDateString()
+        const datePart = isToday ? "Today" : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+        const timePart = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+        return `${datePart} at ${timePart}`
+    }
+
     if (!commitmentLog) {
         return (
             <section className="flex flex-col gap-2 text-sm">
@@ -24,7 +33,7 @@ export default function CommitmentLogCard({ commitmentLog }: { commitmentLog: Co
         <section className="flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between gap-4">
                 <h4 className="font-serif text-base text-ink">Commitment</h4>
-                <span className="text-xs text-muted">Last updated {new Date(commitmentLog.updated_at ?? commitmentLog.created_at).toLocaleString()}</span>
+                <span className="text-xs text-muted">Last updated {formatLastUpdated(commitmentLog.updated_at ?? commitmentLog.created_at)}</span>
             </div>
 
             <div className="flex flex-row gap-3 overflow-x-auto">
@@ -51,7 +60,7 @@ export default function CommitmentLogCard({ commitmentLog }: { commitmentLog: Co
                 <div className="card flex flex-1 min-w-[7rem] flex-col gap-2">
                     <p className="text-xs uppercase tracking-wide text-muted">Last Updated</p>
                     <div className="index-divider" />
-                    <p className="text-sm font-medium">{new Date(commitmentLog.updated_at ?? commitmentLog.created_at).toLocaleString()}</p>
+                    <p className="text-sm font-medium">{formatLastUpdated(commitmentLog.updated_at ?? commitmentLog.created_at)}</p>
                 </div>
             </div>
         </section>

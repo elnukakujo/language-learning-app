@@ -75,6 +75,20 @@ def create_user():
                     example: "john_doe"
                     description: The unique username for the user
                     required: true
+                display_name:
+                    type: string
+                    example: "John Doe"
+                    description: Optional display name shown in the UI instead of username
+                    required: false
+                email:
+                    type: string
+                    example: "john@example.com"
+                    description: Required, unique email for the user
+                    required: true
+                password:
+                    type: string
+                    description: Required plaintext password, stored as a hash
+                    required: true
     responses:
       201:
         description: Language created successfully
@@ -86,10 +100,10 @@ def create_user():
     try:
         # Validate request data
         data = UserDict(**request.json)
-        
+
         # Create user
         user = user_service.create(data, as_dict=True)
-        
+
         if user:
             return jsonify({
                 'success': True,
@@ -97,9 +111,11 @@ def create_user():
             }), 201
         else:
             return jsonify({'error': 'Failed to create user'}), 400
-            
+
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @bp.route('/<user_id>', methods=['PUT', 'PATCH'])
@@ -125,6 +141,18 @@ def update_user(user_id: str):
                     example: "john_doe_updated"
                     description: The new username for the user
                     required: false
+                display_name:
+                    type: string
+                    description: New display name for the user
+                    required: false
+                email:
+                    type: string
+                    description: New email for the user, must be unique
+                    required: false
+                password:
+                    type: string
+                    description: New plaintext password; omit or leave blank to keep the current one
+                    required: false
     responses:
       200:
         description: User updated successfully
@@ -147,9 +175,9 @@ def update_user(user_id: str):
     """
     try:
         data = UserDict(**request.json)
-        
+
         user = user_service.update(user_id, data, as_dict=True)
-        
+
         if user:
             return jsonify({
                 'success': True,
@@ -157,9 +185,11 @@ def update_user(user_id: str):
             })
         else:
             return jsonify({'error': 'User not found'}), 404
-            
+
     except ValidationError as e:
         return jsonify({'error': 'Validation failed', 'details': e.errors()}), 400
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @bp.route('/<user_id>', methods=['DELETE'])

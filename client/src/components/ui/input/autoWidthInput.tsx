@@ -13,6 +13,7 @@ export default function AutoWidthInput({
   placeholder = "",
   disabled = false,
   required = false,
+  type = "text",
   ...props
 
 }: {
@@ -26,6 +27,7 @@ export default function AutoWidthInput({
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
+  type?: string;
 }) {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [resizeWidth, setResizeWidth] = useState<number>(minWidth);
@@ -65,6 +67,7 @@ export default function AutoWidthInput({
 
       <input
         {...props}
+        type={type}
         value={value ?? ""}
         onChange={(e) => onChange(e)}
         style={{ width: `${resizeWidth+1}rem`, height: `${height}rem` }}

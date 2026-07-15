@@ -69,7 +69,7 @@ export default function UserSwitcher({ currentUserId }: { currentUserId: string 
                                         : "cursor-pointer text-foreground hover:bg-accent-soft"
                                 }`}
                             >
-                                {user.username}
+                                {user.display_name || user.username}
                             </button>
                         ))
                     )}
