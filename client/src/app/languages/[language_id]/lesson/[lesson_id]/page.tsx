@@ -47,7 +47,7 @@ export default async function Lesson({ params }: { params: Promise<{ language_id
                     </DeleteButton>
                 </nav>
             </header>
-            <article className="flex flex-row gap-8 justify-around">
+            <article className="flex flex-row flex-wrap gap-8 justify-around">
                 <VocabularyList vocProps={vocabularies} />
                 <GrammarList gramProps={grammars} />
                 <CalligraphyList callProps={calligraphies} />

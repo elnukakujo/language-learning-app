@@ -386,6 +386,8 @@ export default function ExerciseForm({
         } else if (exerciseType === "quizz") {
             content = { options: quizOptions, correct: quizCorrect };
             normalizedAnswer = quizCorrect.map(i => quizOptions[i]).join(", ");
+        } else if (exerciseType === "speaking") {
+            normalizedAnswer = normalizedQuestion;
         }
 
         const element: Partial<Exercise> = {
