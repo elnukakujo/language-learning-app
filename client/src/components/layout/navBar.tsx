@@ -27,7 +27,7 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 		<header className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-md">
 			<div className="nav-row mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
 				<div className="flex items-center gap-3">
-					<div className={pathname === "/" ? "invisible pointer-events-none" : "visible"}>
+					<div className={pathname === "/" || /^\/user\/[^/]+\/update$/.test(pathname) ? "invisible pointer-events-none" : "visible"}>
 						<BackButton />
 					</div>
 					<Link href="/" className="flex flex-col leading-tight">

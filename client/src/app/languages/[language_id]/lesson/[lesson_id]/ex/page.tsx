@@ -25,7 +25,7 @@ export default async function ExercisesPage({ params }: { params: Promise<{ lang
                 {Object.entries(exercisesByType).map(([type, exercises]) => (
                     <section key={type}>
                         <h3>{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
-                        <ul>
+                        <ul className="list-none">
                             {exercises.map((exercise, index) => (
                                 <li key={index} className="card flex flex-col gap-2">
                                     {!['type_in_the_blank', 'select_in_the_blank', 'conversation'].includes(exercise.exercise_type!) && (
