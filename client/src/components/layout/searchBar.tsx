@@ -149,7 +149,7 @@ export default function SearchBar({ currentUserId }: { currentUserId: string | n
       {isOpen && query.trim().length >= 1 && (
         <div className="card absolute mt-2 w-full overflow-hidden p-0 shadow-xl">
           {results.length > 0 ? (
-            <ul className="max-h-80 overflow-y-auto py-1">
+            <ul className="max-h-80 list-none overflow-y-auto py-1">
               {results.map((result) => (
                 <li key={`${result.type}-${result.id}`}>
                   <button

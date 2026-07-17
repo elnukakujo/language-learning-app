@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -86,6 +87,7 @@ class FeedbackService:
 				messages,
 				tokenize=False,
 				add_generation_prompt=True,
+				enable_thinking=False,
 			)
 			model_inputs = self.tokenizer([prompt], return_tensors="pt").to(self.model.device)
 
@@ -102,6 +104,8 @@ class FeedbackService:
 			]
 
 			feedback = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+			# ponytail: defensive strip in case enable_thinking is ignored by a swapped-in model
+			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
 		except Exception as err:
 			logger.error(f"Failed to generate feedback with text model: {err}")

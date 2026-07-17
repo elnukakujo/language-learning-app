@@ -21,6 +21,7 @@ export default function SourceForm({ source, navDisabled = false, onSuccess }: {
     const [title, setTitle] = useState<string>(sourceData.title || "");
     const [description, setDescription] = useState<string>(sourceData.description || "");
     const [sourceType, setSourceType] = useState<string>(sourceData.source_type || "original");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchUserId = async () => {
@@ -39,6 +40,7 @@ export default function SourceForm({ source, navDisabled = false, onSuccess }: {
             source_type: sourceType,
             description,
         };
+        setIsSubmitting(true);
         try {
         if (isUpdate) {
             await updateSource(sourceData.id!, element);
@@ -53,6 +55,7 @@ export default function SourceForm({ source, navDisabled = false, onSuccess }: {
         console.error("Error creating/updating source:", error);
         alert(`Failed to ${isUpdate ? "update" : "create"} source.`);
         } finally {
+        setIsSubmitting(false);
         if (onSuccess) onSuccess();
         }
     };
@@ -81,7 +84,7 @@ export default function SourceForm({ source, navDisabled = false, onSuccess }: {
             onChange={(e) => setDescription(e.target.value)}
         />
 
-        {isUpdate ? <SubmitButton>Update Source</SubmitButton> : <SubmitButton>Add Source</SubmitButton>}
+        {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Source</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Source</SubmitButton>}
         </form>
     );
 }

@@ -40,7 +40,7 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 					</Link>
 				</div>
 
-				<nav className="flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-background p-1 shadow-sm">
+				<nav className="nav-links flex items-center gap-1 overflow-x-auto rounded-full border border-border bg-background p-1 shadow-sm">
 					{primaryLinks.map((link) => {
 						const active = isActive(link.href);
 
@@ -63,7 +63,7 @@ export default function NavBar({ currentUserId }: { currentUserId: string | null
 				<div className="nav-search">
 					<SearchBar currentUserId={currentUserId} />
 				</div>
-                <div className={`flex items-center gap-2 ${currentUserId ? "visible" : "invisible pointer-events-none"}`}>
+                <div className={`nav-user flex items-center gap-2 ${currentUserId ? "visible" : "invisible pointer-events-none"}`}>
                     <UserSwitcher currentUserId={currentUserId} />
                     <Link
                         href={`/user/${currentUserId}/update`}

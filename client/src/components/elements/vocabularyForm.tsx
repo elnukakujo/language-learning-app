@@ -52,6 +52,7 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(vocabularyData.tags ? vocabularyData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(vocabularyData.sources ? vocabularyData.sources.map(source => source.id!) : []);
     const [conflict, setConflict] = useState<ConflictError | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const buildElement = (): Partial<Vocabulary> => ({
         word: {
@@ -86,6 +87,7 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
         e.preventDefault();
         const element = buildElement();
 
+        setIsSubmitting(true);
         try {
             await submit(element);
         } catch (error) {
@@ -95,16 +97,21 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
             }
             console.error(`Failed to ${isUpdate ? "update" : "create"} vocabulary:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} vocabulary. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const resolveConflict = async (element: Partial<Vocabulary>, onConflict: "keep" | "overwrite" | "merge") => {
         setConflict(null);
+        setIsSubmitting(true);
         try {
             await submit(element, onConflict);
         } catch (error) {
             console.error("Failed to resolve vocabulary conflict:", error);
             alert("Failed to resolve conflict. Check console for details.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -234,7 +241,7 @@ export default function VocabularyForm({vocabulary, lesson_id}: {vocabulary?: Vo
                     <FontAwesomeIcon icon={faAdd}/>
                 </button>
             </article>
-            {isUpdate ? <SubmitButton>Update Vocabulary</SubmitButton> : <SubmitButton>Add Vocabulary</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Vocabulary</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Vocabulary</SubmitButton>}
         </form>
         </>
     );

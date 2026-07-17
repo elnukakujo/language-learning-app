@@ -162,7 +162,7 @@ class WordService:
 
         update_data = data.model_dump(exclude={'id', 'language_id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
-        if (existing_word := self.get_by_word(update_data['word'], language_id=existing.language_id, session=session)) and existing_word.id != word_id:
+        if update_data['word'] != existing.word and (existing_word := self.get_by_word(update_data['word'], language_id=existing.language_id, session=session)) and existing_word.id != word_id:
             logger.warning(f"Word with value '{update_data['word']}' already exists.")
             raise ValueError(f"Word with value '{update_data['word']}' already exists.")
 

@@ -133,7 +133,7 @@ class CharacterService:
         update_data = data.model_dump(exclude={'id', 'language_id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
         logger.info(f"Update data for character {character_id}: {update_data}")
 
-        if (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
+        if update_data['character'] != existing.character and (existing_character := self.get_by_character(update_data['character'], language_id=existing.language_id, session=session)) and existing_character.id != character_id:
             logger.warning(f"Character with value '{update_data['character']}' already exists.")
             raise ValueError(f"Character with value '{update_data['character']}' already exists.")
 

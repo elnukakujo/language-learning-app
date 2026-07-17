@@ -52,6 +52,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(calligraphyData.tags ? calligraphyData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(calligraphyData.sources ? calligraphyData.sources.map(source => source.id!) : []);
     const [conflict, setConflict] = useState<ConflictError | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const buildElement = (): Partial<Calligraphy> => ({
         character: {
@@ -87,6 +88,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
         e.preventDefault();
         const element = buildElement();
 
+        setIsSubmitting(true);
         try {
             await submit(element);
         } catch (error) {
@@ -96,16 +98,21 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
             }
             console.error(`Failed to ${isUpdate ? "update" : "create"} calligraphy:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} calligraphy. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const resolveConflict = async (element: Partial<Calligraphy>, onConflict: "keep" | "overwrite" | "merge") => {
         setConflict(null);
+        setIsSubmitting(true);
         try {
             await submit(element, onConflict);
         } catch (error) {
             console.error("Failed to resolve calligraphy conflict:", error);
             alert("Failed to resolve conflict. Check console for details.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -302,7 +309,7 @@ export default function CalligraphyForm({calligraphy, lesson_id}: {calligraphy?:
                     <FontAwesomeIcon icon={faAdd}/> Add Example Sentence
                 </button>
             </article>
-            {isUpdate ? <SubmitButton>Update Calligraphy</SubmitButton> : <SubmitButton>Add Calligraphy</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Calligraphy</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Calligraphy</SubmitButton>}
         </form>
         </>
     );
