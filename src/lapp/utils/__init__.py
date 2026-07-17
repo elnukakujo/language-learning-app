@@ -10,6 +10,8 @@ from .models import (
     get_stt_pipe,
     get_text_gen_model,
     get_text_gen_tokenizer,
+    get_feedback_model,
+    get_feedback_tokenizer,
     get_qwen_tts_model,
 )
 from .translate import translate
@@ -36,6 +38,8 @@ __all__ = [
     get_stt_pipe,
     get_text_gen_model,
     get_text_gen_tokenizer,
+    get_feedback_model,
+    get_feedback_tokenizer,
     get_qwen_tts_model,
     translate,
     get_phonetic,

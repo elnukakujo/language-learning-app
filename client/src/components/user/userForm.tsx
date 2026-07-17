@@ -26,6 +26,9 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
     const [learning_goals, setLearningGoals] = useState<string>(userData.preferences?.learning_goals || "");
     const [preferred_exercise_types, setPreferredExerciseTypes] = useState<string[]>(userData.preferences?.preferred_exercise_types || []);
     const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(userData.preferences?.daily_goal_minutes || 20);
+    const [aiFeedbackEnabled, setAiFeedbackEnabled] = useState<boolean>(userData.preferences?.ai_feedback_enabled ?? true);
+    const [aiTextGenEnabled, setAiTextGenEnabled] = useState<boolean>(userData.preferences?.ai_text_gen_enabled ?? true);
+    const [aiTtsEnabled, setAiTtsEnabled] = useState<boolean>(userData.preferences?.ai_tts_enabled ?? true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,7 +47,10 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 native_language_iso639_2: native_language_iso639_2,
                 learning_goals: learning_goals,
                 preferred_exercise_types: preferred_exercise_types,
-                daily_goal_minutes: dailyGoalMinutes
+                daily_goal_minutes: dailyGoalMinutes,
+                ai_feedback_enabled: aiFeedbackEnabled,
+                ai_text_gen_enabled: aiTextGenEnabled,
+                ai_tts_enabled: aiTtsEnabled
             }
         };
         try {
@@ -129,6 +135,57 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                     selectedOption={dailyGoalMinutes.toString()}
                     onChange={(selected) => setDailyGoalMinutes(parseInt((selected as string)))}
                 />
+            </article>
+
+            <article className="card w-full max-w-md flex flex-col gap-1">
+                <h3>AI Features</h3>
+                <label className="flex items-center justify-between gap-3 py-2.5">
+                    <span>
+                        <span className="block text-sm font-medium">Feedback</span>
+                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                            Generate feedback with AI, otherwise fall back to a simple template
+                        </span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0"
+                        style={{ accentColor: "var(--color-primary)" }}
+                        checked={aiFeedbackEnabled}
+                        onChange={(e) => setAiFeedbackEnabled(e.target.checked)}
+                    />
+                </label>
+                <div className="index-divider" />
+                <label className="flex items-center justify-between gap-3 py-2.5">
+                    <span>
+                        <span className="block text-sm font-medium">Example generation</span>
+                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                            Auto-generate example sentences and words
+                        </span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0"
+                        style={{ accentColor: "var(--color-primary)" }}
+                        checked={aiTextGenEnabled}
+                        onChange={(e) => setAiTextGenEnabled(e.target.checked)}
+                    />
+                </label>
+                <div className="index-divider" />
+                <label className="flex items-center justify-between gap-3 py-2.5">
+                    <span>
+                        <span className="block text-sm font-medium">Audio generation</span>
+                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                            Auto-generate audio (TTS)
+                        </span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0"
+                        style={{ accentColor: "var(--color-primary)" }}
+                        checked={aiTtsEnabled}
+                        onChange={(e) => setAiTtsEnabled(e.target.checked)}
+                    />
+                </label>
             </article>
 
             {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update user</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add User</SubmitButton>}

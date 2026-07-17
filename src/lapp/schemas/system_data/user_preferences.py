@@ -10,4 +10,7 @@ class UserPreferencesDict(BaseModel):
     preferred_exercise_types: Optional[List[str]] = []
     daily_goal_minutes: Optional[int] = 20
     last_updated: Optional[datetime] = None
+    ai_feedback_enabled: Optional[bool] = True
+    ai_text_gen_enabled: Optional[bool] = True
+    ai_tts_enabled: Optional[bool] = True
     user: Optional[dict] = None

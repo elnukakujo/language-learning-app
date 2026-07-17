@@ -1,5 +1,6 @@
 
 import logging
+import re
 logger = logging.getLogger(__name__)
 
 from ..utils import get_text_gen_model, get_text_gen_tokenizer
@@ -90,7 +91,8 @@ class TextGeneratorService:
         text = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
-            add_generation_prompt=True
+            add_generation_prompt=True,
+            enable_thinking=False
         )
         model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
 
@@ -105,7 +107,9 @@ class TextGeneratorService:
             output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
         ]
 
-        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+        output = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+        # ponytail: defensive strip in case enable_thinking is ignored by a swapped-in model
+        return re.sub(r"<think>.*?</think>", "", output, flags=re.DOTALL).strip()
 
     def generate_learnable_sentence(self, grammar_sheet: str, source_lang_code: str, target_lang_code: str) -> str:
         """
@@ -152,7 +156,7 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=96)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256)
     
     def generate_example_sentence(self, vocabulary_word: str, source_lang_code: str, target_lang_code: str) -> str:
         """
@@ -199,7 +203,7 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=96)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256)
     
     def generate_example_word(self, character: str, source_lang_code: str, target_lang_code: str) -> str:
         """
@@ -246,4 +250,4 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=24)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256)

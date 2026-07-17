@@ -6,22 +6,24 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..core.database import db_manager, transactional
-from ..utils import get_text_gen_model, get_text_gen_tokenizer
+from ..utils import get_feedback_model, get_feedback_tokenizer
 from .features import ExerciseService
+from .system_data import UserPreferencesService
 
 logger = logging.getLogger(__name__)
 
 exercise_service = ExerciseService()
+user_preferences_service = UserPreferencesService()
 
 
 class FeedbackService:
 	@property
 	def tokenizer(self):
-		return get_text_gen_tokenizer()
+		return get_feedback_tokenizer()
 
 	@property
 	def model(self):
-		return get_text_gen_model()
+		return get_feedback_model()
 
 	feedback_instruct = (
 		"You are a supportive language-learning tutor.\n"
@@ -195,5 +197,10 @@ class FeedbackService:
 
 		if input_type == "speech":
 			context["correct_audio_index"] = correct_audio_index
+
+		user_id = exercise.lesson.language.user_id
+		prefs = user_preferences_service.get_by_user_id(user_id, session=session)
+		if prefs is not None and prefs.ai_feedback_enabled is False:
+			return self._fallback_feedback(context)
 
 		return self._generate_with_model(context)

@@ -92,7 +92,10 @@ class UserPreferencesService:
             native_language_iso639_2=data.native_language_iso639_2,
             learning_goals=data.learning_goals,
             preferred_exercise_types=data.preferred_exercise_types,
-            daily_goal_minutes=data.daily_goal_minutes
+            daily_goal_minutes=data.daily_goal_minutes,
+            ai_feedback_enabled=data.ai_feedback_enabled,
+            ai_text_gen_enabled=data.ai_text_gen_enabled,
+            ai_tts_enabled=data.ai_tts_enabled,
         )
         result = db_manager.insert(pref, session=session, commit=False)
         if result:

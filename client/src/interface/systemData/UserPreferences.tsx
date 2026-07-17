@@ -9,4 +9,7 @@ export default interface UserPreferences {
     preferred_exercise_types?: string[]; // e.g., ['essay', 'translate']
     daily_goal_minutes?: number;
     last_updated: string; // ISO date string
+    ai_feedback_enabled?: boolean;
+    ai_text_gen_enabled?: boolean;
+    ai_tts_enabled?: boolean;
 }

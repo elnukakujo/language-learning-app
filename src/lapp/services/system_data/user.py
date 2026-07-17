@@ -106,7 +106,10 @@ class UserService:
                 native_language_iso639_2=user_data.preferences.native_language_iso639_2 if user_data.preferences else [],
                 learning_goals=user_data.preferences.learning_goals if user_data.preferences else "",
                 preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else [],
-                daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20
+                daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20,
+                ai_feedback_enabled=user_data.preferences.ai_feedback_enabled if user_data.preferences else True,
+                ai_text_gen_enabled=user_data.preferences.ai_text_gen_enabled if user_data.preferences else True,
+                ai_tts_enabled=user_data.preferences.ai_tts_enabled if user_data.preferences else True
             ),
             session=session,
         )
@@ -157,7 +160,10 @@ class UserService:
                 native_language_iso639_2=update_data.preferences.native_language_iso639_2 if update_data.preferences else [],
                 learning_goals=update_data.preferences.learning_goals if update_data.preferences else "",
                 preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else [],
-                daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20
+                daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20,
+                ai_feedback_enabled=update_data.preferences.ai_feedback_enabled if update_data.preferences else True,
+                ai_text_gen_enabled=update_data.preferences.ai_text_gen_enabled if update_data.preferences else True,
+                ai_tts_enabled=update_data.preferences.ai_tts_enabled if update_data.preferences else True
             ),
             session=session,
         )

@@ -17,6 +17,7 @@ from ..models.base import (
 )
 from ..schemas import GrammarDict, CalligraphyDict, VocabularyDict
 from ..services import TextGeneratorService, GrammarService, VocabularyService, CalligraphyService
+from ..services.system_data import UserPreferencesService
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,8 @@ def generate_missing_texts(app: Flask):
             grammar_service = GrammarService()
             vocabulary_service = VocabularyService()
             calligraphy_service = CalligraphyService()
+            user_preferences_service = UserPreferencesService()
+            ai_text_gen_enabled_by_user: dict[str, bool] = {}
 
             calligraphies_without_examples: list[Calligraphy] = (
                 session.query(Calligraphy)
@@ -117,6 +120,14 @@ def generate_missing_texts(app: Flask):
                 progress.set_postfix_str(f"{type(feature).__name__} {feature.id}")
                 language: Language = db_manager.find_by_pk(Language(id=feature.lesson.language_id), session=session)
                 lang_codes = f"{language.source_iso639_2t}->{language.target_iso639_2t}"
+
+                if language.user_id not in ai_text_gen_enabled_by_user:
+                    prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
+                    ai_text_gen_enabled_by_user[language.user_id] = prefs is None or prefs.ai_text_gen_enabled is not False
+                if not ai_text_gen_enabled_by_user[language.user_id]:
+                    progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [ai text-gen disabled for user]")
+                    continue
+
                 logger.info(f"Generating text for feature ID {feature.id} with language {language.source_iso639_2t} -> {language.target_iso639_2t}")
                 try:
                     # Generate audio using TTS service
