@@ -49,6 +49,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
     const [sourceIso639_2t, setSourceIso639_2t] = useState<string | undefined>(languageData.source_iso639_2t);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(languageData.tags ? languageData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(languageData.sources ? languageData.sources.map(source => source.id!) : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     useEffect(() => {
         const fetchUserId = async () => {
@@ -97,6 +98,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
             sources: selectedSourceIds.map(id => ({ id }))
         };
 
+        setIsSubmitting(true);
         try {
             console.debug(element);
             if (isUpdate) {
@@ -110,6 +112,8 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} language:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} language. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -188,7 +192,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
                 elementId={languageData.id!}
             />
 
-            {isUpdate ? <SubmitButton>Update Language</SubmitButton> : <SubmitButton>Add Language</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Language</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Language</SubmitButton>}
         </form>
     );
 }

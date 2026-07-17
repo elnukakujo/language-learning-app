@@ -244,6 +244,7 @@ export default function ExerciseForm({
     const [relatedGrammars, setRelatedGrammars] = useState<string[]>(exerciseData.related_grammar ?? []);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(exerciseData.tags ? exerciseData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(exerciseData.sources ? exerciseData.sources.map(source => source.id!) : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ── Structured content state (type_in_the_blank, select_in_the_blank, matching, organize, true_false) ──
     const existingContent = exerciseData.content;
@@ -411,6 +412,7 @@ export default function ExerciseForm({
             return;
         }
 
+        setIsSubmitting(true);
         try {
             let exerciseId: string;
             if (isUpdate) {
@@ -427,6 +429,8 @@ export default function ExerciseForm({
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} exercise:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} exercise. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -559,7 +563,7 @@ export default function ExerciseForm({
                         elementId={exerciseData.id!}
                     />
 
-                    {isUpdate ? <SubmitButton>Update Exercise</SubmitButton> : <SubmitButton>Add Exercise</SubmitButton>}
+                    {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Exercise</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Exercise</SubmitButton>}
                 </>
             )}
         </form>

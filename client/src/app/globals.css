@@ -669,11 +669,28 @@
     flex-basis: 100%;
     min-width: 0;
   }
+  @media (max-width: 639px) {
+    /* Phone: give links/search/user each their own full-width row so
+       nothing competes for space next to the brand mark. */
+    .nav-links,
+    .nav-user {
+      flex-basis: 100%;
+      justify-content: center;
+    }
+    .nav-links {
+      order: 2;
+    }
+    .nav-user {
+      order: 4;
+      justify-content: flex-end;
+    }
+  }
   @media (min-width: 640px) {
     .nav-search {
       order: 0;
       flex-basis: auto;
       flex: 1;
+      max-width: 20rem;
     }
   }
 

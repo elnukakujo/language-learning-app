@@ -36,6 +36,7 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(lessonData.sources ? lessonData.sources.map(source => source.id!) : []);
 
     const [levelOptions, setLevelOptions] = useState<string[]>(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']); // Default options if no target language is selected
+    const [isSubmitting, setIsSubmitting] = useState(false);
     useEffect(() => {
         const getLanguageAndSetLevels = async () => {
             const language: Language = await getLanguageById(language_id);
@@ -59,6 +60,7 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
             sources: selectedSourceIds.map(id => ({ id }))
         };
 
+        setIsSubmitting(true);
         try {
             let lessonId: string;
             if (isUpdate) {
@@ -74,6 +76,8 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} lesson:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} lesson. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -113,7 +117,7 @@ export default function LessonForm({ lesson, language_id }: { lesson?: Partial<L
                 elementId={lessonData.id!}
             />
 
-            {isUpdate ? <SubmitButton>Update Lesson</SubmitButton> : <SubmitButton>Add Lesson</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Lesson</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Lesson</SubmitButton>}
         </form>
     );
 }

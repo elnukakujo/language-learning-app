@@ -27,6 +27,7 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
   const [color, setColor] = useState<string>(tagData.color || "#3B82F6");
   const [description, setDescription] = useState<string>(tagData.description || "");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Close picker when clicking outside
@@ -57,6 +58,7 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
       color,
       description,
     };
+    setIsSubmitting(true);
     try {
       if (isUpdate) {
         await updateTag(tagData.id!, element);
@@ -71,6 +73,7 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
       console.error("Error creating/updating tag:", error);
       alert(`Failed to ${isUpdate ? "update" : "create"} tag.`);
     } finally {
+      setIsSubmitting(false);
       if (onSuccess) onSuccess();
     }
   };
@@ -133,7 +136,7 @@ export default function TagForm({ tag, navDisabled = false, onSuccess }: { tag?:
         onChange={(e) => setDescription(e.target.value)}
       />
 
-      {isUpdate ? <SubmitButton>Update Tag</SubmitButton> : <SubmitButton>Add Tag</SubmitButton>}
+      {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Tag</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Tag</SubmitButton>}
     </form>
   );
 }

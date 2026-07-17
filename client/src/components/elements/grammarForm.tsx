@@ -36,6 +36,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Gra
     const [learnableSentence, setLearnableSentence] = useState<Partial<Passage>[]>(grammarData.example_sentences!);
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>(grammarData.tags ? grammarData.tags.map(tag => tag.id!) : []);
     const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(grammarData.sources ? grammarData.sources.map(source => source.id!) : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -54,6 +55,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Gra
             sources: selectedSourceIds.map(id => ({ id }))
         };
         
+        setIsSubmitting(true);
         try {
             let grammarId: string;
             if (isUpdate) {
@@ -69,6 +71,8 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Gra
         } catch (error) {
             console.error(`Failed to ${isUpdate ? "update" : "create"} grammar:`, error);
             alert(`Failed to ${isUpdate ? "update" : "create"} grammar. Check console for details.`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -151,7 +155,7 @@ export default function GrammarForm({grammar, lesson_id}: {grammar?: Partial<Gra
                     <FontAwesomeIcon icon={faAdd}/>
                 </button>
             </article>
-            {isUpdate ? <SubmitButton>Update Grammar</SubmitButton> : <SubmitButton>Add Grammar</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update Grammar</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add Grammar</SubmitButton>}
         </form>
     );
 }

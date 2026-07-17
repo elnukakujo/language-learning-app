@@ -26,9 +26,11 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
     const [learning_goals, setLearningGoals] = useState<string>(userData.preferences?.learning_goals || "");
     const [preferred_exercise_types, setPreferredExerciseTypes] = useState<string[]>(userData.preferences?.preferred_exercise_types || []);
     const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(userData.preferences?.daily_goal_minutes || 20);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsSubmitting(true);
         const element: Partial<User> = {
             id: userData.id,
             username: username,
@@ -59,6 +61,7 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
         console.error("Error creating/updating user:", error);
         alert(`Failed to ${isUpdate ? "update" : "create"} user.`);
         } finally {
+        setIsSubmitting(false);
         if (onSuccess) onSuccess();
         }
     };
@@ -128,7 +131,7 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 />
             </article>
 
-            {isUpdate ? <SubmitButton>Update user</SubmitButton> : <SubmitButton>Add User</SubmitButton>}
+            {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update user</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add User</SubmitButton>}
         </form>
     );
 }

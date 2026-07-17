@@ -197,7 +197,7 @@ class PassageService:
 
         update_data = data.model_dump(exclude={'id', 'language_id', 'difficulty', 'status', 'score', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
-        if (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
+        if update_data['text'] != existing.text and (existing_passage := self.get_by_text(update_data['text'], language_id=existing.language_id, session=session)) and existing_passage.id != passage_id:
             logger.warning(f"Passage with value '{update_data['text']}' already exists.")
             raise ValueError(f"Passage with value '{update_data['text']}' already exists.")
 
