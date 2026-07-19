@@ -11,15 +11,15 @@ LAPP_PUBLIC_PORT=30080
 cd "$(dirname "$0")/.."
 
 docker build -t fluence-backend:test .
-docker save fluence-backend:test | sudo k3s ctr images import -
+docker save fluence-backend:test | k3s ctr images import -
 
 docker build -f client/Dockerfile \
   --build-arg LAPP_PUBLIC_HOST=$LAPP_PUBLIC_HOST \
   --build-arg LAPP_PUBLIC_PORT=$LAPP_PUBLIC_PORT \
   -t fluence-frontend:test .
-docker save fluence-frontend:test | sudo k3s ctr images import -
+docker save fluence-frontend:test | k3s ctr images import -
 
-sudo kubectl apply -f k8s/
-sudo kubectl -n fluence rollout restart deployment/backend deployment/frontend
-sudo kubectl -n fluence rollout status deployment/backend --timeout=90s
-sudo kubectl -n fluence rollout status deployment/frontend --timeout=60s
+kubectl apply -f k8s/
+kubectl -n fluence rollout restart deployment/backend deployment/frontend
+kubectl -n fluence rollout status deployment/backend --timeout=90s
+kubectl -n fluence rollout status deployment/frontend --timeout=60s
