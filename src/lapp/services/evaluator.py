@@ -1,5 +1,8 @@
+import io
+
 import numpy as np
 from scipy.spatial.distance import cosine
+from scipy.io import wavfile
 import language_tool_python
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -17,7 +20,8 @@ from ..utils import (
     get_text_embedding_model,
     get_audio_embedding_model,
     get_audio_embedding_processor,
-    get_stt_pipe,
+    transcribe_audio,
+    STT_API,
 )
 from .features import ExerciseService
 from .feedback import FeedbackService
@@ -37,10 +41,6 @@ class EvaluatorService:
     @property
     def audio_embedding_processor(self):
         return get_audio_embedding_processor()
-
-    @property
-    def stt_pipe(self):
-        return get_stt_pipe()
 
     exercises_scales = {
         "translate": (0.6, 0.2, 0.2),
@@ -125,7 +125,9 @@ class EvaluatorService:
         return self.audio_embedding_model(**input_processed, output_hidden_states=True).hidden_states[-1].squeeze(0).mean(dim=0).detach().cpu().numpy()
     
     def _speech_to_text(self, waveform: np.ndarray) -> str:
-        return self.stt_pipe(waveform, return_timestamps=False)["text"]
+        buf = io.BytesIO()
+        wavfile.write(buf, 16000, waveform.astype(np.float32))
+        return transcribe_audio(**STT_API, wav_bytes=buf.getvalue())
 
     def _compute_cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         return float(1-cosine(u = vec1, v = vec2))

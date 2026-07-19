@@ -96,10 +96,6 @@ from functools import cache
 # has always used.
 TEXT_EMBEDDING_MODEL = os.environ.get("LAPP_TEXT_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 AUDIO_EMBEDDING_MODEL = os.environ.get("LAPP_AUDIO_EMBEDDING_MODEL", "facebook/mms-300m")
-STT_MODEL = os.environ.get("LAPP_STT_MODEL", "openai/whisper-large-v3-turbo")
-TTS_MODEL = os.environ.get("LAPP_TTS_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice")
-TEXT_GEN_MODEL = os.environ.get("LAPP_TEXT_GEN_MODEL", "Qwen/Qwen3-1.7B")
-FEEDBACK_MODEL = os.environ.get("LAPP_FEEDBACK_MODEL", "Qwen/Qwen3-0.6B")
 
 
 def _local_files_only(repo_id: str, require_tokenizer: bool = False) -> tuple[str | None, bool]:
@@ -140,97 +136,3 @@ def get_audio_embedding_processor():
     )
 
 
-@cache
-def get_stt_pipe():
-    """Speech-to-text pipeline (Whisper-large-v3-turbo by default)."""
-    import torch
-    from transformers import (
-        AutoModelForSpeechSeq2Seq,
-        AutoProcessor,
-        pipeline,
-    )
-    device = get_device()
-    # float16 has no native CPU arithmetic support and falls back to slow
-    # scalar emulation; only use it on a real GPU.
-    dtype = torch.float16 if device in ("cuda", "mps") else torch.float32
-    path, offline = _local_files_only(STT_MODEL, require_tokenizer=True)
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        path or STT_MODEL,
-        dtype=dtype,
-        use_safetensors=True,
-        local_files_only=offline,
-    ).to(device)
-    processor = AutoProcessor.from_pretrained(path or STT_MODEL, local_files_only=offline)
-    return pipeline(
-        "automatic-speech-recognition",
-        model=model,
-        tokenizer=processor.tokenizer,
-        feature_extractor=processor.feature_extractor,
-        dtype=dtype,
-        device=device,
-    )
-
-
-@cache
-def get_qwen_tts_model():
-    """Text-to-speech model (Qwen3-TTS by default)."""
-    import torch
-    from qwen_tts import Qwen3TTSModel
-    path, offline = _local_files_only(TTS_MODEL)
-    device = get_device()
-    # bfloat16 has no native CPU arithmetic support (esp. on Apple Silicon) and
-    # falls back to slow scalar emulation, making generation 10-50x slower.
-    # Real GPUs (cuda) have hardware bf16, so use it there.
-    dtype = torch.bfloat16 if device == "cuda" else torch.float32
-    return Qwen3TTSModel.from_pretrained(
-        path or TTS_MODEL,
-        device_map=device,
-        dtype=dtype,
-        local_files_only=offline,
-    )
-
-
-@cache
-def get_text_gen_tokenizer():
-    from transformers import AutoTokenizer
-    path, offline = _local_files_only(TEXT_GEN_MODEL, require_tokenizer=True)
-    logger.info(f"[text-gen-tokenizer] path={path!r} offline={offline}")
-    return AutoTokenizer.from_pretrained(path or TEXT_GEN_MODEL, local_files_only=offline)
-
-
-@cache
-def get_text_gen_model():
-    """Text generation model (Qwen3-1.7B by default)."""
-    from transformers import AutoModelForCausalLM
-    path, offline = _local_files_only(TEXT_GEN_MODEL)
-    return AutoModelForCausalLM.from_pretrained(
-        path or TEXT_GEN_MODEL,
-        # device_map="auto" is for multi-GPU orchestration; on a single-device
-        # box its memory heuristic can misfire and leave layers stranded on
-        # the meta device (uninitialized). Pick one device explicitly instead.
-        device_map=get_device(),
-        dtype="auto",
-        local_files_only=offline,
-    )
-
-
-@cache
-def get_feedback_tokenizer():
-    from transformers import AutoTokenizer
-    path, offline = _local_files_only(FEEDBACK_MODEL, require_tokenizer=True)
-    logger.info(f"[feedback-tokenizer] path={path!r} offline={offline}")
-    return AutoTokenizer.from_pretrained(path or FEEDBACK_MODEL, local_files_only=offline)
-
-
-@cache
-def get_feedback_model():
-    """Feedback generation model (Qwen3-0.6B by default) - kept small since
-    this runs synchronously on the evaluate request path, unlike text-gen."""
-    from transformers import AutoModelForCausalLM
-    path, offline = _local_files_only(FEEDBACK_MODEL)
-    return AutoModelForCausalLM.from_pretrained(
-        path or FEEDBACK_MODEL,
-        device_map=get_device(),
-        dtype="auto",
-        local_files_only=offline,
-    )

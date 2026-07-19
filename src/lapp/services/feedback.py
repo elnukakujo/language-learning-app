@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..core.database import db_manager, transactional
-from ..utils import get_feedback_model, get_feedback_tokenizer
+from ..utils import chat_completion, FEEDBACK_API
 from .features import ExerciseService
 from .system_data import UserPreferencesService
 
@@ -17,14 +17,6 @@ user_preferences_service = UserPreferencesService()
 
 
 class FeedbackService:
-	@property
-	def tokenizer(self):
-		return get_feedback_tokenizer()
-
-	@property
-	def model(self):
-		return get_feedback_model()
-
 	feedback_instruct = (
 		"You are a supportive language-learning tutor.\n"
 		"Follow these rules exactly:\n"
@@ -79,34 +71,14 @@ class FeedbackService:
 		return messages
 
 	def _generate_with_model(self, context: dict[str, object]) -> str:
-		if not self.model or not self.tokenizer:
+		if not FEEDBACK_API["base_url"]:
 			logger.warning("Text Generator Service is not available. Returning fallback feedback.")
 			return self._fallback_feedback(context)
 
 		try:
 			messages = self._build_prompt(context)
-			prompt = self.tokenizer.apply_chat_template(
-				messages,
-				tokenize=False,
-				add_generation_prompt=True,
-				enable_thinking=False,
-			)
-			model_inputs = self.tokenizer([prompt], return_tensors="pt").to(self.model.device)
-
-			generated_ids = self.model.generate(
-				**model_inputs,
-				max_new_tokens=96,
-				do_sample=True,
-				temperature=0.5,
-				top_p=0.9,
-			)
-			generated_ids = [
-				output_ids[len(input_ids):]
-				for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-			]
-
-			feedback = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
-			# ponytail: defensive strip in case enable_thinking is ignored by a swapped-in model
+			feedback = chat_completion(**FEEDBACK_API, messages=messages, max_tokens=96, temperature=0.5).strip()
+			# ponytail: defensive strip in case a reasoning model ignores the no-think instruction
 			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
 		except Exception as err:

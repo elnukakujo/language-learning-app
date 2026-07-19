@@ -3,19 +3,11 @@ import logging
 import re
 logger = logging.getLogger(__name__)
 
-from ..utils import get_text_gen_model, get_text_gen_tokenizer
+from ..utils import chat_completion, TEXT_GEN_API
 from .containers import LanguageService
 language_service = LanguageService()
 
 class TextGeneratorService:
-    @property
-    def tokenizer(self):
-        return get_text_gen_tokenizer()
-
-    @property
-    def model(self):
-        return get_text_gen_model()
-    
     grammar_instruct = (
         "You generate exactly one short language-learning sentence.\n"
         "Rules:\n"
@@ -88,27 +80,8 @@ class TextGeneratorService:
         )
 
     def _generate_from_messages(self, messages: list[dict], max_new_tokens: int) -> str:
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            enable_thinking=False
-        )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
-
-        generated_ids = self.model.generate(
-            **model_inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=0.4,
-            top_p=0.9
-        )
-        generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-        ]
-
-        output = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
-        # ponytail: defensive strip in case enable_thinking is ignored by a swapped-in model
+        output = chat_completion(**TEXT_GEN_API, messages=messages, max_tokens=max_new_tokens).strip()
+        # ponytail: defensive strip in case a reasoning model ignores the no-think instruction
         return re.sub(r"<think>.*?</think>", "", output, flags=re.DOTALL).strip()
 
     def generate_learnable_sentence(self, grammar_sheet: str, source_lang_code: str, target_lang_code: str) -> str:
@@ -123,7 +96,7 @@ class TextGeneratorService:
         Returns:
             A single short example sentence that illustrates the grammar point.
         """
-        if not self.model or not self.tokenizer:
+        if not TEXT_GEN_API["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
@@ -170,7 +143,7 @@ class TextGeneratorService:
         Returns:
             A single short example sentence that illustrates the vocabulary word.
         """
-        if not self.model or not self.tokenizer:
+        if not TEXT_GEN_API["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
@@ -217,7 +190,7 @@ class TextGeneratorService:
         Returns:
             A single example word that contains the character.
         """
-        if not self.model or not self.tokenizer:
+        if not TEXT_GEN_API["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 

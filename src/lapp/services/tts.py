@@ -1,19 +1,17 @@
 import logging
 import uuid
 from pathlib import Path
-import soundfile as sf
 
-from ..utils import detect_text_language, get_qwen_tts_model
-from ..utils.detect_language import _LANGUAGES
+from ..utils import synthesize_speech, TTS_API
 
 logger = logging.getLogger(__name__)
 
 class TTSService:
     """
-    Service for generating text-to-speech audio using QwenTTS.
-    
+    Service for generating text-to-speech audio via a configurable TTS API endpoint.
+
     This service handles:
-    - Audio generation via QwenTTS 3
+    - Audio generation via LAPP_TTS_API_BASE_URL
     - Integration with MediaService/MediaFileHandler
     - File management and storage
     - Error handling and logging
@@ -24,10 +22,6 @@ class TTSService:
         self.audio_dir = self.media_root / 'audio'
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
-    @property
-    def model(self):
-        return get_qwen_tts_model()
-    
     def _get_filename(self) -> str:
         """
         Get filename for TTS audio file.
@@ -58,7 +52,7 @@ class TTSService:
         language_name: str = None,
     ) -> str | list[str]:
         """
-        Generate audio file from text using QwenTTS API.
+        Generate audio file from text using the configured TTS API endpoint.
         
         Args:
             text: Text to convert to speech (string)
@@ -74,27 +68,17 @@ class TTSService:
         # Validation
         if not text:
             raise ValueError("Text cannot be empty")
-        
+
         try:
             logger.info(f"Generating TTS for: {text}")
 
-            if not language_name:
-                language_name = detect_text_language(text).name
-            logger.info(f"Detected language: {language_name} for text: '{text}'")
-            
-            wavs, sr = self.model.generate_custom_voice(
-                text=[text],
-                speaker="Vivian",
-                language=language_name if language_name and any(
-                    language_name == lang.name for lang in _LANGUAGES.values()
-                ) else None,
-            )
-            
+            wav_bytes = synthesize_speech(**TTS_API, text=text)
+
             generated_paths = []
             filename = self._get_filename()
             output_path = self.audio_dir / filename
-            sf.write(output_path, wavs[0], sr)
-            
+            output_path.write_bytes(wav_bytes)
+
             # Get normalized path with forward slashes
             relative_path = self._get_relative_path(output_path)
             generated_paths.append(relative_path)
