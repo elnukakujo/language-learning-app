@@ -74,8 +74,8 @@ spec:
       terminationGracePeriodSeconds: 30 # matches compose stop_grace_period, gives backup_on_exit.py time to finish
       containers:
         - name: backend
-          image: ghcr.io/elnukakujo/fluence-backend:test
-          imagePullPolicy: Always
+          image: fluence-backend:test
+          imagePullPolicy: Never # image is built locally on this node and imported into k3s's containerd, never pulled
           envFrom:
             - configMapRef:
                 name: fluence-backend-config

@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/elnukakujo/fluence-frontend:test
-          imagePullPolicy: Always
+          image: fluence-frontend:test
+          imagePullPolicy: Never # image is built locally on this node and imported into k3s's containerd, never pulled
           env:
             - name: PORT
               value: "3000"
