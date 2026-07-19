@@ -11,7 +11,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /path/to/media # CHANGE ME on PCT (PROD_MEDIA_ROOT)
+    path: /mnt/ssd/fluence/media
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -38,7 +38,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /path/to/backups # CHANGE ME on PCT (PROD_BACKUP_ROOT)
+    path: /mnt/ssd/fluence/backups
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -74,7 +74,7 @@ spec:
       terminationGracePeriodSeconds: 30 # matches compose stop_grace_period, gives backup_on_exit.py time to finish
       containers:
         - name: backend
-          image: ghcr.io/OWNER/fluence-backend:test # CHANGE ME: set OWNER
+          image: ghcr.io/elnukakujo/fluence-backend:test
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
@@ -91,7 +91,7 @@ spec:
                   name: fluence-secrets
                   key: HF_TOKEN
           ports:
-            - containerPort: 5000
+            - containerPort: 5050
           resources:
             requests:
               cpu: "500m"
@@ -101,13 +101,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: 5050
             initialDelaySeconds: 10
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /
-              port: 5000
+              port: 5050
             initialDelaySeconds: 15
             periodSeconds: 10
           volumeMounts:
@@ -133,6 +133,6 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 5000
-      targetPort: 5000
+    - port: 5050
+      targetPort: 5050
       nodePort: 30500

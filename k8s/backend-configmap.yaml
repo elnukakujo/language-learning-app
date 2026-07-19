@@ -6,7 +6,7 @@ metadata:
 data:
   LAPP_ENV: "prod"
   LAPP_HOST: "0.0.0.0"
-  LAPP_PORT: "5000"
+  LAPP_PORT: "5050"
   LAPP_DEVICE: "cpu"
   LAPP_SKIP_STARTUP_TASKS: "true"
   PROD_MEDIA_ROOT: "/app/media"

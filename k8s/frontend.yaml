@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/OWNER/fluence-frontend:test # CHANGE ME: set OWNER
+          image: ghcr.io/elnukakujo/fluence-frontend:test
           imagePullPolicy: Always
           env:
             - name: PORT

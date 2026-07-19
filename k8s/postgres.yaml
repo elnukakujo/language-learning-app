@@ -11,7 +11,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /var/lib/docker/volumes/fluence_pgdata/_data # CHANGE ME on PCT
+    path: /var/lib/docker/volumes/language-learning-app_pgdata/_data
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
