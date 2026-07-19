@@ -1,0 +1,52 @@
+name: Deploy to k3s
+
+on:
+  push:
+    branches: [test]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fluence-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/fluence-frontend
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        run: |
+          docker build -t "$BACKEND_IMAGE:test" -t "$BACKEND_IMAGE:test-${GITHUB_SHA::7}" .
+          docker push "$BACKEND_IMAGE:test"
+          docker push "$BACKEND_IMAGE:test-${GITHUB_SHA::7}"
+
+      - name: Build and push frontend
+        run: |
+          docker build -f client/Dockerfile \
+            --build-arg LAPP_PUBLIC_HOST="${{ vars.LAPP_PUBLIC_HOST }}" \
+            --build-arg LAPP_PUBLIC_PORT="${{ vars.LAPP_PUBLIC_PORT }}" \
+            --build-arg LAPP_EXTRA_MEDIA_HOSTS="${{ vars.LAPP_EXTRA_MEDIA_HOSTS }}" \
+            -t "$FRONTEND_IMAGE:test" -t "$FRONTEND_IMAGE:test-${GITHUB_SHA::7}" .
+          docker push "$FRONTEND_IMAGE:test"
+          docker push "$FRONTEND_IMAGE:test-${GITHUB_SHA::7}"
+
+      - name: Apply manifests
+        run: kubectl apply -f k8s/
+
+      - name: Roll out
+        run: |
+          kubectl rollout restart deployment/backend deployment/frontend -n fluence
+          kubectl rollout status deployment/backend -n fluence --timeout=90s
+          kubectl rollout status deployment/frontend -n fluence --timeout=60s
