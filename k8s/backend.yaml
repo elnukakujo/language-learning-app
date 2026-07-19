@@ -100,13 +100,13 @@ spec:
               memory: "4Gi"
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 5050
             initialDelaySeconds: 10
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: 5050
             initialDelaySeconds: 15
             periodSeconds: 10
