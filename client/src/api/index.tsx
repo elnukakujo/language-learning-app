@@ -8,7 +8,10 @@ import { deleteTag } from "@/api/tag";
 import { deleteSource } from "@/api/source";
 
 // NEXT_PUBLIC_ prefix required: this runs in the browser, not just the Next.js server.
-const PUBLIC_BASE_URL = `http://${process.env.NEXT_PUBLIC_LAPP_HOST || "127.0.0.1"}:${process.env.NEXT_PUBLIC_LAPP_PORT || 5000}`;
+// Use this (not BASE_URL) for any URL handed straight to the browser as an <img>/<audio> src -
+// those are fetched by the browser itself even when the element renders in a server component,
+// so they need the public host, never the internal one BASE_URL resolves to on the server.
+export const PUBLIC_BASE_URL = `http://${process.env.NEXT_PUBLIC_LAPP_HOST || "127.0.0.1"}:${process.env.NEXT_PUBLIC_LAPP_PORT || 5000}`;
 
 // Server-side code (SSR/route handlers) runs inside the backend's own network (a pod/container),
 // where the browser-facing LAPP_PUBLIC_HOST (a LAN IP or domain) isn't routable - it must reach

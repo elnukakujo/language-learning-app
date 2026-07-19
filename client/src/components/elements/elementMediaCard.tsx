@@ -1,6 +1,5 @@
 import { BaseMediaFiles } from "@/interface/base";
-import { BASE_URL } from "@/api";
-import Image from "next/image";
+import { PUBLIC_BASE_URL as BASE_URL } from "@/api";
 import AudioPlayer from "../media/audioPlayer";
 import ImageViewer from "../media/imageViewer";
 
