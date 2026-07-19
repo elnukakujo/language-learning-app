@@ -5,7 +5,7 @@
 # rolls out the cluster.
 set -e
 
-LAPP_PUBLIC_HOST=192.168.1.125
+LAPP_PUBLIC_HOST=192.168.1.137
 LAPP_PUBLIC_PORT=30080
 
 cd "$(dirname "$0")/.."
