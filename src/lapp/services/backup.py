@@ -137,6 +137,20 @@ class BackupService:
                 logger.error(f"Backup file not found: {backup_path}")
                 return False
 
+            # pg_dump -n only dumps objects inside the schema, not the schema itself -
+            # restoring into a fresh database with no fluence_prod schema yet fails on
+            # every FK pointing at it. Create it first; --clean --if-exists then handles
+            # the rest for restores onto an already-populated schema.
+            create_schema = subprocess.run(
+                ["psql", *self._connection_args(), "-c", f'CREATE SCHEMA IF NOT EXISTS "{self.schema}"'],
+                env=self._pg_env(),
+                capture_output=True,
+                text=True,
+            )
+            if create_schema.returncode != 0:
+                logger.error(f"❌ Failed to ensure schema exists: {create_schema.stderr.strip()}")
+                return False
+
             result = subprocess.run(
                 ["pg_restore", *self._connection_args(), "-n", self.schema, "--clean", "--if-exists", str(backup_path)],
                 env=self._pg_env(),
