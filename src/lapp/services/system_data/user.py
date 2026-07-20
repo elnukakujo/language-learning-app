@@ -112,12 +112,10 @@ class UserService:
                 ai_example_sentence_enabled=user_data.preferences.ai_example_sentence_enabled if user_data.preferences else True,
                 ai_example_word_enabled=user_data.preferences.ai_example_word_enabled if user_data.preferences else True,
                 ai_tts_enabled=user_data.preferences.ai_tts_enabled if user_data.preferences else True,
-                ai_gen_api_base_url=user_data.preferences.ai_gen_api_base_url if user_data.preferences else None,
-                ai_gen_api_key=user_data.preferences.ai_gen_api_key if user_data.preferences else None,
-                ai_gen_model=user_data.preferences.ai_gen_model if user_data.preferences else None,
-                ai_tts_api_base_url=user_data.preferences.ai_tts_api_base_url if user_data.preferences else None,
-                ai_tts_api_key=user_data.preferences.ai_tts_api_key if user_data.preferences else None,
-                ai_tts_model=user_data.preferences.ai_tts_model if user_data.preferences else None
+                # ai_gen_*/ai_tts_* connection fields are intentionally omitted here - they're
+                # saved directly via PUT /api/pref/<id> (ConnectionCapability in userForm.tsx),
+                # never through this nested construction. Passing them (even as None) would mark
+                # them "set" for the exclude_unset update below and wipe out the saved connection.
             ),
             session=session,
         )
@@ -174,12 +172,8 @@ class UserService:
                 ai_example_sentence_enabled=update_data.preferences.ai_example_sentence_enabled if update_data.preferences else True,
                 ai_example_word_enabled=update_data.preferences.ai_example_word_enabled if update_data.preferences else True,
                 ai_tts_enabled=update_data.preferences.ai_tts_enabled if update_data.preferences else True,
-                ai_gen_api_base_url=update_data.preferences.ai_gen_api_base_url if update_data.preferences else None,
-                ai_gen_api_key=update_data.preferences.ai_gen_api_key if update_data.preferences else None,
-                ai_gen_model=update_data.preferences.ai_gen_model if update_data.preferences else None,
-                ai_tts_api_base_url=update_data.preferences.ai_tts_api_base_url if update_data.preferences else None,
-                ai_tts_api_key=update_data.preferences.ai_tts_api_key if update_data.preferences else None,
-                ai_tts_model=update_data.preferences.ai_tts_model if update_data.preferences else None
+                # ai_gen_*/ai_tts_* connection fields are intentionally omitted here - see the
+                # matching comment in create() above.
             ),
             session=session,
         )

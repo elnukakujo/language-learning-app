@@ -2,7 +2,7 @@ import logging
 import uuid
 from pathlib import Path
 
-from ..utils import synthesize_speech, TTS_API
+from ..utils import synthesize_speech
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +70,13 @@ class TTSService:
         if not text:
             raise ValueError("Text cannot be empty")
 
+        if not api or not api.get("base_url"):
+            raise ValueError("No TTS API configured for this user")
+
         try:
             logger.info(f"Generating TTS for: {text}")
 
-            wav_bytes = synthesize_speech(**(api or TTS_API), text=text)
+            wav_bytes = synthesize_speech(**api, text=text)
 
             generated_paths = []
             filename = self._get_filename()

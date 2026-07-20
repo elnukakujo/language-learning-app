@@ -4,6 +4,7 @@ import { useState } from "react";
 import SubmitButton from "@/components/ui/buttons/submitButton";
 import { useRouter } from "next/navigation";
 import { createUser, updateUser } from "@/api/user";
+import { updateUserPreferences } from "@/api/userPreferences";
 import AutoWidthInput from "@/components/ui/input/autoWidthInput";
 import User from "@/interface/systemData/User";
 import ClassicSelectMenu from "@/components/ui/selectMenu/classicSelectMenu";
@@ -60,13 +61,9 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 ai_learnable_sentence_enabled: aiLearnableSentenceEnabled,
                 ai_example_sentence_enabled: aiExampleSentenceEnabled,
                 ai_example_word_enabled: aiExampleWordEnabled,
-                ai_tts_enabled: aiTtsEnabled,
-                ai_gen_api_base_url: aiGenApiBaseUrl || undefined,
-                ai_gen_api_key: aiGenApiKey || undefined,
-                ai_gen_model: aiGenModel || undefined,
-                ai_tts_api_base_url: aiTtsApiBaseUrl || undefined,
-                ai_tts_api_key: aiTtsApiKey || undefined,
-                ai_tts_model: aiTtsModel || undefined
+                ai_tts_enabled: aiTtsEnabled
+                // ai_gen_*/ai_tts_* connection fields are saved directly by ConnectionCapability
+                // via PUT /api/pref/<id> as soon as you press Save there - not part of this submit.
             }
         };
         try {
@@ -153,138 +150,301 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 />
             </article>
 
-            <article className="card w-full max-w-md flex flex-col gap-1">
-                <h3>AI Features</h3>
-                <label className="flex items-center justify-between gap-3 py-2.5">
-                    <span>
-                        <span className="block text-sm font-medium">Feedback</span>
-                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Generate feedback with AI, otherwise fall back to a simple template
-                        </span>
-                    </span>
-                    <input
-                        type="checkbox"
-                        className="h-5 w-5 shrink-0"
-                        style={{ accentColor: "var(--color-primary)" }}
-                        checked={aiFeedbackEnabled}
-                        onChange={(e) => setAiFeedbackEnabled(e.target.checked)}
-                    />
-                </label>
-                <div className="index-divider" />
-                <label className="flex items-center justify-between gap-3 py-2.5">
-                    <span>
-                        <span className="block text-sm font-medium">Learnable sentence generation</span>
-                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Auto-generate example sentences for grammar points
-                        </span>
-                    </span>
-                    <input
-                        type="checkbox"
-                        className="h-5 w-5 shrink-0"
-                        style={{ accentColor: "var(--color-primary)" }}
+            <article className="card w-full max-w-md flex flex-col gap-4">
+                <div>
+                    <h3>AI Features</h3>
+                    <p className="text-xs" style={{ color: "var(--color-muted)" }}>
+                        Every feature below runs through an API you connect yourself &mdash; nothing is bundled with the app.
+                    </p>
+                </div>
+
+                <ConnectionCapability
+                    title="Generation"
+                    description="Writes example sentences, example words, and exercise feedback"
+                    prefId={userData.preferences?.id}
+                    baseUrl={aiGenApiBaseUrl}
+                    apiKey={aiGenApiKey}
+                    model={aiGenModel}
+                    baseUrlField="ai_gen_api_base_url"
+                    apiKeyField="ai_gen_api_key"
+                    modelField="ai_gen_model"
+                    onSaved={(v) => { setAiGenApiBaseUrl(v.baseUrl); setAiGenApiKey(v.apiKey); setAiGenModel(v.model); }}
+                    baseUrlPlaceholder="e.g. http://localhost:8000/v1"
+                    modelPlaceholder="e.g. Qwen/Qwen3-4B-AWQ"
+                >
+                    <AiToggleRow
+                        label="Learnable sentences"
+                        description="For grammar points"
                         checked={aiLearnableSentenceEnabled}
-                        onChange={(e) => setAiLearnableSentenceEnabled(e.target.checked)}
+                        onChange={setAiLearnableSentenceEnabled}
                     />
-                </label>
-                <div className="index-divider" />
-                <label className="flex items-center justify-between gap-3 py-2.5">
-                    <span>
-                        <span className="block text-sm font-medium">Example sentence generation</span>
-                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Auto-generate example sentences for vocabulary words
-                        </span>
-                    </span>
-                    <input
-                        type="checkbox"
-                        className="h-5 w-5 shrink-0"
-                        style={{ accentColor: "var(--color-primary)" }}
+                    <AiToggleRow
+                        label="Example sentences"
+                        description="For vocabulary words"
                         checked={aiExampleSentenceEnabled}
-                        onChange={(e) => setAiExampleSentenceEnabled(e.target.checked)}
+                        onChange={setAiExampleSentenceEnabled}
                     />
-                </label>
-                <div className="index-divider" />
-                <label className="flex items-center justify-between gap-3 py-2.5">
-                    <span>
-                        <span className="block text-sm font-medium">Example word generation</span>
-                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Auto-generate example words for calligraphy characters
-                        </span>
-                    </span>
-                    <input
-                        type="checkbox"
-                        className="h-5 w-5 shrink-0"
-                        style={{ accentColor: "var(--color-primary)" }}
+                    <AiToggleRow
+                        label="Example words"
+                        description="For calligraphy characters"
                         checked={aiExampleWordEnabled}
-                        onChange={(e) => setAiExampleWordEnabled(e.target.checked)}
+                        onChange={setAiExampleWordEnabled}
                     />
-                </label>
+                    <AiToggleRow
+                        label="Exercise feedback"
+                        description="Otherwise falls back to a simple template"
+                        checked={aiFeedbackEnabled}
+                        onChange={setAiFeedbackEnabled}
+                    />
+                </ConnectionCapability>
+
                 <div className="index-divider" />
-                <span className="block text-sm font-medium pt-2">Text-gen & feedback API</span>
-                <span className="block text-xs pb-1" style={{ color: "var(--color-muted)" }}>
-                    Optional - leave blank to use the server default. Shared across the sentence/word/feedback generation above.
-                </span>
-                <AutoWidthInput
-                    label="Base URL"
-                    value={aiGenApiBaseUrl}
-                    onChange={(e) => setAiGenApiBaseUrl(e.target.value)}
-                    placeholder="e.g. http://localhost:8080/v1"
-                />
-                <AutoWidthInput
-                    type="password"
-                    label="API Key"
-                    value={aiGenApiKey}
-                    onChange={(e) => setAiGenApiKey(e.target.value)}
-                    placeholder="Leave blank if not required"
-                />
-                <AutoWidthInput
-                    label="Model"
-                    value={aiGenModel}
-                    onChange={(e) => setAiGenModel(e.target.value)}
-                    placeholder="e.g. Qwen/Qwen3-0.6B"
-                />
-                <div className="index-divider" />
-                <label className="flex items-center justify-between gap-3 py-2.5">
-                    <span>
-                        <span className="block text-sm font-medium">Audio generation</span>
-                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Auto-generate audio (TTS)
-                        </span>
-                    </span>
-                    <input
-                        type="checkbox"
-                        className="h-5 w-5 shrink-0"
-                        style={{ accentColor: "var(--color-primary)" }}
+
+                <ConnectionCapability
+                    title="Speech"
+                    description="Reads text aloud for characters, words, and passages"
+                    prefId={userData.preferences?.id}
+                    baseUrl={aiTtsApiBaseUrl}
+                    apiKey={aiTtsApiKey}
+                    model={aiTtsModel}
+                    baseUrlField="ai_tts_api_base_url"
+                    apiKeyField="ai_tts_api_key"
+                    modelField="ai_tts_model"
+                    onSaved={(v) => { setAiTtsApiBaseUrl(v.baseUrl); setAiTtsApiKey(v.apiKey); setAiTtsModel(v.model); }}
+                    baseUrlPlaceholder="e.g. http://localhost:8091/v1"
+                    modelPlaceholder="e.g. Qwen3-TTS-CustomVoice"
+                >
+                    <AiToggleRow
+                        label="Audio generation"
+                        description="Text-to-speech for new components"
                         checked={aiTtsEnabled}
-                        onChange={(e) => setAiTtsEnabled(e.target.checked)}
+                        onChange={setAiTtsEnabled}
                     />
-                </label>
-                <div className="index-divider" />
-                <span className="block text-sm font-medium pt-2">TTS API</span>
-                <span className="block text-xs pb-1" style={{ color: "var(--color-muted)" }}>
-                    Optional - leave blank to use the server default.
-                </span>
-                <AutoWidthInput
-                    label="Base URL"
-                    value={aiTtsApiBaseUrl}
-                    onChange={(e) => setAiTtsApiBaseUrl(e.target.value)}
-                    placeholder="e.g. http://localhost:8091/v1"
-                />
-                <AutoWidthInput
-                    type="password"
-                    label="API Key"
-                    value={aiTtsApiKey}
-                    onChange={(e) => setAiTtsApiKey(e.target.value)}
-                    placeholder="Leave blank if not required"
-                />
-                <AutoWidthInput
-                    label="Model"
-                    value={aiTtsModel}
-                    onChange={(e) => setAiTtsModel(e.target.value)}
-                    placeholder="e.g. Qwen3-TTS-CustomVoice"
-                />
+                </ConnectionCapability>
             </article>
 
             {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update user</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add User</SubmitButton>}
         </form>
+    );
+}
+
+function AiToggleRow({
+    label,
+    description,
+    checked,
+    onChange,
+}: {
+    label: string;
+    description: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+}) {
+    return (
+        <label className="flex items-center justify-between gap-3 py-1.5">
+            <span>
+                <span className="block text-sm">{label}</span>
+                <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                    {description}
+                </span>
+            </span>
+            <input
+                type="checkbox"
+                className="h-5 w-5 shrink-0"
+                style={{ accentColor: "var(--color-primary)" }}
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+            />
+        </label>
+    );
+}
+
+// A capability (e.g. "Generation", "Speech") backed by one API connection shared across its
+// toggles. The connection is its own mini-form: read-only and dimmed until you press Edit, and
+// Save writes straight to the database (PUT /api/pref/<id>) instead of waiting on the page's
+// main submit - so the status badge always reflects what's actually stored, not a draft.
+function ConnectionCapability({
+    title,
+    description,
+    prefId,
+    baseUrl,
+    apiKey,
+    model,
+    baseUrlField,
+    apiKeyField,
+    modelField,
+    onSaved,
+    baseUrlPlaceholder,
+    modelPlaceholder,
+    children,
+}: {
+    title: string;
+    description: string;
+    prefId?: string;
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    baseUrlField: string;
+    apiKeyField: string;
+    modelField: string;
+    onSaved: (values: { baseUrl: string; apiKey: string; model: string }) => void;
+    baseUrlPlaceholder: string;
+    modelPlaceholder: string;
+    children: React.ReactNode;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [draftBaseUrl, setDraftBaseUrl] = useState(baseUrl);
+    const [draftApiKey, setDraftApiKey] = useState(apiKey);
+    const [draftModel, setDraftModel] = useState(model);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const isConnected = Boolean(baseUrl);
+
+    const startEditing = () => {
+        setDraftBaseUrl(baseUrl);
+        setDraftApiKey(apiKey);
+        setDraftModel(model);
+        setError(null);
+        setEditing(true);
+    };
+
+    const cancelEditing = () => {
+        setError(null);
+        setEditing(false);
+    };
+
+    const save = async () => {
+        if (!prefId) {
+            setError("Save this user first, then connect its API.");
+            return;
+        }
+        const trimmedBaseUrl = draftBaseUrl.trim().replace(/\/+$/, "");
+        if (trimmedBaseUrl) {
+            let parsed: URL | null = null;
+            try {
+                parsed = new URL(trimmedBaseUrl);
+            } catch {
+                parsed = null;
+            }
+            if (!parsed || (parsed.protocol !== "http:" && parsed.protocol !== "https:")) {
+                setError("Base URL must be a full address starting with http:// or https://");
+                return;
+            }
+        }
+        setSaving(true);
+        setError(null);
+        try {
+            await updateUserPreferences(prefId, {
+                [baseUrlField]: trimmedBaseUrl || undefined,
+                [apiKeyField]: draftApiKey || undefined,
+                [modelField]: draftModel || undefined,
+            });
+            onSaved({ baseUrl: trimmedBaseUrl, apiKey: draftApiKey, model: draftModel });
+            setEditing(false);
+        } catch {
+            setError("Couldn't save this connection. Try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+                <div>
+                    <span className="block text-sm font-medium">{title}</span>
+                    <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                        {description}
+                    </span>
+                </div>
+                <span
+                    className="badge shrink-0"
+                    style={!isConnected ? { background: "transparent", color: "var(--color-muted)", border: "1px solid var(--color-border)" } : { background: "var(--color-success)", color: "var(--color-primary-foreground)" }}
+                >
+                    <span
+                        className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ background: isConnected ? "var(--color-primary-foreground)" : "var(--color-muted)" }}
+                    />
+                    {isConnected ? "Connected" : "Not connected"}
+                </span>
+            </div>
+
+            <div className="flex flex-col">
+                {children}
+            </div>
+
+            <div
+                className="flex flex-col gap-2 rounded-lg border p-3 transition-opacity"
+                style={{
+                    borderColor: "var(--color-border)",
+                    background: editing ? "var(--color-surface)" : "transparent",
+                    opacity: editing ? 1 : 0.55,
+                }}
+            >
+                <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium" style={{ color: "var(--color-muted)" }}>
+                        {isConnected ? (model || "Connection") : "No connection"}
+                    </span>
+                    {!editing && (
+                        <button
+                            type="button"
+                            onClick={startEditing}
+                            className="text-xs font-medium cursor-pointer"
+                            style={{ color: "var(--color-accent)" }}
+                        >
+                            {isConnected ? "Edit" : "Connect"}
+                        </button>
+                    )}
+                </div>
+
+                <AutoWidthInput
+                    label="Base URL"
+                    value={editing ? draftBaseUrl : baseUrl}
+                    onChange={(e) => setDraftBaseUrl(e.target.value)}
+                    placeholder={baseUrlPlaceholder}
+                    disabled={!editing}
+                />
+                <AutoWidthInput
+                    type="password"
+                    label="API Key"
+                    value={editing ? draftApiKey : apiKey}
+                    onChange={(e) => setDraftApiKey(e.target.value)}
+                    placeholder="Leave blank if not required"
+                    disabled={!editing}
+                />
+                <AutoWidthInput
+                    label="Model"
+                    value={editing ? draftModel : model}
+                    onChange={(e) => setDraftModel(e.target.value)}
+                    placeholder={modelPlaceholder}
+                    disabled={!editing}
+                />
+
+                {error && <p className="text-xs" style={{ color: "var(--color-danger)" }}>{error}</p>}
+
+                {editing && (
+                    <div className="flex justify-end gap-2 pt-1">
+                        <button
+                            type="button"
+                            onClick={cancelEditing}
+                            disabled={saving}
+                            className="text-xs font-medium cursor-pointer"
+                            style={{ color: "var(--color-muted)" }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={save}
+                            disabled={saving}
+                            className="text-xs font-medium cursor-pointer px-3 py-1 rounded-full"
+                            style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+                        >
+                            {saving ? "Saving…" : "Save"}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }

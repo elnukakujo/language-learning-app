@@ -3,36 +3,13 @@
 Targets the OpenAI-compatible surface shared by llama.cpp server, ollama,
 OpenAI, and OpenAI-compatible proxies for other providers (Anthropic,
 DeepSeek, Kimi, ...) - one client, no per-provider abstraction needed.
+
+There is no server-wide default for these - each user configures their own
+API (base_url/api_key/model) in Settings; a task is simply skipped when a
+user hasn't configured one (see the `if not api["base_url"]` guards at each
+call site).
 """
-import os
-
 import httpx
-
-TEXT_GEN_API = dict(
-    base_url=os.environ.get("LAPP_TEXT_GEN_API_BASE_URL", ""),
-    api_key=os.environ.get("LAPP_TEXT_GEN_API_KEY", ""),
-    model=os.environ.get("LAPP_TEXT_GEN_MODEL", ""),
-)
-FEEDBACK_API = dict(
-    base_url=os.environ.get("LAPP_FEEDBACK_API_BASE_URL", ""),
-    api_key=os.environ.get("LAPP_FEEDBACK_API_KEY", ""),
-    model=os.environ.get("LAPP_FEEDBACK_MODEL", ""),
-)
-TTS_API = dict(
-    base_url=os.environ.get("LAPP_TTS_API_BASE_URL", ""),
-    api_key=os.environ.get("LAPP_TTS_API_KEY", ""),
-    model=os.environ.get("LAPP_TTS_MODEL", ""),
-)
-
-
-def resolve_api(default: dict, base_url: str | None, api_key: str | None, model: str | None) -> dict:
-    """Merge a per-user override on top of the server's env-configured default;
-    a blank/None override field falls back to the default."""
-    return dict(
-        base_url=base_url or default["base_url"],
-        api_key=api_key or default["api_key"],
-        model=model or default["model"],
-    )
 
 
 def _client(base_url: str, api_key: str) -> httpx.Client:

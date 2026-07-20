@@ -18,7 +18,6 @@ from ..models.base import (
 from ..schemas import GrammarDict, CalligraphyDict, VocabularyDict
 from ..services import TextGeneratorService, GrammarService, VocabularyService, CalligraphyService
 from ..services.system_data import UserPreferencesService
-from ..utils import resolve_api, TEXT_GEN_API
 
 logger = logging.getLogger(__name__)
 
@@ -129,14 +128,16 @@ def generate_missing_texts(app: Flask):
                         "example_sentence": prefs is None or prefs.ai_example_sentence_enabled is not False,
                         "example_word": prefs is None or prefs.ai_example_word_enabled is not False,
                     }
-                    api = resolve_api(
-                        TEXT_GEN_API,
-                        getattr(prefs, "ai_gen_api_base_url", None),
-                        getattr(prefs, "ai_gen_api_key", None),
-                        getattr(prefs, "ai_gen_model", None),
-                    )
+                    api = {
+                        "base_url": getattr(prefs, "ai_gen_api_base_url", None) or "",
+                        "api_key": getattr(prefs, "ai_gen_api_key", None) or "",
+                        "model": getattr(prefs, "ai_gen_model", None) or "",
+                    } if prefs else None
                     ai_gen_by_user[language.user_id] = (flags, api)
                 flags, api = ai_gen_by_user[language.user_id]
+                if not api or not api["base_url"]:
+                    progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [no text-gen api configured for user]")
+                    continue
 
                 logger.info(f"Generating text for feature ID {feature.id} with language {language.source_iso639_2t} -> {language.target_iso639_2t}")
                 try:

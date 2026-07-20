@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 
-from lapp.utils.model_api import chat_completion, synthesize_speech, resolve_api
+from lapp.utils.model_api import chat_completion, synthesize_speech
 
 
 def _mock_response(json_data=None, content=b"", status_code=200):
@@ -31,18 +31,6 @@ def test_chat_completion_extracts_message_content():
         assert post.call_args.args[0] == "/chat/completions"
 
 
-def test_resolve_api_uses_override_when_present():
-    default = {"base_url": "http://default", "api_key": "dkey", "model": "dmodel"}
-    result = resolve_api(default, "http://override", "okey", "omodel")
-    assert result == {"base_url": "http://override", "api_key": "okey", "model": "omodel"}
-
-
-def test_resolve_api_falls_back_to_default_when_blank():
-    default = {"base_url": "http://default", "api_key": "dkey", "model": "dmodel"}
-    result = resolve_api(default, None, "", None)
-    assert result == default
-
-
 def test_synthesize_speech_returns_bytes():
     resp = _mock_response(content=b"wav-audio-bytes")
     with patch("httpx.Client.post", return_value=resp):
@@ -63,8 +51,6 @@ def test_error_response_raises():
 
 if __name__ == "__main__":
     test_chat_completion_extracts_message_content()
-    test_resolve_api_uses_override_when_present()
-    test_resolve_api_falls_back_to_default_when_blank()
     test_synthesize_speech_returns_bytes()
     test_error_response_raises()
     print("OK")

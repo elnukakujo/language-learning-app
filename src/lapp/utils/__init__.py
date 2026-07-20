@@ -12,10 +12,6 @@ from .models import (
 from .model_api import (
     chat_completion,
     synthesize_speech,
-    resolve_api,
-    TEXT_GEN_API,
-    FEEDBACK_API,
-    TTS_API,
 )
 from .translate import translate
 from .phonetics import get_phonetic
@@ -41,10 +37,6 @@ __all__ = [
     get_stt_pipe,
     chat_completion,
     synthesize_speech,
-    resolve_api,
-    TEXT_GEN_API,
-    FEEDBACK_API,
-    TTS_API,
     translate,
     get_phonetic,
     get_cjk_character_info,

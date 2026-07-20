@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..core.database import db_manager, transactional
-from ..utils import chat_completion, resolve_api, FEEDBACK_API
+from ..utils import chat_completion
 from .features import ExerciseService
 from .system_data import UserPreferencesService
 
@@ -70,15 +70,16 @@ class FeedbackService:
 		messages.append({"role": "user", "content": self._format_context(context)})
 		return messages
 
-	def _generate_with_model(self, context: dict[str, object], api: dict | None = None) -> str:
-		api = api or FEEDBACK_API
-		if not api["base_url"]:
-			logger.warning("Text Generator Service is not available. Returning fallback feedback.")
+	def _generate_with_model(self, context: dict[str, object], api: dict | None) -> str:
+		if not api or not api.get("base_url"):
+			logger.warning("No text-gen API configured for this user. Returning fallback feedback.")
 			return self._fallback_feedback(context)
 
 		try:
 			messages = self._build_prompt(context)
-			feedback = chat_completion(**api, messages=messages, max_tokens=96, temperature=0.5).strip()
+			# ponytail: 512 not 96 - reasoning models spend most of the budget on the <think>
+			# block before the actual answer, so a short cap truncates before any output.
+			feedback = chat_completion(**api, messages=messages, max_tokens=512, temperature=0.5).strip()
 			# ponytail: defensive strip in case a reasoning model ignores the no-think instruction
 			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
@@ -176,10 +177,9 @@ class FeedbackService:
 		if prefs is not None and prefs.ai_feedback_enabled is False:
 			return self._fallback_feedback(context)
 
-		api = resolve_api(
-			FEEDBACK_API,
-			getattr(prefs, "ai_gen_api_base_url", None),
-			getattr(prefs, "ai_gen_api_key", None),
-			getattr(prefs, "ai_gen_model", None),
-		)
+		api = {
+			"base_url": getattr(prefs, "ai_gen_api_base_url", None) or "",
+			"api_key": getattr(prefs, "ai_gen_api_key", None) or "",
+			"model": getattr(prefs, "ai_gen_model", None) or "",
+		} if prefs else None
 		return self._generate_with_model(context, api=api)

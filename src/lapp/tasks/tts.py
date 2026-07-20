@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
 from ..services.system_data import UserPreferencesService
-from ..utils import resolve_api, TTS_API
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
 from ..models.containers import Language
@@ -112,16 +111,18 @@ def generate_missing_component_audio(app: Flask):
                     if language.user_id not in ai_tts_by_user:
                         prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
                         enabled = prefs is None or prefs.ai_tts_enabled is not False
-                        api = resolve_api(
-                            TTS_API,
-                            getattr(prefs, "ai_tts_api_base_url", None),
-                            getattr(prefs, "ai_tts_api_key", None),
-                            getattr(prefs, "ai_tts_model", None),
-                        )
+                        api = {
+                            "base_url": getattr(prefs, "ai_tts_api_base_url", None) or "",
+                            "api_key": getattr(prefs, "ai_tts_api_key", None) or "",
+                            "model": getattr(prefs, "ai_tts_model", None) or "",
+                        } if prefs else None
                         ai_tts_by_user[language.user_id] = (enabled, api)
                     enabled, api = ai_tts_by_user[language.user_id]
                     if not enabled:
                         progress.set_postfix_str(f"{type(component).__name__} {component.id} [ai tts disabled for user]")
+                        continue
+                    if not api or not api["base_url"]:
+                        progress.set_postfix_str(f"{type(component).__name__} {component.id} [no tts api configured]")
                         continue
 
                     if isinstance(component, Character):
