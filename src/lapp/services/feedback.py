@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..core.database import db_manager, transactional
 from ..utils import chat_completion
+from ..utils.detect_language import get_language_by_iso2t
 from .features import ExerciseService
 from .system_data import UserPreferencesService
 
@@ -20,7 +21,9 @@ class FeedbackService:
 	feedback_instruct = (
 		"You are a supportive language-learning tutor.\n"
 		"Follow these rules exactly:\n"
-		"1) Write feedback in SOURCE_LANG_CODE.\n"
+		"1) Write feedback in SOURCE_LANG_CODE, never in TARGET_LANG_CODE - even though the "
+		"QUESTION/USER_INPUT/REFERENCE_ANSWER you are evaluating are written in TARGET_LANG_CODE, "
+		"your OUTPUT text itself must be in SOURCE_LANG_CODE.\n"
 		"2) The learner practices TARGET_LANG_CODE. Evaluate performance for that target language.\n"
 		"3) Output only 1 or 2 short sentences.\n"
 		"4) Mention one strength and one concrete improvement point.\n"
@@ -45,8 +48,10 @@ class FeedbackService:
 	]
 
 	def _format_context(self, context: dict[str, object]) -> str:
+		source_lang_code = str(context.get('source_lang_code', '') or '')
+		source_lang_name = get_language_by_iso2t(source_lang_code).name
 		return (
-			f"SOURCE_LANG_CODE: {context.get('source_lang_code', '')}\n"
+			f"SOURCE_LANG_CODE: {source_lang_code}\n"
 			f"TARGET_LANG_CODE: {context.get('target_lang_code', '')}\n"
 			f"EXERCISE_TYPE: {context.get('exercise_type', '')}\n"
 			f"INPUT_TYPE: {context.get('input_type', '')}\n"
@@ -57,6 +62,10 @@ class FeedbackService:
 			f"USER_INPUT: {context.get('user_input', '')}\n"
 			f"REFERENCE_ANSWER: {context.get('reference_answer', '')}\n"
 			f"METRICS_JSON: {json.dumps(context.get('metrics', {}), ensure_ascii=False)}\n"
+			# ponytail: repeated right before OUTPUT (not just in the system prompt) because
+			# reasoning models were writing feedback in the target language instead - the
+			# Chinese question/answer text in the context above biases them toward it otherwise.
+			f"REMINDER: write your OUTPUT in {source_lang_name} ({source_lang_code}), regardless of what language the QUESTION/ANSWER above are in.\n"
 			"OUTPUT:"
 		)
 
