@@ -108,8 +108,16 @@ class UserService:
                 preferred_exercise_types=user_data.preferences.preferred_exercise_types if user_data.preferences else [],
                 daily_goal_minutes=user_data.preferences.daily_goal_minutes if user_data.preferences else 20,
                 ai_feedback_enabled=user_data.preferences.ai_feedback_enabled if user_data.preferences else True,
-                ai_text_gen_enabled=user_data.preferences.ai_text_gen_enabled if user_data.preferences else True,
-                ai_tts_enabled=user_data.preferences.ai_tts_enabled if user_data.preferences else True
+                ai_learnable_sentence_enabled=user_data.preferences.ai_learnable_sentence_enabled if user_data.preferences else True,
+                ai_example_sentence_enabled=user_data.preferences.ai_example_sentence_enabled if user_data.preferences else True,
+                ai_example_word_enabled=user_data.preferences.ai_example_word_enabled if user_data.preferences else True,
+                ai_tts_enabled=user_data.preferences.ai_tts_enabled if user_data.preferences else True,
+                ai_gen_api_base_url=user_data.preferences.ai_gen_api_base_url if user_data.preferences else None,
+                ai_gen_api_key=user_data.preferences.ai_gen_api_key if user_data.preferences else None,
+                ai_gen_model=user_data.preferences.ai_gen_model if user_data.preferences else None,
+                ai_tts_api_base_url=user_data.preferences.ai_tts_api_base_url if user_data.preferences else None,
+                ai_tts_api_key=user_data.preferences.ai_tts_api_key if user_data.preferences else None,
+                ai_tts_model=user_data.preferences.ai_tts_model if user_data.preferences else None
             ),
             session=session,
         )
@@ -162,8 +170,16 @@ class UserService:
                 preferred_exercise_types=update_data.preferences.preferred_exercise_types if update_data.preferences else [],
                 daily_goal_minutes=update_data.preferences.daily_goal_minutes if update_data.preferences else 20,
                 ai_feedback_enabled=update_data.preferences.ai_feedback_enabled if update_data.preferences else True,
-                ai_text_gen_enabled=update_data.preferences.ai_text_gen_enabled if update_data.preferences else True,
-                ai_tts_enabled=update_data.preferences.ai_tts_enabled if update_data.preferences else True
+                ai_learnable_sentence_enabled=update_data.preferences.ai_learnable_sentence_enabled if update_data.preferences else True,
+                ai_example_sentence_enabled=update_data.preferences.ai_example_sentence_enabled if update_data.preferences else True,
+                ai_example_word_enabled=update_data.preferences.ai_example_word_enabled if update_data.preferences else True,
+                ai_tts_enabled=update_data.preferences.ai_tts_enabled if update_data.preferences else True,
+                ai_gen_api_base_url=update_data.preferences.ai_gen_api_base_url if update_data.preferences else None,
+                ai_gen_api_key=update_data.preferences.ai_gen_api_key if update_data.preferences else None,
+                ai_gen_model=update_data.preferences.ai_gen_model if update_data.preferences else None,
+                ai_tts_api_base_url=update_data.preferences.ai_tts_api_base_url if update_data.preferences else None,
+                ai_tts_api_key=update_data.preferences.ai_tts_api_key if update_data.preferences else None,
+                ai_tts_model=update_data.preferences.ai_tts_model if update_data.preferences else None
             ),
             session=session,
         )

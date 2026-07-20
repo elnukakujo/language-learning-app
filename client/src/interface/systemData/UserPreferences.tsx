@@ -10,6 +10,14 @@ export default interface UserPreferences {
     daily_goal_minutes?: number;
     last_updated: string; // ISO date string
     ai_feedback_enabled?: boolean;
-    ai_text_gen_enabled?: boolean;
+    ai_learnable_sentence_enabled?: boolean;
+    ai_example_sentence_enabled?: boolean;
+    ai_example_word_enabled?: boolean;
     ai_tts_enabled?: boolean;
+    ai_gen_api_base_url?: string;
+    ai_gen_api_key?: string;
+    ai_gen_model?: string;
+    ai_tts_api_base_url?: string;
+    ai_tts_api_key?: string;
+    ai_tts_model?: string;
 }

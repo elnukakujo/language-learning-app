@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
 from ..services.system_data import UserPreferencesService
+from ..utils import resolve_api, TTS_API
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
 from ..models.containers import Language
@@ -70,7 +71,7 @@ def generate_missing_component_audio(app: Flask):
             # Initialize TTS service with media_root (avoids app context issue)
             tts_service = TTSService(media_root=media_root)
             user_preferences_service = UserPreferencesService()
-            ai_tts_enabled_by_user: dict[str, bool] = {}
+            ai_tts_by_user: dict[str, tuple[bool, dict]] = {}
 
             # Query Characters without audio_files or with empty audio_files list
             # ponytail: JSON column has no `=` operator in postgres, compare array length instead
@@ -108,10 +109,18 @@ def generate_missing_component_audio(app: Flask):
                     language = db_manager.find_by_pk(Language(id=component.language_id), session=session)
                     language_name = language.name
 
-                    if language.user_id not in ai_tts_enabled_by_user:
+                    if language.user_id not in ai_tts_by_user:
                         prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
-                        ai_tts_enabled_by_user[language.user_id] = prefs is None or prefs.ai_tts_enabled is not False
-                    if not ai_tts_enabled_by_user[language.user_id]:
+                        enabled = prefs is None or prefs.ai_tts_enabled is not False
+                        api = resolve_api(
+                            TTS_API,
+                            getattr(prefs, "ai_tts_api_base_url", None),
+                            getattr(prefs, "ai_tts_api_key", None),
+                            getattr(prefs, "ai_tts_model", None),
+                        )
+                        ai_tts_by_user[language.user_id] = (enabled, api)
+                    enabled, api = ai_tts_by_user[language.user_id]
+                    if not enabled:
                         progress.set_postfix_str(f"{type(component).__name__} {component.id} [ai tts disabled for user]")
                         continue
 
@@ -128,7 +137,7 @@ def generate_missing_component_audio(app: Flask):
 
                     progress.set_postfix_str(f"{type(component).__name__} {component.id} [{language.target_iso639_2t}]: {text[:40]!r}")
 
-                    relative_path = tts_service.generate_audio(text=text, language_name=language_name)
+                    relative_path = tts_service.generate_audio(text=text, language_name=language_name, api=api)
                     component_id = component.id
 
                     updated_component = component.to_dict(include_relations=False)

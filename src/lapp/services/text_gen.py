@@ -79,12 +79,13 @@ class TextGeneratorService:
             "OUTPUT:"
         )
 
-    def _generate_from_messages(self, messages: list[dict], max_new_tokens: int) -> str:
-        output = chat_completion(**TEXT_GEN_API, messages=messages, max_tokens=max_new_tokens).strip()
+    def _generate_from_messages(self, messages: list[dict], max_new_tokens: int, api: dict | None = None) -> str:
+        api = api or TEXT_GEN_API
+        output = chat_completion(**api, messages=messages, max_tokens=max_new_tokens).strip()
         # ponytail: defensive strip in case a reasoning model ignores the no-think instruction
         return re.sub(r"<think>.*?</think>", "", output, flags=re.DOTALL).strip()
 
-    def generate_learnable_sentence(self, grammar_sheet: str, source_lang_code: str, target_lang_code: str) -> str:
+    def generate_learnable_sentence(self, grammar_sheet: str, source_lang_code: str, target_lang_code: str, api: dict | None = None) -> str:
         """
         Generate a learnable sentence based on a grammar sheet.
         
@@ -96,7 +97,8 @@ class TextGeneratorService:
         Returns:
             A single short example sentence that illustrates the grammar point.
         """
-        if not TEXT_GEN_API["base_url"]:
+        api = api or TEXT_GEN_API
+        if not api["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
@@ -129,9 +131,9 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=256)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256, api=api)
     
-    def generate_example_sentence(self, vocabulary_word: str, source_lang_code: str, target_lang_code: str) -> str:
+    def generate_example_sentence(self, vocabulary_word: str, source_lang_code: str, target_lang_code: str, api: dict | None = None) -> str:
         """
         Generate an example sentence based on a vocabulary word.
         
@@ -143,7 +145,8 @@ class TextGeneratorService:
         Returns:
             A single short example sentence that illustrates the vocabulary word.
         """
-        if not TEXT_GEN_API["base_url"]:
+        api = api or TEXT_GEN_API
+        if not api["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
@@ -176,9 +179,9 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=256)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256, api=api)
     
-    def generate_example_word(self, character: str, source_lang_code: str, target_lang_code: str) -> str:
+    def generate_example_word(self, character: str, source_lang_code: str, target_lang_code: str, api: dict | None = None) -> str:
         """
         Generate an example word based on a character.
         
@@ -190,7 +193,8 @@ class TextGeneratorService:
         Returns:
             A single example word that contains the character.
         """
-        if not TEXT_GEN_API["base_url"]:
+        api = api or TEXT_GEN_API
+        if not api["base_url"]:
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
@@ -223,4 +227,4 @@ class TextGeneratorService:
             )
         })
 
-        return self._generate_from_messages(messages=messages, max_new_tokens=256)
+        return self._generate_from_messages(messages=messages, max_new_tokens=256, api=api)

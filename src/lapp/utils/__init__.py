@@ -7,14 +7,14 @@ from .models import (
     get_text_embedding_model,
     get_audio_embedding_model,
     get_audio_embedding_processor,
+    get_stt_pipe,
 )
 from .model_api import (
     chat_completion,
-    transcribe_audio,
     synthesize_speech,
+    resolve_api,
     TEXT_GEN_API,
     FEEDBACK_API,
-    STT_API,
     TTS_API,
 )
 from .translate import translate
@@ -38,12 +38,12 @@ __all__ = [
     get_text_embedding_model,
     get_audio_embedding_model,
     get_audio_embedding_processor,
+    get_stt_pipe,
     chat_completion,
-    transcribe_audio,
     synthesize_speech,
+    resolve_api,
     TEXT_GEN_API,
     FEEDBACK_API,
-    STT_API,
     TTS_API,
     translate,
     get_phonetic,

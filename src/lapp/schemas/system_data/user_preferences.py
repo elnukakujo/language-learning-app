@@ -11,6 +11,14 @@ class UserPreferencesDict(BaseModel):
     daily_goal_minutes: Optional[int] = 20
     last_updated: Optional[datetime] = None
     ai_feedback_enabled: Optional[bool] = True
-    ai_text_gen_enabled: Optional[bool] = True
+    ai_learnable_sentence_enabled: Optional[bool] = True
+    ai_example_sentence_enabled: Optional[bool] = True
+    ai_example_word_enabled: Optional[bool] = True
     ai_tts_enabled: Optional[bool] = True
+    ai_gen_api_base_url: Optional[str] = None
+    ai_gen_api_key: Optional[str] = None
+    ai_gen_model: Optional[str] = None
+    ai_tts_api_base_url: Optional[str] = None
+    ai_tts_api_key: Optional[str] = None
+    ai_tts_model: Optional[str] = None
     user: Optional[dict] = None

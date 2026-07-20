@@ -1,4 +1,4 @@
-"""HTTP client for API-backed model tasks (text-gen, feedback, STT, TTS).
+"""HTTP client for API-backed model tasks (text-gen, feedback, TTS).
 
 Targets the OpenAI-compatible surface shared by llama.cpp server, ollama,
 OpenAI, and OpenAI-compatible proxies for other providers (Anthropic,
@@ -18,16 +18,21 @@ FEEDBACK_API = dict(
     api_key=os.environ.get("LAPP_FEEDBACK_API_KEY", ""),
     model=os.environ.get("LAPP_FEEDBACK_MODEL", ""),
 )
-STT_API = dict(
-    base_url=os.environ.get("LAPP_STT_API_BASE_URL", ""),
-    api_key=os.environ.get("LAPP_STT_API_KEY", ""),
-    model=os.environ.get("LAPP_STT_MODEL", ""),
-)
 TTS_API = dict(
     base_url=os.environ.get("LAPP_TTS_API_BASE_URL", ""),
     api_key=os.environ.get("LAPP_TTS_API_KEY", ""),
     model=os.environ.get("LAPP_TTS_MODEL", ""),
 )
+
+
+def resolve_api(default: dict, base_url: str | None, api_key: str | None, model: str | None) -> dict:
+    """Merge a per-user override on top of the server's env-configured default;
+    a blank/None override field falls back to the default."""
+    return dict(
+        base_url=base_url or default["base_url"],
+        api_key=api_key or default["api_key"],
+        model=model or default["model"],
+    )
 
 
 def _client(base_url: str, api_key: str) -> httpx.Client:
@@ -57,23 +62,6 @@ def chat_completion(
         )
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
-
-
-def transcribe_audio(
-    base_url: str,
-    api_key: str,
-    model: str,
-    wav_bytes: bytes,
-    filename: str = "audio.wav",
-) -> str:
-    with _client(base_url, api_key) as client:
-        resp = client.post(
-            "/audio/transcriptions",
-            data={"model": model},
-            files={"file": (filename, wav_bytes, "audio/wav")},
-        )
-        resp.raise_for_status()
-        return resp.json()["text"]
 
 
 def synthesize_speech(

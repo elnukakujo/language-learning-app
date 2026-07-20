@@ -50,6 +50,7 @@ class TTSService:
         self,
         text: str,
         language_name: str = None,
+        api: dict | None = None,
     ) -> str | list[str]:
         """
         Generate audio file from text using the configured TTS API endpoint.
@@ -72,7 +73,7 @@ class TTSService:
         try:
             logger.info(f"Generating TTS for: {text}")
 
-            wav_bytes = synthesize_speech(**TTS_API, text=text)
+            wav_bytes = synthesize_speech(**(api or TTS_API), text=text)
 
             generated_paths = []
             filename = self._get_filename()

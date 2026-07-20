@@ -18,6 +18,7 @@ from ..models.base import (
 from ..schemas import GrammarDict, CalligraphyDict, VocabularyDict
 from ..services import TextGeneratorService, GrammarService, VocabularyService, CalligraphyService
 from ..services.system_data import UserPreferencesService
+from ..utils import resolve_api, TEXT_GEN_API
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def generate_missing_texts(app: Flask):
             vocabulary_service = VocabularyService()
             calligraphy_service = CalligraphyService()
             user_preferences_service = UserPreferencesService()
-            ai_text_gen_enabled_by_user: dict[str, bool] = {}
+            ai_gen_by_user: dict[str, tuple[dict[str, bool], dict]] = {}
 
             calligraphies_without_examples: list[Calligraphy] = (
                 session.query(Calligraphy)
@@ -121,39 +122,60 @@ def generate_missing_texts(app: Flask):
                 language: Language = db_manager.find_by_pk(Language(id=feature.lesson.language_id), session=session)
                 lang_codes = f"{language.source_iso639_2t}->{language.target_iso639_2t}"
 
-                if language.user_id not in ai_text_gen_enabled_by_user:
+                if language.user_id not in ai_gen_by_user:
                     prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
-                    ai_text_gen_enabled_by_user[language.user_id] = prefs is None or prefs.ai_text_gen_enabled is not False
-                if not ai_text_gen_enabled_by_user[language.user_id]:
-                    progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [ai text-gen disabled for user]")
-                    continue
+                    flags = {
+                        "learnable_sentence": prefs is None or prefs.ai_learnable_sentence_enabled is not False,
+                        "example_sentence": prefs is None or prefs.ai_example_sentence_enabled is not False,
+                        "example_word": prefs is None or prefs.ai_example_word_enabled is not False,
+                    }
+                    api = resolve_api(
+                        TEXT_GEN_API,
+                        getattr(prefs, "ai_gen_api_base_url", None),
+                        getattr(prefs, "ai_gen_api_key", None),
+                        getattr(prefs, "ai_gen_model", None),
+                    )
+                    ai_gen_by_user[language.user_id] = (flags, api)
+                flags, api = ai_gen_by_user[language.user_id]
 
                 logger.info(f"Generating text for feature ID {feature.id} with language {language.source_iso639_2t} -> {language.target_iso639_2t}")
                 try:
                     # Generate audio using TTS service
                     if isinstance(feature, Calligraphy):
+                        if not flags["example_word"]:
+                            progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [ai example word gen disabled for user]")
+                            continue
                         text = feature.character.character
                         progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_example_word(
                             text,
                             source_lang_code=language.source_iso639_2t,
-                            target_lang_code=language.target_iso639_2t
+                            target_lang_code=language.target_iso639_2t,
+                            api=api,
                         )
                     elif isinstance(feature, Vocabulary):
+                        if not flags["example_sentence"]:
+                            progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [ai example sentence gen disabled for user]")
+                            continue
                         text = feature.word.word
                         progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_example_sentence(
                             text,
                             source_lang_code=language.source_iso639_2t,
-                            target_lang_code=language.target_iso639_2t
+                            target_lang_code=language.target_iso639_2t,
+                            api=api,
                         )
                     elif isinstance(feature, Grammar):
+                        if not flags["learnable_sentence"]:
+                            progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [ai learnable sentence gen disabled for user]")
+                            continue
                         text = f" #{feature.title}\n\n{feature.explanation}"
                         progress.set_postfix_str(f"{type(feature).__name__} {feature.id} [{lang_codes}]: {text[:40]!r}")
                         generated_text = text_gen_service.generate_learnable_sentence(
                             text,
                             source_lang_code=language.source_iso639_2t,
-                            target_lang_code=language.target_iso639_2t
+                            target_lang_code=language.target_iso639_2t,
+                            api=api,
                         )
                     else:
                         logger.warning(f"⚠️  Unknown feature type for ID {feature.id}, skipping")

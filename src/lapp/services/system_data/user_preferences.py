@@ -94,8 +94,16 @@ class UserPreferencesService:
             preferred_exercise_types=data.preferred_exercise_types,
             daily_goal_minutes=data.daily_goal_minutes,
             ai_feedback_enabled=data.ai_feedback_enabled,
-            ai_text_gen_enabled=data.ai_text_gen_enabled,
+            ai_learnable_sentence_enabled=data.ai_learnable_sentence_enabled,
+            ai_example_sentence_enabled=data.ai_example_sentence_enabled,
+            ai_example_word_enabled=data.ai_example_word_enabled,
             ai_tts_enabled=data.ai_tts_enabled,
+            ai_gen_api_base_url=data.ai_gen_api_base_url,
+            ai_gen_api_key=data.ai_gen_api_key,
+            ai_gen_model=data.ai_gen_model,
+            ai_tts_api_base_url=data.ai_tts_api_base_url,
+            ai_tts_api_key=data.ai_tts_api_key,
+            ai_tts_model=data.ai_tts_model,
         )
         result = db_manager.insert(pref, session=session, commit=False)
         if result:

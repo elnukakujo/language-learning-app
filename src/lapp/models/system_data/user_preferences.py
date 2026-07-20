@@ -15,9 +15,20 @@ class UserPreferences(Base):
     daily_goal_minutes = Column(Integer, default=20, nullable=False)
     last_updated = Column(Date, default=date.today)
     ai_feedback_enabled = Column(Boolean, default=True, nullable=False)
-    ai_text_gen_enabled = Column(Boolean, default=True, nullable=False)
+    ai_learnable_sentence_enabled = Column(Boolean, default=True, nullable=False)
+    ai_example_sentence_enabled = Column(Boolean, default=True, nullable=False)
+    ai_example_word_enabled = Column(Boolean, default=True, nullable=False)
     ai_tts_enabled = Column(Boolean, default=True, nullable=False)
-    
+
+    # Per-user override of the server's .env-configured API defaults (src/lapp/utils/model_api.py).
+    # Blank/None falls back to the server default - see resolve_api().
+    ai_gen_api_base_url = Column(String, nullable=True)
+    ai_gen_api_key = Column(String, nullable=True)
+    ai_gen_model = Column(String, nullable=True)
+    ai_tts_api_base_url = Column(String, nullable=True)
+    ai_tts_api_key = Column(String, nullable=True)
+    ai_tts_model = Column(String, nullable=True)
+
     # Foreign keys
     user_id = Column(String, ForeignKey('user.id'), nullable=False, unique=True)
 
@@ -37,8 +48,16 @@ class UserPreferences(Base):
             "preferred_exercise_types": self.preferred_exercise_types,
             "last_updated": self.last_updated.isoformat() if self.last_updated else None,
             "ai_feedback_enabled": self.ai_feedback_enabled,
-            "ai_text_gen_enabled": self.ai_text_gen_enabled,
+            "ai_learnable_sentence_enabled": self.ai_learnable_sentence_enabled,
+            "ai_example_sentence_enabled": self.ai_example_sentence_enabled,
+            "ai_example_word_enabled": self.ai_example_word_enabled,
             "ai_tts_enabled": self.ai_tts_enabled,
+            "ai_gen_api_base_url": self.ai_gen_api_base_url,
+            "ai_gen_api_key": self.ai_gen_api_key,
+            "ai_gen_model": self.ai_gen_model,
+            "ai_tts_api_base_url": self.ai_tts_api_base_url,
+            "ai_tts_api_key": self.ai_tts_api_key,
+            "ai_tts_model": self.ai_tts_model,
         }
         if include_relations and self.user:
             base["user"] = self.user.to_dict(include_relations=False)

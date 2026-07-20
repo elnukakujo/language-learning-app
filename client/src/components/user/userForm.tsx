@@ -27,8 +27,16 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
     const [preferred_exercise_types, setPreferredExerciseTypes] = useState<string[]>(userData.preferences?.preferred_exercise_types || []);
     const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(userData.preferences?.daily_goal_minutes || 20);
     const [aiFeedbackEnabled, setAiFeedbackEnabled] = useState<boolean>(userData.preferences?.ai_feedback_enabled ?? true);
-    const [aiTextGenEnabled, setAiTextGenEnabled] = useState<boolean>(userData.preferences?.ai_text_gen_enabled ?? true);
+    const [aiLearnableSentenceEnabled, setAiLearnableSentenceEnabled] = useState<boolean>(userData.preferences?.ai_learnable_sentence_enabled ?? true);
+    const [aiExampleSentenceEnabled, setAiExampleSentenceEnabled] = useState<boolean>(userData.preferences?.ai_example_sentence_enabled ?? true);
+    const [aiExampleWordEnabled, setAiExampleWordEnabled] = useState<boolean>(userData.preferences?.ai_example_word_enabled ?? true);
     const [aiTtsEnabled, setAiTtsEnabled] = useState<boolean>(userData.preferences?.ai_tts_enabled ?? true);
+    const [aiGenApiBaseUrl, setAiGenApiBaseUrl] = useState<string>(userData.preferences?.ai_gen_api_base_url || "");
+    const [aiGenApiKey, setAiGenApiKey] = useState<string>(userData.preferences?.ai_gen_api_key || "");
+    const [aiGenModel, setAiGenModel] = useState<string>(userData.preferences?.ai_gen_model || "");
+    const [aiTtsApiBaseUrl, setAiTtsApiBaseUrl] = useState<string>(userData.preferences?.ai_tts_api_base_url || "");
+    const [aiTtsApiKey, setAiTtsApiKey] = useState<string>(userData.preferences?.ai_tts_api_key || "");
+    const [aiTtsModel, setAiTtsModel] = useState<string>(userData.preferences?.ai_tts_model || "");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -49,8 +57,16 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 preferred_exercise_types: preferred_exercise_types,
                 daily_goal_minutes: dailyGoalMinutes,
                 ai_feedback_enabled: aiFeedbackEnabled,
-                ai_text_gen_enabled: aiTextGenEnabled,
-                ai_tts_enabled: aiTtsEnabled
+                ai_learnable_sentence_enabled: aiLearnableSentenceEnabled,
+                ai_example_sentence_enabled: aiExampleSentenceEnabled,
+                ai_example_word_enabled: aiExampleWordEnabled,
+                ai_tts_enabled: aiTtsEnabled,
+                ai_gen_api_base_url: aiGenApiBaseUrl || undefined,
+                ai_gen_api_key: aiGenApiKey || undefined,
+                ai_gen_model: aiGenModel || undefined,
+                ai_tts_api_base_url: aiTtsApiBaseUrl || undefined,
+                ai_tts_api_key: aiTtsApiKey || undefined,
+                ai_tts_model: aiTtsModel || undefined
             }
         };
         try {
@@ -157,19 +173,75 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                 <div className="index-divider" />
                 <label className="flex items-center justify-between gap-3 py-2.5">
                     <span>
-                        <span className="block text-sm font-medium">Example generation</span>
+                        <span className="block text-sm font-medium">Learnable sentence generation</span>
                         <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
-                            Auto-generate example sentences and words
+                            Auto-generate example sentences for grammar points
                         </span>
                     </span>
                     <input
                         type="checkbox"
                         className="h-5 w-5 shrink-0"
                         style={{ accentColor: "var(--color-primary)" }}
-                        checked={aiTextGenEnabled}
-                        onChange={(e) => setAiTextGenEnabled(e.target.checked)}
+                        checked={aiLearnableSentenceEnabled}
+                        onChange={(e) => setAiLearnableSentenceEnabled(e.target.checked)}
                     />
                 </label>
+                <div className="index-divider" />
+                <label className="flex items-center justify-between gap-3 py-2.5">
+                    <span>
+                        <span className="block text-sm font-medium">Example sentence generation</span>
+                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                            Auto-generate example sentences for vocabulary words
+                        </span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0"
+                        style={{ accentColor: "var(--color-primary)" }}
+                        checked={aiExampleSentenceEnabled}
+                        onChange={(e) => setAiExampleSentenceEnabled(e.target.checked)}
+                    />
+                </label>
+                <div className="index-divider" />
+                <label className="flex items-center justify-between gap-3 py-2.5">
+                    <span>
+                        <span className="block text-sm font-medium">Example word generation</span>
+                        <span className="block text-xs" style={{ color: "var(--color-muted)" }}>
+                            Auto-generate example words for calligraphy characters
+                        </span>
+                    </span>
+                    <input
+                        type="checkbox"
+                        className="h-5 w-5 shrink-0"
+                        style={{ accentColor: "var(--color-primary)" }}
+                        checked={aiExampleWordEnabled}
+                        onChange={(e) => setAiExampleWordEnabled(e.target.checked)}
+                    />
+                </label>
+                <div className="index-divider" />
+                <span className="block text-sm font-medium pt-2">Text-gen & feedback API</span>
+                <span className="block text-xs pb-1" style={{ color: "var(--color-muted)" }}>
+                    Optional - leave blank to use the server default. Shared across the sentence/word/feedback generation above.
+                </span>
+                <AutoWidthInput
+                    label="Base URL"
+                    value={aiGenApiBaseUrl}
+                    onChange={(e) => setAiGenApiBaseUrl(e.target.value)}
+                    placeholder="e.g. http://localhost:8080/v1"
+                />
+                <AutoWidthInput
+                    type="password"
+                    label="API Key"
+                    value={aiGenApiKey}
+                    onChange={(e) => setAiGenApiKey(e.target.value)}
+                    placeholder="Leave blank if not required"
+                />
+                <AutoWidthInput
+                    label="Model"
+                    value={aiGenModel}
+                    onChange={(e) => setAiGenModel(e.target.value)}
+                    placeholder="e.g. Qwen/Qwen3-0.6B"
+                />
                 <div className="index-divider" />
                 <label className="flex items-center justify-between gap-3 py-2.5">
                     <span>
@@ -186,6 +258,30 @@ export default function UserForm({ user, navDisabled = false, onSuccess }: { use
                         onChange={(e) => setAiTtsEnabled(e.target.checked)}
                     />
                 </label>
+                <div className="index-divider" />
+                <span className="block text-sm font-medium pt-2">TTS API</span>
+                <span className="block text-xs pb-1" style={{ color: "var(--color-muted)" }}>
+                    Optional - leave blank to use the server default.
+                </span>
+                <AutoWidthInput
+                    label="Base URL"
+                    value={aiTtsApiBaseUrl}
+                    onChange={(e) => setAiTtsApiBaseUrl(e.target.value)}
+                    placeholder="e.g. http://localhost:8091/v1"
+                />
+                <AutoWidthInput
+                    type="password"
+                    label="API Key"
+                    value={aiTtsApiKey}
+                    onChange={(e) => setAiTtsApiKey(e.target.value)}
+                    placeholder="Leave blank if not required"
+                />
+                <AutoWidthInput
+                    label="Model"
+                    value={aiTtsModel}
+                    onChange={(e) => setAiTtsModel(e.target.value)}
+                    placeholder="e.g. Qwen3-TTS-CustomVoice"
+                />
             </article>
 
             {isUpdate ? <SubmitButton isLoading={isSubmitting}>Update user</SubmitButton> : <SubmitButton isLoading={isSubmitting}>Add User</SubmitButton>}

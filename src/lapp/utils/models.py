@@ -96,6 +96,10 @@ from functools import cache
 # has always used.
 TEXT_EMBEDDING_MODEL = os.environ.get("LAPP_TEXT_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 AUDIO_EMBEDDING_MODEL = os.environ.get("LAPP_AUDIO_EMBEDDING_MODEL", "facebook/mms-300m")
+# whisper-tiny is multilingual (~99 languages) and small (~39M params) - needed
+# locally since exercise evaluation calls this synchronously and can't depend
+# on an external API being reachable.
+STT_MODEL = os.environ.get("LAPP_STT_MODEL", "openai/whisper-tiny")
 
 
 def _local_files_only(repo_id: str, require_tokenizer: bool = False) -> tuple[str | None, bool]:
@@ -133,6 +137,37 @@ def get_audio_embedding_processor():
     path, offline = _local_files_only(AUDIO_EMBEDDING_MODEL, require_tokenizer=True)
     return Wav2Vec2FeatureExtractor.from_pretrained(
         path or AUDIO_EMBEDDING_MODEL, local_files_only=offline
+    )
+
+
+@cache
+def get_stt_pipe():
+    """Speech-to-text pipeline (Whisper-tiny by default: lightweight, multilingual)."""
+    import torch
+    from transformers import (
+        AutoModelForSpeechSeq2Seq,
+        AutoProcessor,
+        pipeline,
+    )
+    device = get_device()
+    # float16 has no native CPU arithmetic support and falls back to slow
+    # scalar emulation; only use it on a real GPU.
+    dtype = torch.float16 if device in ("cuda", "mps") else torch.float32
+    path, offline = _local_files_only(STT_MODEL, require_tokenizer=True)
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        path or STT_MODEL,
+        dtype=dtype,
+        use_safetensors=True,
+        local_files_only=offline,
+    ).to(device)
+    processor = AutoProcessor.from_pretrained(path or STT_MODEL, local_files_only=offline)
+    return pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        dtype=dtype,
+        device=device,
     )
 
 

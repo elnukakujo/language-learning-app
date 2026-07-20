@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..core.database import db_manager, transactional
-from ..utils import chat_completion, FEEDBACK_API
+from ..utils import chat_completion, resolve_api, FEEDBACK_API
 from .features import ExerciseService
 from .system_data import UserPreferencesService
 
@@ -70,14 +70,15 @@ class FeedbackService:
 		messages.append({"role": "user", "content": self._format_context(context)})
 		return messages
 
-	def _generate_with_model(self, context: dict[str, object]) -> str:
-		if not FEEDBACK_API["base_url"]:
+	def _generate_with_model(self, context: dict[str, object], api: dict | None = None) -> str:
+		api = api or FEEDBACK_API
+		if not api["base_url"]:
 			logger.warning("Text Generator Service is not available. Returning fallback feedback.")
 			return self._fallback_feedback(context)
 
 		try:
 			messages = self._build_prompt(context)
-			feedback = chat_completion(**FEEDBACK_API, messages=messages, max_tokens=96, temperature=0.5).strip()
+			feedback = chat_completion(**api, messages=messages, max_tokens=96, temperature=0.5).strip()
 			# ponytail: defensive strip in case a reasoning model ignores the no-think instruction
 			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
@@ -175,4 +176,10 @@ class FeedbackService:
 		if prefs is not None and prefs.ai_feedback_enabled is False:
 			return self._fallback_feedback(context)
 
-		return self._generate_with_model(context)
+		api = resolve_api(
+			FEEDBACK_API,
+			getattr(prefs, "ai_gen_api_base_url", None),
+			getattr(prefs, "ai_gen_api_key", None),
+			getattr(prefs, "ai_gen_model", None),
+		)
+		return self._generate_with_model(context, api=api)
