@@ -54,6 +54,35 @@ spec:
   volumeName: fluence-backups-pv
   storageClassName: ""
 ---
+# Caches the local STT (whisper-tiny) + text/audio embedding models (~3GB) so a
+# pod restart doesn't re-download them from Hugging Face every time.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fluence-hf-cache-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/ssd/fluence/hf-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fluence-hf-cache-pvc
+  namespace: fluence
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: fluence-hf-cache-pv
+  storageClassName: ""
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -92,10 +121,13 @@ spec:
                   key: HF_TOKEN
           ports:
             - containerPort: 5050
+          # Local footprint is now just STT (whisper-tiny) + text/audio embeddings
+          # (text-gen/feedback/TTS moved to external APIs) - measured ~1.1GB RSS
+          # with text-embedding+STT loaded, ~3GB with all three local models resident.
           resources:
             requests:
               cpu: "500m"
-              memory: "2Gi"
+              memory: "3Gi"
             limits:
               memory: "4Gi"
           readinessProbe:
@@ -115,6 +147,8 @@ spec:
               mountPath: /app/media
             - name: backups
               mountPath: /app/backups
+            - name: hf-cache
+              mountPath: /root/.cache/huggingface
       volumes:
         - name: media
           persistentVolumeClaim:
@@ -122,6 +156,9 @@ spec:
         - name: backups
           persistentVolumeClaim:
             claimName: fluence-backups-pvc
+        - name: hf-cache
+          persistentVolumeClaim:
+            claimName: fluence-hf-cache-pvc
 ---
 apiVersion: v1
 kind: Service
