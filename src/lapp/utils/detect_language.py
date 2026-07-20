@@ -1,6 +1,4 @@
 from langdetect import detect
-import whisper
-import os
 import logging
 from dataclasses import dataclass
 
@@ -67,13 +65,6 @@ def get_language_by_iso1(iso1: str) -> Language:
     normalized = iso1.strip().lower()
     return _LANGUAGES.get(normalized, _UNKNOWN)
 
-from functools import cache
-
-
-@cache
-def _get_detection_model():
-    return whisper.load_model("base")
-
 def detect_text_language(text: str) -> Language:
     """
     Detect the language of a text string.
@@ -94,37 +85,3 @@ def detect_text_language(text: str) -> Language:
     except Exception as e:
         logger.error(f"Error detecting text language: {e}")
         return _UNKNOWN
-
-
-def detect_audio_language(audio_file_path: str) -> tuple[Language, float]:
-    """
-    Detect the language of an audio file using Whisper.
-
-    Returns (Language, confidence) or (_UNKNOWN, 0.0) on error.
-
-    Example:
-        lang, confidence = detect_audio_language("clip.mp3")
-        lang.iso2t   # "fra"
-        confidence   # 0.97
-    """
-    try:
-        if not os.path.isfile(audio_file_path):
-            logger.error(f"Audio file does not exist: {audio_file_path}")
-            return _UNKNOWN, 0.0
-
-        audio = whisper.load_audio(audio_file_path)
-        audio = whisper.pad_or_trim(audio)
-        mel = whisper.log_mel_spectrogram(
-            audio, n_mels=_get_detection_model().dims.n_mels
-        ).to(_get_detection_model().device)
-
-        _, probs = _get_detection_model().detect_language(mel)
-        iso1 = max(probs, key=probs.get)
-        confidence = probs[iso1]
-
-        lang = _lookup(iso1)
-        return lang, confidence
-
-    except Exception as e:
-        logger.error(f"Error detecting audio language: {e}")
-        return _UNKNOWN, 0.0
