@@ -46,6 +46,7 @@ dependencies = [
     "spacy>=3.8.11",
     "sqlalchemy>=2.0.41",
     "sv-core-news-md",
+    "torchaudio>=2.10.0",
     "torchcodec>=0.10.0",
     "uk-core-news-md",
     "zh-core-web-md",
