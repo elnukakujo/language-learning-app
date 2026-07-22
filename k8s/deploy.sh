@@ -27,3 +27,5 @@ kubectl -n fluence rollout status deployment/frontend --timeout=60s
 docker image prune -f
 docker builder prune -f
 crictl rmi --prune 2>/dev/null || true
+# Docker copy is dead weight once imported into containerd — keep only k3s copy
+docker rmi fluence-backend:test fluence-frontend:test 2>/dev/null || true
