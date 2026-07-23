@@ -225,15 +225,15 @@ export default function AudioPlayer({
       </div>
 
       <div className="flex items-center justify-center gap-3 mb-3">
-        <button className="btn btn-secondary !p-2 !rounded-full" onClick={() => skip(-5)} aria-label="Back 5 seconds">
+        <button type="button" className="btn btn-secondary !p-2 !rounded-full" onClick={() => skip(-5)} aria-label="Back 5 seconds">
           <SkipBack size={16} />
         </button>
 
-        <button className="ap-play-btn" onClick={togglePlay} aria-label={playing ? "Pause" : "Play"}>
+        <button type="button" className="ap-play-btn" onClick={togglePlay} aria-label={playing ? "Pause" : "Play"}>
           {playing ? <Pause size={20} /> : <Play size={20} />}
         </button>
 
-        <button className="btn btn-secondary !p-2 !rounded-full" onClick={() => skip(5)} aria-label="Forward 5 seconds">
+        <button type="button" className="btn btn-secondary !p-2 !rounded-full" onClick={() => skip(5)} aria-label="Forward 5 seconds">
           <SkipForward size={16} />
         </button>
       </div>
@@ -247,11 +247,12 @@ export default function AudioPlayer({
         </span>
 
         <div className="flex items-center gap-2">
-          <button className="btn btn-secondary !p-2 !rounded-full" onClick={restart} aria-label="Restart">
+          <button type="button" className="btn btn-secondary !p-2 !rounded-full" onClick={restart} aria-label="Restart">
             <RotateCcw size={14} />
           </button>
 
           <button
+            type="button"
             className="badge cursor-pointer font-mono text-[0.72rem] hover:bg-accent hover:text-primary-foreground transition-colors"
             onClick={() => setSpeedIdx((i) => (i + 1) % SPEED_STEPS.length)}
             aria-label="Playback speed"
@@ -261,6 +262,7 @@ export default function AudioPlayer({
 
           {transcript && (
             <button
+              type="button"
               className="badge cursor-pointer hover:bg-accent hover:text-primary-foreground transition-colors flex items-center gap-1"
               onClick={() => setShowTranscript((v) => !v)}
               aria-expanded={showTranscript}
