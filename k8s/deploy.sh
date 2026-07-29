@@ -8,11 +8,11 @@ set -e
 cd "$(dirname "$0")/.."
 . ./.env
 
-# Free space before building: previous deploy's Docker artifacts (dangling
-# images, build cache) are dead weight — they were imported into containerd
-# last time.
-docker image prune -f
-docker builder prune -f
+# Free space before building. Storage is tight (app fits exactly once, not
+# twice). Previous deploys leave behind dangling images, BuildKit cache
+# (including the uv cache mount with ~2.6GB of torch packages), and stopped
+# containers — all dead weight once imported into containerd.
+docker system prune -af
 
 # --- backend ---
 docker build -t fluence-backend:test .
