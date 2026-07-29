@@ -28,6 +28,15 @@ docker save fluence-frontend:test | k3s ctr --namespace=k8s.io images import -
 docker rmi fluence-frontend:test
 
 kubectl apply -f k8s/
+
+# Force-delete non-running pods from previous deploys — they hold RWO PVCs
+# and block the new pods from mounting them.
+for deploy in backend frontend; do
+  kubectl -n fluence get pods -l app=$deploy --no-headers 2>/dev/null | \
+    awk '!/Running|Pending/ {print $1}' | \
+    xargs -r kubectl -n fluence delete pod --force --grace-period=0 --wait=false
+done || true
+
 kubectl -n fluence rollout restart deployment/backend deployment/frontend
 kubectl -n fluence rollout status deployment/backend --timeout=90s
 kubectl -n fluence rollout status deployment/frontend --timeout=60s
