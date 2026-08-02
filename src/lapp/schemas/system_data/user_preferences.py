@@ -21,6 +21,7 @@ class UserPreferencesDict(BaseModel):
     ai_tts_api_base_url: Optional[str] = None
     ai_tts_api_key: Optional[str] = None
     ai_tts_model: Optional[str] = None
+    ai_endpoints: Optional[list] = None
     user: Optional[dict] = None
 
     @field_validator("ai_gen_api_base_url", "ai_tts_api_base_url")

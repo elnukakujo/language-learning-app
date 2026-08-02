@@ -151,6 +151,12 @@
   .link:hover {
     color: var(--color-accent);
   }
+
+  /* Global focus ring — matches .input:focus for consistency */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -754,4 +760,100 @@
   .heatmap-level-2 { background: color-mix(in srgb, var(--color-accent) 45%, var(--color-accent-soft)); }
   .heatmap-level-3 { background: color-mix(in srgb, var(--color-accent) 75%, var(--color-accent-soft)); }
   .heatmap-level-4 { background: var(--color-accent); }
+
+  /* ── Settings sidebar ─────────────────────────────────────────────── */
+  .settings-sidebar {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .settings-sidebar-link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .settings-sidebar-link:hover {
+    background: var(--color-accent-soft);
+  }
+  .settings-sidebar-link.active {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  /* ── Toggle switch ────────────────────────────────────────────────── */
+  .toggle-switch {
+    appearance: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 2.75rem;
+    height: 1.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: "";
+    position: absolute;
+    left: 0.125rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: var(--color-surface);
+    box-shadow: 0 1px 3px rgb(54 43 34 / 0.15);
+    transition: transform 0.2s ease;
+  }
+  .toggle-switch:checked {
+    background: var(--color-primary);
+  }
+  .toggle-switch:checked::after {
+    transform: translateX(1.25rem);
+  }
+  .toggle-switch:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .toggle-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Password strength bar ────────────────────────────────────────── */
+  .strength-segment {
+    flex: 1;
+    height: 4px;
+    border-radius: var(--radius-full);
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* ── Endpoint card ────────────────────────────────────────────────── */
+  .endpoint-card {
+    border-radius: var(--radius);
+  }
+
+  /* ── Backup row ───────────────────────────────────────────────────── */
+  .backup-row {
+    transition: background-color 0.15s ease;
+  }
+  .backup-row:hover {
+    background: var(--color-accent-soft);
+  }
+
+  /* ── Indeterminate progress bar (backup creation) ─────────────────── */
+  .progress-bar-indeterminate {
+    animation: indeterminate 1.4s ease-in-out infinite;
+  }
+  @keyframes indeterminate {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
 }

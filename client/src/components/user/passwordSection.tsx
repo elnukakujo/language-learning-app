@@ -2,67 +2,117 @@
 
 import { useState } from "react";
 import SectionCard from "./sectionCard";
-import AutoWidthInput from "@/components/ui/input/autoWidthInput";
-import SubmitButton from "@/components/ui/buttons/submitButton";
+import SaveButton from "./saveButton";
+import PasswordStrengthBar from "./passwordStrengthBar";
 import { updateUserPassword } from "@/api/user";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function PasswordSection({ userId }: { userId: string }) {
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setSuccess(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-        if (!newPassword && !confirmPassword) return; // blank = no-op
-        if (newPassword !== confirmPassword) {
-            setError("Passwords do not match");
-            return;
-        }
+    if (!currentPassword && !newPassword && !confirmPassword) return;
+    if (!currentPassword) { setError("Current password is required to set a new password"); return; }
+    if (newPassword !== confirmPassword) { setError("New passwords do not match"); return; }
+    if (newPassword.length < 8) { setError("New password must be at least 8 characters"); return; }
 
-        setSaving(true);
-        try {
-            await updateUserPassword(userId, newPassword);
-            setNewPassword("");
-            setConfirmPassword("");
-            setSuccess(true);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to update password");
-        } finally {
-            setSaving(false);
-        }
-    };
+    setSaving(true);
+    try {
+      // TODO: include currentPassword in API call when backend supports verification
+      await updateUserPassword(userId, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    return (
-        <SectionCard title="Password">
-            <p className="text-sm opacity-60">Optional — leave blank to keep your current password.</p>
+  const passwordInput = (
+    value: string,
+    onChange: (v: string) => void,
+    show: boolean,
+    setShow: (v: boolean) => void,
+    placeholder: string,
+    autocomplete: string,
+  ) => (
+    <div className="relative">
+      <input
+        className="input pr-10"
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autocomplete}
+        disabled={saving}
+      />
+      <button
+        type="button"
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md opacity-50 hover:opacity-80 focus:outline-2 focus:outline-offset-1 focus:outline-[var(--color-accent)]"
+        onClick={() => setShow(!show)}
+        tabIndex={-1}
+        aria-label={show ? "Hide password" : "Show password"}
+      >
+        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+      </button>
+    </div>
+  );
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            {success && <p className="text-sm" style={{ color: "var(--color-primary)" }}>Password updated.</p>}
+  return (
+    <SectionCard title="Password">
+      <p className="text-sm opacity-60">Leave all fields blank to keep your current password.</p>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <AutoWidthInput
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="New password"
-                    disabled={saving}
-                />
-                <AutoWidthInput
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                    disabled={saving}
-                />
-                <div>
-                    <SubmitButton isLoading={saving} />
-                </div>
-            </form>
-        </SectionCard>
-    );
+      {error && (
+        <p className="text-sm" style={{ color: "var(--color-danger)" }} role="alert">
+          {error}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-sm opacity-70">Current Password</span>
+          {passwordInput(currentPassword, setCurrentPassword, showCurrent, setShowCurrent, "Enter current password", "current-password")}
+        </label>
+
+        <div className="index-divider" />
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm opacity-70">New Password</span>
+          {passwordInput(newPassword, setNewPassword, showNew, setShowNew, "Enter new password", "new-password")}
+          {newPassword && <PasswordStrengthBar password={newPassword} />}
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm opacity-70">Confirm New Password</span>
+          {passwordInput(confirmPassword, setConfirmPassword, showConfirm, setShowConfirm, "Re-enter new password", "new-password")}
+        </label>
+
+        <div>
+          <SaveButton isLoading={saving} onSuccessLabel="Password updated" />
+        </div>
+      </form>
+
+      {/* Active Sessions — placeholder */}
+      <div className="index-divider" />
+      <div>
+        <h4 className="text-sm font-medium mb-1">Active Sessions</h4>
+        <p className="text-xs opacity-40">
+          {// TODO: implement session tracking on backend
+          }Session management is not yet available.
+        </p>
+      </div>
+    </SectionCard>
+  );
 }

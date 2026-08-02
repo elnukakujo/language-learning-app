@@ -30,4 +30,5 @@ export interface ApiEndpointConfig {
     api_key?: string;
     model?: string;
     is_active: boolean;
+    voice?: string; // TTS voice, e.g. "alloy" (OpenAI) or "en_f" (Kokoro)
 }

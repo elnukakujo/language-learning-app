@@ -182,8 +182,32 @@ def delete_user_preferences(pref_id: str):
             description: User preferences not found
     """
     success = user_preferences_service.delete(pref_id)
-    
+
     if success:
         return jsonify({'success': True}), 204
     else:
         return jsonify({'error': 'User preferences not found'}), 404
+
+
+@bp.route('/test-endpoint', methods=['POST'])
+def test_endpoint():
+    """Test connectivity to an API endpoint (server-side, no CORS)."""
+    import time, urllib.request
+
+    body = request.json or {}
+    base_url = (body.get("base_url") or "").strip()
+    if not base_url:
+        return jsonify({"ok": False, "error": "No base URL provided"}), 400
+
+    req = urllib.request.Request(base_url, method="GET")
+    if body.get("api_key"):
+        req.add_header("Authorization", f"Bearer {body['api_key']}")
+
+    start = time.perf_counter()
+    try:
+        urllib.request.urlopen(req, timeout=5)
+        ms = round((time.perf_counter() - start) * 1000)
+        return jsonify({"ok": True, "ms": ms})
+    except Exception as e:
+        ms = round((time.perf_counter() - start) * 1000)
+        return jsonify({"ok": False, "ms": ms, "error": str(e)})

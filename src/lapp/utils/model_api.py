@@ -44,19 +44,18 @@ def chat_completion(
 def synthesize_speech(
     base_url: str,
     api_key: str,
-    model: str,
-    text: str,
+    model: str = "",
+    text: str = "",
     voice: str = "alloy",
 ) -> bytes:
+    body: dict = {"input": text, "voice": voice}
+    if model:
+        body["model"] = model
+    # ponytail: only include response_format when model is present (OpenAI path);
+    # Custom providers like Kokoro don't expect it.
+    if model:
+        body["response_format"] = "wav"
     with _client(base_url, api_key) as client:
-        resp = client.post(
-            "/audio/speech",
-            json={
-                "model": model,
-                "input": text,
-                "voice": voice,
-                "response_format": "wav",
-            },
-        )
+        resp = client.post("/audio/speech", json=body)
         resp.raise_for_status()
         return resp.content

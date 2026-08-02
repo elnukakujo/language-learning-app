@@ -128,11 +128,26 @@ def generate_missing_texts(app: Flask):
                         "example_sentence": prefs is None or prefs.ai_example_sentence_enabled is not False,
                         "example_word": prefs is None or prefs.ai_example_word_enabled is not False,
                     }
-                    api = {
-                        "base_url": getattr(prefs, "ai_gen_api_base_url", None) or "",
-                        "api_key": getattr(prefs, "ai_gen_api_key", None) or "",
-                        "model": getattr(prefs, "ai_gen_model", None) or "",
-                    } if prefs else None
+                    api = None
+                    if prefs:
+                        # Check ai_endpoints first for an active text_gen endpoint
+                        for ep in (getattr(prefs, "ai_endpoints", None) or []):
+                            if isinstance(ep, dict) and ep.get("is_active") and ep.get("api_type") in ("text_gen", "both"):
+                                api = {
+                                    "base_url": ep.get("base_url", "") or "",
+                                    "api_key": ep.get("api_key", "") or "",
+                                    "model": ep.get("model", "") or "",
+                                }
+                                break
+                        # Fall back to legacy flat fields
+                        if not api:
+                            legacy_url = getattr(prefs, "ai_gen_api_base_url", None) or ""
+                            if legacy_url:
+                                api = {
+                                    "base_url": legacy_url,
+                                    "api_key": getattr(prefs, "ai_gen_api_key", None) or "",
+                                    "model": getattr(prefs, "ai_gen_model", None) or "",
+                                }
                     ai_gen_by_user[language.user_id] = (flags, api)
                 flags, api = ai_gen_by_user[language.user_id]
                 if not api or not api["base_url"]:
