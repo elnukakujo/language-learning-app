@@ -112,3 +112,6 @@ dev = [
 
 [project.scripts]
 server = "lapp.__main__:main"
+
+[tool.pytest.ini_options]
+markers = ["smoke: real LLM endpoint tests requiring env vars"]

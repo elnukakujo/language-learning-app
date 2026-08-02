@@ -7,6 +7,8 @@ from typing import Optional, List
 
 from sqlalchemy.engine import make_url
 
+from ..core.database import db_manager
+
 logger = logging.getLogger(__name__)
 
 class BackupService:
@@ -106,6 +108,7 @@ class BackupService:
                 return None
 
             logger.info(f"✅ Backup created: {backup_path.name}")
+            db_manager.reset_mutation_counter()  # every backup path resets the action counter
             if name is None:
                 self.cleanup_old_backups()
             return backup_path

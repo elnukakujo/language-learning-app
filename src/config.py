@@ -55,7 +55,7 @@ class Config:
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
     
     # Backup settings
-    BACKUP_INTERVAL_MINUTES = 20  # Every 20 minutes
+    BACKUP_AFTER_ACTIONS = 100  # Create a backup after this many DB mutations
     MAX_BACKUPS = 10  # Keep last 10 backups
 
     # Media cleanup settings

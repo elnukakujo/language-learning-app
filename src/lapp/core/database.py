@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, Type, TypeVar, Any
 
 import sqlalchemy
-from sqlalchemy import create_engine, select, update, Table, Column, String, Integer
+from sqlalchemy import create_engine, select, update, delete, Table, Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, selectinload
 from sqlalchemy.inspection import inspect
@@ -51,6 +51,58 @@ id_counter_table = Table(
     Column("entity_type", String, primary_key=True),
     Column("next_value", Integer, nullable=False),
 )
+
+# Backup trigger counter: how many session_scope() transactions have committed
+# since the last backup. One row in id_counter_table, entity_type keyed by
+# MUTATION_COUNTER_ENTITY. Incremented inside session_scope() before commit so
+# a rollback naturally discards the increment.
+# ponytail: counts read-only scopes too; threshold is a heuristic, backups fire
+# slightly early. Not worth dirty-tracking.
+MUTATION_COUNTER_ENTITY = "__mutation_count__"
+
+
+def increment_mutation_counter(session: Session) -> int:
+    """Atomically bump the mutation counter; seeds the row on first use."""
+    stmt = postgresql_insert(id_counter_table).values(
+        entity_type=MUTATION_COUNTER_ENTITY, next_value=1
+    ).on_conflict_do_update(
+        index_elements=["entity_type"],
+        set_={"next_value": id_counter_table.c.next_value + 1},
+    ).returning(id_counter_table.c.next_value)
+    return session.execute(stmt).scalar_one()
+
+
+def get_mutation_count(session: Optional[Session] = None) -> int:
+    """Current mutation count; 0 when no row exists yet."""
+    close_session = session is None
+    if close_session:
+        session = db_manager.get_session()
+    try:
+        row = session.execute(
+            select(id_counter_table.c.next_value).where(
+                id_counter_table.c.entity_type == MUTATION_COUNTER_ENTITY
+            )
+        ).first()
+        return row[0] if row else 0
+    finally:
+        if close_session:
+            session.close()
+
+
+def reset_mutation_counter(session: Optional[Session] = None) -> None:
+    """Zero the counter (row deletion reads back as 0)."""
+    close_session = session is None
+    if close_session:
+        session = db_manager.get_session()
+    try:
+        session.execute(delete(id_counter_table).where(
+            id_counter_table.c.entity_type == MUTATION_COUNTER_ENTITY
+        ))
+        if close_session:
+            session.commit()
+    finally:
+        if close_session:
+            session.close()
 
 class DatabaseManager:
     """
@@ -208,6 +260,7 @@ class DatabaseManager:
         session = self.get_session()
         try:
             yield session
+            increment_mutation_counter(session)  # same txn as the writes; rolls back with them
             session.commit()
         except Exception:
             session.rollback()

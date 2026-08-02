@@ -7,57 +7,47 @@ logger = logging.getLogger(__name__)
 
 def register_backup_tasks(scheduler: BackgroundScheduler, app: Flask):
     """
-    Register backup-related scheduled tasks.
-    Uses interval-based scheduling since app doesn't run 24/7.
-    
-    Args:
-        scheduler: APScheduler instance
-        app: Flask app instance for accessing config
+    Backup after every BACKUP_AFTER_ACTIONS DB mutations. Polls every 60s;
+    actual backup runs in the poll tick, not in any request thread.
     """
-    # Get backup interval from config (default: 60 minutes)
-    backup_interval = app.config.get('BACKUP_INTERVAL_MINUTES', 60)
-    
-    # Interval-based backup (runs every X minutes while app is running)
+    threshold = app.config.get('BACKUP_AFTER_ACTIONS', 100)
+
     scheduler.add_job(
-        func=create_automatic_backup,
-        trigger=IntervalTrigger(minutes=backup_interval),
+        func=check_and_backup,
+        trigger=IntervalTrigger(seconds=60),
         id='automatic_backup',
-        name=f'Automatic database backup (every {backup_interval} minutes)',
+        name=f'Automatic database backup (after {threshold} mutations)',
         replace_existing=True,
         args=[app]
     )
-    logger.info(f"✅ Scheduled job: automatic_backup (every {backup_interval} minutes)")
+    logger.info(f"✅ Scheduled job: automatic_backup (every {threshold} mutations, polled every 60s)")
 
-def create_automatic_backup(app: Flask):
-    """
-    Scheduled task: Create automatic database backup.
-    
-    This function is called by APScheduler and must handle app context properly.
-    """
+def check_and_backup(app: Flask):
+    """Poll the mutation counter; create a backup once it crosses the threshold."""
+    from lapp.core.database import db_manager
+    try:
+        count = db_manager.get_mutation_count()
+    except Exception as e:
+        logger.error(f"❌ Could not read mutation counter: {e}")
+        return
+    if count >= app.config.get('BACKUP_AFTER_ACTIONS', 100):
+        logger.info(f"⏰ Mutation counter at {count}, creating automatic backup")
+        create_automatic_backup(app)
+
+def create_automatic_backup(app: Flask) -> bool:
+    """Create a backup via app.backup_manager (no duplicate BackupService)."""
     with app.app_context():
         try:
-            from pathlib import Path
-            from lapp.services.backup import BackupService
-
-            # Get config values from app (inside app context)
-            backup_service = BackupService(
-                database_url=app.config['SQLALCHEMY_DATABASE_URI'],
-                schema=app.config['DB_SCHEMA'],
-                backup_dir=Path(app.config['BACKUP_ROOT']),
-                max_backups=app.config['MAX_BACKUPS']
-            )
-
-            # Create backup
-            backup_path = backup_service.create_backup()
-
+            backup_path = app.backup_manager.create_backup()
             if backup_path:
-                stats = backup_service.get_stats()
+                stats = app.backup_manager.get_stats()
                 logger.info(
                     f"✅ Automatic backup: {backup_path.name} "
                     f"(Total: {stats['total_backups']}/{stats['max_backups']})"
                 )
-            else:
-                logger.warning("⚠️ Automatic backup was not created")
-        
+                return True
+            logger.warning("⚠️ Automatic backup was not created")
+            return False
         except Exception as e:
             logger.error(f"❌ Automatic backup error: {e}", exc_info=True)
+            return False
