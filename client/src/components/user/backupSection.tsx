@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBackup, deleteBackup, listBackups, restoreBackup } from "@/api/backup";
+import ConfirmDialog from "./confirmDialog";
 
 type Backup = {
     filename: string;
@@ -14,6 +15,7 @@ export default function BackupSection() {
     const [backups, setBackups] = useState<Backup[]>([]);
     const [loading, setLoading] = useState(false);
     const [pendingRestore, setPendingRestore] = useState<string | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
     const refresh = async () => {
         const data = await listBackups();
@@ -51,6 +53,7 @@ export default function BackupSection() {
     const handleDelete = async (filename: string) => {
         try {
             await deleteBackup(filename);
+            setPendingDelete(null);
             await refresh();
         } catch (error) {
             console.error("Failed to delete backup:", error);
@@ -76,7 +79,7 @@ export default function BackupSection() {
                             <button type="button" onClick={() => setPendingRestore(b.filename)} disabled={loading} className="btn btn-secondary">
                                 Restore
                             </button>
-                            <button type="button" onClick={() => handleDelete(b.filename)} disabled={loading || backups.length <= 1} className="btn btn-danger">
+                            <button type="button" onClick={() => setPendingDelete(b.filename)} disabled={loading || backups.length <= 1} className="btn btn-danger">
                                 Delete
                             </button>
                         </div>
@@ -86,17 +89,23 @@ export default function BackupSection() {
             </ul>
 
             {pendingRestore && (
-                <div className="fixed inset-0 z-50 flex flex-col gap-3 items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <p className="text-white">Restore database from &quot;{pendingRestore}&quot;? This will overwrite current data.</p>
-                    <div className="flex flex-row gap-2">
-                        <button type="button" onClick={() => handleRestore(pendingRestore)} className="btn btn-danger">
-                            Confirm Restore
-                        </button>
-                        <button type="button" onClick={() => setPendingRestore(null)} className="btn btn-secondary">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
+                <ConfirmDialog
+                    message={`Restore database from "${pendingRestore}"? This will overwrite current data.`}
+                    confirmLabel="Confirm Restore"
+                    danger
+                    onConfirm={() => handleRestore(pendingRestore)}
+                    onCancel={() => setPendingRestore(null)}
+                />
+            )}
+
+            {pendingDelete && (
+                <ConfirmDialog
+                    message={`Delete backup "${pendingDelete}"?`}
+                    confirmLabel="Delete"
+                    danger
+                    onConfirm={() => handleDelete(pendingDelete)}
+                    onCancel={() => setPendingDelete(null)}
+                />
             )}
         </article>
     );

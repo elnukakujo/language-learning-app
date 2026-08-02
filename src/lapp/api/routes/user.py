@@ -211,8 +211,45 @@ def delete_user(user_id: str):
             description: User not found
     """
     success = user_service.delete(user_id)
-    
+
     if success:
         return jsonify({'success': True}), 204
     else:
         return jsonify({'error': 'User not found'}), 404
+
+
+@bp.route('/<user_id>/password', methods=['PUT'])
+def update_password(user_id: str):
+    """Update a user's password.
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+            type: object
+            properties:
+                password:
+                    type: string
+                    description: New plaintext password
+                    required: true
+    responses:
+      200:
+        description: Password updated
+      400:
+        description: Password cannot be blank
+      404:
+        description: User not found
+    """
+    password = (request.json or {}).get("password", "")
+    if not password:
+        return jsonify({'error': 'Password cannot be blank'}), 400
+    if not user_service.update_password(user_id, password):
+        return jsonify({'error': 'User not found'}), 404
+    return jsonify({'success': True})

@@ -10,8 +10,7 @@ from ..utils import chat_completion
 from ..utils.detect_language import get_language_by_iso2t
 from .features import ExerciseService
 from .system_data import UserPreferencesService
-
-logger = logging.getLogger(__name__)
+user_preferences_service = UserPreferencesService()
 
 exercise_service = ExerciseService()
 user_preferences_service = UserPreferencesService()

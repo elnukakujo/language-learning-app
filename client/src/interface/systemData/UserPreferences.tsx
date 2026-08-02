@@ -20,4 +20,14 @@ export default interface UserPreferences {
     ai_tts_api_base_url?: string;
     ai_tts_api_key?: string;
     ai_tts_model?: string;
+    ai_endpoints?: ApiEndpointConfig[];
+}
+
+export interface ApiEndpointConfig {
+    name: string;
+    api_type: "text_gen" | "tts" | "both";
+    base_url?: string;
+    api_key?: string;
+    model?: string;
+    is_active: boolean;
 }

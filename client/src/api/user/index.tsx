@@ -45,3 +45,13 @@ export async function deleteUser(userId: string) {
   });
   if (!res.ok) throw new Error("Failed to delete user");
 }
+
+export async function updateUserPassword(userId: string, password: string) {
+  const res = await fetch(`${BASE_URL}/api/user/${userId}/password`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) throw new Error("Failed to update password");
+  return res.json();
+}

@@ -85,8 +85,8 @@ class UserService:
         Returns:
             The created User object or UserDict, depending on the as_dict flag.
         """
-        if not user_data.email or not user_data.password:
-            raise ValueError("email and password are required to create a user.")
+        if not user_data.email:
+            raise ValueError("email is required to create a user.")
 
         if db_manager.find_by_attr(model_class=User, attr_values={"email": user_data.email}, session=session):
             raise ValueError(f"Email already in use: {user_data.email}")
@@ -97,7 +97,7 @@ class UserService:
             username=user_data.username,
             display_name=user_data.display_name,
             email=user_data.email,
-            password_hash=generate_password_hash(user_data.password),
+            password_hash=generate_password_hash(user_data.password) if user_data.password else None,
         )
 
         user_obj.preferences = user_preferences_service.create(
@@ -221,11 +221,35 @@ class UserService:
             session=session
         )
 
+        if not user:
+            return False
+
+        # Delete children before parent (FK constraint)
+        if user.preferences:
+            user_preferences_service.delete(pref_id=user.preferences.id, session=session)
+
         result = db_manager.delete(user, session=session, commit=False)
         if result:
             logger.info(f"Deleted User item with ID: {user_id}")
         else:
             logger.warning(f"User with ID {user_id} not found for deletion.")
-
-        user_preferences_service.delete(pref_id=user.preferences_id, session=session)
         return result
+
+    @transactional
+    def update_password(
+        self,
+        user_id: str,
+        password: str,
+        session: Optional[Session] = None,
+    ) -> bool:
+        """Update a user's password hash. Returns False if user not found."""
+        user = db_manager.find_by_attr(
+            model_class=User,
+            attr_values={'id': user_id},
+            session=session
+        )
+        if not user:
+            return False
+        user.password_hash = generate_password_hash(password)
+        db_manager.modify(obj=user, session=session, commit=False)
+        return True
