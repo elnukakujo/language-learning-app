@@ -24,9 +24,9 @@ def register_backup_tasks(scheduler: BackgroundScheduler, app: Flask):
 
 def check_and_backup(app: Flask):
     """Poll the mutation counter; create a backup once it crosses the threshold."""
-    from lapp.core.database import db_manager
+    from lapp.core.database import db_manager, get_mutation_count
     try:
-        count = db_manager.get_mutation_count()
+        count = get_mutation_count()
     except Exception as e:
         logger.error(f"❌ Could not read mutation counter: {e}")
         return
