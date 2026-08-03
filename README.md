@@ -4,39 +4,36 @@
 ![Flask](https://img.shields.io/badge/Flask-API-000000?style=flat-square&logo=flask&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-15-111111?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-Local%20Storage-003B57?style=flat-square&logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-k3s-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
 
-A full-stack personal knowledge base for language study. The project combines a Flask API, a Next.js frontend, local media storage, spaced-repetition style scoring, and AI-assisted content generation to organize vocabulary, grammar, calligraphy, and exercises in one place.
-
-## Why this project exists
-
-I wanted a lightweight system for managing my language-learning material without spreading notes across notebooks, screenshots, audio files, and random documents. This app turns those study assets into a structured database with clear relationships:
-
-- Languages contain units.
-- Units contain vocabulary, grammar notes, calligraphy items, and exercises.
-- Exercises can reference vocabulary, grammar, and calligraphy entries.
-- Media files and generated audio stay linked to the learning content they belong to.
+A full-stack, multi-user language learning platform with AI-assisted content generation, speech evaluation, and study tracking. Combines a Flask API, Next.js frontend, per-user configurable LLM backends, and Kubernetes deployment — all designed to organize vocabulary, grammar, characters, words, passages, and exercises in one place.
 
 ## What it does
 
-- Manage multiple languages and split them into units.
-- Store vocabulary entries with translations and study scores.
-- Store grammar notes and render Markdown content in the frontend.
-- Store calligraphy items for character-based languages.
-- Create exercises in several formats, including translate, fill-in-the-blank, matching, organize, essay, true/false, and answering modes.
-- Upload and serve local image and audio assets.
-- Generate example text with a local Hugging Face text-generation model.
-- Generate speech audio with Qwen TTS.
-- Run scheduled background jobs for backups, text generation, and TTS generation.
-- Expose a REST API with Swagger documentation through Flasgger.
+- **Multi-user** with a cookie-based user switcher — each user has their own languages, preferences, and AI config.
+- **Language → Lesson → Elements** hierarchy. Lessons group vocabulary, grammar, calligraphy, characters, words, and passages.
+- **10 exercise types**: translate, fill-in-the-blank, matching, organize, essay, true/false, answering, speaking, conversation, quizz, type-in-the-blank, and select-in-the-blank.
+- **AI-assisted content** — per-user OpenAI-compatible API config for example sentences, word definitions, grammar explanations, and TTS audio generation.
+- **Speech evaluation** — record spoken answers, transcribed via Whisper and scored against reference audio/text.
+- **AI tutor feedback** — LLM-generated feedback on exercise answers with few-shot prompts.
+- **Global search** across all content types with CJK-aware tokenization.
+- **Study tracking** — daily stats, commitment log, streak tracking, and a practice heatmap on the home dashboard.
+- **Sources & Tags** — attach metadata (textbooks, websites, custom labels) to any learning element.
+- **CJK enrichment** — automatic pinyin, radical/stroke count, romanization, and gloss translation for Chinese, Japanese, and Korean.
+- **Media management** — upload and serve images/audio; orphaned files auto-cleaned.
+- **Action-based backups** — create, restore, list, and delete backups via API; auto-restore on container startup.
+- **Kubernetes deployment** — k3s manifests with PVCs for media, backups, and Hugging Face cache.
+- **REST API** with Swagger documentation via Flasgger.
 
 ## Screenshots
 
-### Home and unit views
+### Home and lesson views
 
-| Home | Unit overview |
+| Home | Lesson overview |
 | --- | --- |
-| ![Home page](assets/screenshots/home_page.png) | ![Unit page](assets/screenshots/unit_page.png) |
+| ![Home page](assets/screenshots/home_page.png) | ![Lesson page](assets/screenshots/unit_page.png) |
 
 ### Study modes
 
@@ -53,36 +50,40 @@ I wanted a lightweight system for managing my language-learning material without
 ### Backend
 
 - Flask application factory with modular blueprints.
-- SQLAlchemy models organized by containers, components, and features.
-- SQLite by default for local development.
-- APScheduler for recurring background jobs.
-- Media and backup management stored on disk.
-- REST endpoints for languages, units, vocabulary, grammar, calligraphy, exercises, media, and backups.
+- SQLAlchemy ORM with Alembic migrations (PostgreSQL in production, SQLite for local dev).
+- Atomic ID generation via a dedicated `id_counter` table — race-free across concurrent requests.
+- Per-user AI configuration: each user sets their own OpenAI-compatible endpoint, API key, and model for text generation, TTS, and feedback.
+- APScheduler for recurring background jobs (backups, text generation, TTS, media cleanup).
+- Media and backup storage on disk with configurable roots.
+- REST endpoints for 20+ resource types: languages, lessons, vocabulary, grammar, calligraphy, characters, words, passages, exercises, sources, tags, users, preferences, daily stats, commitment logs, search, evaluation, backups, and media.
 
 ### Frontend
 
 - Next.js App Router project in [client](client).
-- Server and client components for study flows.
-- Centralized API layer in [client/src/api/index.tsx](client/src/api/index.tsx).
-- Pages for creating, updating, browsing, and practicing learning content.
+- Per-domain API modules in `client/src/api/` (one per resource type).
+- Server and client components for study flows, user management, and settings.
+- Pages for creating, updating, browsing, and practicing all content types.
 
 ## Project structure
 
 ```text
 .
-├── client/                 # Next.js frontend
-├── src/lapp/               # Flask app package
-│   ├── api/routes/         # REST endpoints
-│   ├── core/               # Database and scheduler
-│   ├── models/             # SQLAlchemy models
-│   ├── schemas/            # Pydantic schemas
-│   ├── services/           # Media, backup, TTS, text generation
-│   └── tasks/              # Scheduled jobs
-├── assets/screenshots/     # README screenshots
-├── backups/                # Backup storage
-├── dev/                    # Development media and backup folders
-├── instance/               # SQLite databases
-└── media/                  # Production media storage
+├── client/                  # Next.js frontend
+├── src/lapp/                # Flask app package
+│   ├── api/routes/          # REST endpoints (20+ resource types)
+│   ├── core/                # Database, scheduler, config
+│   ├── models/              # SQLAlchemy models (containers, components, features, system_data, data_collection)
+│   ├── schemas/             # Pydantic schemas
+│   ├── services/            # Media, backup, TTS, text gen, search, evaluation, feedback
+│   ├── tasks/               # Scheduled background jobs
+│   └── utils/               # CJK enrichment, model API client, phonetics, tokenization
+├── alembic/                 # Database migrations
+├── k8s/                     # Kubernetes manifests (k3s)
+├── docker/                  # Docker entrypoint, migration, backup scripts
+├── assets/screenshots/      # README screenshots
+├── media/                   # Production media storage
+├── backups/                 # Backup storage
+└── tests/                   # Test suite
 ```
 
 ## Tech stack
@@ -91,14 +92,16 @@ I wanted a lightweight system for managing my language-learning material without
 
 - Python 3.12+
 - Flask
-- SQLAlchemy
+- SQLAlchemy (with Alembic)
 - Pydantic
 - APScheduler
-- Flasgger
-- spaCy language models
-- Sentence Transformers
-- Qwen TTS
-- Hugging Face Transformers
+- Flasgger (Swagger)
+- PostgreSQL / SQLite
+- spaCy, Sentence Transformers
+- Whisper (speech-to-text)
+- language-tool-python (grammar checking)
+- pypinyin, pykakasi, hangul-romanize, hanzipy (CJK enrichment)
+- argostranslate (gloss translation)
 
 ### Frontend
 
@@ -107,6 +110,12 @@ I wanted a lightweight system for managing my language-learning material without
 - TypeScript
 - Tailwind CSS 4
 - React Markdown
+
+### Infrastructure
+
+- Docker & Docker Compose
+- Kubernetes (k3s)
+- PersistentVolumes for media, backups, HF cache
 
 ## Getting started
 
@@ -120,19 +129,15 @@ I wanted a lightweight system for managing my language-learning material without
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/elnukakujo/language-learning-app.git
-cd language-learning-app
+git clone https://github.com/elnukakujo/vocabulary-dbms.git
+cd vocabulary-dbms
 ```
 
 ### 2. Install backend dependencies
 
-Using `uv`:
-
 ```bash
 uv sync
 ```
-
-If you prefer `pip`, install from the project metadata after creating a virtual environment.
 
 ### 3. Install frontend dependencies
 
@@ -148,9 +153,7 @@ cd ..
 ./scripts/run.sh --env prod --host 127.0.0.1 --port 5000
 ```
 
-This starts the Flask API and the Next.js client in one command (arguments are forwarded to
-`uv run server`), and stops both together on Ctrl+C. In `--env prod` (or `LAPP_ENV=prod`), the
-client is built and served with `next start`; otherwise it runs `next dev`.
+This starts the Flask API and the Next.js client in one command, and stops both on Ctrl+C. In `--env prod` (or `LAPP_ENV=prod`), the client is built and served with `next start`; otherwise `next dev`.
 
 The API will be available at `http://127.0.0.1:5000` and the client at `http://localhost:3000`.
 
@@ -158,9 +161,9 @@ Useful endpoints:
 
 - `GET /health`
 - `GET /api/languages/`
-- Swagger UI via Flasgger when the server is running
+- Swagger UI via Flasgger
 
-To run either process on its own instead:
+To run either process standalone:
 
 ```bash
 uv run server --env prod --host 127.0.0.1 --port 5000
@@ -171,47 +174,71 @@ cd client
 LAPP_URL=http://127.0.0.1:5000 npm run dev
 ```
 
-The client reads the backend URL from `LAPP_URL` and falls back to `http://127.0.0.1:5000` if it is not set.
+The client reads the backend URL from `LAPP_URL` (falls back to `http://127.0.0.1:5000`).
 
 ### Running with Docker
 
-As an alternative to the native setup above, the full stack (Postgres, backend, frontend) can run in Docker:
-
 ```bash
-cp .env.example .env   # fill in DATABASE_URL, POSTGRES_*, etc. if not already done
+cp .env.example .env   # fill in DATABASE_URL, POSTGRES_*, etc.
 docker compose up --build
 ```
 
-- Database migrations (`alembic upgrade head`) run automatically on backend startup.
-- The same root `.env` is used for both native and Docker runs; `docker-compose.yml` only overrides the database host to `db` internally, everything else comes from `.env` as-is.
+- Database migrations run automatically on backend startup.
 - The API is available at `http://localhost:${LAPP_PORT:-5000}` and the client at `http://localhost:${PORT:-8080}`.
-- `PROD_MEDIA_ROOT`/`PROD_BACKUP_ROOT` (if set) are bind-mounted into the backend container, so media/backups land at whatever host path you choose.
+- `PROD_MEDIA_ROOT`/`PROD_BACKUP_ROOT` (if set) are bind-mounted into the backend container.
 
-## Development notes
+### Kubernetes (k3s)
 
-- Development uses a local SQLite database at `instance/dev_languages.db`.
-- Development media files are stored in `dev/media`.
-- Development backups are stored in `dev/backups`.
-- Background jobs are skipped in testing mode and started automatically in the main Flask process.
+```bash
+cp k8s/secrets.yaml.example k8s/secrets.yaml   # fill in secrets
+./k8s/deploy.sh
+```
+
+Manifests deploy the full stack (Postgres, backend, frontend) with PVC-based persistence.
 
 ## API overview
 
-The backend exposes endpoints for:
+| Endpoint | Resources |
+| --- | --- |
+| `/api/languages` | Language CRUD |
+| `/api/lessons` | Lesson CRUD |
+| `/api/vocabulary` | Vocabulary entries |
+| `/api/grammar` | Grammar notes (Markdown) |
+| `/api/calligraphy` | Calligraphy items |
+| `/api/character` | Characters (CJK) |
+| `/api/word` | Words |
+| `/api/passage` | Passages |
+| `/api/exercise` | Exercises (10+ types) |
+| `/api/user` | User CRUD + password management |
+| `/api/pref` | Per-user preferences, AI config, endpoint testing |
+| `/api/sources` | Source CRUD + attach/detach |
+| `/api/tags` | Tag CRUD + attach/detach |
+| `/api/search` | Global search (CJK-aware) |
+| `/api/evaluate` | Text and speech answer evaluation |
+| `/api/daily-stats` | Daily study stats and history |
+| `/api/commitment-log` | Long-term study tracking |
+| `/api/backup` | Create, restore, list, info, delete backups |
+| `/media` | Media upload and serve |
 
-- `/api/languages`
-- `/api/units`
-- `/api/vocabulary`
-- `/api/grammar`
-- `/api/calligraphy`
-- `/api/exercise`
-- `/media`
-- `/api/backup`
+## Multi-user system
 
-Common operations include listing by language or unit, fetching a single item, creating records, updating records, deleting records, scoring study items, evaluating translation exercises, managing uploads, and handling backup lifecycle operations.
+Users switch via a cookie-based picker — no login required. Each user has:
+- Their own languages, lessons, and study progress.
+- Configurable preferences (native language, daily goal, preferred exercise types).
+- Per-user AI API settings (base URL, key, model) for text generation, TTS, and feedback.
 
-## Current focus areas
+## AI & LLM
 
-- Personal language-course organization
-- Interactive study flows from stored content
-- Local-first media and backup handling
-- AI-assisted sentence and audio generation, as well as translation evaluation
+All AI features use a user-configured OpenAI-compatible API. No hardcoded model — each user brings their own endpoint (llama.cpp, Ollama, OpenAI, Anthropic, DeepSeek, Kimi, etc.). Features gated behind per-user toggles:
+- Example sentences for vocabulary, grammar, and calligraphy
+- Example words and definitions
+- TTS audio generation
+- Tutor feedback on exercise answers
+- Speech evaluation via Whisper (server-side STT model)
+
+## Development notes
+
+- Development uses SQLite at `instance/dev_languages.db`.
+- Development media in `media_dev/`, backups in `backups_dev/`.
+- Background jobs are skipped in testing mode.
+- Set `LAPP_ENV=dev` for auto-reload and debug endpoints.
