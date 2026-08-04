@@ -199,7 +199,8 @@ def test_endpoint():
     if not base_url:
         return jsonify({"ok": False, "error": "No base URL provided"}), 400
 
-    req = urllib.request.Request(base_url, method="GET")
+    url = f"{base_url.rstrip('/')}/models"
+    req = urllib.request.Request(url, method="GET")
     if body.get("api_key"):
         req.add_header("Authorization", f"Bearer {body['api_key']}")
 
