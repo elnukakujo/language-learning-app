@@ -1,19 +1,21 @@
 from sqlalchemy import Column, String, JSON
+from sqlalchemy.orm import relationship
 
-from ..base import BaseFeatureModel
+from ..base import BaseFeatureModel, exercise_calligraphy_link, exercise_grammar_link, exercise_vocabulary_link
 
 class Exercise(BaseFeatureModel):
     __tablename__ = 'exercise'
+    __mapper_args__ = {"polymorphic_identity": "exercise"}
 
-    exercise_type = Column(String, index=True)  # e.g., multiple choice, fill
-    question = Column(String, index=True)
-    answer = Column(String)
+    exercise_type = Column(String, nullable=False, index=True)  # e.g., multiple choice, fill
+    question = Column(String, nullable=False, index=True)
+    answer = Column(String, nullable=False)
     text_support = Column(String, default="")   # e.g., additional text information
+    content = Column(JSON, nullable=True)  # structured data for type_in_the_blank/select_in_the_blank/matching/organize/true_false/quizz
     
-    # Store relationship IDs as JSON arrays
-    vocabulary_ids = Column(JSON, default=list)
-    calligraphy_ids = Column(JSON, default=list)
-    grammar_ids = Column(JSON, default=list)
+    related_vocabulary = relationship('Vocabulary', secondary=exercise_vocabulary_link)
+    related_calligraphy = relationship('Calligraphy', secondary=exercise_calligraphy_link)
+    related_grammar = relationship('Grammar', secondary=exercise_grammar_link)
     
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict = {
@@ -22,8 +24,9 @@ class Exercise(BaseFeatureModel):
             "question": self.question,
             "text_support": self.text_support,
             "answer": self.answer,
-            "vocabulary_ids": self.vocabulary_ids,
-            "calligraphy_ids": self.calligraphy_ids,
-            "grammar_ids": self.grammar_ids
+            "content": self.content,
+            "related_vocabulary": [v.id for v in self.related_vocabulary],
+            "related_calligraphy": [c.id for c in self.related_calligraphy],
+            "related_grammar": [g.id for g in self.related_grammar],
         }
         return base_dict

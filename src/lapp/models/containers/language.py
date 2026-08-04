@@ -1,42 +1,54 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped
 
 from ..base import BaseContainerModel
-from .unit import Unit
+from .lesson import Lesson
 
 class Language(BaseContainerModel):
     __tablename__ = 'language'
+    __mapper_args__ = {"polymorphic_identity": "language"}
+    __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_language_user_name'),)
 
-    name = Column(String, index=True)
-    native_name = Column(String)
-    level = Column(String)
-    description = Column(String, default="")
+    name = Column(String, nullable=False, index=True)
+    alias = Column(String)
     flag = Column(String, default="")
 
-    # Foreign key to current unit
-    current_unit = Column(String, nullable=True)
+    source_iso639_2t = Column(String, nullable=True, default="eng")
+    target_iso639_2t = Column(String, nullable=True)
 
-    # One-to-many: all units belonging to this language
-    unit: Mapped[list["Unit"]] = relationship(
-        "Unit",
+    # Foreign keys
+    # use_alter=True breaks the language<->lesson circular FK dependency
+    # (lesson.language_id -> language.id) into two DDL passes, so Postgres's
+    # create_all()/drop_all() can topologically sort the tables. SQLite
+    # tolerates the cycle silently; Postgres doesn't.
+    current_lesson_id = Column(
+        String,
+        ForeignKey('lesson.id', use_alter=True, name='fk_language_current_lesson_id'),
+        nullable=True
+    )
+
+    # One-to-many: all lessons belonging to this language
+    lessons: Mapped[list["Lesson"]] = relationship(
+        "Lesson",
         back_populates="language",
         cascade="all, delete-orphan",
+        foreign_keys=[Lesson.language_id],
     )
 
     def to_dict(self, include_relations: bool = True) -> dict:
         base_dict =  {
-            **super().to_dict(),
+            **super().to_dict(include_relations),
             "name": self.name,
-            "native_name": self.native_name,
-            "level": self.level,
-            "description": self.description,
+            "alias": self.alias,
             "flag": self.flag,
-            "current_unit": self.current_unit
+            "source_iso639_2t": self.source_iso639_2t,
+            "target_iso639_2t": self.target_iso639_2t,
         }
 
         if include_relations:
             base_dict.update({
-                "unit_ids": [unit.id for unit in self.unit]
+                "current_lesson_id": self.current_lesson_id,
+                "lesson_ids": [lesson.id for lesson in self.lessons],
             })
         
         return base_dict

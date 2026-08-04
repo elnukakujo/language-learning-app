@@ -1,0 +1,57 @@
+from sqlalchemy import Column, Enum, String, Date, DateTime, ForeignKey, select
+from sqlalchemy.sql import func
+from sqlalchemy.util import defaultdict
+
+from ...core.database import Base, db_manager
+from ..base import source_element_link
+
+class Source(Base):
+    __tablename__ = 'source'
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('user.id'), nullable=False)
+    title = Column(String, nullable=False)
+    date = Column(Date)
+    description = Column(String)
+    source_type = Column(Enum("original", "textbook", "class", "online", "media", "social", "other", "ai", name="source_type_enum"), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=True)
+
+    def get_elements(self) -> dict:
+        # Reuse self's own session rather than leaking an unclosed one from
+        # db_manager.get_session() (see the equivalent comment on
+        # BaseElementModel.get_progress_tracking in models/base.py).
+        from sqlalchemy.orm import object_session
+        session = object_session(self) or db_manager.get_session()
+        linked_ids = [
+            row.element_id for row in session.execute(
+                select(source_element_link.c.element_id).where(
+                    source_element_link.c.source_id == self.id
+                )
+            )
+        ]
+
+        if not linked_ids:
+            return {}
+
+        bucketed = defaultdict(list)
+        for id_ in linked_ids:
+            type_name = id_.split("_")[0]
+            bucketed[type_name].append(id_)
+
+        return dict(bucketed)
+
+    def to_dict(self, include_relations: bool = False) -> dict:
+        base = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "title": self.title,
+            "date": self.date.isoformat() if self.date else None,
+            "description": self.description,
+            "source_type": self.source_type,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+        if include_relations:
+            base["elements"] = self.get_elements()
+        return base

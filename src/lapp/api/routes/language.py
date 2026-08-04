@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
+import logging
+logger = logging.getLogger(__name__)
 
 from ...services import LanguageService
 from ...schemas.containers import LanguageDict
@@ -7,10 +9,10 @@ from ...schemas.containers import LanguageDict
 bp = Blueprint('language', __name__, url_prefix='/api/languages')
 language_service = LanguageService()
 
-@bp.route('/', methods=['GET'])
-def get_all_languages():
+@bp.route('/all/<user_id>', methods=['GET'])
+def get_all_user_languages(user_id: str):
     """
-    Get all languages
+    Get all languages for the current user
     ---
     tags:
       - Languages
@@ -22,7 +24,9 @@ def get_all_languages():
           items:
             type: object
     """
-    languages = language_service.get_all(as_dict=True)
+    languages = language_service.get_by_user_id(user_id=user_id, as_dict=True)
+    if languages is None or len(languages) == 0:
+        return jsonify([]), 200
     return jsonify(languages)
 
 
@@ -71,12 +75,12 @@ def create_language():
                 name:
                     type: string
                     example: "French"
-                native_name:
+                alias:
                     type: string
                     example: "Français"
                 level:
-                    type: string
-                    example: "A1"
+                    type: number
+                    example: 0
                     required: false
                 description:
                     type: string
@@ -85,6 +89,18 @@ def create_language():
                 flag:
                     type: string
                     example: "🇫🇷"
+                    required: false
+                user_id:
+                    type: string
+                    example: "user_U0"
+                    required: true
+                target_iso639_2t:
+                    type: string
+                    example: "fra"
+                    required: false
+                source_iso639_2t:
+                    type: string
+                    example: "eng"
                     required: false
     responses:
       201:
@@ -134,12 +150,12 @@ def update_language(language_id: str):
                 name:
                     type: string
                     example: "French"
-                native_name:
+                alias:
                     type: string
                     example: "Français"
                 level:
-                    type: string
-                    example: "A1"
+                    type: number
+                    example: 0
                     required: false
                 description:
                     type: string
@@ -149,9 +165,9 @@ def update_language(language_id: str):
                     type: string
                     example: "🇫🇷"
                     required: false
-                current_unit:
+                current_lesson_id:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: false
     responses:
       200:

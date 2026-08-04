@@ -1,15 +1,24 @@
 from .containers import *
 from .components import *
 from .features import *
+from .system_data import *
+from .data_collection import *
 
 __all__ = [
     "LanguageDict",
-    "UnitDict",
+    "LessonDict",
     "VocabularyDict",
     "GrammarDict",
     "CalligraphyDict",
     "ExerciseDict",
     "CharacterDict",
     "WordDict",
-    "PassageDict"
+    "PassageDict",
+    "UserDict",
+    "UserPreferencesDict",
+    "SourceDict",
+    "TagDict",
+    "ProgressTrackingDict",
+    "DailyStatsDict",
+    "CommitmentLogDict",
 ]

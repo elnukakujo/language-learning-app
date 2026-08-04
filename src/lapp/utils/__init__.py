@@ -1,36 +1,49 @@
 from .file_handler import MediaFileHandler
-from .helpers import update_score
-from .detect_language import detect_audio_language, detect_text_language
+from .helpers import update_score, update_difficulty, stack_lists
+from .detect_language import detect_text_language, get_language_by_iso2t, get_language_by_iso1
 from .spacy_model import load_spacy_model
 from .offline import is_offline
 from .models import (
-    text_embedding_model,
-    audio_embedding_model,
-    audio_embedding_processor,
-    stt_model,
-    stt_processor,
-    stt_pipe,
-    audio_detection_model,
-    text_gen_model,
-    text_gen_tokenizer,
-    qwen_tts_model,
+    get_text_embedding_model,
+    get_audio_embedding_model,
+    get_audio_embedding_processor,
+    get_stt_pipe,
 )
+from .model_api import (
+    chat_completion,
+    synthesize_speech,
+)
+from .translate import translate
+from .phonetics import get_phonetic
+from .strokes import get_cjk_character_info
+from .enrich_components import enrich_character, enrich_word, enrich_passage
+from .tokenize import tokenize, get_content_words, get_characters
+from .resolve_orm_table import resolve_element_model
 
 __all__ = [
     MediaFileHandler,
     update_score,
+    update_difficulty,
+    stack_lists,
     detect_text_language,
-    detect_audio_language,
+    get_language_by_iso2t,
+    get_language_by_iso1,
     load_spacy_model,
     is_offline,
-    text_embedding_model,
-    audio_embedding_model,
-    audio_embedding_processor,
-    stt_model,
-    stt_processor,
-    stt_pipe,
-    audio_detection_model,
-    text_gen_model,
-    text_gen_tokenizer,
-    qwen_tts_model,
+    get_text_embedding_model,
+    get_audio_embedding_model,
+    get_audio_embedding_processor,
+    get_stt_pipe,
+    chat_completion,
+    synthesize_speech,
+    translate,
+    get_phonetic,
+    get_cjk_character_info,
+    enrich_character,
+    enrich_word,
+    enrich_passage,
+    tokenize,
+    get_content_words,
+    get_characters,
+    resolve_element_model,
 ]

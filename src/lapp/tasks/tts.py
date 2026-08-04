@@ -1,13 +1,19 @@
 import logging
+import os
+from sqlalchemy import func, cast
+from sqlalchemy.dialects.postgresql import JSONB
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask
+from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
+from ..services.system_data import UserPreferencesService
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
+from ..models.containers import Language
 
 passage_service = PassageService()
 word_service = WordService()
@@ -25,15 +31,17 @@ def register_tts_tasks(scheduler: BackgroundScheduler, app: Flask):
     # Get TTS interval from config (default: 120 minutes = 2 hours)
     tts_interval = app.config.get('TTS_INTERVAL_MINUTES', 120)
     
-    # Run TTS generation immediately on startup
-    scheduler.add_job(
-        func=generate_missing_component_audio,
-        id='generate_missing_component_audio_startup',
-        name='Generate missing audio for Components (startup)',
-        replace_existing=True,
-        args=[app]  # Pass app context to the task function
-    )
-    
+    # Run TTS generation immediately on startup (skip with LAPP_SKIP_STARTUP_TASKS=1,
+    # e.g. during dev when the app gets restarted often and this is CPU-heavy)
+    if os.environ.get('LAPP_SKIP_STARTUP_TASKS', '').lower() not in ('1', 'true', 'yes'):
+        scheduler.add_job(
+            func=generate_missing_component_audio,
+            id='generate_missing_component_audio_startup',
+            name='Generate missing audio for Components (startup)',
+            replace_existing=True,
+            args=[app]  # Pass app context to the task function
+        )
+
     # Interval-based TTS generation
     scheduler.add_job(
         func=generate_missing_component_audio,
@@ -52,7 +60,8 @@ def generate_missing_component_audio(app: Flask):
     Background task to generate audio for Components (Characters/Words/Passages) without audio files.
     """
     logger.info("🎵 Starting TTS generation task for Components...")
-    
+    session = db_manager.get_session()
+
     with app.app_context():
         try:
             # Get config values from app
@@ -60,18 +69,19 @@ def generate_missing_component_audio(app: Flask):
 
             # Initialize TTS service with media_root (avoids app context issue)
             tts_service = TTSService(media_root=media_root)
+            user_preferences_service = UserPreferencesService()
+            ai_tts_by_user: dict[str, tuple[bool, dict]] = {}
 
-            session = db_manager.get_session()
-            
             # Query Characters without audio_files or with empty audio_files list
+            # ponytail: JSON column has no `=` operator in postgres, compare array length instead
             characters_without_audio = session.query(Character).filter(
-                (Character.audio_files == None) | (Character.audio_files == [])
+                (Character.audio_files == None) | (func.jsonb_array_length(cast(Character.audio_files, JSONB)) == 0)
             ).all()
             words_without_audio = session.query(Word).filter(
-                (Word.audio_files == None) | (Word.audio_files == [])
+                (Word.audio_files == None) | (func.jsonb_array_length(cast(Word.audio_files, JSONB)) == 0)
             ).all()
             passages_without_audio = session.query(Passage).filter(
-                (Passage.audio_files == None) | (Passage.audio_files == [])
+                (Passage.audio_files == None) | (func.jsonb_array_length(cast(Passage.audio_files, JSONB)) == 0)
             ).all()
 
             components_without_audio = characters_without_audio + words_without_audio + passages_without_audio
@@ -90,9 +100,47 @@ def generate_missing_component_audio(app: Flask):
             success_count = 0
             error_count = 0
             
-            for component in components_without_audio:
+            progress = tqdm(components_without_audio, desc="Generating missing audio")
+            for component in progress:
+                progress.set_postfix_str(f"{type(component).__name__} {component.id}")
                 try:
                     # Generate audio using TTS service
+                    language = db_manager.find_by_pk(Language(id=component.language_id), session=session)
+                    language_name = language.name
+
+                    if language.user_id not in ai_tts_by_user:
+                        prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
+                        enabled = prefs is None or prefs.ai_tts_enabled is not False
+                        api = None
+                        if prefs:
+                            # Check ai_endpoints first for an active TTS endpoint
+                            for ep in (getattr(prefs, "ai_endpoints", None) or []):
+                                if isinstance(ep, dict) and ep.get("is_active") and ep.get("api_type") in ("tts", "both"):
+                                    api = {
+                                        "base_url": ep.get("base_url", "") or "",
+                                        "api_key": ep.get("api_key", "") or "",
+                                        "model": ep.get("model", "") or "",
+                                        "voice": ep.get("voice") or "alloy",
+                                    }
+                                    break
+                            # Fall back to legacy flat fields
+                            if not api:
+                                legacy_url = getattr(prefs, "ai_tts_api_base_url", None) or ""
+                                if legacy_url:
+                                    api = {
+                                        "base_url": legacy_url,
+                                        "api_key": getattr(prefs, "ai_tts_api_key", None) or "",
+                                        "model": getattr(prefs, "ai_tts_model", None) or "",
+                                        "voice": "alloy",
+                                    }
+                        ai_tts_by_user[language.user_id] = (enabled, api)
+                    enabled, api = ai_tts_by_user[language.user_id]
+                    if not enabled:
+                        progress.set_postfix_str(f"{type(component).__name__} {component.id} [ai tts disabled for user]")
+                        continue
+                    if not api or not api["base_url"]:
+                        progress.set_postfix_str(f"{type(component).__name__} {component.id} [no tts api configured]")
+                        continue
 
                     if isinstance(component, Character):
                         text = getattr(component, 'character', None)
@@ -105,7 +153,9 @@ def generate_missing_component_audio(app: Flask):
                         logger.warning(f"⚠️  Component ID {component.id} has no text to generate audio from")
                         continue
 
-                    relative_path = tts_service.generate_audio(text=text)
+                    progress.set_postfix_str(f"{type(component).__name__} {component.id} [{language.target_iso639_2t}]: {text[:40]!r}")
+
+                    relative_path = tts_service.generate_audio(text=text, language_name=language_name, api=api)
                     component_id = component.id
 
                     updated_component = component.to_dict(include_relations=False)
@@ -121,16 +171,23 @@ def generate_missing_component_audio(app: Flask):
                         result = passage_service.update(passage_id=component_id, data=PassageDict(**updated_component), session=session)
                     
                     if not result:
+                        session.rollback()
                         logger.warning(f"⚠️  Failed to update component '{text}' (ID: {component.id})")
                         continue
 
                     if result.audio_files != [relative_path]:
+                        session.rollback()
                         logger.warning(f"⚠️  Audio path mismatch for component '{text}' (ID: {component.id}) - expected: {relative_path}, got: {result.audio_files}")
                         continue
 
+                    # *_service.update() above was called with session=session and
+                    # commit=False internally (per the @transactional contract) — this
+                    # caller owns the commit. Without it, session.close() below would
+                    # roll everything back and the backlog would never actually shrink.
+                    session.commit()
                     success_count += 1
                     logger.info(f"✅ Generated audio for component '{text}' (ID: {component.id})")
-                    
+
                 except Exception as e:
                     error_count += 1
                     session.rollback()

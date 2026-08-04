@@ -33,19 +33,19 @@ def get_all_exercise_from_language(language_id: str):
     return jsonify(exercise)
 
 
-@bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_exercise_from_unit(unit_id: str):
-    """Get all exercise for a specific unit.
+@bp.route('/lesson/<lesson_id>', methods=['GET'])
+def get_all_exercise_from_lesson(lesson_id: str):
+    """Get all exercise for a specific lesson.
     ---
     tags:
         - Exercise
     parameters:
-        - name: unit_id
+        - name: lesson_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve exercise from
-          example: "unit_U1"
+          description: The ID of the lesson to retrieve exercise from
+          example: "lesson_L1"
     responses:
         200:
             description: List of exercise
@@ -55,7 +55,7 @@ def get_all_exercise_from_unit(unit_id: str):
                     type: object
                     description: Exercise object
     """
-    exercise = exercise_service.get_all(unit_id=unit_id, as_dict=True)
+    exercise = exercise_service.get_all(lesson_id=lesson_id, as_dict=True)
     return jsonify(exercise)
 
 
@@ -103,10 +103,10 @@ def create_exercise():
             type: object
             description: Exercise object
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
-                    description: "ID of the unit this exercise belongs to"
+                    example: "lesson_L1"
+                    description: "ID of the lesson this exercise belongs to"
                     required: true
                 exercise_type:
                     type: string
@@ -142,21 +142,21 @@ def create_exercise():
                     example: "Paris"
                     required: true
                     description: "The correct answer for the exercise"
-                vocabulary_ids:
+                vocabulary:
                     type: array
                     items:
                         type: string
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                calligraphy_ids:
+                calligraphy:
                     type: array
                     items:
                         type: string
                     example: ["call_C1"]
                     description: "List of associated calligraphy IDs"
                     required: false
-                grammar_ids:
+                grammar:
                     type: array
                     items:
                         type: string
@@ -211,10 +211,10 @@ def update_exercise(exercise_id: str):
             type: object
             description: Exercise object
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
-                    description: "ID of the unit this exercise belongs to"
+                    example: "lesson_L1"
+                    description: "ID of the lesson this exercise belongs to"
                     required: true
                 exercise_type:
                     type: string
@@ -250,21 +250,21 @@ def update_exercise(exercise_id: str):
                     example: "Paris"
                     required: true
                     description: "The correct answer for the exercise"
-                vocabulary_ids:
+                vocabulary:
                     type: array
                     items:
                         type: string
                     example: ["voc_V1"]
                     description: "List of associated vocabulary IDs"
                     required: false
-                calligraphy_ids:
+                calligraphy:
                     type: array
                     items:
                         type: string
                     example: ["call_C1"]
                     description: "List of associated calligraphy IDs"
                     required: false
-                grammar_ids:
+                grammar:
                     type: array
                     items:
                         type: string
@@ -347,6 +347,11 @@ def score_exercise():
                     example: 0.8
                     description: "The score for the exercise"
                     required: true
+                attempt_number:
+                    type: integer
+                    example: 2
+                    description: "The number of attempts made for the exercise"
+                    required: false
     responses:
         200:
             description: Exercise scored successfully
@@ -359,8 +364,19 @@ def score_exercise():
     data = request.json
     exercise_id = data['exercise_id']
     score = float(data['score'])
+    duration_ms = float(data['duration_ms'])
+    hint_used = bool(data.get('hint_used', False))
+    attempt_number = int(data['attempt_number']) if data.get('attempt_number') is not None else None
 
-    exercise = exercise_service.update_score(exercise_id, score, as_dict=True, include_relations=False)
+    exercise = exercise_service.update_score(
+        exercise_id,
+        score,
+        duration_ms=duration_ms,
+        hint_used=hint_used,
+        attempt_number=attempt_number,
+        as_dict=True,
+        include_relations=False,
+    )
     
     if exercise:
         return jsonify({

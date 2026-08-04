@@ -33,19 +33,19 @@ def get_all_grammar_from_language(language_id: str):
     return jsonify(grammar)
 
 
-@bp.route('/unit/<unit_id>', methods=['GET'])
-def get_all_grammar_from_unit(unit_id: str):
-    """Get all grammar for a specific unit.
+@bp.route('/lesson/<lesson_id>', methods=['GET'])
+def get_all_grammar_from_lesson(lesson_id: str):
+    """Get all grammar for a specific lesson.
     --- 
     tags:
         - Grammar
     parameters:
-        - name: unit_id
+        - name: lesson_id
           in: path
           type: string
           required: true
-          description: The ID of the unit to retrieve grammar for
-          example: "unit_U1"
+          description: The ID of the lesson to retrieve grammar for
+          example: "lesson_L1"
     responses:
         200:
             description: A list of grammar items
@@ -55,7 +55,7 @@ def get_all_grammar_from_unit(unit_id: str):
                     type: object
                     description: "A Grammar object"
     """
-    grammar = grammar_service.get_all(unit_id=unit_id, as_dict=True)
+    grammar = grammar_service.get_all(lesson_id=lesson_id, as_dict=True)
     return jsonify(grammar)
 
 
@@ -102,11 +102,11 @@ def create_grammar():
             type: object
             description: Grammar data
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: true
-                    description: "The ID of the unit the grammar belongs to"
+                    description: "The ID of the lesson the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"
@@ -117,7 +117,7 @@ def create_grammar():
                     example: "The past tense is used to describe actions that have already happened."
                     required: true
                     description: "Explanation of the grammar"
-                learnable_sentences:
+                example_sentences:
                     type: array
                     required: false
                     description: "Array of passages that illustrate the grammar point"
@@ -207,11 +207,11 @@ def update_grammar(grammar_id: str):
             type: object
             description: Grammar data
             properties:
-                unit_id:
+                lesson_id:
                     type: string
-                    example: "unit_U1"
+                    example: "lesson_L1"
                     required: false
-                    description: "The ID of the unit the grammar belongs to"
+                    description: "The ID of the lesson the grammar belongs to"
                 title:
                     type: string
                     example: "Past Tense"
@@ -222,7 +222,7 @@ def update_grammar(grammar_id: str):
                     example: "The past tense is used to describe actions that have already happened."
                     required: false
                     description: "Explanation of the grammar"
-                learnable_sentences:
+                example_sentences:
                     type: array
                     required: false
                     description: "Array of passages that illustrate the grammar point"
@@ -349,8 +349,17 @@ def score_grammar():
     data = request.json
     grammar_id = data['grammar_id']
     score = float(data['score'])
+    duration_ms = float(data['duration_ms'])
+    hint_used = bool(data.get('hint_used', False))
 
-    grammar = grammar_service.update_score(grammar_id, score, as_dict=True, include_relations=False)
+    grammar = grammar_service.update_score(
+        grammar_id,
+        score,
+        duration_ms=duration_ms,
+        hint_used=hint_used,
+        as_dict=True,
+        include_relations=False,
+    )
     
     if grammar:
         return jsonify({

@@ -1,4 +1,4 @@
-import LanguageForm from "@/components/forms/entityForms/languageForm";
+import LanguageForm from "@/components/language/languageForm";
 
 export default function NewLanguagePage() {
     return (

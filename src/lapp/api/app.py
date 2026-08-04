@@ -1,5 +1,4 @@
 import logging
-import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flasgger import Swagger
@@ -23,9 +22,11 @@ def create_app(config_name: str = 'default') -> Flask:
     
     # Load configuration
     app.config.from_object(config[config_name])
-    
+
     # Configure logging
     configure_logging(app)
+
+    logger.info(f"📁 MEDIA_ROOT={app.config.get('MEDIA_ROOT')!r} BACKUP_ROOT={app.config.get('BACKUP_ROOT')!r}")
     
     # Enable CORS for frontend
     CORS(app, resources={
@@ -73,6 +74,16 @@ def initialize_extensions(app: Flask) -> None:
     # Initialize database
     init_db(app)
 
+    # Attach the backup manager so CLI commands and /api/backup routes can use it
+    from pathlib import Path
+    from ..services.backup import BackupService
+    app.backup_manager = BackupService(
+        database_url=app.config['SQLALCHEMY_DATABASE_URI'],
+        schema=app.config['DB_SCHEMA'],
+        backup_dir=Path(app.config['BACKUP_ROOT']),
+        max_backups=app.config['MAX_BACKUPS']
+    )
+
     # Initialize centralized scheduler (handles ALL background tasks including backups)
     from ..core.scheduler import init_scheduler
     scheduler = init_scheduler(app)
@@ -84,7 +95,7 @@ def register_blueprints(app: Flask) -> None:
     
     from ..api.routes import (
         language_bp,
-        unit_bp,
+        lesson_bp,
         vocabulary_bp,
         calligraphy_bp,
         grammar_bp,
@@ -92,12 +103,22 @@ def register_blueprints(app: Flask) -> None:
         media_bp,
         backup_bp,
         evaluate_bp,
+        tag_bp,
+        source_bp,
+        user_bp,
+        user_preferences_bp,
+        search_bp,
+        word_bp,
+        character_bp,
+        passage_bp,
+        daily_stats_bp,
+        commitment_log_bp,
     )
-    
+
     # Register blueprints
     blueprints = [
         language_bp,
-        unit_bp,
+        lesson_bp,
         vocabulary_bp,
         calligraphy_bp,
         grammar_bp,
@@ -105,6 +126,16 @@ def register_blueprints(app: Flask) -> None:
         media_bp,
         backup_bp,
         evaluate_bp,
+        tag_bp,
+        source_bp,
+        user_bp,
+        user_preferences_bp,
+        search_bp,
+        word_bp,
+        character_bp,
+        passage_bp,
+        daily_stats_bp,
+        commitment_log_bp,
     ]
     
     for blueprint in blueprints:
@@ -159,16 +190,16 @@ def register_commands(app: Flask) -> None:
     @app.cli.command()
     def backup_now():
         """Create a manual backup."""
-        backup_path = app.backup_manager.backup()
+        backup_path = app.backup_manager.create_backup()
         if backup_path:
             print(f"✅ Backup created: {backup_path}")
         else:
             print("❌ Backup failed")
-    
+
     @app.cli.command()
     def restore_backup():
         """Restore from latest backup."""
-        success = app.backup_manager.restore()
+        success = app.backup_manager.restore_backup()
         if success:
             print("✅ Database restored")
         else:

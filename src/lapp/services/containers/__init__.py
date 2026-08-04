@@ -1,7 +1,7 @@
 from .language import LanguageService
-from .unit import UnitService
+from .lesson import LessonService
 
 __all__ = [
     "LanguageService",
-    "UnitService",
+    "LessonService",
 ]

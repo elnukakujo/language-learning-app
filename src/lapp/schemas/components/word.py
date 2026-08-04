@@ -5,11 +5,14 @@ from ..base import BaseComponentDict
 
 class WordDict(BaseComponentDict):
     word: str
-    translation: str
+    translation: Optional[str] = None
     phonetic: Optional[str] = None
-    type: Optional[str] = None
-    gender: Optional[str] = None
-    
+    word_type: Optional[str] = None
+    word_gender: Optional[str] = None
+
+    characters: Optional[list[dict]] = None  # List of character
+    passages: Optional[list[dict]] = None  # List of passage
+
     @model_validator(mode="after")
     def _validate(self):
         valid_types = [
@@ -29,9 +32,9 @@ class WordDict(BaseComponentDict):
             "modal",
             ""
         ]
-        if self.type is not None and self.type.lower() not in valid_types:
-            raise ValueError(f"Invalid type: {self.type}. Must be one of {valid_types}.")
-        valid_gender = ["m", "f", "n"]
-        if self.gender is not None and self.gender.lower() not in valid_gender:
-            raise ValueError(f"Invalid gender: {self.gender}. Must be one of {valid_gender}.")
+        if self.word_type is not None and self.word_type.lower() not in valid_types:
+            raise ValueError(f"Invalid type: {self.word_type}. Must be one of {valid_types}.")
+        valid_gender = ["m", "f", "n", "c", ""]
+        if self.word_gender is not None and self.word_gender.lower() not in valid_gender:
+            raise ValueError(f"Invalid gender: {self.word_gender}. Must be one of {valid_gender}.")
         return self

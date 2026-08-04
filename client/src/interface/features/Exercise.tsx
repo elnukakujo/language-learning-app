@@ -1,12 +1,21 @@
 import { BaseFeature } from "../base";
 
+export type ExerciseContent =
+    | { segments: string[]; blanks: { options?: string[]; answer: string }[] } // type_in_the_blank / select_in_the_blank
+    | { pairs: [string, string][] } // matching
+    | { items: string[]; answer_order: number[] } // organize
+    | { statement: string; answer: boolean } // true_false
+    | { options: string[]; correct: number[] }; // quizz
+
 export default interface Exercise extends BaseFeature {
     exercise_type?: 'essay' | 'answering' | 'translate' | 'organize' | 'conversation' |
-                    'type_in_the_blank' | 'select_in_the_blank' | 'matching' | 'true_false' | 'speaking';
+                    'type_in_the_blank' | 'select_in_the_blank' | 'matching' | 'true_false' | 'speaking' | 'quizz';
     question: string;
     answer: string;
     text_support?: string;
-    vocabulary_ids?: string[];
-    calligraphy_ids?: string[];
-    grammar_ids?: string[];
+    content?: ExerciseContent;
+
+    related_vocabulary?: string[];
+    related_calligraphy?: string[];
+    related_grammar?: string[];
 };

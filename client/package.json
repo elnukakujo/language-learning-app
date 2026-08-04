@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node --env-file=../.env node_modules/.bin/next dev",
+    "build": "node --env-file=../.env node_modules/.bin/next build",
+    "start": "node --env-file=../.env node_modules/.bin/next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -15,8 +15,10 @@
     "extendable-media-recorder-wav-encoder": "^7.0.136",
     "ldrs": "^1.1.9",
     "lodash": "^4.17.21",
+    "lucide-react": "^1.24.0",
     "next": "15.3.5",
     "react": "^19.0.0",
+    "react-colorful": "^5.7.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "react-media-recorder": "^1.7.2",

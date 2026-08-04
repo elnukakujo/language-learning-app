@@ -1,52 +1,49 @@
-import { getLanguageData } from "@/api";
+import NavButton from "@/components/layout/navButton";
+import DeleteButton from "@/components/ui/buttons/deleteButton";
+import ElementPerformanceCard from "@/components/elements/elementPerformanceCard";
+import ElementTagsCard from "@/components/elements/elementTagsCard";
+import ElementSourcesCard from "@/components/elements/elementSourcesCard";
+import LanguageStatsPanel from "@/components/language/LanguageStatsPanel";
+import { getLanguageData } from "@/api/language";
+import { getTodayDailyStats } from "@/api/dailyStats";
+import LanguageHeaderCard from "@/components/language/languageHeaderCard";
+import LessonsSection from "@/components/language/lessonsSection";
 
-import UnitOverviewCard from "@/components/cards/unitOverviewCard";
-import type Unit from "@/interface/containers/Unit";
-import NavButton from "@/components/buttons/navButton";
-import DeleteButton from "@/components/buttons/deleteButton";
-
-export default async function Language({ params }: { params: { language_id: string } }) {
+export default async function Language({ params }: { params: Promise<{ language_id: string }> }) {
     const { language_id } = await params;
-    const { language, units } = await getLanguageData(language_id);
-    const hasUnits = units && units.length > 0;
+    const { language, lessons } = await getLanguageData(language_id);
+    const dailyStats = language.user_id ? await getTodayDailyStats(language.user_id, language_id) : null;
+    const commitmentLog = language.user_id ? await (await import("@/api/commitmentLog")).getCommitmentLogForUserLanguage(language.user_id, language_id) : null;
+    const hasLessons = lessons && lessons.length > 0;
 
     return (
         <main className="flex flex-col space-y-4">
-            <header className="flex flex-col">
-                <h1>{language.flag} {language.name} ({language.native_name})</h1>
-                {language.level && <p>Language Level: {language.level}</p>}
-                <p>Language Score: {language.score.toFixed(1)}/100</p>
-                <p>Last Seen: {new Date(language.last_seen).toLocaleDateString()}</p>
-                {language.current_unit && <p>Current Unit ID: {language.current_unit}</p>}
+            <header className="flex flex-col gap-4">
+                <LanguageHeaderCard language={language} />
+                <ElementPerformanceCard element={language} />
+                <ElementTagsCard element={language} />
+                <ElementSourcesCard element={language} />
                 <nav className="flex flex-row space-x-4">
-                    {language.current_unit && <NavButton path={`/languages/${language_id}/unit/${language.current_unit}`}>
-                        <p>Go to Current Unit</p>
+                    {language.current_lesson_id && <NavButton path={`/languages/${language_id}/lesson/${language.current_lesson_id}`}>
+                        <p>Go to Current Lesson</p>
                     </NavButton>}
                     <NavButton path={`/languages/${language_id}/update`}>
                         <p>Update Language</p>
                     </NavButton>
                     <DeleteButton element_id={language_id}/>
                 </nav>
+                <LanguageStatsPanel dailyStats={dailyStats} commitmentLog={commitmentLog} />
             </header>
             <article className="flex flex-col space-y-4">
-                {
-                    hasUnits && 
-                    (
-                        <section>
-                            <h2>Units</h2>
-                            <ul className="flex flex-col space-y-2">
-                                {units.map((unit: Unit) => (
-                                    <li key={unit.id}>
-                                        <UnitOverviewCard unit={unit} />
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    )
-                }
+                {hasLessons && (
+                    <LessonsSection
+                        lessons={lessons}
+                        language_code={language.target_iso639_2t ?? ""}
+                    />
+                )}
                 
-                <NavButton path={`/languages/${language_id}/unit/new`}>
-                    <p>Create New Unit</p>
+                <NavButton path={`/languages/${language_id}/lesson/new`}>
+                    <p>Create New Lesson</p>
                 </NavButton>
             </article>
         </main>

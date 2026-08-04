@@ -1,7 +1,7 @@
 from .language import Language
-from .unit import Unit
+from .lesson import Lesson
 
 __all__ = [
     "Language",
-    "Unit",
+    "Lesson",
 ]

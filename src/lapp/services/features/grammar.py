@@ -1,22 +1,25 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import GrammarDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Grammar
-from ..containers import UnitService, LanguageService
-from ..components import PassageService
-from ...core.database import db_manager
-from ...utils import update_score
+from ...models.system_data import Tag, Source
+from ..containers import LessonService, LanguageService
+from ..components import PassageService, WordService
+from ..data_collection import ProgressTrackingService
+from ...core.database import db_manager, transactional, resolve_related
+from ...utils import update_score, update_difficulty
 
-unit_service = UnitService()
+lesson_service = LessonService()
 language_service = LanguageService()
+word_service = WordService()
 passage_service = PassageService()
+progress_tracking_service = ProgressTrackingService()
 
 class GrammarService:
     def _serialize(self, grammar: Grammar | None, as_dict: bool, include_relations: bool) -> Grammar | dict | None:
@@ -29,61 +32,39 @@ class GrammarService:
             return grammars
         return [grammar.to_dict(include_relations=include_relations) for grammar in grammars]
 
+    @transactional
     def get_all(
         self,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Grammar] | list[dict]:
-        """
-        Get all Grammar items for a specific language or unit.
-
-        Args:
-            language_id (Optional[str] = None): The id of the language to get all the grammars from
-            unit_id (Optional[str] = None): The id of the unit to get all the grammars from
-
-        Returns:
-            List of Grammar objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                grammars = []
-                for unit in units:
-                    grammars.extend(
-                        db_manager.find_all(
-                            model_class=Grammar,
-                            filters={'unit_id': unit.id},
-                            session=session
-                        )
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            grammars = []
+            for lesson in lessons:
+                grammars.extend(
+                    db_manager.find_all(
+                        model_class=Grammar,
+                        filters={'lesson_id': lesson.id},
+                        session=session
                     )
-                return self._serialize_list(grammars, as_dict, include_relations)
-            elif unit_id:
-                grammars = db_manager.find_all(
-                    model_class=Grammar,
-                    filters={'unit_id': unit_id},
-                    session=session
                 )
-                return self._serialize_list(grammars, as_dict, include_relations)
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all grammars: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+            return self._serialize_list(grammars, as_dict, include_relations)
+        elif lesson_id:
+            grammars = db_manager.find_all(
+                model_class=Grammar,
+                filters={'lesson_id': lesson_id},
+                session=session
+            )
+            return self._serialize_list(grammars, as_dict, include_relations)
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
 
+    @transactional
     def get_by_id(
         self,
         grammar_id: str,
@@ -91,93 +72,47 @@ class GrammarService:
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Grammar | dict | None:
-        """
-        Get a Grammar item by its ID.
+        grammar = db_manager.find_by_attr(
+            model_class=Grammar,
+            attr_values={'id': grammar_id},
+            session=session
+        )
+        return self._serialize(grammar, as_dict, include_relations)
 
-        Args:
-            grammar_id: The ID of the Grammar item to retrieve.
-
-        Returns:
-            Grammar object if found, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            grammar = db_manager.find_by_attr(
-                model_class=Grammar,
-                attr_values={'id': grammar_id},
-                session=session
-            )
-            return self._serialize(grammar, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get grammar by id: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def get_by_level(
         self,
-        level: str,
+        level: int,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Grammar] | list[dict]:
-        """
-        Get all Grammar items of a specific level among a language.
-        
-        Args:
-            language_id: The id of the language to filter Grammar items
-            unit_id: The id of the unit to filter Grammar items
-            level: Grammar level (e.g., 'A1', 'B2')
-        
-        Returns:
-            List of matching Grammar objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
-
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                grammars = []
-                for unit in units:
-                    grammars.extend(
-                        db_manager.find_all(
-                            model_class=Grammar,
-                            filters={'level': level, 'unit_id': unit.id},
-                            session=session
-                        )
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            grammars = []
+            for lesson in lessons:
+                grammars.extend(
+                    db_manager.find_all(
+                        model_class=Grammar,
+                        filters={'level': level, 'lesson_id': lesson.id},
+                        session=session
                     )
-                return self._serialize_list(grammars, as_dict, include_relations)
-            elif unit_id:
-                grammars = db_manager.find_all(
-                    model_class=Grammar,
-                    filters={'level': level, 'unit_id': unit_id},
-                    session=session
                 )
-                return self._serialize_list(grammars, as_dict, include_relations)
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get_by_level grammars: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-    
+            return self._serialize_list(grammars, as_dict, include_relations)
+        elif lesson_id:
+            grammars = db_manager.find_all(
+                model_class=Grammar,
+                filters={'level': level, 'lesson_id': lesson_id},
+                session=session
+            )
+            return self._serialize_list(grammars, as_dict, include_relations)
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
+
+    @transactional
     def create(
         self,
         data: GrammarDict,
@@ -185,68 +120,38 @@ class GrammarService:
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Grammar | dict | None:
-        """
-        Create a new Grammar item.
+        lesson = lesson_service.get_by_id(data.lesson_id, session=session)
+        if not lesson:
+            logger.warning(f"Cannot create Grammar item, lesson not found: {data.lesson_id}")
+            return None
 
-        Args:
-            data: GrammarDict containing Grammar item details.
+        example_sentences = []
+        for sentence in (data.example_sentences or []):
+            sentence.language_id = lesson.language_id
+            passage = passage_service.create(sentence, session=session)
+            if passage:
+                example_sentences.append(passage)
 
-        Returns:
-            Created Grammar object if successful, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            unit = unit_service.get_by_id(data.unit_id, session=session)
+        grammar = Grammar(
+            id=db_manager.generate_new_id(model_class=Grammar, session=session),
+            lesson_id=lesson.id,
+            title=data.title,
+            explanation=data.explanation,
+            example_sentences=example_sentences,
+            tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+            sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
+        )
 
-            if not unit:
-                logger.warning(f"Cannot create Grammar item, unit not found: {data.unit_id}")
-                return None
+        result = db_manager.insert(obj=grammar, session=session, commit=False)
 
-            # Create Passages using PassageService
-            learnable_sentences = []
-            for sentence in (data.learnable_sentences or []):
-                passage = passage_service.create(sentence, session=session)
-                if passage:
-                    learnable_sentences.append(passage)
+        if result:
+            logger.info(f"Created new Grammar item with ID: {result.id}")
+        else:
+            logger.error(f"Failed to create new Grammar item: {grammar.title}")
 
-            # Prepare data without learnable_sentences to avoid duplication
-            grammar_data = data.model_dump(exclude_none=True)
-            grammar_data.pop('learnable_sentences', None)
+        return self._serialize(result, as_dict, include_relations)
 
-            grammar = Grammar(
-                id = db_manager.generate_new_id(
-                    model_class=Grammar,
-                    session=session
-                ),
-                **grammar_data
-            )
-            
-            # Add the passages to the grammar
-            grammar.learnable_sentences = learnable_sentences
-            
-            result = db_manager.insert(
-                obj=grammar,
-                session=session
-            )
-
-            if result:
-                logger.info(f"Created new Grammar item with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new Grammar item: {grammar.title}")
-
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to create grammar: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def update(
         self,
         grammar_id: str,
@@ -255,171 +160,131 @@ class GrammarService:
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Grammar | dict | None:
-        """
-        Update an existing Grammar item.
+        existing = self.get_by_id(grammar_id, session=session)
+        if not existing:
+            logger.warning(f"Grammar item not found: {grammar_id}")
+            return None
 
-        Args:
-            grammar_id: The ID of the Grammar item to update.
-            data: GrammarDict containing updated Grammar item details.
+        existing.example_words = []
+        if data.example_words is not None:
+            for example_word_data in data.example_words:
+                example_word_data.language_id = existing.lesson.language_id
+                # merge: example words are auxiliary/derived, not the primary
+                # thing the user is creating — preserve silent-merge behavior.
+                word = word_service.create(example_word_data, session=session, on_conflict="merge")
+                if word:
+                    existing.example_words.append(word)
 
-        Returns:
-            Updated Grammar object if successful, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            existing = self.get_by_id(grammar_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Grammar item not found: {grammar_id}")
-                return None
-            
-            # Handle learnable_sentences update through PassageService if provided
-            if data.learnable_sentences is not None:
-                # Delete old passages and create new ones
-                for old_passage in existing.learnable_sentences:
-                    passage_service.delete(old_passage.id, session=session)
-                
-                # Create new passages
-                new_sentences = []
-                for sentence in data.learnable_sentences:
-                    passage = passage_service.create(sentence, session=session)
-                    if passage:
-                        new_sentences.append(passage)
-                
-                existing.learnable_sentences = new_sentences
-            else:
-                existing.learnable_sentences = []
-            
-            # Remove nested objects from update_data
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('learnable_sentences', None)
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            
-            # Update the existing object's attributes
-            for key, value in update_data.items():
-                setattr(existing, key, value)
-            
-            # Save to database
-            result = db_manager.modify(existing, session=session)
-            
-            if result:
-                logger.info(f"Updated Grammar item: {grammar_id}")
-            else:
-                logger.error(f"Failed to update Grammar item: {grammar_id}")
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update grammar: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        existing.example_sentences = []
+        if data.example_sentences is not None:
+            for sentence in data.example_sentences:
+                sentence.language_id = existing.lesson.language_id
+                passage = passage_service.create(sentence, session=session)
+                if passage:
+                    existing.example_sentences.append(passage)
 
+        update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'example_words', 'example_sentences', 'tags', 'sources'}, exclude_none=True)
+
+        for key, value in update_data.items():
+            setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
+
+        result = db_manager.modify(existing, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated Grammar item: {grammar_id}")
+        else:
+            logger.error(f"Failed to update Grammar item: {grammar_id}")
+
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def delete(self, grammar_id: str, session: Optional[Session] = None) -> bool:
-        """
-        Delete a Grammar item by its ID.
+        existing = self.get_by_id(grammar_id, session=session)
+        if not existing:
+            logger.warning(f"Grammar item not found: {grammar_id}")
+            return False
 
-        Args:
-            grammar_id: The ID of the Grammar item to delete.
-        Returns:
-            True if deletion was successful, else False
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            # Check if grammar item exists before deleting
-            existing = self.get_by_id(grammar_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Grammar item not found: {grammar_id}")
-                return False
-            
-            # Delete from database
-            success = db_manager.delete(existing, session=session)
-            
-            if success:
-                logger.info(f"Deleted Grammar item: {grammar_id}")
-            else:
-                logger.error(f"Failed to delete Grammar item: {grammar_id}")
-            
-            return success
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to delete grammar: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        success = db_manager.delete(existing, session=session, commit=False)
 
+        if success:
+            logger.info(f"Deleted Grammar item: {grammar_id}")
+        else:
+            logger.error(f"Failed to delete Grammar item: {grammar_id}")
+
+        return success
+
+    @transactional
     def update_score(
         self,
         grammar_id: str,
         score: float,
+        duration_ms: float,
+        hint_used: bool = False,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Grammar | dict | None:
-        """
-        Update Grammar item score based on average of all of its components scores.
-        
-        This should be called whenever a component's score changes.
-        
-        Args:
-            grammar_id: The ID of the Grammar item to update
-            score: The new score for the Grammar item
-        
-        Returns:
-            Updated Grammar object if successful, None otherwise
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            grammar = self.get_by_id(grammar_id, session=session)
-        
-            if not grammar:
-                logger.warning(f"Grammar item not found: {grammar_id}")
-                return None
-            
-            previous_score = grammar.score
+        grammar = self.get_by_id(grammar_id, session=session)
 
-            grammar.score = update_score(
-                score=grammar.score,
-                last_seen=grammar.last_seen,
-                similarity=score
+        if not grammar:
+            logger.warning(f"Grammar item not found: {grammar_id}")
+            return None
+
+        previous_score = grammar.score
+
+        grammar.score = update_score(
+            score=grammar.score,
+            last_seen_at=grammar.last_seen_at,
+            similarity=score
+        )
+
+        grammar.difficulty = update_difficulty(
+            new_score=score,
+            last_seen_at=grammar.last_seen_at,
+            previous_difficulty=grammar.difficulty,
+            created_at=grammar.created_at
+        )
+
+        grammar.last_seen_at = datetime.now()
+
+        result = db_manager.modify(grammar, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated GrammarFeature {grammar_id} score to {grammar.score} and difficulty to {grammar.difficulty}")
+
+            progress_tracking_service.create(
+                data=ProgressTrackingDict(
+                    user_id=grammar.lesson.user_id,
+                    language_id=grammar.lesson.language_id,
+                    element_id=grammar_id,
+                    element_type="grammar",
+                    element_status=grammar.status,
+                    score_before=previous_score,
+                    score_after=result.score,
+                    result=result.score >= previous_score,
+                    duration_ms=duration_ms,
+                    hint_used=hint_used,
+                ),
+                session=session,
             )
-            
-            # Update last_seen
-            grammar.last_seen = date.today()
-            # Save changes
-            result = db_manager.modify(grammar, session=session)
-            
-            if result:
-                logger.info(f"Updated Grammar item {grammar_id} score: {result.score}")
 
-            if grammar.score != previous_score:
-                if grammar.unit_id:
-                    unit_service.update_score(grammar.unit_id, session=session)
-                    logger.info(f"Updated unit {grammar.unit_id} score due to Grammar {grammar_id}")
-            
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update grammar score: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        if grammar.score != previous_score:
+            lesson_service.update_score(grammar.lesson_id, session=session)
+            logger.info(f"Updated lesson {grammar.lesson_id} score due to Grammar {grammar_id}")
+
+            if grammar.example_words:
+                for word in grammar.example_words:
+                    word_service.update_score(word.id, session=session)
+                    logger.info(f"Updated example Word {word.id} score due to Grammar {grammar_id}")
+
+            if grammar.example_sentences:
+                for passage in grammar.example_sentences:
+                    passage_service.update_score(passage.id, session=session)
+                    logger.info(f"Updated example Passage {passage.id} score due to Grammar {grammar_id}")
+
+        return self._serialize(result, as_dict, include_relations)

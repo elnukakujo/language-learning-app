@@ -4,8 +4,11 @@ from ..base import BaseContainerDict
 
 class LanguageDict(BaseContainerDict):
     name: str
-    native_name: Optional[str] = None
-    level: Optional[str] = "A1"  # Default level
-    description: Optional[str] = None
+    alias: Optional[str] = None
     flag: Optional[str] = None  # Flag emoji
-    current_unit: Optional[str] = None
+
+    target_iso639_2t: Optional[str] = None
+    source_iso639_2t: Optional[str] = None
+    
+    user_id: Optional[str] = None
+    current_lesson_id: Optional[str] = None

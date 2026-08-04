@@ -1,194 +1,226 @@
-from ..utils import text_gen_model, text_gen_tokenizer
 
 import logging
+import re
 logger = logging.getLogger(__name__)
 
+from ..utils import chat_completion
+from .containers import LanguageService
+language_service = LanguageService()
+
 class TextGeneratorService:
-    tokenizer = text_gen_tokenizer
-    model = text_gen_model
-    
-    grammar_instruct = "You are a helpful assistant which helps to generate single short example sentences using a grammar provided in a grammar sheet."
+    grammar_instruct = (
+        "You generate exactly one short language-learning sentence.\n"
+        "Rules:\n"
+        "1) Output only the sentence in TARGET language.\n"
+        "2) Do not output explanations, labels, or translations.\n"
+        "3) Keep the sentence simple and natural.\n"
+        "4) Use the grammar point from GRAMMAR_SHEET."
+    )
     grammar_shots = [
-        ["""# Énumérer avec 第 dì\n\n第 dì permet de former des chiffres et nombres ordinaux.
-        Il s'emploie de la façon suivante :
-
-        第 + chiffre/nombre ( + Classificateur )
-
-        * 第一 dì yī : « Le premier »
-        * 第二 dì èr : « Le deuxième »
-        * 第三 dì sān : « Le troisième »
-        * 我是第四 wǒ shì dì sì : « Je suis quatrième »
-        * 他是第六 tā shì dì liù : « Il est sixième »
-
-        Nous pouvons également y rajouter un classificateur, puis un nom :
-
-        * 第一个月 dì yī gè yuè : « Le premier mois »
-        * 我是第三个人 wǒ shì dì sān gè rén : « Je suis la troisième personne »
-        * 我的第三个中文老师 wǒ de dì sān gè zhōngwén lǎoshī : « Mon troisième professeur de chinois »
-        * 第一次 dì yī cì : « La première fois »
-        * 这是我第三次吃中国饭 zhè shì wǒ dì sān cì chī zhōngguó fàn : « C’est la troisième fois que je mange chinois »
-
-        Le classificateur est absent pour, entre autres, les mots 天 tiān et 年 nián :
-
-        * 第一天 dì yī tiān : « Le premier jour »
-        * 第二年 dì èr nián : « La deuxième année »
-
-        Lorsque l'on veut dire « deuxième », il faut employer 二 èr et non 两 liǎng :
-
-        * 两个人 liǎng gè rén : « Deux personnes »
-        * 第二个人 dì èr gè rén : « La deuxième personne »
-
-        Les deux mots suivants signifient « étage » et peuvent s'employer sans 第 dì :
-
-        * 三楼 sān lóu : « Troisième étage »
-        * 四层 sì céng : « Quatrième étage »""", "这是我第二次来中国。"],
-        ["""# Le Sie de Politesse (Formalité)
-
-        Pour marquer le respect ou s'adresser à un inconnu/adulte, on utilise la forme Sie.
-        - Le pronom **Sie** (vous formel, singulier et pluriel) s'écrit toujours avec une **majuscule**.
-        - Le verbe est toujours conjugué comme à l'infinitif (**-en**).
-
-        | Forme | Pronom | Verbe |
-        |:-----:|:------:|:-----:|
-        | **Formelle** | **Sie** (majuscule) | ...en (Infinitif) |
-        | **Informelle** | **du** (minuscule) | ...st (2e pers. singulier) |""", "Kommen Sie bitte hierher."]
+        [
+            "fra",
+            "zho",
+            "Use 第 + number to express ordinals (first, second, third).",
+            "这是我第二次来中国。"
+        ],
+        [
+            "fra",
+            "deu",
+            "Use polite Sie with verb in infinitive form for formal requests.",
+            "Kommen Sie bitte hierher."
+        ]
     ]
 
-    vocabulary_instruct = "You are a helpful assistant which helps to generate single short example sentences using a vocabulary word provided."
+    vocabulary_instruct = (
+        "You generate exactly one short language-learning sentence.\n"
+        "Rules:\n"
+        "1) Output only the sentence in TARGET language.\n"
+        "2) Do not output explanations, labels, or translations.\n"
+        "3) The sentence must include VOCABULARY_WORD exactly once.\n"
+        "4) Keep it simple and natural."
+    )
     vocabulary_shots = [
-        ["吃饭", "我喜欢吃中国饭。"],
-        ["Computerspiele", "Ich spiele gern Computerspiele."]
+        ["eng", "zho", "吃饭", "我喜欢吃中国饭。"],
+        ["eng", "deu", "Computerspiele", "Ich spiele gern Computerspiele."]
     ]
 
-    calligraphy_instruct = "You are a helpful assistant which helps to generate a single example word using a character provided."
+    calligraphy_instruct = (
+        "You generate exactly one target-language word for handwriting practice.\n"
+        "Rules:\n"
+        "1) Output only one word in TARGET language.\n"
+        "2) Do not output explanations, labels, or translations.\n"
+        "3) The word must contain INPUT_CHARACTER.\n"
+        "4) Keep the output concise."
+    )
     calligraphy_shots = [
-        ["学", "学习"],
-        ["语", "语言"],
-        ["文", "文化"]
+        ["eng", "zho", "学", "学习"],
+        ["eng", "zho", "语", "语言"],
+        ["eng", "zho", "文", "文化"]
     ]
 
-    def generate_learnable_sentence(self, grammar_sheet: str) -> str:
+    @staticmethod
+    def _build_user_prompt(
+        task: str,
+        source_lang_code: str,
+        target_lang_code: str,
+        input_label: str,
+        input_value: str
+    ) -> str:
+        if not source_lang_code or not target_lang_code:
+            raise ValueError(
+                f"Missing language code(s): source_lang_code={source_lang_code!r}, target_lang_code={target_lang_code!r}"
+            )
+        return (
+            f"TASK: {task}\n"
+            f"SOURCE_LANG_CODE: {source_lang_code.strip().lower()}\n"
+            f"TARGET_LANG_CODE: {target_lang_code.strip().lower()}\n"
+            f"{input_label}:\n"
+            f"{input_value}\n"
+            "OUTPUT:"
+        )
+
+    def _generate_from_messages(self, messages: list[dict], max_new_tokens: int, api: dict) -> str:
+        output = chat_completion(**api, messages=messages, max_tokens=max_new_tokens).strip()
+        # ponytail: defensive strip in case a reasoning model ignores the no-think instruction
+        return re.sub(r"<think>.*?</think>", "", output, flags=re.DOTALL).strip()
+
+    def generate_learnable_sentence(self, grammar_sheet: str, source_lang_code: str, target_lang_code: str, api: dict) -> str:
         """
         Generate a learnable sentence based on a grammar sheet.
         
         Args:
             grammar_sheet: The grammar sheet to use for generating the sentence.
+            source_lang_code: The source language code (e.g., 'en' for English).
+            target_lang_code: The target language code (e.g., 'zh' for Chinese).
         
         Returns:
             A single short example sentence that illustrates the grammar point.
         """
-        if not self.model or not self.tokenizer:
+        if not api or not api.get("base_url"):
             logger.warning("Text Generator Service is not available. Returning empty string.")
             return ""
 
+        system_content = self.grammar_instruct
         messages = [
-            {"role": "system", "content": self.grammar_instruct}
+            {"role": "system", "content": system_content}
         ]
 
-        for grammar_shot, sentence_shot in self.grammar_shots:
-            messages.append({"role": "user", "content": grammar_shot})
+        for shot_source, shot_target, grammar_shot, sentence_shot in self.grammar_shots:
+            messages.append({
+                "role": "user",
+                "content": self._build_user_prompt(
+                    task="grammar_sentence",
+                    source_lang_code=shot_source,
+                    target_lang_code=shot_target,
+                    input_label="GRAMMAR_SHEET",
+                    input_value=grammar_shot
+                )
+            })
             messages.append({"role": "assistant", "content": sentence_shot})
 
-        messages.append({"role": "user", "content": grammar_sheet})
-        
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+        messages.append({
+            "role": "user",
+            "content": self._build_user_prompt(
+                task="grammar_sentence",
+                source_lang_code=source_lang_code,
+                target_lang_code=target_lang_code,
+                input_label="GRAMMAR_SHEET",
+                input_value=grammar_sheet
+            )
+        })
 
-        generated_ids = self.model.generate(
-            **model_inputs,
-            max_new_tokens=128,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9
-        )
-        generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-        ]
-
-        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return self._generate_from_messages(messages=messages, max_new_tokens=768, api=api)
     
-    def generate_example_sentence(self, vocabulary_word: str) -> str:
+    def generate_example_sentence(self, vocabulary_word: str, source_lang_code: str, target_lang_code: str, api: dict) -> str:
         """
         Generate an example sentence based on a vocabulary word.
         
         Args:
             vocabulary_word: The vocabulary word to use in the example sentence.
+            source_lang_code: The source language code (e.g., 'en' for English).
+            target_lang_code: The target language code (e.g., 'zh' for Chinese).
         
         Returns:
             A single short example sentence that illustrates the vocabulary word.
         """
+        if not api or not api.get("base_url"):
+            logger.warning("Text Generator Service is not available. Returning empty string.")
+            return ""
 
+        system_content = self.vocabulary_instruct
         messages = [
-            {"role": "system", "content": self.vocabulary_instruct}
+            {"role": "system", "content": system_content}
         ]
 
-        for vocabulary_shot, sentence_shot in self.vocabulary_shots:
-            messages.append({"role": "user", "content": vocabulary_shot})
+        for shot_source, shot_target, vocabulary_shot, sentence_shot in self.vocabulary_shots:
+            messages.append({
+                "role": "user",
+                "content": self._build_user_prompt(
+                    task="vocabulary_sentence",
+                    source_lang_code=shot_source,
+                    target_lang_code=shot_target,
+                    input_label="VOCABULARY_WORD",
+                    input_value=vocabulary_shot
+                )
+            })
             messages.append({"role": "assistant", "content": sentence_shot})
 
-        messages.append({"role": "user", "content": vocabulary_word})
-        
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+        messages.append({
+            "role": "user",
+            "content": self._build_user_prompt(
+                task="vocabulary_sentence",
+                source_lang_code=source_lang_code,
+                target_lang_code=target_lang_code,
+                input_label="VOCABULARY_WORD",
+                input_value=vocabulary_word
+            )
+        })
 
-        generated_ids = self.model.generate(
-            **model_inputs,
-            max_new_tokens=128,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9
-        )
-        generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-        ]
-
-        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return self._generate_from_messages(messages=messages, max_new_tokens=768, api=api)
     
-    def generate_example_word(self, character: str) -> str:
+    def generate_example_word(self, character: str, source_lang_code: str, target_lang_code: str, api: dict) -> str:
         """
         Generate an example word based on a character.
         
         Args:
             character: The character to use in the example word.
+            source_lang_code: The source language code (e.g., 'en' for English).
+            target_lang_code: The target language code (e.g., 'zh' for Chinese).
         
         Returns:
             A single example word that contains the character.
         """
+        if not api or not api.get("base_url"):
+            logger.warning("Text Generator Service is not available. Returning empty string.")
+            return ""
 
+        system_content = self.calligraphy_instruct
         messages = [
-            {"role": "system", "content": self.calligraphy_instruct}
+            {"role": "system", "content": system_content}
         ]
 
-        for calligraphy_shot, word_shot in self.calligraphy_shots:
-            messages.append({"role": "user", "content": calligraphy_shot})
+        for shot_source, shot_target, calligraphy_shot, word_shot in self.calligraphy_shots:
+            messages.append({
+                "role": "user",
+                "content": self._build_user_prompt(
+                    task="calligraphy_word",
+                    source_lang_code=shot_source,
+                    target_lang_code=shot_target,
+                    input_label="INPUT_CHARACTER",
+                    input_value=calligraphy_shot
+                )
+            })
             messages.append({"role": "assistant", "content": word_shot})
 
-        messages.append({"role": "user", "content": character})
-        
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+        messages.append({
+            "role": "user",
+            "content": self._build_user_prompt(
+                task="calligraphy_word",
+                source_lang_code=source_lang_code,
+                target_lang_code=target_lang_code,
+                input_label="INPUT_CHARACTER",
+                input_value=character
+            )
+        })
 
-        generated_ids = self.model.generate(
-            **model_inputs,
-            max_new_tokens=16,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9
-        )
-        generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-        ]
-
-        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return self._generate_from_messages(messages=messages, max_new_tokens=768, api=api)

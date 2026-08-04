@@ -1,23 +1,28 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
 
 import logging
+
+from ...core.database import db_manager, transactional, resolve_related
+from ...models.features import Exercise
+from ...schemas.features import ExerciseDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
+from ...models.system_data import Tag, Source
+from ...utils import update_score, update_difficulty
+from ..containers import LessonService
+from ..data_collection import ProgressTrackingService
+from .calligraphy import CalligraphyService
+from .grammar import GrammarService
+from .vocabulary import VocabularyService
+
 logger = logging.getLogger(__name__)
 
-from ...schemas.features import ExerciseDict
-from ...models.features import Exercise
-from ...core.database import db_manager
-from ...utils import update_score
-from ..containers import UnitService
-from .calligraphy import CalligraphyService
-from .vocabulary import VocabularyService
-from .grammar import GrammarService
-
-unit_service = UnitService()
+lesson_service = LessonService()
 calligraphy_service = CalligraphyService()
-vocabulary_service = VocabularyService()
 grammar_service = GrammarService()
+vocabulary_service = VocabularyService()
+progress_tracking_service = ProgressTrackingService()
 
 class ExerciseService:
     def _serialize(self, exercise: Exercise | None, as_dict: bool, include_relations: bool) -> Exercise | dict | None:
@@ -30,478 +35,285 @@ class ExerciseService:
             return exercises
         return [exercise.to_dict(include_relations=include_relations) for exercise in exercises]
 
-    def _check_associate_components(
-        self, 
-        calligraphy_ids: Optional[list[str]],
-        vocabulary_ids: Optional[list[str]],
-        grammar_ids: Optional[list[str]],
-        session: Optional[Session] = None
-    ) -> tuple[list[str], list[str], list[str]]:
-        """Validate and filter associated component IDs."""
-        
-        valid_calligraphy_ids = [
-            cid for cid in (calligraphy_ids or [])
-            if calligraphy_service.get_by_id(calligraphy_id=cid, session=session)
+    def _resolve_associations(
+        self,
+        calligraphy: Optional[list[str]],
+        vocabulary: Optional[list[str]],
+        grammar: Optional[list[str]],
+        session: Optional[Session],
+    ) -> tuple[list, list, list]:
+        calligraphies = [
+            c
+            for cid in (calligraphy or [])
+            if (c := calligraphy_service.get_by_id(calligraphy_id=cid, session=session))
         ]
-        
-        valid_grammar_ids = [
-            gid for gid in (grammar_ids or [])
-            if grammar_service.get_by_id(grammar_id=gid, session=session)
+        vocabularies = [
+            v
+            for vid in (vocabulary or [])
+            if (v := vocabulary_service.get_by_id(voc_id=vid, session=session))
         ]
-        
-        valid_voc_ids = [
-            vid for vid in (vocabulary_ids or [])
-            if vocabulary_service.get_by_id(voc_id=vid, session=session)
+        grammars = [
+            g
+            for gid in (grammar or [])
+            if (g := grammar_service.get_by_id(grammar_id=gid, session=session))
         ]
-        
-        return valid_calligraphy_ids, valid_voc_ids, valid_grammar_ids
-    
-    def _clean_exercise_associations(self, exercise: Exercise, session: Optional[Session] = None) -> bool:
-        """
-        Clean invalid association_ids from an exercise.
-        
-        Returns:
-            True if any associations were cleaned, False otherwise
-        """
-        if not (exercise.calligraphy_ids or exercise.vocabulary_ids or exercise.grammar_ids):
-            return False
-        
-        cleaned_calligraphy_ids, cleaned_voc_ids, cleaned_grammar_ids = self._check_associate_components(
-            calligraphy_ids=exercise.calligraphy_ids,
-            vocabulary_ids=exercise.vocabulary_ids,
-            grammar_ids=exercise.grammar_ids,
-            session=session
-        )
-        
-        if (cleaned_calligraphy_ids != exercise.calligraphy_ids or
-            cleaned_voc_ids != exercise.vocabulary_ids or
-            cleaned_grammar_ids != exercise.grammar_ids):
-            
-            exercise.calligraphy_ids = cleaned_calligraphy_ids
-            exercise.vocabulary_ids = cleaned_voc_ids
-            exercise.grammar_ids = cleaned_grammar_ids
-            db_manager.modify(exercise, session=session)
-            return True
-        
-        return False
-        
+        return calligraphies, vocabularies, grammars
+
+    @transactional
     def get_all(
         self,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> list[Exercise] | list[dict]:
-        """
-        Get all exercises for a specific language or unit.
-
-        Args:
-            language_id (Optional[str] = None): The id of the language to get all the exercises from
-            unit_id (Optional[str] = None): The id of the unit to get all the exercises from
-
-        Returns:
-            List of Exercise objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                exercises = []
-                for unit in units:
-                    exercises.extend(
-                        db_manager.find_all(
-                            model_class=Exercise,
-                            filters={'unit_id': unit.id},
-                            session=session
-                        )
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't both be specified: {language_id}, {lesson_id}"
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            exercises: list[Exercise] = []
+            for lesson in lessons:
+                exercises.extend(
+                    db_manager.find_all(
+                        model_class=Exercise,
+                        filters={"lesson_id": lesson.id},
+                        session=session,
                     )
-            elif unit_id:
-                exercises = db_manager.find_all(
-                    model_class=Exercise,
-                    filters={'unit_id': unit_id},
-                    session=session
                 )
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
-            
-            if exercises:
-                for ex in exercises:
-                    self._clean_exercise_associations(ex, session=session)
-            return self._serialize_list(exercises, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all exercises: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        elif lesson_id:
+            exercises = db_manager.find_all(
+                model_class=Exercise,
+                filters={"lesson_id": lesson_id},
+                session=session,
+            )
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id}, {lesson_id}")
 
+        return self._serialize_list(exercises, as_dict, include_relations)
+
+    @transactional
     def get_by_id(
         self,
         ex_id: str,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> Exercise | dict | None:
-        """
-        Get a Exercise item by its ID.
+        exercise = db_manager.find_by_attr(
+            model_class=Exercise,
+            attr_values={"id": ex_id},
+            session=session,
+        )
+        return self._serialize(exercise, as_dict, include_relations)
 
-        Args:
-            ex_id: The ID of the Exercise item to retrieve.
-
-        Returns:
-            Exercise object if found, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            exercise = db_manager.find_by_attr(
-                model_class=Exercise,
-                attr_values={'id': ex_id},
-                session=session
-            )
-
-            if exercise:
-                self._clean_exercise_associations(exercise, session=session)
-            return self._serialize(exercise, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get exercise by id: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def get_by_level(
         self,
         level: str,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> list[Exercise] | list[dict]:
-        """
-        Get all Exercise items of a specific level among a language.
-        
-        Args:
-            language_id: The id of the language to filter Exercise items
-            unit_id: The id of the unit to filter Exercise items
-            level: Exercise level (e.g., 'A1', 'B2')
-        
-        Returns:
-            List of matching Exercise objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't both be specified: {language_id}, {lesson_id}"
 
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                exercises = []
-                for unit in units:
-                    exercises.extend(
-                        db_manager.find_all(
-                            model_class=Exercise,
-                            filters={'unit_id': unit.id},
-                            session=session
-                        )
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            exercises: list[Exercise] = []
+            for lesson in lessons:
+                exercises.extend(
+                    db_manager.find_all(
+                        model_class=Exercise,
+                        filters={"lesson_id": lesson.id, "level": level},
+                        session=session,
                     )
-            elif unit_id:
-                exercises = db_manager.find_all(
-                    model_class=Exercise,
-                    filters={'level': level, 'unit_id': unit_id},
-                    session=session
                 )
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got neither: {language_id} and {unit_id}")
-            
-            for ex in exercises:
-                self._clean_exercise_associations(ex, session=session)
-            return self._serialize_list(exercises, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get_by_level exercises: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-    
+        elif lesson_id:
+            exercises = db_manager.find_all(
+                model_class=Exercise,
+                filters={"lesson_id": lesson_id, "level": level},
+                session=session,
+            )
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id}, {lesson_id}")
+
+        return self._serialize_list(exercises, as_dict, include_relations)
+
+    @transactional
     def create(
         self,
         data: ExerciseDict,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> Exercise | dict | None:
-        """
-        Create a new Exercise item.
+        lesson = lesson_service.get_by_id(data.lesson_id, session=session)
+        if not lesson:
+            logger.warning(f"Cannot create exercise, lesson not found: {data.lesson_id}")
+            return None
 
-        Args:
-            data: ExerciseDict containing Exercise item details.
+        exercise_data = data.model_dump(exclude={'status', 'score', 'created_at', 'last_seen_at'}, exclude_none=True)
 
-        Returns:
-            Created Exercise object if successful, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            unit = unit_service.get_by_id(data.unit_id, session=session)
+        related_calligraphy = exercise_data.pop("related_calligraphy", None)
+        related_vocabulary = exercise_data.pop("related_vocabulary", None)
+        related_grammar = exercise_data.pop("related_grammar", None)
 
-            if not unit:
-                logger.warning(f"Cannot create Exercise item, unit not found: {data.unit_id}")
-                return None
-            
-            if data.calligraphy_ids or data.vocabulary_ids or data.grammar_ids:
-                data.calligraphy_ids, data.vocabulary_ids, data.grammar_ids = self._check_associate_components(
-                    calligraphy_ids=data.calligraphy_ids,
-                    vocabulary_ids=data.vocabulary_ids,
-                    grammar_ids=data.grammar_ids,
-                    session=session
-                )
+        exercise = Exercise(
+            id=db_manager.generate_new_id(model_class=Exercise, session=session),
+            lesson_id=lesson.id,
+            exercise_type=exercise_data.get("exercise_type"),
+            question=exercise_data.get("question"),
+            answer=exercise_data.get("answer"),
+            text_support=exercise_data.get("text_support", ""),
+            content=exercise_data.get("content"),
+            image_files=data.image_files or [],
+            audio_files=data.audio_files or [],
+            tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+            sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
+        )
+        exercise.related_calligraphy, exercise.related_vocabulary, exercise.related_grammar = self._resolve_associations(
+            calligraphy=related_calligraphy,
+            vocabulary=related_vocabulary,
+            grammar=related_grammar,
+            session=session,
+        )
 
-            exercise = Exercise(
-                id = db_manager.generate_new_id(
-                    model_class=Exercise,
-                    session=session
-                ),
-                **data.model_dump(exclude_none=True)
-            )
-            result = db_manager.insert(
-                obj=exercise,
-                session=session
-            )
+        result = db_manager.insert(obj=exercise, session=session, commit=False)
+        return self._serialize(result, as_dict, include_relations)
 
-            if result:
-                logger.info(f"Created new Exercise item with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new Exercise item: {exercise.id}")
-
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to create exercise: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
-        return result
-
+    @transactional
     def update(
         self,
         ex_id: str,
         data: ExerciseDict,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> Exercise | dict | None:
-        """
-        Update an existing Exercise item.
+        existing = self.get_by_id(ex_id, session=session)
+        if not existing:
+            logger.warning(f"Exercise not found: {ex_id}")
+            return None
 
-        Args:
-            ex_id: The ID of the Exercise item to update.
-            data: ExerciseDict containing updated Exercise item details.
-        Returns:
-            Updated Exercise object if successful, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            existing = self.get_by_id(ex_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Exercise item not found: {ex_id}")
-                return None
-            
-            if not unit_service.get_by_id(data.unit_id, session=session):
-                logger.warning(f"Unit not found: {data.unit_id}, keeping existing unit_id: {existing.unit_id}")
-                data.unit_id = existing.unit_id  # Revert to existing unit_id
-            
-            if data.calligraphy_ids or data.vocabulary_ids or data.grammar_ids:
-                data.calligraphy_ids, data.vocabulary_ids, data.grammar_ids = self._check_associate_components(
-                    calligraphy_ids=data.calligraphy_ids,
-                    vocabulary_ids=data.vocabulary_ids,
-                    grammar_ids=data.grammar_ids,
-                    session=session
-                )
-            
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            
-            # Update the existing object's attributes
-            for key, value in update_data.items():
-                setattr(existing, key, value)
-            
-            # Save to database
-            result = db_manager.modify(existing, session=session)
-            
-            if result:
-                logger.info(f"Updated Exercise item: {ex_id}")
-            else:
-                logger.error(f"Failed to update Exercise item: {ex_id}")
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update exercise: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
 
+        related_calligraphy = update_data.pop("related_calligraphy", None)
+        related_vocabulary = update_data.pop("related_vocabulary", None)
+        related_grammar = update_data.pop("related_grammar", None)
+
+        for key, value in update_data.items():
+            setattr(existing, key, value)
+
+        if related_calligraphy is not None or related_vocabulary is not None or related_grammar is not None:
+            existing.related_calligraphy, existing.related_vocabulary, existing.related_grammar = self._resolve_associations(
+                calligraphy=related_calligraphy,
+                vocabulary=related_vocabulary,
+                grammar=related_grammar,
+                session=session,
+            )
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
+
+        result = db_manager.modify(existing, session=session, commit=False)
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def delete(self, ex_id: str, session: Optional[Session] = None) -> bool:
-        """
-        Delete an Exercise item by its ID.
+        existing = self.get_by_id(ex_id, session=session)
+        if not existing:
+            return False
+        return db_manager.delete(existing, session=session, commit=False)
 
-        Args:
-            ex_id: The ID of the Exercise item to delete.
-        Returns:
-            True if deletion was successful, else False
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            # Check if Exercise item exists before deleting
-            existing = self.get_by_id(ex_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Exercise item not found: {ex_id}")
-                return False
-            
-            # Delete from database
-            success = db_manager.delete(existing, session=session)
-            
-            if success:
-                logger.info(f"Deleted Exercise item: {ex_id}")
-            else:
-                logger.error(f"Failed to delete Exercise item: {ex_id}")
-            
-            return success
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to delete exercise: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def update_score(
         self,
         ex_id: str,
         score: float,
+        duration_ms: float,
         session: Optional[Session] = None,
+        hint_used: bool = False,
+        attempt_number: Optional[int] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
     ) -> Exercise | dict | None:
-        """
-        Update Exercise item score based on average of all of its components scores.
-        
-        This should be called whenever a component's score changes.
-        
-        Args:
-            ex_id: The ID of the Exercise item to update
-            score: The new score for the Exercise item
-        
-        Returns:
-            Updated Exercise object if successful, None otherwise
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            exercise = self.get_by_id(ex_id, session=session)
-            
-            if not exercise:
-                logger.warning(f"Exercise item not found: {ex_id}")
-                return None
-            
-            previous_score = exercise.score
-            
-            exercise.score = update_score(
-                score=exercise.score,
-                last_seen=exercise.last_seen,
-                similarity=score
+        exercise = self.get_by_id(ex_id, session=session)
+        if not exercise:
+            logger.warning(f"Exercise not found: {ex_id}")
+            return None
+
+        previous_score = exercise.score
+        exercise.score = update_score(
+            score=exercise.score,
+            last_seen_at=exercise.last_seen_at,
+            similarity=score,
+        )
+        exercise.difficulty = update_difficulty(
+            new_score=exercise.score,
+            last_seen_at=exercise.last_seen_at,
+            previous_difficulty=exercise.difficulty,
+            created_at=exercise.created_at
+        )
+
+        exercise.last_seen_at = datetime.now()
+
+        result = db_manager.modify(exercise, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated exercise {ex_id} score to {exercise.score} and difficulty to {exercise.difficulty}")
+
+            progress_tracking_service.create(
+                data=ProgressTrackingDict(
+                    user_id=exercise.lesson.user_id,
+                    language_id=exercise.lesson.language_id,
+                    element_id=ex_id,
+                    element_type="exercise",
+                    element_status=exercise.status,
+                    score_before=previous_score,
+                    score_after=result.score,
+                    result=result.score >= previous_score,
+                    duration_ms=duration_ms,
+                    hint_used=hint_used,
+                    attempt_number=attempt_number,
+                ),
+                session=session,
             )
-            
-            # Update last_seen
-            exercise.last_seen = date.today()
 
-            # Save changes
-            result = db_manager.modify(exercise, session=session)
+        for vocabulary in exercise.related_vocabulary:
+            vocabulary_service.update_score(
+                vocabulary.id,
+                score=score,
+                duration_ms=duration_ms,
+                hint_used=hint_used,
+                session=session,
+            )
+            logger.info(f"Updated vocabulary {vocabulary.id} score due to exercise {ex_id}")
 
-            if result:
-                logger.info(f"Updated Exercise item {ex_id} score: {result.score}")
+        for grammar in exercise.related_grammar:
+            grammar_service.update_score(
+                grammar.id,
+                score=score,
+                duration_ms=duration_ms,
+                hint_used=hint_used,
+                session=session,
+            )
+            logger.info(f"Updated grammar {grammar.id} score due to exercise {ex_id}")
 
-            # Update scores of associated components
-            dependencies_lists = []
-            if exercise.vocabulary_ids:
-                for voc_id in exercise.vocabulary_ids:
-                    voc = vocabulary_service.get_by_id(voc_id=voc_id, session=session)
-                    if voc:
-                        dependencies_lists.append(voc)
-            if exercise.calligraphy_ids:
-                for calligraphy_id in exercise.calligraphy_ids:
-                    calligraphy = calligraphy_service.get_by_id(calligraphy_id=calligraphy_id, session=session)
-                    if calligraphy:
-                        dependencies_lists.append(calligraphy)
-            if exercise.grammar_ids:
-                for grammar_id in exercise.grammar_ids:
-                    grammar = grammar_service.get_by_id(grammar_id=grammar_id, session=session)
-                    if grammar:
-                        dependencies_lists.append(grammar)
+        for calligraphy in exercise.related_calligraphy:
+            calligraphy_service.update_score(
+                calligraphy.id,
+                score=score,
+                duration_ms=duration_ms,
+                hint_used=hint_used,
+                session=session,
+            )
+            logger.info(f"Updated calligraphy {calligraphy.id} score due to exercise {ex_id}")
 
-            for feature in dependencies_lists:
-                feature.score = update_score(
-                    score=feature.score,
-                    last_seen=feature.last_seen,
-                    similarity=score
-                )
-                feature.last_seen = date.today()
+        if exercise.score != previous_score:
+            lesson_service.update_score(exercise.lesson_id, session=session)
+            logger.info(f"Updated lesson {exercise.lesson_id} score due to exercise {ex_id}")
 
-                db_manager.modify(feature, session=session)
-
-            if exercise.score != previous_score:
-                unit_service.update_score(exercise.unit_id, session=session)
-                logger.info(f"Updated unit {exercise.unit_id} score due to Exercise {ex_id}")
-            
-            # Ensure all attributes are loaded before closing session
-            if owns_session and result:
-                session.refresh(result)
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update Exercise score for {ex_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        return self._serialize(result, as_dict, include_relations)

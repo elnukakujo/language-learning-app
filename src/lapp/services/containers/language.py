@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import datetime
+from os import name
 from typing import Optional
 from sqlalchemy.orm import Session
 
@@ -6,8 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.containers import LanguageDict
-from ...models.containers import Language, Unit
-from ...core.database import db_manager
+from ...models.system_data import Source, Tag
+from ...models.containers import Language, Lesson
+from ...core.database import db_manager, transactional, resolve_related
 
 class LanguageService:
     def _serialize(self, language: Language | None, as_dict: bool, include_relations: bool) -> Language | dict | None:
@@ -20,43 +22,29 @@ class LanguageService:
             return languages
         return [language.to_dict(include_relations=include_relations) for language in languages]
 
-    def _check_current_unit(self, language: Language, current_unit_id: str, session: Optional[Session] = None) -> bool:
+    def _check_current_lesson(self, language: Language, current_lesson_id: str, session: Optional[Session] = None) -> bool:
         """
-        Check if the current unit ID is valid for the given language.
+        Check if the current lesson ID is valid for the given language.
 
         Args:
             language: The Language object.
-            current_unit_id: The current unit ID to validate.
+            current_lesson_id: The current lesson ID to validate.
         Returns:
             True if valid, False otherwise.
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            from .unit import UnitService
-            unit_service = UnitService()
-            if (unit := unit_service.get_by_id(current_unit_id, session=session)):
-                return unit.id
-            new_current_unit_id = self._find_current_unit(language.id, score_threshold=0.75, session=session)
+        from .lesson import LessonService
+        lesson_service = LessonService()
+        if (lesson := lesson_service.get_by_id(current_lesson_id, session=session)):
+            return lesson.id
+        new_current_lesson_id = self._find_current_lesson(language.id, score_threshold=0.75, session=session)
 
-            language.current_unit = new_current_unit_id
-            db_manager.modify(language, session=session)
-            return new_current_unit_id
-            
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to check current unit {current_unit_id} for language {language.id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        language.current_lesson_id = new_current_lesson_id
+        db_manager.modify(language, session=session, commit=False)
+        return new_current_lesson_id
     
-    def _find_current_unit(self, language_id: str, score_threshold: float, session: Optional[Session] = None) -> Optional[str]:
+    def _find_current_lesson(self, language_id: str, score_threshold: float, session: Optional[Session] = None) -> Optional[str]:
         """
-        Find the first unit ID for a given language with a score below a certain threshold.
+        Find the first lesson ID for a given language with a score below a certain threshold.
 
         Args:
             language_id: The ID of the language.
@@ -64,74 +52,57 @@ class LanguageService:
             session: Optional SQLAlchemy session.
         
         Returns:
-            The ID of the first unit below the threshold, or None if all units meet/exceed the threshold.
+            The ID of the first lesson below the threshold, or None if all lessons meet/exceed the threshold.
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            from .unit import UnitService
-            unit_service = UnitService()
+        from .lesson import LessonService
+        lesson_service = LessonService()
 
-            units = unit_service.get_all(
-                language_id=language_id,
-                session=session
-            )
-            for unit in units:
-                if unit.score < score_threshold*100:
-                    return unit.id
-            return units[-1].id if units else None
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to find current unit for language {language_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        lessons = lesson_service.get_all(
+            language_id=language_id,
+            session=session
+        )
+        for lesson in lessons:
+            if lesson.score < score_threshold*100:
+                return lesson.id
+        return lessons[-1].id if lessons else None
         
-    def get_all(
+    @transactional
+    def get_by_user_id(
         self,
+        user_id: str,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Language] | list[dict]:
         """
-        Get all languages.
+        Get all languages for a specific user.
 
         Args:
-            None
+            user_id: The ID of the user.
+            session: Optional SQLAlchemy session.
+            as_dict: Whether to return dictionaries instead of objects.
+            include_relations: Whether to include related objects.
 
         Returns:
             List of Language objects
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            languages = db_manager.find_all(
-                model_class=Language,
+        languages = db_manager.find_all(
+            model_class=Language,
+            filters={'user_id': user_id},
+            session=session
+        )
+        for language in languages:
+            language.current_lesson_id = self._check_current_lesson(
+                language=language,
+                current_lesson_id=language.current_lesson_id,
                 session=session
             )
-            for language in languages:
-                # Ensure current_unit is valid
-                language.current_unit = self._check_current_unit(
-                    language=language,
-                    current_unit_id=language.current_unit,
-                    session=session
-                )
-            return self._serialize_list(languages, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all languages: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
 
+        if not as_dict:
+            return languages
+        return self._serialize_list(languages, as_dict, include_relations)
+
+    @transactional
     def get_by_id(
         self,
         language_id: str,
@@ -148,35 +119,24 @@ class LanguageService:
         Returns:
             Language object if found, else None
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            language = db_manager.find_by_attr(
-                model_class=Language,
-                attr_values={'id': language_id},
+        language = db_manager.find_by_attr(
+            model_class=Language,
+            attr_values={'id': language_id},
+            session=session
+        )
+        logger.info(f"Retrieved language with ID {language_id}")
+        if language:
+            language.current_lesson_id = self._check_current_lesson(
+                language=language,
+                current_lesson_id=language.current_lesson_id,
                 session=session
             )
-            if language:
-                language.current_unit = self._check_current_unit(
-                    language=language,
-                    current_unit_id=language.current_unit,
-                    session=session
-                )
-            return self._serialize(language, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get language {language_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        return self._serialize(language, as_dict, include_relations)
 
+    @transactional
     def get_by_level(
         self,
-        level: str,
+        level: int,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
@@ -185,38 +145,25 @@ class LanguageService:
         Get all languages of a specific level.
         
         Args:
-            level: Language level (e.g., 'A1', 'B2')
+            level: Language level (e.g., 0, 1, 2, etc.)
         
         Returns:
             List of matching Language objects
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            languages = db_manager.find_all(
-                model_class=Language,
-                filters={'level': level},
+        languages = db_manager.find_all(
+            model_class=Language,
+            filters={'level': level},
+            session=session
+        )
+        for language in languages:
+            language.current_lesson_id = self._check_current_lesson(
+                language=language,
+                current_lesson_id=language.current_lesson_id,
                 session=session
             )
-            for language in languages:
-                # Ensure current_unit is valid
-                language.current_unit = self._check_current_unit(
-                    language=language,
-                    current_unit_id=language.current_unit,
-                    session=session
-                )
-            return self._serialize_list(languages, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get languages by level {level}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        return self._serialize_list(languages, as_dict, include_relations)
     
+    @transactional
     def create(
         self,
         data: LanguageDict,
@@ -233,44 +180,39 @@ class LanguageService:
         Returns:
             Created Language object if successful, else None
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            language = Language(
-                id = db_manager.generate_new_id(model_class=Language, session=session),
-                **data.model_dump(exclude_none=True)
-            )
+        language = Language(
+            id=db_manager.generate_new_id(model_class=Language, session=session),
+            user_id=data.user_id,
+            name=data.name,
+            alias=data.alias,
+            flag=data.flag,
+            level=data.level,
+            description=data.description,
+            source_iso639_2t=data.source_iso639_2t,
+            target_iso639_2t=data.target_iso639_2t,
+            tags=session.query(Tag).filter(Tag.id.in_([t.id for t in data.tags])).all() if data.tags else [],
+            sources=session.query(Source).filter(Source.id.in_([s.id for s in data.sources])).all() if data.sources else []
+        )
 
-            language.last_seen = date.today()
-            language.score = 0.0
-            language.current_unit = self._find_current_unit(
-                language_id=language.id,
-                score_threshold=0.75,
-                session=session
-            )
+        result = db_manager.insert(obj=language, session=session, commit=False)
 
-            result = db_manager.insert(
-                obj=language,
-                session=session
-            )
+        # Create also the Commitment Log entry for this language
+        from ..data_collection.commitment_log import CommitmentLogService
+        commitment_log_service = CommitmentLogService()
+        commitment_log_service.create(
+            user_id=data.user_id,
+            language_id=language.id,
+            session=session
+        )
 
-            if result:
-                logger.info(f"Created new language with ID: {result.id}")
-            else:
-                logger.error(f"Failed to create new language: {language.name}")
+        if result:
+            logger.info(f"Created new language with ID: {result.id}")
+        else:
+            logger.error(f"Failed to create new language: {language.name}")
 
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to create language: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        return self._serialize(result, as_dict, include_relations)
 
+    @transactional
     def update(
         self,
         language_id: str,
@@ -289,51 +231,39 @@ class LanguageService:
         Returns:
             Updated Language object if successful, else None
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            existing = self.get_by_id(language_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Language not found: {language_id}")
-                return None
-            
-            # Update the existing object's attributes
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
+        existing = self.get_by_id(language_id, session=session)
 
-            for key, value in update_data.items():
+        if not existing:
+            logger.warning(f"Language not found: {language_id}")
+            return None
+
+        update_data = data.model_dump(exclude={'current_lesson_id', 'id', 'user_id', 'score', 'status', 'created_at', 'last_seen_at', 'tags', 'sources'}, exclude_none=True)
+
+        for key, value in update_data.items():
+            if value is not None:
                 setattr(existing, key, value)
-            
-            # Update last_seen
-            existing.current_unit = self._check_current_unit(
-                language=existing,
-                current_unit_id=existing.current_unit,
-                session=session
-            )
-            
-            # Save to database
-            result = db_manager.modify(existing, session=session)
-            
-            if result:
-                logger.info(f"Updated language: {language_id}")
-            else:
-                logger.error(f"Failed to update language: {language_id}")
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update language {language_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
 
+        existing.current_lesson_id = self._check_current_lesson(
+            language=existing,
+            current_lesson_id=existing.current_lesson_id,
+            session=session
+        )
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
+
+        result = db_manager.modify(existing, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated language: {language_id}")
+        else:
+            logger.error(f"Failed to update language: {language_id}")
+
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def delete(self, language_id: str, session: Optional[Session] = None) -> bool:
         """
         Delete a language by its ID.
@@ -344,41 +274,27 @@ class LanguageService:
         Returns:
             True if deletion was successful, else False
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            # Check if language exists before deleting
-            existing = self.get_by_id(language_id, session=session)
-            
-            if not existing:
-                logger.warning(f"Language not found: {language_id}")
-                return False
-            
-            # Delete from database
-            success = db_manager.delete(existing, session=session)
-            
-            if success:
-                logger.info(f"Deleted language: {language_id}")
-            else:
-                logger.error(f"Failed to delete language: {language_id}")
-            
-            return success
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to delete language {language_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        existing = self.get_by_id(language_id, session=session)
 
+        if not existing:
+            logger.warning(f"Language not found: {language_id}")
+            return False
+
+        success = db_manager.delete(existing, session=session, commit=False)
+
+        if success:
+            logger.info(f"Deleted language: {language_id}")
+        else:
+            logger.error(f"Failed to delete language: {language_id}")
+
+        return success
+
+    @transactional
     def update_score(self, language_id: str, session: Optional[Session] = None) -> Language | None:
         """
-        Update language score based on average of all unit scores.
+        Update language score based on average of all lesson scores.
         
-        This should be called whenever a unit's score changes.
+        This should be called whenever a lesson's score changes.
         
         Args:
             language_id: The ID of the language to update
@@ -386,57 +302,40 @@ class LanguageService:
         Returns:
             Updated Language object if successful, None otherwise
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            language = self.get_by_id(language_id, session=session)
-            
-            if not language:
-                logger.warning(f"Language not found: {language_id}")
-                return None
-            
-            # Get all units for this language
-            units = db_manager.find_all(
-                model_class=Unit,
-                filters={'language_id': language_id},
-                session=session
+        language = self.get_by_id(language_id, session=session)
+
+        if not language:
+            logger.warning(f"Language not found: {language_id}")
+            return None
+
+        lessons = db_manager.find_all(
+            model_class=Lesson,
+            filters={'language_id': language_id},
+            session=session
+        )
+
+        if not lessons:
+            logger.warning(f"No lessons found for language: {language_id}")
+            language.score = 0.0
+        else:
+            total_score = sum(lesson.score for lesson in lessons)
+            language.score = round(total_score / len(lessons), 2)
+
+            logger.info(
+                f"Calculated language score: {language.score} "
+                f"(from {len(lessons)} lessons)"
             )
-            
-            if not units:
-                logger.warning(f"No units found for language: {language_id}")
-                language.score = 0.0
-            else:
-                # Calculate average score from all units
-                total_score = sum(unit.score for unit in units)
-                language.score = round(total_score / len(units), 2)
-                
-                logger.info(
-                    f"Calculated language score: {language.score} "
-                    f"(from {len(units)} units)"
-                )
-            
-            # Update last_seen
-            language.last_seen = date.today()
-            language.current_unit = self._find_current_unit(
-                language_id=language.id,
-                score_threshold=0.75,
-                session=session
-            )
-            
-            # Save changes
-            result = db_manager.modify(language, session=session)
-            
-            if result:
-                logger.info(f"Updated language {language_id} score: {result.score}")
-            
-            return result
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update language score for {language_id}: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+
+        language.last_seen_at = datetime.now()
+        language.current_lesson_id = self._find_current_lesson(
+            language_id=language.id,
+            score_threshold=0.75,
+            session=session
+        )
+
+        result = db_manager.modify(language, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated language {language_id} score: {result.score}")
+
+        return result

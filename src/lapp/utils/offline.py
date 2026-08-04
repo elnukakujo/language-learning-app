@@ -1,13 +1,12 @@
 import os
-import socket
+import urllib.request
 
 
 def is_offline() -> bool:
     try:
-        socket.setdefaulttimeout(3)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
+        urllib.request.urlopen("https://huggingface.co", timeout=3)
         return False
-    except OSError:
+    except Exception:
         return True
 
 

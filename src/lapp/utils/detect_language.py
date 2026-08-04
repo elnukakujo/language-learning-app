@@ -1,6 +1,4 @@
 from langdetect import detect
-import whisper
-import os
 import logging
 from dataclasses import dataclass
 
@@ -47,7 +45,25 @@ def _lookup(iso1: str) -> Language:
     # langdetect sometimes returns "zh-cn" / "zh-tw" — normalise to bare code
     return _LANGUAGES.get(iso1.split("-")[0], _UNKNOWN)
 
-audio_detection_model = whisper.load_model("base")
+
+def get_language_by_iso2t(iso2t: str) -> Language:
+    """Resolve a language by ISO 639-2/T code (e.g. 'fra', 'zho')."""
+    if not iso2t:
+        return _UNKNOWN
+
+    normalized = iso2t.strip().lower()
+    for lang in _LANGUAGES.values():
+        if lang.iso2t == normalized:
+            return lang
+    return _UNKNOWN
+
+def get_language_by_iso1(iso1: str) -> Language:
+    """Resolve a language by ISO 639-1 code (e.g. 'fr', 'zh')."""
+    if not iso1:
+        return _UNKNOWN
+
+    normalized = iso1.strip().lower()
+    return _LANGUAGES.get(normalized, _UNKNOWN)
 
 def detect_text_language(text: str) -> Language:
     """
@@ -65,43 +81,7 @@ def detect_text_language(text: str) -> Language:
     """
     try:
         lang = _lookup(detect(text))
-        logger.debug(f"Detected text language: {lang}")
         return lang
     except Exception as e:
         logger.error(f"Error detecting text language: {e}")
         return _UNKNOWN
-
-
-def detect_audio_language(audio_file_path: str) -> tuple[Language, float]:
-    """
-    Detect the language of an audio file using Whisper.
-
-    Returns (Language, confidence) or (_UNKNOWN, 0.0) on error.
-
-    Example:
-        lang, confidence = detect_audio_language("clip.mp3")
-        lang.iso2t   # "fra"
-        confidence   # 0.97
-    """
-    try:
-        if not os.path.isfile(audio_file_path):
-            logger.error(f"Audio file does not exist: {audio_file_path}")
-            return _UNKNOWN, 0.0
-
-        audio = whisper.load_audio(audio_file_path)
-        audio = whisper.pad_or_trim(audio)
-        mel = whisper.log_mel_spectrogram(
-            audio, n_mels=audio_detection_model.dims.n_mels
-        ).to(audio_detection_model.device)
-
-        _, probs = audio_detection_model.detect_language(mel)
-        iso1 = max(probs, key=probs.get)
-        confidence = probs[iso1]
-
-        lang = _lookup(iso1)
-        logger.debug(f"Detected audio language: {lang} (confidence: {confidence:.2f})")
-        return lang, confidence
-
-    except Exception as e:
-        logger.error(f"Error detecting audio language: {e}")
-        return _UNKNOWN, 0.0

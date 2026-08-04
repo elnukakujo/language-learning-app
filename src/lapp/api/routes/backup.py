@@ -45,7 +45,7 @@ def create_backup():
     """
     try:
         backup_mgr = current_app.backup_manager
-        backup_path = backup_mgr.backup()
+        backup_path = backup_mgr.create_backup()
         
         if backup_path:
             # Get file size
@@ -131,7 +131,7 @@ def restore_backup():
                 }), 404
         
         # Restore from specified backup or latest
-        success = backup_mgr.restore(backup_path)
+        success = backup_mgr.restore_backup(backup_path)
         
         if success:
             restored_from = backup_path.name if backup_path else backup_mgr.get_latest_backup().name
@@ -203,8 +203,7 @@ def list_backups():
         backup_list = []
         for backup_path in backups:
             stat = backup_path.stat()
-            created_timestamp = stat.st_ctime
-            created_dt = datetime.fromtimestamp(created_timestamp)
+            created_dt = backup_mgr.backup_timestamp(backup_path)
             age_days = (datetime.now() - created_dt).days
             
             backup_list.append({
@@ -262,7 +261,7 @@ def backup_info():
     """
     try:
         backup_mgr = current_app.backup_manager
-        info = backup_mgr.get_backup_info()
+        info = backup_mgr.get_stats()
         
         # Add additional calculated fields
         backups = backup_mgr.list_backups()
@@ -274,8 +273,7 @@ def backup_info():
         # Add latest backup age
         latest = backup_mgr.get_latest_backup()
         if latest:
-            created_timestamp = latest.stat().st_ctime
-            created_dt = datetime.fromtimestamp(created_timestamp)
+            created_dt = backup_mgr.backup_timestamp(latest)
             age_hours = (datetime.now() - created_dt).total_seconds() / 3600
             info['latest_backup_age_hours'] = round(age_hours, 1)
         else:
@@ -304,7 +302,7 @@ def delete_backup(backup_file: str):
           required: true
           type: string
           description: Name of the backup file to delete
-          example: backup_2024-01-01_12-00-00.sqlite
+          example: backup_fluence_dev_20260101_120000.dump
     responses:
         200:
             description: Backup deleted successfully
@@ -350,7 +348,7 @@ def delete_backup(backup_file: str):
         backup_path = backup_mgr.backup_dir / backup_file
         
         # Security check: ensure it's a backup file
-        if not backup_file.startswith('backup_') or not backup_file.endswith('.sqlite'):
+        if not backup_file.startswith('backup_') or not backup_file.endswith('.dump'):
             return jsonify({
                 'success': False,
                 'error': 'Invalid backup filename'
@@ -422,7 +420,7 @@ def cleanup_old_backups():
         before_count = len(backup_mgr.list_backups())
         
         # Trigger cleanup
-        backup_mgr._cleanup_old_backups()
+        backup_mgr.cleanup_old_backups()
         
         # Get count after cleanup
         after_count = len(backup_mgr.list_backups())

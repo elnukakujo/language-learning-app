@@ -1,11 +1,14 @@
 import { BaseContainer } from '../base';
+import Lesson from './Lesson';
 
 export default interface Language extends BaseContainer {
     name: string;
-    native_name?: string;
+    alias?: string;
     flag?: string;
-    level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-    current_unit?: string;
-    description?: string;
-    current_unit_id?: string;
+    target_iso639_2t?: string;
+    source_iso639_2t?: string;
+    
+    user_id?: string;
+    current_lesson_id?: string;
+    lessons?: Partial<Lesson>[];
 };

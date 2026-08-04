@@ -52,9 +52,10 @@ class AppScheduler:
             logger.info("✅ AppScheduler started")
     
     def shutdown(self):
-        """Shutdown the scheduler gracefully."""
+        """Shutdown the scheduler without waiting for in-flight jobs (a stuck
+        generation call must not block process exit on Ctrl+C)."""
         if self._running:
-            self.scheduler.shutdown()
+            self.scheduler.shutdown(wait=False)
             self._running = False
             logger.info("🛑 AppScheduler stopped")
     

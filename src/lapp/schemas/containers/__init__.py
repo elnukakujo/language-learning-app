@@ -1,7 +1,7 @@
 from .language import LanguageDict
-from .unit import UnitDict
+from .lesson import LessonDict
 
 __all__ = [
     "LanguageDict",
-    "UnitDict",
+    "LessonDict",
 ]

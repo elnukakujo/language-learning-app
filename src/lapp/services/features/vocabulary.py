@@ -1,22 +1,25 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
-
 from sqlalchemy.orm import Session
 
 import logging
 logger = logging.getLogger(__name__)
 
 from ...schemas.features import VocabularyDict
+from ...schemas.data_collection.progress_tracking import ProgressTrackingDict
 from ...models.features import Vocabulary
-from ..containers import UnitService, LanguageService
+from ...models.system_data import Tag, Source
+from ..containers import LessonService, LanguageService
 from ..components import WordService, PassageService
-from ...core.database import db_manager
-from ...utils import update_score
+from ..data_collection import ProgressTrackingService
+from ...core.database import db_manager, transactional, resolve_related, stack_related
+from ...utils import update_score, update_difficulty, stack_lists
 
-unit_service = UnitService()
+lesson_service = LessonService()
 language_service = LanguageService()
 word_service = WordService()
 passage_service = PassageService()
+progress_tracking_service = ProgressTrackingService()
 
 
 class VocabularyService:
@@ -30,61 +33,39 @@ class VocabularyService:
             return vocabularies
         return [vocabulary.to_dict(include_relations=include_relations) for vocabulary in vocabularies]
 
+    @transactional
     def get_all(
         self,
         language_id: Optional[str] = None,
-        unit_id: Optional[str] = None,
+        lesson_id: Optional[str] = None,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Vocabulary] | list[dict]:
-        """
-        Get all vocabulary for a specific language or unit.
-
-        Args:
-            language_id (Optional[str]): The id of the language to get all the vocabulary from
-            unit_id (Optional[str]): The id of the unit to get all the vocabulary from
-
-        Returns:
-            List of VocabularyFeature objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                vocabulary = []
-                for unit in units:
-                    vocabulary.extend(
-                        db_manager.find_all(
-                            model_class=Vocabulary,
-                            filters={'unit_id': unit.id},
-                            session=session
-                        )
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            vocabulary = []
+            for lesson in lessons:
+                vocabulary.extend(
+                    db_manager.find_all(
+                        model_class=Vocabulary,
+                        filters={'lesson_id': lesson.id},
+                        session=session
                     )
-                return self._serialize_list(vocabulary, as_dict, include_relations)
-            elif unit_id:
-                vocabulary = db_manager.find_all(
-                    model_class=Vocabulary,
-                    filters={'unit_id': unit_id},
-                    session=session
                 )
-                return self._serialize_list(vocabulary, as_dict, include_relations)
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get all vocabularies: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+            return self._serialize_list(vocabulary, as_dict, include_relations)
+        elif lesson_id:
+            vocabulary = db_manager.find_all(
+                model_class=Vocabulary,
+                filters={'lesson_id': lesson_id},
+                session=session
+            )
+            return self._serialize_list(vocabulary, as_dict, include_relations)
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
 
+    @transactional
     def get_by_id(
         self,
         voc_id: str,
@@ -92,167 +73,131 @@ class VocabularyService:
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Vocabulary | dict | None:
-        """
-        Get a vocabulary item by its ID.
+        vocabulary = db_manager.find_by_attr(
+            model_class=Vocabulary,
+            attr_values={'id': voc_id},
+            session=session
+        )
+        return self._serialize(vocabulary, as_dict, include_relations)
 
-        Args:
-            voc_id: The ID of the vocabulary item to retrieve.
-
-        Returns:
-            VocabularyFeature object if found, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            vocabulary = db_manager.find_by_attr(
-                model_class=Vocabulary,
-                attr_values={'id': voc_id},
-                session=session
-            )
-            return self._serialize(vocabulary, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get vocabulary by id: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-
+    @transactional
     def get_by_level(
         self,
         language_id: Optional[str],
-        unit_id: Optional[str],
-        level: str,
+        lesson_id: Optional[str],
+        level: int,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> list[Vocabulary] | list[dict]:
-        """
-        Get all vocabulary items of a specific level among a language.
-        
-        Args:
-            language_id: The id of the language to filter vocabulary items
-            unit_id: The id of the unit to filter vocabulary items
-            level: Vocabulary level (e.g., 'A1', 'B2')
-        
-        Returns:
-            List of matching VocabularyFeature objects
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            assert not (language_id and unit_id), f"language_id and unit_id can't be both specified, but got: {language_id} and {unit_id}"
-
-            if language_id:
-                units = unit_service.get_all(language_id=language_id, session=session)
-
-                vocabulary = []
-                for unit in units:
-                    vocabulary.extend(
-                        db_manager.find_all(
-                            model_class=Vocabulary,
-                            filters={'unit_id': unit.id, 'level': level},
-                            session=session
-                        )
+        assert not (language_id and lesson_id), f"language_id and lesson_id can't be both specified, but got: {language_id} and {lesson_id}"
+        if language_id:
+            lessons = lesson_service.get_all(language_id=language_id, session=session)
+            vocabulary = []
+            for lesson in lessons:
+                vocabulary.extend(
+                    db_manager.find_all(
+                        model_class=Vocabulary,
+                        filters={'lesson_id': lesson.id, 'level': level},
+                        session=session
                     )
-                return self._serialize_list(vocabulary, as_dict, include_relations)
-            elif unit_id:
-                vocabulary = db_manager.find_all(
-                    model_class=Vocabulary,
-                    filters={'level': level, 'unit_id': unit_id},
-                    session=session
                 )
-                return self._serialize_list(vocabulary, as_dict, include_relations)
-            else:
-                raise ValueError(f"Requires either language_id or unit_id but got: {language_id} and {unit_id}")
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to get_by_level vocabularies: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
-    
+            return self._serialize_list(vocabulary, as_dict, include_relations)
+        elif lesson_id:
+            vocabulary = db_manager.find_all(
+                model_class=Vocabulary,
+                filters={'level': level, 'lesson_id': lesson_id},
+                session=session
+            )
+            return self._serialize_list(vocabulary, as_dict, include_relations)
+        else:
+            raise ValueError(f"Requires either language_id or lesson_id but got: {language_id} and {lesson_id}")
+
+    @transactional
     def create(
         self,
         data: VocabularyDict,
         session: Optional[Session] = None,
         as_dict: bool = False,
-        include_relations: bool = True
+        include_relations: bool = True,
+        on_conflict: Optional[str] = None,
     ) -> Vocabulary | dict | None:
-        """
-        Create a new vocabulary item.
+        """Create a new vocabulary item.
 
         Args:
-            data: VocabularyDict containing vocabulary item details.
-
-        Returns:
-            Created VocabularyFeature object if successful, else None
+            on_conflict: Forwarded to WordService.create() for the underlying
+                word — None raises DuplicateEntityError on an existing word
+                for this language so the caller can ask the user; "keep" /
+                "overwrite" / "merge" resolve it directly. See WordService.create.
         """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            unit = unit_service.get_by_id(data.unit_id, session=session)
+        lesson = lesson_service.get_by_id(data.lesson_id, session=session)
+        if not lesson:
+            logger.warning(f"Cannot create vocabulary item, lesson not found: {data.lesson_id}")
+            return None
 
-            if not unit:
-                logger.warning(f"Cannot create vocabulary item, unit not found: {data.unit_id}")
-                return None
-            
-            word = word_service.create(data.word, session=session)
-            if not word:
-                logger.error(f"Failed to create word for vocabulary")
-                return None
+        data.word.language_id = lesson.language_id
+        word = word_service.create(data.word, session=session, on_conflict=on_conflict)
+        if not word:
+            logger.error(f"Failed to create word for vocabulary")
+            return None
 
-            # Create Passages using PassageService to ensure they're properly persisted
-            example_sentences = []
-            for example_sentence in (data.example_sentences or []):
-                passage = passage_service.create(example_sentence, session=session)
-                if passage:
-                    example_sentences.append(passage)
+        example_sentences = []
+        for example_sentence in (data.example_sentences or []):
+            example_sentence.language_id = lesson.language_id
+            passage = passage_service.create(example_sentence, session=session)
+            if passage:
+                example_sentences.append(passage)
 
-            # Create Vocabulary with references to the persisted Word and Passages
-            vocabulary = Vocabulary(
-                id = db_manager.generate_new_id(
-                    model_class=Vocabulary,
-                    session=session
-                ),
-                word_id=word.id,
-                unit_id=data.unit_id,
-                image_files=data.image_files,
-                audio_files=data.audio_files
-            )
-            
-            # Add the passages to the vocabulary
-            vocabulary.example_sentences = example_sentences
-            
-            result = db_manager.insert(
-                obj=vocabulary,
-                session=session
-            )
+        existing_vocabulary = (
+            session.query(Vocabulary)
+            .filter(Vocabulary.word_id == word.id, Vocabulary.lesson_id == data.lesson_id)
+            .first()
+            if on_conflict else None
+        )
+
+        if existing_vocabulary:
+            if on_conflict == "merge":
+                existing_vocabulary.image_files = stack_lists(existing_vocabulary.image_files, data.image_files)
+                existing_vocabulary.audio_files = stack_lists(existing_vocabulary.audio_files, data.audio_files)
+                existing_vocabulary.tags = stack_related(existing_vocabulary.tags, data.tags, Tag, session)
+                existing_vocabulary.sources = stack_related(existing_vocabulary.sources, data.sources, Source, session)
+            elif on_conflict == "overwrite":
+                existing_vocabulary.image_files = data.image_files or []
+                existing_vocabulary.audio_files = data.audio_files or []
+                existing_vocabulary.tags = resolve_related(data.tags, Tag, session)
+                existing_vocabulary.sources = resolve_related(data.sources, Source, session)
+            # "keep": leave existing_vocabulary's lists untouched
+            existing_vocabulary.example_sentences = example_sentences or existing_vocabulary.example_sentences
+            result = db_manager.modify(existing_vocabulary, session=session, commit=False)
 
             if result:
-                logger.info(f"Created new VocabularyFeature item with ID: {result.id}")
+                logger.info(f"Merged into existing VocabularyFeature item: {result.id}")
             else:
-                logger.error(f"Failed to create new VocabularyFeature item: {word.word}")
+                logger.error(f"Failed to merge VocabularyFeature item: {existing_vocabulary.id}")
 
             return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to create vocabulary: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
 
+        vocabulary = Vocabulary(
+            id=db_manager.generate_new_id(model_class=Vocabulary, session=session),
+            word_id=word.id,
+            lesson_id=data.lesson_id,
+            image_files=data.image_files or [],
+            audio_files=data.audio_files or [],
+            example_sentences=example_sentences,
+            tags=resolve_related(data.tags, Tag, session),
+            sources=resolve_related(data.sources, Source, session),
+        )
+
+        result = db_manager.insert(obj=vocabulary, session=session, commit=False)
+
+        if result:
+            logger.info(f"Created new VocabularyFeature item with ID: {result.id}")
+        else:
+            logger.error(f"Failed to create new VocabularyFeature item: {word.word}")
+
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def update(
         self,
         voc_id: str,
@@ -261,215 +206,135 @@ class VocabularyService:
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Vocabulary | dict | None:
-        """
-        Update an existing VocabularyFeature item.
+        existing = self.get_by_id(voc_id, session=session)
+        if not existing:
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
+            return None
 
-        Args:
-            voc_id: The ID of the VocabularyFeature item to update.
-            data: VocabularyDict containing updated vocabulary item details.
-
-        Returns:
-            Updated VocabularyFeature object if successful, else None
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            existing = self.get_by_id(voc_id, session=session)
-            
-            if not existing:
-                logger.warning(f"VocabularyFeature item not found: {voc_id}")
-                return None
-            
-            # Handle Word update through WordService if provided
-            if data.word is not None:
-                
-                if (old_word := word_service.get_by_id(existing.word_id, session=session)):
-                    # If word id exists, update that word
-                    updated_word = word_service.update(existing.word_id, data.word, session=session)
-                    if not updated_word:
-                        logger.error(f"Failed to update word for vocabulary: {voc_id}")
-                        return None
-                    
-                    existing.word = updated_word  # Update relationship
-                    
-                elif (old_word := word_service.get_by_word(data.word.word, session=session)):
-                    # If the word already exists, update that word
-
-                    existing_image_files = set(old_word.image_files or [])
-                    new_image_files = data.word.image_files or []
-                    data.word.image_files = list(existing_image_files | set(new_image_files))
-
-                    existing_audio_files = set(old_word.audio_files or [])
-                    new_audio_files = data.word.audio_files or []
-                    data.word.audio_files = list(existing_audio_files | set(new_audio_files))
-
-                    updated_word = word_service.update(
-                        old_word.id,
-                        data.word,
-                        session=session
-                    )
-
-                    existing.word_id = old_word.id  # Update foreign key
-                    existing.word = updated_word  # Update relationship
-                else:
-                    # Create new word if the referenced one doesn't exist
-                    new_word = word_service.create(data.word, session=session)
-                    if not new_word:
-                        logger.error(f"Failed to create new word for vocabulary: {voc_id}")
-                        return None
-                    
-                    existing.word_id = new_word.id  # Update foreign key
-                    existing.word = new_word  # Update relationship
-            
-            # Handle example_sentences update through PassageService if provided
-            if data.example_sentences is not None:
-                # Delete old passages and create new ones
-                for old_passage in existing.example_sentences:
-                    passage_service.delete(old_passage.id, session=session)
-                
-                # Create new passages
-                new_sentences = []
-                for example_sentence in data.example_sentences:
-                    passage = passage_service.create(example_sentence, session=session)
-                    if passage:
-                        new_sentences.append(passage)
-                
-                existing.example_sentences = new_sentences
+        if data.word is not None:
+            data.word.language_id = existing.lesson.language_id
+            if existing.word and data.word.word == existing.word.word:
+                # same word, no text change — a plain edit of the linked
+                # word, not a duplicate to resolve, so replace (not union)
+                # its media/tags/sources.
+                word = word_service.update(existing.word_id, data.word, session=session)
             else:
-                existing.example_sentences = []
-            
-            # Remove nested objects from update_data to avoid overwriting our service-managed updates
-            update_data = data.model_dump()
-            update_data.pop('id', None)  # Don't allow updating the ID
-            update_data.pop('word', None)
-            update_data.pop('example_sentences', None)
-            update_data.pop('score', None)  # Don't allow direct score updates
-            update_data.pop('last_seen', None)  # Don't allow direct last_seen updates
-            
-            # Update remaining fields
-            for key, value in update_data.items():
-                if key != 'word_id':  # Don't overwrite word_id if we already set it
-                    setattr(existing, key, value)
-            
-            # Save to database
-            result = db_manager.modify(existing, session=session)
-            
-            if result:
-                logger.info(f"Updated VocabularyFeature item: {voc_id}")
-            else:
-                logger.error(f"Failed to update VocabularyFeature item: {voc_id}")
-            
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update vocabulary: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+                # merge: changing the word's text could collide with a
+                # different existing word — preserve the old silent-merge
+                # behavior for that case rather than surfacing a conflict
+                # on every text edit.
+                word = word_service.create(data.word, session=session, on_conflict="merge")
+            if word:
+                existing.word = word
+                existing.word_id = word.id
 
+        existing.example_sentences = []
+        if data.example_sentences is not None:
+            for example_sentence_data in data.example_sentences:
+                example_sentence_data.language_id = existing.lesson.language_id if existing.lesson else None
+                passage = passage_service.create(example_sentence_data, session=session)
+                if passage:
+                    existing.example_sentences.append(passage)
+
+        update_data = data.model_dump(exclude={'id', 'lesson_id', 'score', 'difficulty', 'status', 'created_at', 'last_seen_at', 'word', 'word_id', 'example_sentences', 'tags', 'sources'}, exclude_none=True)
+
+        for key, value in update_data.items():
+            setattr(existing, key, value)
+
+        if data.tags is not None:
+            existing.tags = resolve_related(data.tags, Tag, session)
+        if data.sources is not None:
+            existing.sources = resolve_related(data.sources, Source, session)
+
+        result = db_manager.modify(existing, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated VocabularyFeature item: {voc_id}")
+        else:
+            logger.error(f"Failed to update VocabularyFeature item: {voc_id}")
+
+        return self._serialize(result, as_dict, include_relations)
+
+    @transactional
     def delete(self, voc_id: str, session: Optional[Session] = None) -> bool:
-        """
-        Delete a VocabularyFeature item by its ID.
+        existing = self.get_by_id(voc_id, session=session)
+        if not existing:
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
+            return False
 
-        Args:
-            voc_id: The ID of the VocabularyFeature item to delete.
+        success = db_manager.delete(existing, session=session, commit=False)
 
-        Returns:
-            True if deletion was successful, else False
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            # Check if vocabulary item exists before deleting
-            existing = self.get_by_id(voc_id, session=session)
-            
-            if not existing:
-                logger.warning(f"VocabularyFeature item not found: {voc_id}")
-                return False
-            
-            # Delete from database
-            success = db_manager.delete(existing, session=session)
-            
-            if success:
-                logger.info(f"Deleted VocabularyFeature item: {voc_id}")
-            else:
-                logger.error(f"Failed to delete VocabularyFeature item: {voc_id}")
-            
-            return success
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update vocabulary: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+        if success:
+            logger.info(f"Deleted VocabularyFeature item: {voc_id}")
+        else:
+            logger.error(f"Failed to delete VocabularyFeature item: {voc_id}")
 
+        return success
+
+    @transactional
     def update_score(
         self,
         voc_id: str,
         score: float,
+        duration_ms: float,
+        hint_used: bool = False,
         session: Optional[Session] = None,
         as_dict: bool = False,
         include_relations: bool = True
     ) -> Vocabulary | dict | None:
-        """
-        Update VocabularyFeature item score based on average of all of its components scores.
-        
-        This should be called whenever a component's score changes.
-        
-        Args:
-            voc_id: The ID of the VocabularyFeature item to update
-            score: The new score for the VocabularyFeature item
-        
-        Returns:
-            Updated VocabularyFeature object if successful, None otherwise
-        """
-        owns_session = session is None
-        if owns_session:
-            session = db_manager.get_session()
-        
-        try:
-            vocabulary = self.get_by_id(voc_id, session=session)
-            
-            if not vocabulary:
-                logger.warning(f"VocabularyFeature item not found: {voc_id}")
-                return None
-            
-            previous_score = vocabulary.score
-            
-            vocabulary.score = update_score(
-                score=vocabulary.score,
-                last_seen=vocabulary.last_seen,
-                similarity=score
+        vocabulary = self.get_by_id(voc_id, session=session)
+        if not vocabulary:
+            logger.warning(f"VocabularyFeature item not found: {voc_id}")
+            return None
+
+        previous_score = vocabulary.score
+
+        vocabulary.score = update_score(
+            score=vocabulary.score,
+            last_seen_at=vocabulary.last_seen_at,
+            similarity=score
+        )
+
+        vocabulary.difficulty = update_difficulty(
+            new_score=score,
+            last_seen_at=vocabulary.last_seen_at,
+            previous_difficulty=vocabulary.difficulty,
+            created_at=vocabulary.created_at
+        )
+
+        vocabulary.last_seen_at = datetime.now()
+
+        result = db_manager.modify(vocabulary, session=session, commit=False)
+
+        if result:
+            logger.info(f"Updated VocabularyFeature {voc_id} score to {vocabulary.score} and difficulty to {vocabulary.difficulty}")
+
+            progress_tracking_service.create(
+                data=ProgressTrackingDict(
+                    user_id=vocabulary.lesson.user_id,
+                    language_id=vocabulary.lesson.language_id,
+                    element_id=voc_id,
+                    element_type="vocabulary",
+                    element_status=vocabulary.status,
+                    score_before=previous_score,
+                    score_after=result.score,
+                    result=result.score >= previous_score,
+                    duration_ms=min(duration_ms, 10*60*1000),
+                    hint_used=hint_used,
+                ),
+                session=session,
             )
 
-            # Update last_seen
-            vocabulary.last_seen = date.today()
-            
-            # Save changes
-            result = db_manager.modify(vocabulary, session=session)
+        if vocabulary.score != previous_score:
+            lesson_service.update_score(vocabulary.lesson_id, session=session)
+            logger.info(f"Updated lesson {vocabulary.lesson_id} score due to VocabularyFeature {voc_id}")
 
-            if result:
-                logger.info(f"Updated VocabularyFeature item {voc_id} score: {result.score}")
+            word_service.update_score(vocabulary.word_id, session=session)
+            logger.info(f"Updated word {vocabulary.word_id} score due to VocabularyFeature {voc_id}")
 
-            if vocabulary.score != previous_score:
-                if vocabulary.unit_id:
-                    unit_service.update_score(vocabulary.unit_id, session=session)
-                    logger.info(f"Updated unit {vocabulary.unit_id} score due to VocabularyFeature {voc_id}")
-                    
-            return self._serialize(result, as_dict, include_relations)
-        except Exception as e:
-            if owns_session:
-                session.rollback()
-            logger.error(f"Failed to update vocabulary: {e}")
-            raise
-        finally:
-            if owns_session:
-                session.close()
+            if vocabulary.example_sentences:
+                for passage in vocabulary.example_sentences:
+                    passage_service.update_score(passage.id, session=session)
+                    logger.info(f"Updated passage {passage.id} score due to VocabularyFeature {voc_id}")
+
+        return self._serialize(result, as_dict, include_relations)

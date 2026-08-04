@@ -24,6 +24,7 @@ dependencies = [
     "fr-core-news-md",
     "hatchling>=1.27.0",
     "hr-core-news-md",
+    "httpx>=0.27.0",
     "ipykernel>=6.29.5",
     "it-core-news-md",
     "ja-core-news-md",
@@ -34,13 +35,10 @@ dependencies = [
     "mk-core-news-md",
     "nb-core-news-md",
     "nl-core-news-md",
-    "openai-whisper>=20250625",
     "pandas>=2.3.0",
     "pl-core-news-md",
     "pt-core-news-md",
     "pydantic>=2.12.5",
-    "python-multipart>=0.0.20",
-    "qwen-tts>=0.1.0",
     "ro-core-news-md",
     "ru-core-news-md",
     "sentence-transformers>=5.2.3",
@@ -48,12 +46,20 @@ dependencies = [
     "spacy>=3.8.11",
     "sqlalchemy>=2.0.41",
     "sv-core-news-md",
+    "torch>=2.10.0",
+    "torchaudio>=2.10.0",
     "torchcodec>=0.10.0",
     "uk-core-news-md",
-    "uvicorn>=0.35.0",
     "zh-core-web-md",
     "tqdm>=4.67.3",
     "language-tool-python>=3.3.0",
+    "argostranslate>=1.11.0",
+    "pypinyin>=0.55.0",
+    "pykakasi>=2.3.0",
+    "hangul-romanize>=0.1.0",
+    "hanzipy>=1.0.4",
+    "alembic>=1.18.5",
+    "psycopg[binary]>=3.3.4",
 ]
 [build-system]
 requires = ["hatchling"]
@@ -62,7 +68,18 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/lapp"]
 
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 [tool.uv.sources]
+# LAPP_DEVICE=cpu everywhere this runs (no GPU on the deploy box) - pin to the
+# CPU-only wheel index so torch doesn't pull the CUDA runtime (nvidia-cu12
+# packages), which torchaudio's C extension dlopen()s eagerly and crashes on
+# when it's missing/mismatched.
+torch = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+torchaudio = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
 en-core-web-md  = { path = "wheels/en_core_web_md-3.8.0-py3-none-any.whl" }
 fr-core-news-md = { path = "wheels/fr_core_news_md-3.8.0-py3-none-any.whl" }
 de-core-news-md = { path = "wheels/de_core_news_md-3.8.0-py3-none-any.whl" }
@@ -88,5 +105,13 @@ sl-core-news-md = { path = "wheels/sl_core_news_md-3.8.0-py3-none-any.whl" }
 sv-core-news-md = { path = "wheels/sv_core_news_md-3.8.0-py3-none-any.whl" }
 uk-core-news-md = { path = "wheels/uk_core_news_md-3.8.0-py3-none-any.whl" }
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
 [project.scripts]
 server = "lapp.__main__:main"
+
+[tool.pytest.ini_options]
+markers = ["smoke: real LLM endpoint tests requiring env vars"]

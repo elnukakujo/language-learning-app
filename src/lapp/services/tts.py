@@ -1,20 +1,17 @@
 import logging
-import random
 import uuid
 from pathlib import Path
-import torch
-import soundfile as sf
 
-from ..utils import detect_text_language, qwen_tts_model
+from ..utils import synthesize_speech
 
 logger = logging.getLogger(__name__)
 
 class TTSService:
     """
-    Service for generating text-to-speech audio using QwenTTS.
-    
+    Service for generating text-to-speech audio via a configurable TTS API endpoint.
+
     This service handles:
-    - Audio generation via QwenTTS 3
+    - Audio generation via LAPP_TTS_API_BASE_URL
     - Integration with MediaService/MediaFileHandler
     - File management and storage
     - Error handling and logging
@@ -24,8 +21,7 @@ class TTSService:
         self.media_root = Path(media_root if media_root else MediaService().media_root)
         self.audio_dir = self.media_root / 'audio'
         self.audio_dir.mkdir(parents=True, exist_ok=True)
-        self.model = qwen_tts_model
-    
+
     def _get_filename(self) -> str:
         """
         Get filename for TTS audio file.
@@ -52,17 +48,19 @@ class TTSService:
     
     def generate_audio(
         self,
-        text: str | list[str]
+        text: str,
+        language_name: str = None,
+        api: dict | None = None,
     ) -> str | list[str]:
         """
-        Generate audio file from text using QwenTTS API.
+        Generate audio file from text using the configured TTS API endpoint.
         
         Args:
-            text: Text to convert to speech (string or list of strings)
+            text: Text to convert to speech (string)
         
         Returns:
-            Relative path(s) to generated audio file(s) with forward slashes
-            (e.g., '/media/audio/abc123.wav' or list of paths)
+            Relative path to generated audio file with forward slashes
+            (e.g., '/media/audio/abc123.wav')
         
         Raises:
             ValueError: If text is empty
@@ -71,39 +69,25 @@ class TTSService:
         # Validation
         if not text:
             raise ValueError("Text cannot be empty")
-        
-        # Convert single string to list for uniform processing
-        text_list = [text] if isinstance(text, str) else text
-        
-        # Validate all texts
-        for t in text_list:
-            if not t or not t.strip():
-                raise ValueError("Text cannot be empty")
-        
-        try:
-            logger.info(f"Generating TTS for: {text_list}")
 
-            language = detect_text_language(text_list[0])
-            logger.info(f"Detected language: {language.name} ({language.iso1}) for text: '{text_list[0]}'")
-            
-            wavs, sr = self.model.generate_custom_voice(
-                text=text_list,
-                speaker="Vivian",
-                language=language.name if language.name != "Unknown" else None,
-            )
-            
+        if not api or not api.get("base_url"):
+            raise ValueError("No TTS API configured for this user")
+
+        try:
+            logger.info(f"Generating TTS for: {text}")
+
+            wav_bytes = synthesize_speech(**api, text=text)
+
             generated_paths = []
+            filename = self._get_filename()
+            output_path = self.audio_dir / filename
+            output_path.write_bytes(wav_bytes)
+
+            # Get normalized path with forward slashes
+            relative_path = self._get_relative_path(output_path)
+            generated_paths.append(relative_path)
             
-            for idx, txt in enumerate(text_list):
-                filename = self._get_filename()
-                output_path = self.audio_dir / filename
-                sf.write(output_path, wavs[idx], sr)
-                
-                # Get normalized path with forward slashes
-                relative_path = self._get_relative_path(output_path)
-                generated_paths.append(relative_path)
-                
-                logger.info(f"✅ Generated TTS audio: {filename} for text: '{txt}'")
+            logger.info(f"✅ Generated TTS audio: {filename} for text: '{text}'")
             
             # Return single path if input was single string, else return list
             return generated_paths[0] if isinstance(text, str) else generated_paths

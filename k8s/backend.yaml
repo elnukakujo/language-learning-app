@@ -1,0 +1,175 @@
+# hostPath values must match PCT's real PROD_MEDIA_ROOT / PROD_BACKUP_ROOT
+# (from PCT's .env) — reusing the existing directories in place, no data copy.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fluence-media-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/ssd/fluence/media
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fluence-media-pvc
+  namespace: fluence
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  volumeName: fluence-media-pv
+  storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fluence-backups-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/ssd/fluence/backups
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fluence-backups-pvc
+  namespace: fluence
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: fluence-backups-pv
+  storageClassName: ""
+---
+# Caches the local STT (whisper-tiny) + text/audio embedding models (~3GB) so a
+# pod restart doesn't re-download them from Hugging Face every time.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fluence-hf-cache-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/ssd/fluence/hf-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fluence-hf-cache-pvc
+  namespace: fluence
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: fluence-hf-cache-pv
+  storageClassName: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: fluence
+spec:
+  replicas: 1 # do not scale up: entrypoint.sh's restore/backup-on-exit dance is single-instance only
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      terminationGracePeriodSeconds: 30 # matches compose stop_grace_period, gives backup_on_exit.py time to finish
+      containers:
+        - name: backend
+          image: fluence-backend:test
+          imagePullPolicy: Never # image is built locally on this node and imported into k3s's containerd, never pulled
+          envFrom:
+            - configMapRef:
+                name: fluence-backend-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: fluence-secrets
+                  key: DATABASE_URL
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: fluence-secrets
+                  key: HF_TOKEN
+          ports:
+            - containerPort: 5050
+          # Local footprint is now just STT (whisper-tiny) + text/audio embeddings
+          # (text-gen/feedback/TTS moved to external APIs) - measured ~1.1GB RSS
+          # with text-embedding+STT loaded, ~3GB with all three local models resident.
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "3Gi"
+            limits:
+              memory: "4Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5050
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5050
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          volumeMounts:
+            - name: media
+              mountPath: /app/media
+            - name: backups
+              mountPath: /app/backups
+            - name: hf-cache
+              mountPath: /root/.cache/huggingface
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: fluence-media-pvc
+        - name: backups
+          persistentVolumeClaim:
+            claimName: fluence-backups-pvc
+        - name: hf-cache
+          persistentVolumeClaim:
+            claimName: fluence-hf-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: fluence
+spec:
+  type: NodePort
+  selector:
+    app: backend
+  ports:
+    - port: 5050
+      targetPort: 5050
+      nodePort: 30500

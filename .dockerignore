@@ -1,0 +1,12 @@
+.git
+.venv
+node_modules
+client/node_modules
+client/.next
+__pycache__
+*.pyc
+backups*
+media*
+.env
+.env.local
+*.log
