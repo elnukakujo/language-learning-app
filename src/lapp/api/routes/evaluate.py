@@ -1,9 +1,12 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
+import traceback
+import logging
 
 from ...services import EvaluatorService
 
 bp = Blueprint('evaluate', __name__, url_prefix='/api/evaluate')
 evaluator_service = EvaluatorService()
+logger = logging.getLogger(__name__)
 
 @bp.route('/text', methods=['POST'])
 def evaluate_text():
@@ -35,16 +38,19 @@ def evaluate_text():
             schema:
                 type: object
                 description: Evaluation result object with score and tokens information
-        404:
-            description: Exercise not found or text evaluation failed
+        500:
+            description: Evaluation failed
     """
-    data = request.json
-
-    return evaluator_service.evaluate(
-        ex_id=data['exercise_id'],
-        user_input=data['user_text'],
-        input_type='text'
-    )
+    try:
+        data = request.json or {}
+        return evaluator_service.evaluate(
+            ex_id=data.get('exercise_id', ''),
+            user_input=data.get('user_text', ''),
+            input_type='text'
+        )
+    except Exception:
+        logger.error("evaluate_text failed:\n%s", traceback.format_exc())
+        return jsonify({"correct": False, "score": 0.0, "feedback": "Evaluation unavailable. Please try again."}), 200
 
 @bp.route('/speech', methods=['POST'])
 def evaluate_speech():
@@ -78,14 +84,17 @@ def evaluate_speech():
             schema:
                 type: object
                 description: Evaluation result object with score and feedback information
-        404:
-            description: Exercise not found or speech evaluation failed
+        500:
+            description: Evaluation failed
     """
-    data = request.json
-
-    return evaluator_service.evaluate(
-        ex_id=data['exercise_id'],
-        user_input=data['user_audio_url'],
-        input_type='speech',
-        correct_audio_index=data.get('correct_audio_index', 0)
-    )
+    try:
+        data = request.json or {}
+        return evaluator_service.evaluate(
+            ex_id=data.get('exercise_id', ''),
+            user_input=data.get('user_audio_url', ''),
+            input_type='speech',
+            correct_audio_index=data.get('correct_audio_index', 0)
+        )
+    except Exception:
+        logger.error("evaluate_speech failed:\n%s", traceback.format_exc())
+        return jsonify({"correct": False, "score": 0.0, "feedback": "Evaluation unavailable. Please try again."}), 200

@@ -11,7 +11,7 @@ import ClassicSelectMenu from "@/components/ui/selectMenu/classicSelectMenu";
 import { createLanguage, updateLanguage } from "@/api/language";
 import type Language from "@/interface/containers/Language";
 import TagSelector from "@/components/tags/tagSelector";
-import { LANGUAGE_to_ISO639_2T } from "@/utils/language_iso639";
+import { LANGUAGE_to_ISO639_2T, LANGUAGE_FLAGS } from "@/utils/language_iso639";
 import SourceSelector from "@/components/sources/sourceSelector";
 import { getCurrentUserId } from "@/utils/user_cookie";
 import User from "@/interface/systemData/User";
@@ -127,6 +127,7 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
                     const selected = value as string;
                     setName(selected);
                     setTargetIso639_2t(LANGUAGE_to_ISO639_2T[selected] || "");
+                    setFlag(LANGUAGE_FLAGS[selected] || "");
                 }}
                 required
             />
@@ -165,12 +166,14 @@ export default function LanguageForm({language}: { language?: Partial<Language> 
                 required
             />
 
-            <AutoWidthInput
-                value={flag || ""}
-                label="Flag"
-                onChange={(e) => setFlag(e.target.value)}
-                placeholder="Enter flag"
-            />
+            {(name === "Custom" || (!Object.keys(LANGUAGE_to_ISO639_2T).includes(name) && name !== "")) && (
+                <AutoWidthInput
+                    value={flag || ""}
+                    label="Flag"
+                    onChange={(e) => setFlag(e.target.value)}
+                    placeholder="Enter flag emoji"
+                />
+            )}
 
             <ClassicSelectMenu
                 label="Language Used to Study"

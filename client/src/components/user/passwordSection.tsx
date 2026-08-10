@@ -103,16 +103,6 @@ export default function PasswordSection({ userId }: { userId: string }) {
           <SaveButton isLoading={saving} onSuccessLabel="Password updated" />
         </div>
       </form>
-
-      {/* Active Sessions — placeholder */}
-      <div className="index-divider" />
-      <div>
-        <h4 className="text-sm font-medium mb-1">Active Sessions</h4>
-        <p className="text-xs opacity-40">
-          {// TODO: implement session tracking on backend
-          }Session management is not yet available.
-        </p>
-      </div>
     </SectionCard>
   );
 }

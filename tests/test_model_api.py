@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 
-from lapp.utils.model_api import chat_completion, synthesize_speech
+from lapp.utils.model_api import chat_completion, synthesize_speech, ModelAPIError
 
 
 def _mock_response(json_data=None, content=b"", status_code=200):
@@ -43,10 +43,11 @@ def test_error_response_raises():
     with patch("httpx.Client.post", return_value=resp):
         try:
             chat_completion("http://x", "key", "m", [], max_tokens=10)
-        except httpx.HTTPStatusError:
-            pass
+        except ModelAPIError as e:
+            assert e.kind == ModelAPIError.KIND_SERVER
+            assert e.status == 500
         else:
-            raise AssertionError("expected HTTPStatusError to propagate")
+            raise AssertionError("expected ModelAPIError to be raised")
 
 
 if __name__ == "__main__":

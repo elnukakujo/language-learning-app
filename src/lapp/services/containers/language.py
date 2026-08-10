@@ -280,6 +280,17 @@ class LanguageService:
             logger.warning(f"Language not found: {language_id}")
             return False
 
+        # ponytail: delete dependent rows (FK to language, no DB cascade)
+        from ...models.data_collection import CommitmentLog, DailyStats, ProgressTracking
+        for model in (CommitmentLog, DailyStats, ProgressTracking):
+            rows = db_manager.find_all(
+                model_class=model,
+                filters={'language_id': language_id},
+                session=session,
+            )
+            for row in (rows or []):
+                db_manager.delete(row, session=session, commit=False)
+
         success = db_manager.delete(existing, session=session, commit=False)
 
         if success:

@@ -189,26 +189,117 @@ def delete_user_preferences(pref_id: str):
         return jsonify({'error': 'User preferences not found'}), 404
 
 
+@bp.route('/providers', methods=['GET'])
+def list_providers():
+    """Return the provider catalog so the frontend stays in sync."""
+    from ...utils.llm_providers import PROVIDER_LIST
+    return jsonify(PROVIDER_LIST)
+
+
 @bp.route('/test-endpoint', methods=['POST'])
 def test_endpoint():
-    """Test connectivity to an API endpoint (server-side, no CORS)."""
-    import time, urllib.request
+    """Test connectivity to an API endpoint (server-side, no CORS).
+
+    Branches on api_type:
+      - tts:        POST /audio/speech probe
+      - text_gen:   GET /models → mini chat completion
+      - both:       TTS probe first, then text-gen; reports per-path status
+    """
+    import time
+
+    import httpx
+
+    from ...utils.model_api import chat_completion, ModelAPIError
+    from ...utils.llm_providers import auth_headers
+
+    _ERROR_MAP = {
+        ModelAPIError.KIND_CONNECT: "Cannot reach server — check host and port, or disable HTTP_PROXY if a VPN/proxy is active",
+        ModelAPIError.KIND_AUTH: "Authentication failed — check your API key",
+        ModelAPIError.KIND_NOT_FOUND: "Endpoint not found — check the base URL path",
+        ModelAPIError.KIND_SERVER: "Server error — the provider returned an internal error",
+    }
+
+    def _tts_probe(url: str) -> tuple[bool, str | None]:
+        """POST /audio/speech — any HTTP response means reachable."""
+        try:
+            with httpx.Client(trust_env=False, timeout=8) as client:
+                resp = client.post(url, json={"input": "test", "voice": "en_f"})
+                return True, None
+        except httpx.HTTPStatusError:
+            return True, None  # 4xx/5xx still means server is reachable
+        except Exception as e:
+            try:
+                err = ModelAPIError.from_connection(e, url=url)
+                return False, _ERROR_MAP.get(err.kind, err.message)
+            except Exception:
+                return False, str(e)
+
+    def _text_gen_probe() -> tuple[bool, str | None, list]:
+        """GET /models + optional mini chat completion."""
+        tg_url, tg_headers = auth_headers(f"{base_url.rstrip('/')}/models", api_key, auth_type)
+        try:
+            with httpx.Client(trust_env=False, timeout=8) as client:
+                resp = client.get(tg_url, headers=tg_headers)
+                resp.raise_for_status()
+                models_data = resp.json()
+                models = [m["id"] for m in models_data.get("data", [])]
+        except Exception as e:
+            return False, str(e), []
+
+        if model:
+            try:
+                chat_completion(
+                    base_url=base_url, api_key=api_key, model=model,
+                    messages=[{"role": "user", "content": "hi"}],
+                    max_tokens=5, api_format=api_format, auth_type=auth_type,
+                )
+            except Exception:
+                pass  # /models passed, chat probe is optional
+        return True, None, models
 
     body = request.json or {}
     base_url = (body.get("base_url") or "").strip()
     if not base_url:
         return jsonify({"ok": False, "error": "No base URL provided"}), 400
 
-    url = f"{base_url.rstrip('/')}/models"
-    req = urllib.request.Request(url, method="GET")
-    if body.get("api_key"):
-        req.add_header("Authorization", f"Bearer {body['api_key']}")
+    model = (body.get("model") or "").strip()
+    api_key = body.get("api_key") or ""
+    api_format = body.get("api_format") or "openai"
+    auth_type = body.get("auth_type") or "bearer"
+    api_type = body.get("api_type") or "text_gen"
 
     start = time.perf_counter()
-    try:
-        urllib.request.urlopen(req, timeout=5)
+
+    # ── TTS / both: probe /audio/speech ──
+    if api_type in ("tts", "both"):
+        tts_url, tts_headers = auth_headers(f"{base_url.rstrip('/')}/audio/speech", api_key, auth_type)
+        tts_url = f"{tts_url}"  # auth_headers may modify URL for param auth
+        tts_ok, tts_error = _tts_probe(tts_url)
         ms = round((time.perf_counter() - start) * 1000)
-        return jsonify({"ok": True, "ms": ms})
-    except Exception as e:
-        ms = round((time.perf_counter() - start) * 1000)
-        return jsonify({"ok": False, "ms": ms, "error": str(e)})
+
+        if api_type == "tts":
+            if tts_ok:
+                return jsonify({"ok": True, "ms": ms})
+            return jsonify({"ok": False, "ms": ms, "error": tts_error})
+
+        # api_type == "both"
+        if tts_ok:
+            tg_ok, tg_error, tg_models = _text_gen_probe()
+            ms2 = round((time.perf_counter() - start) * 1000)
+            return jsonify({
+                "ok": True, "ms": ms2,
+                "tts_ok": True, "text_gen_ok": tg_ok,
+                "available_models": tg_models,
+                **({"text_gen_error": tg_error} if tg_error else {}),
+            })
+
+        # TTS failed for "both" — try text-gen as fallback
+        logger.info("TTS probe failed for 'both' endpoint (%s), trying text-gen fallback", tts_error)
+        # Fall through to text-gen path below
+
+    # ── Text-gen: GET /models → mini chat completion ──
+    tg_ok, tg_error, tg_models = _text_gen_probe()
+    ms = round((time.perf_counter() - start) * 1000)
+    if tg_ok:
+        return jsonify({"ok": True, "ms": ms, "available_models": tg_models})
+    return jsonify({"ok": False, "ms": ms, "error": tg_error, "available_models": tg_models})

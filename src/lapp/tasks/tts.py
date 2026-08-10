@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
 from ..services.system_data import UserPreferencesService
+from ..utils.llm_providers import resolve_api
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
 from ..models.containers import Language
@@ -111,28 +112,7 @@ def generate_missing_component_audio(app: Flask):
                     if language.user_id not in ai_tts_by_user:
                         prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
                         enabled = prefs is None or prefs.ai_tts_enabled is not False
-                        api = None
-                        if prefs:
-                            # Check ai_endpoints first for an active TTS endpoint
-                            for ep in (getattr(prefs, "ai_endpoints", None) or []):
-                                if isinstance(ep, dict) and ep.get("is_active") and ep.get("api_type") in ("tts", "both"):
-                                    api = {
-                                        "base_url": ep.get("base_url", "") or "",
-                                        "api_key": ep.get("api_key", "") or "",
-                                        "model": ep.get("model", "") or "",
-                                        "voice": ep.get("voice") or "alloy",
-                                    }
-                                    break
-                            # Fall back to legacy flat fields
-                            if not api:
-                                legacy_url = getattr(prefs, "ai_tts_api_base_url", None) or ""
-                                if legacy_url:
-                                    api = {
-                                        "base_url": legacy_url,
-                                        "api_key": getattr(prefs, "ai_tts_api_key", None) or "",
-                                        "model": getattr(prefs, "ai_tts_model", None) or "",
-                                        "voice": "alloy",
-                                    }
+                        api = resolve_api(prefs, "tts") if prefs else None
                         ai_tts_by_user[language.user_id] = (enabled, api)
                     enabled, api = ai_tts_by_user[language.user_id]
                     if not enabled:

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import torchaudio
 import math
+import traceback
 
 import logging
 logger = logging.getLogger(__name__)
@@ -303,67 +304,56 @@ class EvaluatorService:
             "correct_transcription": correct_transcription,
         }
 
-    def evaluate(self, ex_id: str, user_input: str, input_type: str, correct_audio_index: int = 0) -> float:
-        """
-        Evaluate a user's answer for a given exercise ID and input type (text or speech).
-        
-        Args:
-            - ex_id: The ID of the exercise to evaluate.
-            - user_input: The user's answer, either as text or a path to an audio file.
-            - input_type: The type of input, either 'text' or 'speech'.
-            - threshold: The score threshold above which the answer is considered correct (default is 0.8).
-            - correct_audio_index: For speech evaluation, the index of the correct audio file to compare against (default is 0).
-            
-        Returns:
-            A dictionary containing:
-                - 'correct': A boolean indicating whether the answer is correct based on the threshold.
-                - 'score': The computed score for the user's answer.
-                - 'feedback': A string with feedback for the user (currently empty, to be implemented).      
-        """
-        with db_manager.session_scope() as session:
-            exercise = exercise_service.get_by_id(ex_id, session=session)
-            if not exercise:
-                raise ValueError(f"Exercise {ex_id} not found.")
+    def evaluate(self, ex_id: str, user_input: str, input_type: str, correct_audio_index: int = 0):
+        try:
+            with db_manager.session_scope() as session:
+                exercise = exercise_service.get_by_id(ex_id, session=session)
+                if not exercise:
+                    logger.warning("Exercise %s not found, returning safe fallback", ex_id)
+                    return {"correct": False, "score": 0.0, "feedback": "Exercise not found."}
 
-            source_lang_code, target_lang_code = self._get_language_codes_from_exercise(exercise)
+                source_lang_code, target_lang_code = self._get_language_codes_from_exercise(exercise)
 
-            if input_type == 'text':
-                results = self._evaluate_text(
+                if input_type == 'text':
+                    results = self._evaluate_text(
+                        ex_id=ex_id,
+                        user_text=user_input,
+                        target_lang_iso2t=target_lang_code,
+                        session=session,
+                    )
+                elif input_type == 'speech':
+                    results = self._evaluate_speech(
+                        ex_id=ex_id,
+                        user_audio_path=user_input,
+                        correct_audio_index=correct_audio_index,
+                        target_lang_iso2t=target_lang_code,
+                        session=session,
+                    )
+                else:
+                    logger.warning("Invalid input type '%s', returning safe fallback", input_type)
+                    return {"correct": False, "score": 0.0, "feedback": "Invalid exercise type."}
+
+                logger.info("Evaluation results for Exercise %s with input type '%s': %s", ex_id, input_type, results)
+
+                threshold = self.exercises_thresholds.get(exercise.exercise_type, 0.5)
+                feedback = feedback_service.generate_feedback(
                     ex_id=ex_id,
-                    user_text=user_input,
-                    target_lang_iso2t=target_lang_code,
-                    session=session,
-                )
-            elif input_type == 'speech':
-                results = self._evaluate_speech(
-                    ex_id=ex_id,
-                    user_audio_path=user_input,
+                    user_input=user_input,
+                    input_type=input_type,
+                    target_lang_code=target_lang_code or "",
+                    source_lang_code=source_lang_code or "",
+                    results=results,
+                    threshold=threshold,
                     correct_audio_index=correct_audio_index,
-                    target_lang_iso2t=target_lang_code,
                     session=session,
+                    exercise=exercise,
                 )
-            else:
-                logger.warning(f"Invalid input type '{input_type}' for evaluation. Returning score of 0.")
-                raise ValueError("Invalid input type for evaluation. Must be 'text' or 'speech'.")
 
-            logger.info(f"Evaluation results for Exercise {ex_id} with input type '{input_type}': {results}")
-
-            threshold = self.exercises_thresholds.get(exercise.exercise_type, 0.5)
-            feedback = feedback_service.generate_feedback(
-                ex_id=ex_id,
-                user_input=user_input,
-                input_type=input_type,
-                target_lang_code=target_lang_code or "",
-                source_lang_code=source_lang_code or "",
-                results=results,
-                threshold=threshold,
-                correct_audio_index=correct_audio_index,
-                session=session,
-                exercise=exercise,
-            )
-
-            return {
-                "correct": results["score"] > threshold,
-                "score": results["score"],
-                "feedback": feedback,
-            }
+                return {
+                    "correct": results["score"] > threshold,
+                    "score": results["score"],
+                    "feedback": feedback,
+                }
+        except Exception:
+            logger.error("evaluate failed for ex_id=%s:\n%s", ex_id, traceback.format_exc())
+            return {"correct": False, "score": 0.0, "feedback": "Evaluation unavailable. Please try again."}

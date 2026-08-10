@@ -1,6 +1,8 @@
 import json
 import logging
 import re
+
+logger = logging.getLogger(__name__)
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -8,6 +10,7 @@ from sqlalchemy.orm import Session
 from ..core.database import db_manager, transactional
 from ..utils import chat_completion
 from ..utils.detect_language import get_language_by_iso2t
+from ..utils.llm_providers import resolve_api
 from .features import ExerciseService
 from .system_data import UserPreferencesService
 user_preferences_service = UserPreferencesService()
@@ -87,7 +90,7 @@ class FeedbackService:
 			messages = self._build_prompt(context)
 			# ponytail: 512 not 96 - reasoning models spend most of the budget on the <think>
 			# block before the actual answer, so a short cap truncates before any output.
-			feedback = chat_completion(**api, messages=messages, max_tokens=512, temperature=0.5).strip()
+			feedback = chat_completion(**api, messages=messages, max_tokens=512, temperature=0.5, timeout=3).strip()
 			# ponytail: defensive strip in case a reasoning model ignores the no-think instruction
 			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
@@ -180,14 +183,18 @@ class FeedbackService:
 		if input_type == "speech":
 			context["correct_audio_index"] = correct_audio_index
 
-		user_id = exercise.lesson.language.user_id
+		lesson = getattr(exercise, "lesson", None)
+		if lesson:
+			language = getattr(lesson, "language", None)
+			user_id = getattr(language, "user_id", None) if language else None
+		else:
+			user_id = None
+		if not user_id:
+			logger.warning("Cannot resolve user_id from exercise %s — lesson=%s language=%s", ex_id, lesson, language if lesson else None)
+			return self._fallback_feedback(context)
 		prefs = user_preferences_service.get_by_user_id(user_id, session=session)
 		if prefs is not None and prefs.ai_feedback_enabled is False:
 			return self._fallback_feedback(context)
 
-		api = {
-			"base_url": getattr(prefs, "ai_gen_api_base_url", None) or "",
-			"api_key": getattr(prefs, "ai_gen_api_key", None) or "",
-			"model": getattr(prefs, "ai_gen_model", None) or "",
-		} if prefs else None
+		api = resolve_api(prefs, "text_gen") if prefs else None
 		return self._generate_with_model(context, api=api)

@@ -462,7 +462,7 @@ class DatabaseManager:
             return True
         except SQLAlchemyError as e:
             session.rollback()
-            logger.error(f"Delete failed: {e}")
+            logger.error(f"Delete failed for {type(obj).__name__} id={obj.id}: {e}")
             return False
         finally:
             if close_session:

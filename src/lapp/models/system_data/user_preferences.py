@@ -20,8 +20,7 @@ class UserPreferences(Base):
     ai_example_word_enabled = Column(Boolean, default=True, nullable=False)
     ai_tts_enabled = Column(Boolean, default=True, nullable=False)
 
-    # Per-user override of the server's .env-configured API defaults (src/lapp/utils/model_api.py).
-    # Blank/None falls back to the server default - see resolve_api().
+    # Per-user API config. Blank/None means no API configured — tasks skip the user.
     ai_gen_api_base_url = Column(String, nullable=True)
     ai_gen_api_key = Column(String, nullable=True)
     ai_gen_model = Column(String, nullable=True)

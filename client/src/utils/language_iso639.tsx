@@ -32,6 +32,34 @@ export const ISO639_2T_to_LANGUAGE: Record<string, string> = Object.fromEntries(
     Object.entries(LANGUAGE_to_ISO639_2T).map(([language, iso]) => [iso, language])
 );
 
+export const LANGUAGE_FLAGS: Record<string, string> = {
+  "Catalan": "🇪🇸",
+  "Chinese": "🇨🇳",
+  "Croatian": "🇭🇷",
+  "Danish": "🇩🇰",
+  "Dutch": "🇳🇱",
+  "English": "🇬🇧",
+  "Finnish": "🇫🇮",
+  "French": "🇫🇷",
+  "German": "🇩🇪",
+  "Greek": "🇬🇷",
+  "Italian": "🇮🇹",
+  "Japanese": "🇯🇵",
+  "Korean": "🇰🇷",
+  "Lithuanian": "🇱🇹",
+  "Macedonian": "🇲🇰",
+  "Norwegian Bokmål": "🇳🇴",
+  "Norwegian": "🇳🇴",
+  "Polish": "🇵🇱",
+  "Portuguese": "🇵🇹",
+  "Romanian": "🇷🇴",
+  "Russian": "🇷🇺",
+  "Slovenian": "🇸🇮",
+  "Spanish": "🇪🇸",
+  "Swedish": "🇸🇪",
+  "Ukrainian": "🇺🇦",
+};
+
 export type CEFRLevel =
   | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 

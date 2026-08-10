@@ -104,6 +104,7 @@ class UserPreferencesService:
             ai_tts_api_base_url=data.ai_tts_api_base_url,
             ai_tts_api_key=data.ai_tts_api_key,
             ai_tts_model=data.ai_tts_model,
+            ai_endpoints=data.ai_endpoints or [],
         )
         result = db_manager.insert(pref, session=session, commit=False)
         if result:

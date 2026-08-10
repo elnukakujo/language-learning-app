@@ -764,7 +764,7 @@
   /* ── Settings sidebar ─────────────────────────────────────────────── */
   .settings-sidebar {
     position: sticky;
-    top: 1rem;
+    top: 6rem;
   }
 
   .settings-sidebar-link {
@@ -825,6 +825,24 @@
   .toggle-switch:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* ── Custom radio (voice gender selector, etc.) ───────────────────── */
+  /* ponytail: only ::after can't be expressed in Tailwind; all other
+     properties (size, border, colors, focus, disabled) are on the element */
+  .radio-input {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .radio-input:checked::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--color-primary);
   }
 
   /* ── Password strength bar ────────────────────────────────────────── */

@@ -1,6 +1,68 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, field_validator
+
+VALID_PROVIDERS = {
+    "openai", "deepseek", "ollama", "kimi", "groq", "mistral",
+    "openrouter", "anthropic", "gemini", "llamacpp", "localai",
+    "elevenlabs", "local_tts", "custom",
+}
+VALID_API_FORMATS = {"openai", "anthropic", "gemini"}
+VALID_AUTH_TYPES = {"bearer", "x-api-key", "param", "none"}
+VALID_API_TYPES = {"text_gen", "tts", "both"}
+
+
+class ApiEndpoint(BaseModel):
+    """A single LLM API endpoint configuration."""
+    name: str = ""
+    provider: str = "custom"
+    api_type: str = "text_gen"
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    is_active: bool = False
+    voice: Optional[str] = None
+    voice_gender: Optional[str] = None  # "male" | "female" | None
+    api_format: str = "openai"
+    auth_type: str = "bearer"
+
+    @field_validator("provider")
+    @classmethod
+    def _check_provider(cls, v: str) -> str:
+        if v not in VALID_PROVIDERS:
+            raise ValueError(f"Unknown provider: {v}")
+        return v
+
+    @field_validator("api_format")
+    @classmethod
+    def _check_api_format(cls, v: str) -> str:
+        if v not in VALID_API_FORMATS:
+            raise ValueError(f"Unknown api_format: {v}")
+        return v
+
+    @field_validator("auth_type")
+    @classmethod
+    def _check_auth_type(cls, v: str) -> str:
+        if v not in VALID_AUTH_TYPES:
+            raise ValueError(f"Unknown auth_type: {v}")
+        return v
+
+    @field_validator("api_type")
+    @classmethod
+    def _check_api_type(cls, v: str) -> str:
+        if v not in VALID_API_TYPES:
+            raise ValueError(f"Unknown api_type: {v}")
+        return v
+
+    @field_validator("base_url")
+    @classmethod
+    def _validate_base_url(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        if not (v.startswith("http://") or v.startswith("https://")):
+            raise ValueError("must start with http:// or https://")
+        return v.rstrip("/")
+
 
 class UserPreferencesDict(BaseModel):
     id: Optional[str] = None
@@ -32,3 +94,15 @@ class UserPreferencesDict(BaseModel):
         if not (value.startswith("http://") or value.startswith("https://")):
             raise ValueError("must start with http:// or https://")
         return value.rstrip("/")
+
+    @field_validator("ai_endpoints")
+    @classmethod
+    def _validate_endpoints(cls, v: Optional[list]) -> Optional[list]:
+        if v is None:
+            return None
+        validated = []
+        for ep in v:
+            if not isinstance(ep, dict):
+                continue
+            validated.append(ApiEndpoint(**ep).model_dump())
+        return validated

@@ -24,11 +24,15 @@ export default interface UserPreferences {
 }
 
 export interface ApiEndpointConfig {
-    name: string;
-    api_type: "text_gen" | "tts" | "both";
+    name?: string;
+    provider?: string;       // provider key: "openai", "ollama", "local_tts", etc.
+    api_type?: "text_gen" | "tts" | "both";
     base_url?: string;
     api_key?: string;
     model?: string;
     is_active: boolean;
-    voice?: string; // TTS voice, e.g. "alloy" (OpenAI) or "en_f" (Kokoro)
+    voice?: string;          // explicit TTS voice override (e.g. "alloy", "en_f")
+    voice_gender?: "male" | "female"; // voice gender preference (Kokoro-style providers)
+    api_format?: string;     // "openai" | "anthropic" | "gemini"
+    auth_type?: string;      // "bearer" | "x-api-key" | "param" | "none"
 }

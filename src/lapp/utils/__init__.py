@@ -12,6 +12,7 @@ from .models import (
 from .model_api import (
     chat_completion,
     synthesize_speech,
+    ModelAPIError,
 )
 from .translate import translate
 from .phonetics import get_phonetic
@@ -36,6 +37,7 @@ __all__ = [
     get_stt_pipe,
     chat_completion,
     synthesize_speech,
+    ModelAPIError,
     translate,
     get_phonetic,
     get_cjk_character_info,

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SectionCard from "./sectionCard";
-import EndpointCard from "./endpointCard";
+import EndpointCard, { ProviderOption, PROVIDER_OPTIONS as FALLBACK_PROVIDERS } from "./endpointCard";
 import SaveButton from "./saveButton";
 import ConfirmDialog from "./confirmDialog";
 import { updateUserPreferences } from "@/api/userPreferences";
@@ -18,8 +18,19 @@ export default function ApiEndpointsSection({
 }) {
   const [endpoints, setEndpoints] = useState<ApiEndpointConfig[]>(initial);
   const [saving, setSaving] = useState(false);
-  const [testResults, setTestResults] = useState<Record<number, { ok: boolean; ms?: number; error?: string } | null>>({});
+  const [testResults, setTestResults] = useState<Record<number, { ok: boolean; ms?: number; error?: string; available_models?: string[]; tts_ok?: boolean; text_gen_ok?: boolean; text_gen_error?: string } | null>>({});
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
+  const [providers, setProviders] = useState<ProviderOption[]>(FALLBACK_PROVIDERS);
+  const [testingIdx, setTestingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/pref/providers`)
+      .then((r) => r.json())
+      .then((data: ProviderOption[]) => {
+        if (Array.isArray(data) && data.length > 0) setProviders(data);
+      })
+      .catch(() => {}); // fall back to hardcoded list
+  }, []);
 
   const persist = async (updated: ApiEndpointConfig[]) => {
     setSaving(true);
@@ -33,18 +44,19 @@ export default function ApiEndpointsSection({
 
   const handleAdd = () => {
     const ep: ApiEndpointConfig = {
-      name: "",
-      api_type: "text_gen",
-      base_url: undefined,
-      api_key: undefined,
-      model: undefined,
       is_active: endpoints.length === 0,
+      api_format: "openai",
+      auth_type: "bearer",
     };
     setEndpoints([...endpoints, ep]);
   };
 
   const handleUpdate = (idx: number, updated: ApiEndpointConfig) => {
+    const prev = endpoints[idx];
     setEndpoints(endpoints.map((e, i) => (i === idx ? updated : e)));
+    if (prev && (prev.base_url !== updated.base_url || prev.api_format !== updated.api_format || prev.provider !== updated.provider)) {
+      setTestResults((prev) => ({ ...prev, [idx]: null }));
+    }
   };
 
   const handleDelete = (idx: number) => {
@@ -78,6 +90,7 @@ export default function ApiEndpointsSection({
       setTestResults((prev) => ({ ...prev, [idx]: { ok: false, error: "No base URL configured" } }));
       return;
     }
+    setTestingIdx(idx);
     setTestResults((prev) => ({ ...prev, [idx]: null })); // clear while testing
     const start = performance.now();
     try {
@@ -85,7 +98,14 @@ export default function ApiEndpointsSection({
       const res = await fetch(`${BASE_URL}/api/pref/test-endpoint`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ base_url: ep.base_url, api_key: ep.api_key }),
+        body: JSON.stringify({
+          base_url: ep.base_url,
+          api_key: ep.api_key,
+          model: ep.model ?? "",
+          api_format: ep.api_format ?? "openai",
+          auth_type: ep.auth_type ?? "bearer",
+          api_type: ep.api_type ?? "text_gen",
+        }),
         signal: AbortSignal.timeout(8000),
       });
       const data = await res.json();
@@ -93,6 +113,10 @@ export default function ApiEndpointsSection({
     } catch (err) {
       const ms = Math.round(performance.now() - start);
       setTestResults((prev) => ({ ...prev, [idx]: { ok: false, ms, error: err instanceof Error ? err.message : "Connection failed" } }));
+    } finally {
+      // ponytail: 300ms delay prevents spinner flicker on fast responses;
+      // functional update guards against a stale timeout clearing a newer test.
+      setTimeout(() => setTestingIdx((cur) => (cur === idx ? null : cur)), 300);
     }
   };
 
@@ -131,6 +155,8 @@ export default function ApiEndpointsSection({
             onTestConnection={() => handleTestConnection(idx)}
             testResult={testResults[idx] ?? null}
             disabled={saving}
+            providers={providers}
+            testing={testingIdx === idx}
           />
         ))}
 
@@ -152,7 +178,7 @@ export default function ApiEndpointsSection({
 
       {deleteIdx !== null && (
         <ConfirmDialog
-          message={`Delete "${endpoints[deleteIdx]?.name || "Unnamed endpoint"}"?`}
+          message={`Delete "${endpoints[deleteIdx]?.name || "this endpoint"}"?`}
           confirmLabel="Delete"
           danger
           onConfirm={confirmDelete}

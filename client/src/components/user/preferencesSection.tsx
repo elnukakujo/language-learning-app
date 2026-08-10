@@ -5,7 +5,6 @@ import SectionCard from "./sectionCard";
 import AutoSizeTextArea from "@/components/ui/textArea/autoSizeTextArea";
 import ClassicSelectMenu from "@/components/ui/selectMenu/classicSelectMenu";
 import SaveButton from "./saveButton";
-import ToggleRow from "./toggleRow";
 import { updateUserPreferences } from "@/api/userPreferences";
 import { LANGUAGE_to_ISO639_2T } from "@/utils/language_iso639";
 import UserPreferences from "@/interface/systemData/UserPreferences";
@@ -14,19 +13,6 @@ const EXERCISE_TYPES = [
   "essay", "answering", "translate", "organize", "conversation",
   "type_in_the_blank", "select_in_the_blank", "matching", "true_false", "speaking",
 ];
-
-const DIFFICULTY_LEVELS = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
-] as const;
-
-const PRACTICE_MODES = [
-  { value: "flashcards", label: "Flashcards" },
-  { value: "listening", label: "Listening" },
-  { value: "speaking", label: "Speaking" },
-  { value: "writing", label: "Writing" },
-] as const;
 
 export default function PreferencesSection({ preferences }: { preferences: Partial<UserPreferences> }) {
   const [nativeLanguages, setNativeLanguages] = useState<string[]>(
@@ -37,10 +23,6 @@ export default function PreferencesSection({ preferences }: { preferences: Parti
     preferences.preferred_exercise_types ?? []
   );
   const [dailyGoal, setDailyGoal] = useState(preferences.daily_goal_minutes ?? 20);
-  const [difficulty, setDifficulty] = useState<string>("beginner"); // TODO: add to UserPreferences model
-  const [practiceModes, setPracticeModes] = useState<string[]>(["flashcards"]); // TODO: add to UserPreferences model
-  const [notifyEmail, setNotifyEmail] = useState(false); // TODO: add to UserPreferences model
-  const [notifyInApp, setNotifyInApp] = useState(false); // TODO: add to UserPreferences model
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,17 +34,10 @@ export default function PreferencesSection({ preferences }: { preferences: Parti
         learning_goals: learningGoals,
         preferred_exercise_types: exerciseTypes,
         daily_goal_minutes: dailyGoal,
-        // TODO: persist difficulty, practiceModes, notifications when backend supports them
       });
     } finally {
       setSaving(false);
     }
-  };
-
-  const toggleMode = (mode: string) => {
-    setPracticeModes((prev) =>
-      prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
-    );
   };
 
   return (
@@ -107,60 +82,6 @@ export default function PreferencesSection({ preferences }: { preferences: Parti
           </div>
         </div>
 
-        {/* Difficulty */}
-        <fieldset>
-          <legend className="text-sm opacity-70 mb-1">Difficulty Level</legend>
-          <div className="flex gap-3">
-            {DIFFICULTY_LEVELS.map(({ value, label }) => (
-              <label
-                key={value}
-                className={`flex items-center gap-1.5 text-sm cursor-pointer px-3 py-1.5 rounded-full border transition-colors ${
-                  difficulty === value
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                    : "border-[var(--color-border)] hover:border-[var(--color-muted)]"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="difficulty"
-                  value={value}
-                  checked={difficulty === value}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  disabled={saving}
-                  className="sr-only"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {/* Practice Modes */}
-        <fieldset>
-          <legend className="text-sm opacity-70 mb-1">Preferred Practice Modes</legend>
-          <div className="flex flex-wrap gap-2">
-            {PRACTICE_MODES.map(({ value, label }) => (
-              <label
-                key={value}
-                className={`flex items-center gap-1.5 text-sm cursor-pointer px-3 py-1.5 rounded-full border transition-colors ${
-                  practiceModes.includes(value)
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                    : "border-[var(--color-border)] hover:border-[var(--color-muted)]"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={practiceModes.includes(value)}
-                  onChange={() => toggleMode(value)}
-                  disabled={saving}
-                  className="sr-only"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
         {/* Learning Goals */}
         <AutoSizeTextArea
           label="Learning Goals"
@@ -176,25 +97,6 @@ export default function PreferencesSection({ preferences }: { preferences: Parti
           selectedOption={exerciseTypes}
           onChange={(v) => setExerciseTypes(v as string[])}
           multiple
-        />
-
-        <div className="index-divider" />
-
-        {/* Notifications */}
-        <h3 className="text-sm font-medium">Notifications</h3>
-        <ToggleRow
-          label="Email reminders"
-          description="Daily practice reminders via email"
-          checked={notifyEmail}
-          onChange={setNotifyEmail}
-          disabled={saving}
-        />
-        <ToggleRow
-          label="In-app notifications"
-          description="Practice reminders and streak alerts"
-          checked={notifyInApp}
-          onChange={setNotifyInApp}
-          disabled={saving}
         />
 
         <div>

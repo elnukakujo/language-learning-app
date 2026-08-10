@@ -2,9 +2,23 @@ import logging
 import uuid
 from pathlib import Path
 
-from ..utils import synthesize_speech
+from ..utils import synthesize_speech, detect_text_language
 
 logger = logging.getLogger(__name__)
+
+# Verified against http://192.168.1.139:8880/voices (Kokoro server)
+# Convention: {lang}_{gender} — en_f, en_m, es_f, es_m, etc.
+_VOICE_MAP: dict[str, dict[str, str]] = {
+    "en": {"female": "en_f", "male": "en_m"},
+    "es": {"female": "es_f", "male": "es_m"},
+    "fr": {"female": "fr_f"},                          # no male voice
+    "ja": {"female": "ja_f", "male": "ja_m"},
+    "zh": {"female": "zh_f", "male": "zh_m"},
+    "hi": {"female": "hi_f"},                          # no male voice
+    "it": {"female": "it_f"},                          # no male voice
+    "pt": {"female": "pt_f"},                          # no male voice
+}
+_VOICE_FALLBACK = "en_f"
 
 class TTSService:
     """
@@ -75,6 +89,21 @@ class TTSService:
 
         try:
             logger.info(f"Generating TTS for: {text}")
+
+            # Voice resolution: explicit override > language+gender > language-female > fallback
+            if not api.get("voice"):
+                try:
+                    lang = detect_text_language(text)
+                    iso1 = lang.iso1 if lang else "unknown"
+                    gender = api.get("voice_gender") or "female"
+                    voices = _VOICE_MAP.get(iso1, {})
+                    # ponytail: if male voice doesn't exist for this language, fall back to female
+                    voice = voices.get(gender) or voices.get("female") or _VOICE_FALLBACK
+                    api = {**api, "voice": voice}
+                    logger.info(f"Auto-detected voice '{voice}' (lang={iso1}, gender={gender})")
+                except Exception:
+                    api = {**api, "voice": _VOICE_FALLBACK}
+                    logger.info(f"Voice detection failed, using fallback '{_VOICE_FALLBACK}'")
 
             wav_bytes = synthesize_speech(**api, text=text)
 
