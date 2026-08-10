@@ -16,7 +16,7 @@ export const PUBLIC_BASE_URL = `http://${process.env.NEXT_PUBLIC_LAPP_HOST || "1
 // Server-side code (SSR/route handlers) runs inside the backend's own network (a pod/container),
 // where the browser-facing LAPP_PUBLIC_HOST (a LAN IP or domain) isn't routable - it must reach
 // the backend via its service name instead. LAPP_INTERNAL_HOST/PORT default to the docker-compose/
-// k8s service name "backend", overridable if that name ever changes.
+// compose service name "backend", overridable if that name ever changes.
 export const BASE_URL = typeof window === "undefined"
   ? `http://${process.env.LAPP_INTERNAL_HOST || "backend"}:${process.env.LAPP_INTERNAL_PORT || 5050}`
   : PUBLIC_BASE_URL;

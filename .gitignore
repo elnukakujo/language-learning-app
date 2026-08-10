@@ -3,9 +3,6 @@
 *.sqlite3
 *.dump
 
-# Real k8s secrets (template lives at k8s/secrets.yaml.example)
-k8s/secrets.yaml
-
 # Media files
 media/images/*
 media/audio/*

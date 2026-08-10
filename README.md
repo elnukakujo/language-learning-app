@@ -77,7 +77,7 @@ A full-stack, multi-user language learning platform with AI-assisted content gen
 │   ├── tasks/               # Scheduled background jobs
 │   └── utils/               # CJK enrichment, model API client, phonetics, tokenization
 ├── alembic/                 # Database migrations
-├── k8s/                     # Legacy Kubernetes manifests (k3s — replaced by docker-compose.yml)
+├── docker/                  # Docker entrypoint, migration, backup scripts
 ├── docker/                  # Docker entrypoint, migration, backup scripts
 ├── assets/screenshots/      # README screenshots
 ├── media/                   # Production media storage

@@ -16,7 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # No host port — matches k8s ClusterIP-only. Access via: docker compose exec db psql
+    # No host port — internal only. Access via: docker compose exec db psql
 
   backend:
     build:
