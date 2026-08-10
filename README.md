@@ -6,9 +6,8 @@
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-k3s-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
 
-A full-stack, multi-user language learning platform with AI-assisted content generation, speech evaluation, and study tracking. Combines a Flask API, Next.js frontend, per-user configurable LLM backends, and Kubernetes deployment — all designed to organize vocabulary, grammar, characters, words, passages, and exercises in one place.
+A full-stack, multi-user language learning platform with AI-assisted content generation, speech evaluation, and study tracking. Combines a Flask API, Next.js frontend, per-user configurable LLM backends, and Docker Compose deployment — all designed to organize vocabulary, grammar, characters, words, passages, and exercises in one place.
 
 ## What it does
 
@@ -24,7 +23,7 @@ A full-stack, multi-user language learning platform with AI-assisted content gen
 - **CJK enrichment** — automatic pinyin, radical/stroke count, romanization, and gloss translation for Chinese, Japanese, and Korean.
 - **Media management** — upload and serve images/audio; orphaned files auto-cleaned.
 - **Action-based backups** — create, restore, list, and delete backups via API; auto-restore on container startup.
-- **Kubernetes deployment** — k3s manifests with PVCs for media, backups, and Hugging Face cache.
+- **Docker Compose deployment** — single-command deploy with persistent volumes for media, backups, and HF cache.
 - **REST API** with Swagger documentation via Flasgger.
 
 ## Screenshots
@@ -78,7 +77,7 @@ A full-stack, multi-user language learning platform with AI-assisted content gen
 │   ├── tasks/               # Scheduled background jobs
 │   └── utils/               # CJK enrichment, model API client, phonetics, tokenization
 ├── alembic/                 # Database migrations
-├── k8s/                     # Kubernetes manifests (k3s)
+├── k8s/                     # Legacy Kubernetes manifests (k3s — replaced by docker-compose.yml)
 ├── docker/                  # Docker entrypoint, migration, backup scripts
 ├── assets/screenshots/      # README screenshots
 ├── media/                   # Production media storage
@@ -114,8 +113,8 @@ A full-stack, multi-user language learning platform with AI-assisted content gen
 ### Infrastructure
 
 - Docker & Docker Compose
-- Kubernetes (k3s)
-- PersistentVolumes for media, backups, HF cache
+- Persistent volumes for media, backups, and Hugging Face model cache
+- Optional systemd unit for auto-start on boot
 
 ## Getting started
 
@@ -176,7 +175,7 @@ LAPP_URL=http://127.0.0.1:5000 npm run dev
 
 The client reads the backend URL from `LAPP_URL` (falls back to `http://127.0.0.1:5000`).
 
-### Running with Docker
+### Running with Docker (local dev)
 
 ```bash
 cp .env.example .env   # fill in DATABASE_URL, POSTGRES_*, etc.
@@ -184,17 +183,49 @@ docker compose up --build
 ```
 
 - Database migrations run automatically on backend startup.
-- The API is available at `http://localhost:${LAPP_PORT:-5000}` and the client at `http://localhost:${PORT:-8080}`.
+- The API is available at `http://localhost:${LAPP_PORT:-5050}` and the client at `http://localhost:${PORT:-8080}`.
 - `PROD_MEDIA_ROOT`/`PROD_BACKUP_ROOT` (if set) are bind-mounted into the backend container.
+- All storage defaults to local paths — no NAS required for dev.
 
-### Kubernetes (k3s)
+### Production deployment (Docker Compose)
 
 ```bash
-cp k8s/secrets.yaml.example k8s/secrets.yaml   # fill in secrets
-./k8s/deploy.sh
+cp .env.example .env   # fill in all values (see .env.example for docs)
+./deploy.sh
 ```
 
-Manifests deploy the full stack (Postgres, backend, frontend) with PVC-based persistence.
+The deploy script guards against a missing `LAPP_PUBLIC_HOST`, pulls the latest code, builds images, and starts the stack. On a thin-VM + NAS setup, override these in `.env`:
+
+```bash
+PROD_MEDIA_ROOT=/mnt/nas/fluence/media
+PROD_BACKUP_ROOT=/mnt/nas/fluence/backups
+HF_CACHE_DIR=/mnt/nas/fluence/hf-cache
+```
+
+Postgres data stays on a local Docker volume (`fluence_pgdata`) — never on NAS. The app runs an exit backup on every shutdown (`docker compose stop -t 30`), so data survives VM rebuilds. For auto-start on boot, install the systemd unit:
+
+```ini
+# /etc/systemd/system/fluence.service
+[Unit]
+Description=Fluence app
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/user/vocabulary-dbms
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose stop -t 30
+ExecReload=/usr/bin/docker compose up -d --build
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now fluence.service
+```
 
 ## API overview
 

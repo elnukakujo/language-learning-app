@@ -1,3 +1,5 @@
+name: fluence
+
 services:
   db:
     image: postgres:16
@@ -7,8 +9,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-fluence_app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fluence_dev_pass}
       POSTGRES_DB: ${POSTGRES_DB:-fluence}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # No host port — matches k8s ClusterIP-only. Access via: docker compose exec db psql
 
   backend:
     build:
@@ -28,19 +29,26 @@ services:
     env_file: .env
     environment:
       LAPP_HOST: 0.0.0.0
-      LAPP_PORT: ${LAPP_PORT:-${LAPP_PUBLIC_PORT:-5000}}
+      LAPP_PORT: ${LAPP_PORT:-5050}
       DATABASE_URL: postgresql://${POSTGRES_USER:-fluence_app}:${POSTGRES_PASSWORD:-fluence_dev_pass}@db:5432/${POSTGRES_DB:-fluence}
       PROD_MEDIA_ROOT: /app/media
       PROD_BACKUP_ROOT: /app/backups
-      RESTORE_LATEST_BACKUP: ${RESTORE_LATEST_BACKUP:-true}
+      RESTORE_LATEST_BACKUP: ${RESTORE_LATEST_BACKUP:-false}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5050/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
-      - "${LAPP_PORT:-${LAPP_PUBLIC_PORT:-5000}}:${LAPP_PORT:-${LAPP_PUBLIC_PORT:-5000}}"
+      - "${LAPP_PORT:-5050}:${LAPP_PORT:-5050}"
     volumes:
       - ${PROD_MEDIA_ROOT:-./media}:/app/media
       - ${PROD_BACKUP_ROOT:-./backups}:/app/backups
+      - ${HF_CACHE_DIR:-${HOME}/.cache/huggingface}:/root/.cache/huggingface
 
   frontend:
     build:
@@ -50,7 +58,7 @@ services:
       sbom: false
       args:
         LAPP_PUBLIC_HOST: ${LAPP_PUBLIC_HOST:-localhost}
-        LAPP_PUBLIC_PORT: ${LAPP_PUBLIC_PORT:-5000}
+        LAPP_PUBLIC_PORT: ${LAPP_PUBLIC_PORT:-5050}
         LAPP_EXTRA_MEDIA_HOSTS: ${LAPP_EXTRA_MEDIA_HOSTS:-}
     restart: unless-stopped
     environment:
@@ -62,3 +70,4 @@ services:
 
 volumes:
   pgdata:
+    name: fluence_pgdata

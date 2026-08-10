@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Fail fast if the storage mount is missing (e.g. NAS not mounted on prod).
+test -d /app/backups || { echo "FATAL: /app/backups not mounted (NAS down?)"; exit 1; }
+
 uv run --frozen --no-dev python docker/restore_latest_backup.py
 uv run --frozen --no-dev python docker/migrate.py
 
