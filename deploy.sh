@@ -13,5 +13,5 @@ grep -qE '^LAPP_PUBLIC_HOST=.+' .env || {
 
 git pull --ff-only
 docker compose up -d --build --remove-orphans
-docker builder prune -f
+docker builder prune -af
 docker image prune -f
