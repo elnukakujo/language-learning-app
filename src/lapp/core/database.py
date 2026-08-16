@@ -52,12 +52,13 @@ id_counter_table = Table(
     Column("next_value", Integer, nullable=False),
 )
 
-# Backup trigger counter: how many session_scope() transactions have committed
-# since the last backup. One row in id_counter_table, entity_type keyed by
-# MUTATION_COUNTER_ENTITY. Incremented inside session_scope() before commit so
-# a rollback naturally discards the increment.
-# ponytail: counts read-only scopes too; threshold is a heuristic, backups fire
-# slightly early. Not worth dirty-tracking.
+# Backup trigger counter: how many session_scope() transactions that wrote data
+# have committed since the last backup. One row in id_counter_table, entity_type
+# keyed by MUTATION_COUNTER_ENTITY. A before_flush listener (see _mark_mutated)
+# flags sessions that modified ORM state, so read-only scopes — monitoring
+# pings, dashboard polls — don't count. Internal id_counter bookkeeping via raw
+# Core UPDATE doesn't count either; those aren't user operations.
+# ponytail: flag rides on session.info; per-write-type tracking not worth it.
 MUTATION_COUNTER_ENTITY = "__mutation_count__"
 
 
@@ -104,6 +105,17 @@ def reset_mutation_counter(session: Optional[Session] = None) -> None:
         if close_session:
             session.close()
 
+
+def _mark_mutated(session: Session, flush_context, instances) -> None:
+    """before_flush listener: flag sessions with pending ORM changes.
+
+    Fires before flush clears new/dirty/deleted, so it catches writes even
+    when a mid-body flush (e.g. CRUD with commit=False) runs before the
+    session_scope() check.
+    """
+    if session.new or session.dirty or session.deleted:
+        session.info['_mutated'] = True
+
 class DatabaseManager:
     """
     Manages database connections, sessions, and CRUD operations.
@@ -143,6 +155,7 @@ class DatabaseManager:
             # returned ORM objects via to_dict() once the session is gone.
             expire_on_commit=False,
         )
+        sqlalchemy.event.listen(self.SessionLocal, 'before_flush', _mark_mutated)
         self._scoped_session = scoped_session(self.SessionLocal)
     
     def init_app(self, app: Flask) -> None:
@@ -260,7 +273,10 @@ class DatabaseManager:
         session = self.get_session()
         try:
             yield session
-            increment_mutation_counter(session)  # same txn as the writes; rolls back with them
+            session.flush()  # materialize pending writes; before_flush sets the flag
+            if session.info.get('_mutated'):
+                # Same txn as the writes; a rollback discards the increment.
+                increment_mutation_counter(session)
             session.commit()
         except Exception:
             session.rollback()

@@ -1,4 +1,6 @@
-"""Mutation counter contract: counts committed session_scope()s, not failed ones."""
+"""Mutation counter contract: counts committed session_scope()s that wrote data."""
+from sqlalchemy import select
+
 from lapp.core.database import get_mutation_count, reset_mutation_counter
 from lapp.models.system_data import User
 
@@ -11,6 +13,12 @@ def test_counter_increments_per_committed_scope(db):
     with db.session_scope() as s:
         db.insert(User(id="user_C2", username="b"), session=s, commit=False)
     assert get_mutation_count() == 2
+
+
+def test_counter_not_incremented_by_read_only_scope(db):
+    with db.session_scope() as s:
+        s.execute(select(User)).all()
+    assert get_mutation_count() == 0
 
 
 def test_counter_not_incremented_on_rollback(db):
