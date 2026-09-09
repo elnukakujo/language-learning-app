@@ -63,7 +63,7 @@ class TTSService:
     def generate_audio(
         self,
         text: str,
-        language_name: str = None,
+        language_code: str = None,
         api: dict | None = None,
     ) -> str | list[str]:
         """
@@ -90,17 +90,18 @@ class TTSService:
         try:
             logger.info(f"Generating TTS for: {text}")
 
-            # Voice resolution: explicit override > language+gender > language-female > fallback
+            # Voice resolution: explicit override > target-language > language+gender > language-female > fallback.
+            # Prefer the caller's target language over guessing from the text —
+            # single CJK chars like 犬 are shared across ja/zh and langdetect misreads them.
             if not api.get("voice"):
                 try:
-                    lang = detect_text_language(text)
-                    iso1 = lang.iso1 if lang else "unknown"
+                    iso1 = language_code or detect_text_language(text).iso1
                     gender = api.get("voice_gender") or "female"
                     voices = _VOICE_MAP.get(iso1, {})
                     # ponytail: if male voice doesn't exist for this language, fall back to female
                     voice = voices.get(gender) or voices.get("female") or _VOICE_FALLBACK
                     api = {**api, "voice": voice}
-                    logger.info(f"Auto-detected voice '{voice}' (lang={iso1}, gender={gender})")
+                    logger.info(f"Selected voice '{voice}' (lang={iso1}, gender={gender})")
                 except Exception:
                     api = {**api, "voice": _VOICE_FALLBACK}
                     logger.info(f"Voice detection failed, using fallback '{_VOICE_FALLBACK}'")

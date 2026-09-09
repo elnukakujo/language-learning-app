@@ -12,6 +12,23 @@ VALID_AUTH_TYPES = {"bearer", "x-api-key", "param", "none"}
 VALID_API_TYPES = {"text_gen", "tts", "both"}
 
 
+def _normalize_base_url(v: Optional[str]) -> Optional[str]:
+    """Normalize a user-entered base URL.
+
+    Auto-prepends ``http://`` to bare ``host:port`` values (e.g. ``localhost:11434``)
+    so local endpoints save without the user typing the scheme. Anything with a
+    scheme already, or a non-http(s) scheme, is rejected as before.
+    """
+    if not v:
+        return v
+    v = v.strip()
+    if "://" not in v:
+        v = "http://" + v
+    if not (v.startswith("http://") or v.startswith("https://")):
+        raise ValueError("must start with http:// or https://")
+    return v.rstrip("/")
+
+
 class ApiEndpoint(BaseModel):
     """A single LLM API endpoint configuration."""
     name: str = ""
@@ -57,11 +74,7 @@ class ApiEndpoint(BaseModel):
     @field_validator("base_url")
     @classmethod
     def _validate_base_url(cls, v: Optional[str]) -> Optional[str]:
-        if not v:
-            return v
-        if not (v.startswith("http://") or v.startswith("https://")):
-            raise ValueError("must start with http:// or https://")
-        return v.rstrip("/")
+        return _normalize_base_url(v)
 
 
 class UserPreferencesDict(BaseModel):
@@ -89,11 +102,7 @@ class UserPreferencesDict(BaseModel):
     @field_validator("ai_gen_api_base_url", "ai_tts_api_base_url")
     @classmethod
     def _validate_api_base_url(cls, value: Optional[str]) -> Optional[str]:
-        if not value:
-            return value
-        if not (value.startswith("http://") or value.startswith("https://")):
-            raise ValueError("must start with http:// or https://")
-        return value.rstrip("/")
+        return _normalize_base_url(value)
 
     @field_validator("ai_endpoints")
     @classmethod

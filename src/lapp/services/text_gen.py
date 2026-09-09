@@ -80,7 +80,7 @@ class TextGeneratorService:
         )
 
     def _generate_from_messages(self, messages: list[dict], max_new_tokens: int, api: dict) -> str:
-        output = chat_completion(**api, messages=messages, max_tokens=max_new_tokens).strip()
+        output = chat_completion(**api, messages=messages, max_tokens=max_new_tokens, disable_thinking=True).strip()
         # ponytail: defensive strip in case a reasoning model ignores the no-think instruction
         return re.sub(r"<think>.*?</think>", "", output, flags=re.DOTALL).strip()
 

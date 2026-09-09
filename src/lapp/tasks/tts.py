@@ -12,6 +12,7 @@ from ..core.database import db_manager
 from ..services import TTSService, PassageService, WordService, CharacterService
 from ..services.system_data import UserPreferencesService
 from ..utils.llm_providers import resolve_api
+from ..utils import get_language_by_iso2t
 from ..schemas.components import CharacterDict, PassageDict, WordDict
 from ..models.components import Passage, Character, Word
 from ..models.containers import Language
@@ -107,7 +108,7 @@ def generate_missing_component_audio(app: Flask):
                 try:
                     # Generate audio using TTS service
                     language = db_manager.find_by_pk(Language(id=component.language_id), session=session)
-                    language_name = language.name
+                    language_code = get_language_by_iso2t(language.target_iso639_2t).iso1
 
                     if language.user_id not in ai_tts_by_user:
                         prefs = user_preferences_service.get_by_user_id(language.user_id, session=session)
@@ -135,7 +136,7 @@ def generate_missing_component_audio(app: Flask):
 
                     progress.set_postfix_str(f"{type(component).__name__} {component.id} [{language.target_iso639_2t}]: {text[:40]!r}")
 
-                    relative_path = tts_service.generate_audio(text=text, language_name=language_name, api=api)
+                    relative_path = tts_service.generate_audio(text=text, language_code=language_code, api=api)
                     component_id = component.id
 
                     updated_component = component.to_dict(include_relations=False)

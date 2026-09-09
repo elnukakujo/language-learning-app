@@ -7,6 +7,9 @@ export async function updateUserPreferences(prefId: string, data: Partial<UserPr
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update user preferences");
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? `Failed to update user preferences (${res.status})`);
+  }
   return res.json();
 }

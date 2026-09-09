@@ -100,19 +100,25 @@ def _chat_completion_openai(
     top_p: float = 0.9,
     *,
     timeout: float = 60,
+    disable_thinking: bool = False,
 ) -> str:
     url, headers = auth_headers(base_url, api_key, auth_type)
+    body = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": top_p,
+    }
+    # llama.cpp hint for Qwen3-style reasoning models: disable the hidden
+    # "thinking" pass so they answer directly instead of burning the whole token
+    # budget on <reasoning> and returning empty content (finish_reason=length).
+    # Other OpenAI-compatible servers ignore this field. Opt-in only — the same
+    # model is used for feedback etc. where thinking is wanted.
+    if disable_thinking:
+        body["chat_template_kwargs"] = {"enable_thinking": False}
     with httpx.Client(base_url=url, headers=headers, timeout=timeout, trust_env=False) as client:
-        resp = client.post(
-            "/chat/completions",
-            json={
-                "model": model,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "top_p": top_p,
-            },
-        )
+        resp = client.post("/chat/completions", json=body)
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"]
 
@@ -232,6 +238,7 @@ def chat_completion(
     auth_type: str = "bearer",
     *,
     timeout: float = 60,
+    disable_thinking: bool = False,
 ) -> str:
     """Send a chat completion request. Dispatches on api_format.
 
@@ -256,6 +263,7 @@ def chat_completion(
                 base_url=base_url, api_key=api_key, auth_type=auth_type,
                 model=model, messages=messages, max_tokens=max_tokens,
                 temperature=temperature, top_p=top_p, timeout=timeout,
+                disable_thinking=disable_thinking,
             )
     except ModelAPIError:
         raise

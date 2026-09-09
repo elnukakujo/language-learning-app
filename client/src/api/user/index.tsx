@@ -15,6 +15,7 @@ export async function getUserById(userId: string) {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Failed to fetch user ${userId}`);
   return res.json();
 }

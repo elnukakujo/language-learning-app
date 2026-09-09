@@ -18,6 +18,7 @@ export default function ApiEndpointsSection({
 }) {
   const [endpoints, setEndpoints] = useState<ApiEndpointConfig[]>(initial);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<number, { ok: boolean; ms?: number; error?: string; available_models?: string[]; tts_ok?: boolean; text_gen_ok?: boolean; text_gen_error?: string } | null>>({});
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const [providers, setProviders] = useState<ProviderOption[]>(FALLBACK_PROVIDERS);
@@ -34,9 +35,12 @@ export default function ApiEndpointsSection({
 
   const persist = async (updated: ApiEndpointConfig[]) => {
     setSaving(true);
+    setSaveError(null);
     try {
       await updateUserPreferences(prefId, { ai_endpoints: updated });
       setEndpoints(updated);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save endpoints");
     } finally {
       setSaving(false);
     }
@@ -159,6 +163,12 @@ export default function ApiEndpointsSection({
             testing={testingIdx === idx}
           />
         ))}
+
+        {saveError && (
+          <p className="text-sm" style={{ color: "var(--color-danger)" }} role="alert">
+            ✗ {saveError}
+          </p>
+        )}
 
         {endpoints.length > 0 && (
           <div className="flex items-center gap-2 pt-2">

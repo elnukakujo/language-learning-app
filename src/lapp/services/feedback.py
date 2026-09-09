@@ -90,7 +90,7 @@ class FeedbackService:
 			messages = self._build_prompt(context)
 			# ponytail: 512 not 96 - reasoning models spend most of the budget on the <think>
 			# block before the actual answer, so a short cap truncates before any output.
-			feedback = chat_completion(**api, messages=messages, max_tokens=512, temperature=0.5, timeout=3).strip()
+			feedback = chat_completion(**api, messages=messages, max_tokens=512, temperature=0.5, timeout=30, disable_thinking=True).strip()
 			# ponytail: defensive strip in case a reasoning model ignores the no-think instruction
 			feedback = re.sub(r"<think>.*?</think>", "", feedback, flags=re.DOTALL).strip()
 			return feedback or self._fallback_feedback(context)
