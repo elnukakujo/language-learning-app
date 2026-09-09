@@ -5,7 +5,6 @@ import { Eye, EyeOff, Copy, Check, ChevronDown, ChevronUp, ArrowUp, ArrowDown } 
 import { Ring } from "ldrs/react";
 //@ts-ignore
 import "ldrs/react/Ring.css";
-import ConfirmDialog from "./confirmDialog";
 import { ApiEndpointConfig } from "@/interface/systemData/UserPreferences";
 
 export type ProviderOption = {
@@ -92,7 +91,6 @@ export default function EndpointCard({
   const [expanded, setExpanded] = useState(!endpoint.api_type);
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleCopy = async () => {
     if (!endpoint.api_key) return;
@@ -478,23 +476,13 @@ export default function EndpointCard({
             <button
               type="button"
               className="btn btn-danger text-xs ml-auto"
-              onClick={() => setConfirmDelete(true)}
+              onClick={onDelete}
               disabled={disabled}
             >
               Delete
             </button>
           </div>
         </div>
-      )}
-
-      {confirmDelete && (
-        <ConfirmDialog
-          message={`Delete "${endpoint.name || "Unnamed endpoint"}"?`}
-          confirmLabel="Delete"
-          danger
-          onConfirm={onDelete}
-          onCancel={() => setConfirmDelete(false)}
-        />
       )}
     </div>
   );

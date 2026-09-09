@@ -110,7 +110,7 @@ export default function ApiEndpointsSection({
           auth_type: ep.auth_type ?? "bearer",
           api_type: ep.api_type ?? "text_gen",
         }),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(30000),
       });
       const data = await res.json();
       setTestResults((prev) => ({ ...prev, [idx]: data }));
