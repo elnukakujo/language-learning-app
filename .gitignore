@@ -18,6 +18,8 @@ instance/*
 .env.local
 .vscode/
 .DS_Store
+graphify-out/
+.graphifyignore
 
 # Python
 __pycache__/

@@ -113,6 +113,7 @@ def register_blueprints(app: Flask) -> None:
         passage_bp,
         daily_stats_bp,
         commitment_log_bp,
+        review_bp,
     )
 
     # Register blueprints
@@ -136,8 +137,9 @@ def register_blueprints(app: Flask) -> None:
         passage_bp,
         daily_stats_bp,
         commitment_log_bp,
+        review_bp,
     ]
-    
+
     for blueprint in blueprints:
         app.register_blueprint(blueprint)
         logger.info(f"✅ Registered blueprint: {blueprint.name}")

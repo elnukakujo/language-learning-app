@@ -1,6 +1,6 @@
 from .containers import LanguageService, LessonService
 from .components import CharacterService, WordService, PassageService
-from .features import VocabularyService, CalligraphyService, GrammarService, ExerciseService
+from .features import VocabularyService, CalligraphyService, GrammarService, ExerciseService, ReviewService
 from .system_data import TagService, SourceService, UserService, UserPreferencesService
 from .media import MediaService
 from .tts import TTSService
@@ -19,6 +19,7 @@ __all__ = [
     "CalligraphyService",
     "GrammarService",
     "ExerciseService",
+    "ReviewService",
     "MediaService",
     "TTSService",
     "TextGeneratorService",

@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from lapp.utils.helpers import (
     compute_recency_weight,
+    review_priority,
     update_difficulty,
     update_score,
 )
@@ -37,6 +38,24 @@ def test_update_difficulty_reacts_to_performance():
     hard = update_difficulty(new_score=10, **kwargs)
     assert hard > easy               # poor performance pushes difficulty up
     assert 0.0 <= easy <= 1.0 and 0.0 <= hard <= 1.0
+
+
+def test_review_priority_ranks_stale_above_fresh():
+    today = date.today()
+    created_at = today - timedelta(days=30)
+    stale = review_priority(created_at=created_at, last_seen_at=today - timedelta(days=10), difficulty=0.5, score=80)
+    fresh = review_priority(created_at=created_at, last_seen_at=today, difficulty=0.5, score=80)
+    assert stale > fresh  # longer since seen → more forgetting → higher priority
+
+
+def test_review_priority_boosts_difficult_and_new_cards():
+    today = date.today()
+    created_at = today - timedelta(days=30)
+    mastered = review_priority(created_at=created_at, last_seen_at=today, difficulty=0.1, score=90)
+    hard = review_priority(created_at=created_at, last_seen_at=today, difficulty=0.9, score=90)
+    new_card = review_priority(created_at=created_at, last_seen_at=today, difficulty=0.1, score=10)
+    assert hard > mastered              # hard cards surface even when just seen
+    assert new_card > mastered          # low-score (just-introduced) cards repeat
 
 
 if __name__ == "__main__":

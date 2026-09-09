@@ -1,0 +1,86 @@
+from typing import Optional
+from sqlalchemy.orm import Session
+
+import logging
+logger = logging.getLogger(__name__)
+
+from ...core.database import db_manager, transactional
+from ...models.containers import Language, Lesson
+from ...models.features import Vocabulary, Grammar, Calligraphy
+from ...models.system_data import UserPreferences
+from ...utils import review_priority
+
+# Convert the user's daily minutes goal into a card count. Fixed estimate.
+# ponytail: SECONDS_PER_CARD fixed; derive from DailyStats.time_studied_ms /
+# items_reviewed if a per-user pace ever matters.
+SECONDS_PER_CARD = 30.0
+
+# The three flashcard-able feature types, in review (round-robin) order.
+FEATURE_MODELS = (Vocabulary, Grammar, Calligraphy)
+
+
+class ReviewService:
+    """On-the-fly selection of the daily review queue for a language.
+
+    No persisted SRS state: every card's "should review now" priority is
+    computed from fields it already has (created_at / last_seen_at / difficulty
+    / score) via review_priority(). The queue interleaves the three flashcard
+    types and is capped by the user's daily_goal_minutes.
+    """
+
+    @transactional
+    def get_review_cards(
+        self,
+        language_id: str,
+        session: Optional[Session] = None,
+        as_dict: bool = True,
+    ) -> list:
+        language = db_manager.find_by_attr(Language, {"id": language_id}, session=session)
+        if not language:
+            return []
+
+        daily_goal_minutes = 20
+        preferences = db_manager.find_by_attr(
+            UserPreferences, {"user_id": language.user_id}, session=session
+        )
+        if preferences is not None and preferences.daily_goal_minutes:
+            daily_goal_minutes = preferences.daily_goal_minutes
+        max_cards = max(1, round(daily_goal_minutes * 60 / SECONDS_PER_CARD))
+
+        lesson_ids = [
+            row.id
+            for row in session.query(Lesson)
+            .filter(Lesson.language_id == language_id)
+            .all()
+        ]
+
+        buckets = {model: [] for model in FEATURE_MODELS}
+        for model in FEATURE_MODELS:
+            cards = (
+                session.query(model)
+                .filter(
+                    model.lesson_id.in_(lesson_ids),
+                    model.last_seen_at.isnot(None),
+                )
+                .all()
+            )
+            buckets[model] = sorted(
+                cards,
+                key=lambda c: review_priority(
+                    c.created_at, c.last_seen_at, c.difficulty or 0.0, c.score or 0
+                ),
+                reverse=True,
+            )
+
+        # Round-robin across the three types so one type can't crowd out the rest.
+        queue: list = []
+        while len(queue) < max_cards and any(buckets[m] for m in FEATURE_MODELS):
+            for model in FEATURE_MODELS:
+                if len(queue) >= max_cards:
+                    break
+                if buckets[model]:
+                    queue.append(buckets[model].pop(0))
+
+        if as_dict:
+            return [card.to_dict(include_relations=True) for card in queue]
+        return queue

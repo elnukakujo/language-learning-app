@@ -24,6 +24,9 @@ export default async function Language({ params }: { params: Promise<{ language_
                 <ElementTagsCard element={language} />
                 <ElementSourcesCard element={language} />
                 <nav className="flex flex-row space-x-4">
+                    <NavButton path={`/languages/${language_id}/review`}>
+                        <p>Daily Review</p>
+                    </NavButton>
                     {language.current_lesson_id && <NavButton path={`/languages/${language_id}/lesson/${language.current_lesson_id}`}>
                         <p>Go to Current Lesson</p>
                     </NavButton>}

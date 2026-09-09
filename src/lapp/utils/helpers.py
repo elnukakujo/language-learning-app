@@ -46,6 +46,25 @@ def compute_recency_weight(
 
     return staleness / maturity_dampen
 
+def review_priority(
+    created_at: date | datetime,
+    last_seen_at: date | datetime,
+    difficulty: float,
+    score: float,
+) -> float:
+    """Composite "should review now" priority for the daily review queue.
+
+    Sums three independent signals, all derivable from fields already on every
+    feature/component (no persisted SRS state):
+      - forgetting: recency weight (staleness) scaled by difficulty,
+      - difficult:  difficulty itself, so hard cards surface even if recent,
+      - learning:   low score, so just-introduced cards repeat into long-term memory.
+    """
+    forgetting = compute_recency_weight(created_at, last_seen_at) * (1.0 + difficulty)
+    learning = 1.0 - min(max(score, 0.0), 100.0) / 100.0
+    return forgetting + difficulty + learning
+
+
 def update_score(
     score: float,
     last_seen_at: date | datetime,
